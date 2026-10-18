@@ -34,7 +34,7 @@ export function jpeg(w, h, top = [220, 220, 210], bottom = [120, 60, 40]) {
 export const fakeFinder = {
   calls: [],
   installed: () => true,
-  modelBytes: () => 3_364_167_120,
+  downloadBytes: () => 3_364_167_120,
   async install({ onProgress }) {
     onProgress({ name: "sam3_image_encoder.onnx", overallDone: 1, overallTotal: 2 });
     return { files: [] };

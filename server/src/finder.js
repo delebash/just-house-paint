@@ -9,7 +9,7 @@
 // of GPU memory on DirectML, so the segmenter is released when it has been idle a while and
 // before the AI photo runs (releaseGpu).
 
-import { existsSync } from "node:fs";
+import { existsSync, statSync } from "node:fs";
 import { ApiError } from "@delebash/core/platform/errors";
 import { getLogger } from "@delebash/core/platform/log";
 import { displayPath } from "./files.js";
@@ -73,6 +73,15 @@ export function resolveOverlaps(parts, priority = DEFAULT_PART_PRIORITY) {
  * The finder. `ctx`: { dataDir, modelDir, providers?, partsConfig() → recipe, priority() →
  * keys, idleMs() → ms before the segmenter is released; createSegmenter (tests swap it) }.
  */
+/** A file here at its expected size (its SHA-256 is checked by the install, not here). */
+function hasFile(file, size) {
+  try {
+    return statSync(file).size === size;
+  } catch {
+    return false;
+  }
+}
+
 export function createFinder(ctx) {
   let seg = null;
   let loading = null;
@@ -138,7 +147,8 @@ export function createFinder(ctx) {
 
   return {
     installed,
-    modelBytes: () => MODEL_FILES.reduce((n, f) => n + f.size, 0),
+    /** What Install still downloads: the files not here at their full size (the install card's figure). */
+    downloadBytes: () => MODEL_FILES.filter((f) => !hasFile(`${ctx.modelDir}/${f.name}`, f.size)).reduce((n, f) => n + f.size, 0),
     /** Download the models (a job): `download` is the kit's streamDownload. */
     install: ({ download, onProgress, signal }) =>
       ensureModels(ctx.modelDir, { download, onProgress, cancelCheck: () => signal?.aborted }),

@@ -548,8 +548,9 @@ Playwright against that server. Screenshots: session e638ccef's scratchpad `real
 - **Installing the part finder through the app:** with the four ONNX files already in `data/models/sam3`
   (hard links to the probe's), `POST /v1/segment/install` checked each one's SHA-256 and downloaded only the
   missing `tokenizer.json` and `tokenizer_config.json` (the kit's `streamDownload`) — the job finished in a few
-  seconds. The status's `downloadBytes` stays the whole bundle (3,364,167,120 B) even when most of it is
-  present, so the install card says "3.1 GB" for a 2 MB download.
+  seconds. The status's `downloadBytes` was then the whole bundle (3,364,167,120 B) even with most of it
+  present ("3.1 GB" on the card for a 2 MB download); since fixed — it counts only the files not here at
+  their full size (both engines; `tests/finder_status.test.js`).
 - **Finding the parts of house1** (2765×2074, display copy 2048×1536): **39 s** for the job, the model's load
   included; 10 parts — body 492,210 px (0.91), trim 13,859 (0.58), front door 13,880 (0.71), garage door 61,370
   (0.97), shutters 55,835 (0.90), columns 2,500 (0.58), chimney 8,076 (0.92), roof 186,637 (0.95), windows 78,121

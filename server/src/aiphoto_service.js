@@ -5,7 +5,7 @@
 // installing them (a job), and one render — which first frees the GPU (the part finder's image
 // session and the local AI model), because sd.cpp doesn't wait for memory (RESEARCH §10).
 
-import { existsSync, readdirSync } from "node:fs";
+import { existsSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 import { ApiError } from "@delebash/core/platform/errors";
 import { getLogger } from "@delebash/core/platform/log";
@@ -43,7 +43,18 @@ export function createAiPhoto(ctx) {
     async status() {
       const gpu = await ctx.detectGpu();
       const row = selectEngineAsset(ENGINE_RELEASES.pinned, { platform: process.platform, arch: process.arch, gpu });
-      const downloadBytes = (row ? row.asset.size + (row.runtime?.size || 0) : 0) + Object.values(MODEL_FILES).reduce((n, m) => n + m.size, 0);
+      // what Install still downloads: the engine unless it is here, and the models not here at full size
+      const engineBytes = row && !engineHere() ? row.asset.size + (row.runtime?.size || 0) : 0;
+      const modelBytes = Object.values(MODEL_FILES)
+        .filter((m) => {
+          try {
+            return statSync(path.join(ctx.modelDir, m.file)).size !== m.size;
+          } catch {
+            return true;
+          }
+        })
+        .reduce((n, m) => n + m.size, 0);
+      const downloadBytes = engineBytes + modelBytes;
       return {
         engineInstalled: engineHere(),
         modelsInstalled: modelsHere(),

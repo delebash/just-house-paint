@@ -16,7 +16,7 @@ import { getState } from "../app_state.js";
 export function router(ctx = getState()) {
   const app = new Hono();
 
-  app.get("/v1/segment/status", (c) => c.json({ installed: ctx.finder.installed(), downloadBytes: ctx.finder.modelBytes() }));
+  app.get("/v1/segment/status", (c) => c.json({ installed: ctx.finder.installed(), downloadBytes: ctx.finder.downloadBytes() }));
 
   app.post("/v1/segment/install", (c) => {
     const job = ctx.jobs.start({ kind: "install-finder", key: "" }, ({ signal, progress }) =>
