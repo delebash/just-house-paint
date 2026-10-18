@@ -18,7 +18,8 @@ blotchy grey. Lower **Texture** to calm it; at 1 the photo's texture is kept who
 **Compare with** puts something else on the left of a line across the photo: **The photo as taken**
 (before and after), or one of the house's saved designs — so two designs sit side by side (open one,
 compare with the other). The colors on screen stay on the right; the slider beside it moves the
-line. **Nothing** takes the line away.
+line. **Side by side** shows the two as pictures next to each other instead — one zoom, one pan; the
+brush, eraser, box and eyedropper work on the right one. **Nothing** takes the line away.
 
 **Outlines** draws the edge of the **Selected part** (the default), of **All parts**, or none
 (**Off**); the choice is kept. Zoom with the mouse wheel or the **+**, **−** and **Fit** buttons at

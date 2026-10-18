@@ -22,6 +22,9 @@ const props = defineProps({
   // 0–1: `before` (the photo as taken, or another design) shows left of this fraction; null = no split
   split: { type: Number, default: null },
   before: { type: Object, default: null },
+  // `before` and the painted photo next to each other (one zoom, one pan) instead of the split line;
+  // the tools work on the painted one, on the right
+  sideBySide: { type: Boolean, default: false },
   tool: { type: String, default: "look" },
   brushSize: { type: Number, default: 20 },
   // the brush's color while drawing (the selected part's paint, or the outline color)
@@ -40,11 +43,14 @@ const pointer = ref(null);
 
 const imgW = computed(() => props.photo?.naturalWidth || props.photo?.width || 1);
 const imgH = computed(() => props.photo?.naturalHeight || props.photo?.height || 1);
+// side by side: the painted photo sits right of `before`, a small gap between (photo pixels)
+const offsetX = computed(() => (props.sideBySide ? Math.round(imgW.value * 1.02) : 0));
+const contentW = computed(() => offsetX.value + imgW.value);
 
-/** Fit the photo inside the stage, centered. */
+/** Fit the photo (or both, side by side) inside the stage, centered. */
 function fitToStage() {
-  const s = Math.min(size.value.width / imgW.value, size.value.height / imgH.value) || 1;
-  view.value = { scale: s, x: (size.value.width - imgW.value * s) / 2, y: (size.value.height - imgH.value * s) / 2 };
+  const s = Math.min(size.value.width / contentW.value, size.value.height / imgH.value) || 1;
+  view.value = { scale: s, x: (size.value.width - contentW.value * s) / 2, y: (size.value.height - imgH.value * s) / 2 };
 }
 /** The zoom buttons: by a step around the middle of the view. */
 const zoomBy = (factor) => zoomAt(view.value.scale * factor, size.value.width / 2, size.value.height / 2);
@@ -61,16 +67,17 @@ onMounted(() => {
 });
 onBeforeUnmount(() => observer?.disconnect());
 watch(() => props.photo, fitToStage);
+watch(() => props.sideBySide, fitToStage);
 watch(
   () => props.version,
   () => stage.value?.getNode()?.batchDraw(),
 );
 
-/** The pointer in photo pixels. */
+/** The pointer in the painted photo's pixels (side by side: the one on the right). */
 function photoPoint() {
   const p = stage.value?.getNode()?.getPointerPosition();
   if (!p) return null;
-  return { x: (p.x - view.value.x) / view.value.scale, y: (p.y - view.value.y) / view.value.scale };
+  return { x: (p.x - view.value.x) / view.value.scale - offsetX.value, y: (p.y - view.value.y) / view.value.scale };
 }
 const inside = (pt) => pt && pt.x >= 0 && pt.y >= 0 && pt.x < imgW.value && pt.y < imgH.value;
 
@@ -133,7 +140,7 @@ function onUp() {
 }
 
 const imageConfig = computed(() => ({ image: props.painted || props.photo, width: imgW.value, height: imgH.value }));
-const beforeClip = computed(() => (props.split === null ? null : { x: 0, y: 0, width: imgW.value * props.split, height: imgH.value }));
+const beforeClip = computed(() => (props.split === null || props.sideBySide ? null : { x: 0, y: 0, width: imgW.value * props.split, height: imgH.value }));
 const groupConfig = computed(() => ({ x: view.value.x, y: view.value.y, scaleX: view.value.scale, scaleY: view.value.scale }));
 const cursorConfig = computed(() =>
   pointer.value && (props.tool === "brush" || props.tool === "eraser") && inside(pointer.value)
@@ -158,7 +165,7 @@ const boxConfig = computed(() => {
     ? { x: Math.min(b.x0, b.x1), y: Math.min(b.y0, b.y1), width: Math.abs(b.x1 - b.x0), height: Math.abs(b.y1 - b.y0), stroke: "#ffffff", strokeWidth: 2 / view.value.scale, dash: [6 / view.value.scale, 4 / view.value.scale] }
     : null;
 });
-const splitLine = computed(() => (props.split === null ? null : { points: [imgW.value * props.split, 0, imgW.value * props.split, imgH.value], stroke: "#ffffff", strokeWidth: 2 / view.value.scale }));
+const splitLine = computed(() => (props.split === null || props.sideBySide ? null : { points: [imgW.value * props.split, 0, imgW.value * props.split, imgH.value], stroke: "#ffffff", strokeWidth: 2 / view.value.scale }));
 </script>
 
 <template>
@@ -170,15 +177,19 @@ const splitLine = computed(() => (props.split === null ? null : { points: [imgW.
     >
       <v-layer>
         <v-group :config="groupConfig">
-          <v-image :config="imageConfig" />
-          <v-group v-if="beforeClip" :config="{ clip: beforeClip }">
-            <v-image :config="{ image: before || photo, width: imgW, height: imgH }" />
+          <!-- side by side: the photo as taken (or a design) on the left -->
+          <v-image v-if="sideBySide" :config="{ image: before || photo, width: imgW, height: imgH }" />
+          <v-group :config="{ x: offsetX }">
+            <v-image :config="imageConfig" />
+            <v-group v-if="beforeClip" :config="{ clip: beforeClip }">
+              <v-image :config="{ image: before || photo, width: imgW, height: imgH }" />
+            </v-group>
+            <v-image v-if="overlay" :config="{ image: overlay, width: imgW, height: imgH, listening: false }" />
+            <v-line v-if="splitLine" :config="splitLine" />
+            <v-line v-if="lineConfig" :config="lineConfig" />
+            <v-rect v-if="boxConfig" :config="boxConfig" />
+            <v-circle v-if="cursorConfig" :config="cursorConfig" />
           </v-group>
-          <v-image v-if="overlay" :config="{ image: overlay, width: imgW, height: imgH, listening: false }" />
-          <v-line v-if="splitLine" :config="splitLine" />
-          <v-line v-if="lineConfig" :config="lineConfig" />
-          <v-rect v-if="boxConfig" :config="boxConfig" />
-          <v-circle v-if="cursorConfig" :config="cursorConfig" />
         </v-group>
       </v-layer>
     </v-stage>

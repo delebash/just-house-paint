@@ -37,7 +37,7 @@ vi.mock("../services/maskImage.js", () => ({
   drawPixels: (_rgba, width, height) => ({ width, height }),
 }));
 vi.mock("../components/HouseCanvas.vue", () => ({
-  default: { name: "HouseCanvas", props: ["photo", "painted", "overlay", "before", "split", "tool"], render: () => h("div", { class: "house-canvas-stub" }) },
+  default: { name: "HouseCanvas", props: ["photo", "painted", "overlay", "before", "split", "tool", "sideBySide"], render: () => h("div", { class: "house-canvas-stub" }) },
 }));
 
 const { default: HousePage } = await import("./HousePage.vue");
@@ -282,12 +282,20 @@ test("Compare shows the photo as taken or a saved design left of the split", asy
   await flushPromises();
   expect(canvas().props("split")).toBe(0.5);
   expect(canvas().props("before")).toEqual({ width: W, height: H });
+  // side by side: the two pictures next to each other
+  expect(canvas().props("sideBySide")).toBe(false);
+  const side = document.body.querySelector(".house__side .q-toggle");
+  await click(side);
+  expect(canvas().props("sideBySide")).toBe(true);
   compare.vm.$emit("update:modelValue", "photo");
   await flushPromises();
   expect(canvas().props("before")).toBeNull();
   compare.vm.$emit("update:modelValue", "off");
   await flushPromises();
   expect(canvas().props("split")).toBeNull();
+  // nothing to compare: no side by side, and its switch is gone
+  expect(canvas().props("sideBySide")).toBe(false);
+  expect(document.body.querySelector(".house__side")).toBeNull();
 });
 
 test("the outlines: the selected part's by default, every part's, or none — and the choice is kept", async () => {

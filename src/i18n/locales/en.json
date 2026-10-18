@@ -257,7 +257,8 @@
     "compare": {
       "label": "Compare with",
       "off": "Nothing",
-      "photo": "The photo as taken"
+      "photo": "The photo as taken",
+      "sideBySide": "Side by side"
     },
     "undo": "Undo",
     "undoHint": "Undo (Ctrl+Z)",

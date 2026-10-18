@@ -27,6 +27,7 @@ import {
   UiSelect,
   UiSlider,
   UiTabStrip,
+  UiToggle,
   useSurfaceTask,
 } from "@delebash/ui";
 import { onKeyStroke } from "@vueuse/core";
@@ -67,6 +68,8 @@ const tool = ref("look");
 const brushSize = ref(24);
 // "off", "photo" (the photo as taken) or a design's id — shown left of the split
 const compareWith = ref("off");
+// the compare as two pictures next to each other instead of the split line
+const sideBySide = ref(false);
 const split = ref(0.5);
 const busy = ref({ find: false, ai: false, export: false });
 // the AI photo dialog: closed (null), the install offer ({ render: null }) or a kept render
@@ -554,7 +557,11 @@ const canRevert = computed(() => !!house.design && house.dirty);
             <span>{{ t("house.compare.label") }}</span>
             <UiSelect v-model="compareWith" :options="compareOptions" width="name" :aria-label="t('house.compare.label')" />
           </span>
-          <UiSlider v-if="compareWith !== 'off'" v-model="split" :min="0" :max="1" :step="0.01" width="short" :show-number="false" :aria-label="t('house.tools.split')" />
+          <label v-if="compareWith !== 'off'" class="house__tool house__side">
+            <UiToggle v-model="sideBySide" :aria-label="t('house.compare.sideBySide')" />
+            <span>{{ t("house.compare.sideBySide") }}</span>
+          </label>
+          <UiSlider v-if="compareWith !== 'off' && !sideBySide" v-model="split" :min="0" :max="1" :step="0.01" width="short" :show-number="false" :aria-label="t('house.tools.split')" />
           <label class="house__tool">
             <span>{{ t("house.tools.texture") }}</span>
             <UiSlider v-model="texture" :min="0" :max="1" :step="0.05" width="short" :aria-label="t('house.tools.texture')" />
@@ -563,7 +570,7 @@ const canRevert = computed(() => !!house.design && house.dirty);
         <HouseCanvas
           class="house__canvas"
           :photo="photo" :painted="painted" :overlay="overlay" :before="before" :version="version"
-          :split="compareWith !== 'off' ? split : null"
+          :split="compareWith !== 'off' ? split : null" :side-by-side="compareWith !== 'off' && sideBySide"
           :tool="tool" :brush-size="brushSize" :stroke-color="strokeColor"
           @pick="onPick" @stroke="onStroke" @box="onBox"
         />
