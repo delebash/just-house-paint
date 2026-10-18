@@ -11,7 +11,7 @@ import { useI18n } from "vue-i18n";
 import { useHouseStore } from "../stores/house.js";
 import NameDialog from "./NameDialog.vue";
 
-const emit = defineEmits(["show-render"]);
+const emit = defineEmits(["show-render", "color-card"]);
 const { t } = useI18n();
 const house = useHouseStore();
 
@@ -71,6 +71,7 @@ const designName = (id) => house.designs.find((d) => d.id === id)?.name;
     <div class="designs__actions">
       <UiButton v-if="house.designId" intent="primary" :disabled="!house.dirty" :label="t('designs.save', { name: house.design?.name })" @click="save" />
       <UiButton :intent="house.designId ? 'secondary' : 'primary'" :disabled="!Object.keys(house.colors).length" :label="t('designs.saveAs')" @click="naming = {}" />
+      <UiButton intent="ghost" :disabled="!Object.keys(house.colors).length" :label="t('designs.colorCard')" :title="t('designs.colorCardHint')" @click="emit('color-card')" />
     </div>
     <p v-if="!house.designs.length" class="muted">{{ t("designs.none") }}</p>
     <q-list v-else class="designs__list" dense>

@@ -40,3 +40,27 @@ test("a brush change is prepared again", () => {
   p.touched("trim");
   expect(p.paint({ trim: "#ffffff" }).rgba[3 * 4]).toBe(255);
 });
+
+test("the eyedropper reads the photo's own color — a median, so a stray pixel doesn't decide it", () => {
+  const w = 10;
+  const h = 10;
+  const rgba = new Uint8ClampedArray(w * h * 4);
+  for (let i = 0; i < w * h; i++) rgba.set([200, 100, 50, 255], i * 4);
+  rgba.set([0, 0, 0, 255], (5 * w + 5) * 4); // one dark pixel in the middle
+  const painter = createPainter({ rgba, width: w, height: h });
+  expect(painter.sample(5, 5, 1)).toBe("#c86432");
+  expect(painter.sample(0, 0, 2)).toBe("#c86432"); // a corner: only the pixels inside the photo
+});
+
+test("a part's color as photographed is the median inside its outline", () => {
+  const w = 4;
+  const h = 2;
+  const rgba = new Uint8ClampedArray(w * h * 4);
+  for (let i = 0; i < w * h; i++) rgba.set(i < 4 ? [255, 255, 255, 255] : [10, 20, 30, 255], i * 4);
+  const painter = createPainter({ rgba, width: w, height: h });
+  painter.setMask("trim", Uint8Array.from([0, 0, 0, 0, 255, 255, 255, 0]));
+  expect(painter.photographed("trim")).toBe("#0a141e");
+  expect(painter.photographed("nothing")).toBeNull();
+  painter.setMask("empty", new Uint8Array(w * h));
+  expect(painter.photographed("empty")).toBeNull();
+});

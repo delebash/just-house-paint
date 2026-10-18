@@ -32,6 +32,8 @@ const searching = ref(false);
 const hex = ref("");
 const nearest = ref([]);
 const hexRule = schemaRules(NearestQuery).hex;
+// the exact color came off the photo (the eyedropper, a part as photographed) — its light is in it
+const picked = ref(false);
 
 const brandOptions = computed(() => paints.ready.map((b) => ({ value: b.key, label: t("colors.brandCount", { brand: b.label, n: b.paintCount }) })));
 const selectedName = computed(() => (house.selectedPart ? partName(house.selectedPart, { t, te }) : ""));
@@ -66,6 +68,19 @@ function choose(paint) {
   paints.remember([paint]);
   house.setColor(house.selectedPart, paint.id);
 }
+
+// a color read off the photo: into "An exact color", matched at once
+watch(
+  () => house.pickedColor,
+  (p) => {
+    if (!p) return;
+    const got = house.takePickedColor();
+    hex.value = got.hex;
+    picked.value = true;
+    match();
+  },
+  { immediate: true },
+);
 
 async function match() {
   if (!/^#[0-9a-fA-F]{6}$/.test(hex.value)) return;
@@ -124,11 +139,12 @@ async function match() {
       <p class="hint">{{ t("colors.exact.hint") }}</p>
       <q-form class="form__row" @submit="match">
         <UiField :label="t('colors.exact.hex')" layout="block" for="exact-hex">
-          <UiInput id="exact-hex" v-model="hex" width="token" :placeholder="t('colors.exact.placeholder')" lazy-rules :rules="hexRule" />
+          <UiInput id="exact-hex" v-model="hex" width="token" @update:model-value="picked = false" :placeholder="t('colors.exact.placeholder')" lazy-rules :rules="hexRule" />
         </UiField>
         <UiColorPicker v-model="hex" :aria-label="t('colors.exact.pick')" />
         <UiButton type="submit" intent="secondary" :label="t('colors.exact.match')" />
       </q-form>
+      <p v-if="picked" class="hint">{{ t("colors.exact.picked") }}</p>
       <q-list v-if="nearest.length" class="colors__nearest" dense>
         <q-item v-for="n in nearest" :key="n.paint.id" clickable class="nearest" :disable="!house.selectedPart" @click="choose(n.paint)">
           <q-item-section avatar class="nearest__swatch"><span class="nearest__color" :style="{ background: n.paint.hex }" /></q-item-section>

@@ -38,6 +38,12 @@ the selected part. **Exterior colors only** hides the colors a brand marks for i
 it doesn't mark either way stay). **An exact color** — a hex color, or one from the picker — finds
 the brand's nearest paints, closest first, each with its ΔE.
 
+**A color from the photo**: choose **Pick a color** above the photo and click it — the color there
+goes into **An exact color**, with the brand's nearest paints. On the **Parts** tab, the small round
+swatch beside a part is its color as photographed; click it to find the paints nearest the color
+your house has now. Light and shadow are in a photo's colors, so the nearest paint is close, not
+exact — check a chip against the wall.
+
 ## Discontinued colors
 
 Some lists include colors a brand no longer sells. They are hidden unless you turn on **Show

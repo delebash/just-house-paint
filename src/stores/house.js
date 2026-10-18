@@ -41,8 +41,11 @@ export const useHouseStore = defineStore("house", {
     // the design the colors came from (null: not from a saved design)
     designId: null,
     selectedPart: null,
-    // bumps when a part's mask changes on the server, so the screen reloads that mask
+    // bumps when a part's mask changes on the server (the mask URL's cache-buster)
     maskVersions: {},
+    // a color read off the photo (the eyedropper, a part's color as photographed) for the Colors tab:
+    // { hex, at } until the tab takes it
+    pickedColor: null,
   }),
   getters: {
     design: (s) => s.designs.find((d) => d.id === s.designId) || null,
@@ -58,7 +61,7 @@ export const useHouseStore = defineStore("house", {
       this.loading = true;
       try {
         const [house, parts, designs, renders] = await Promise.all([get(hp(id)), get(hp(id, "/parts")), get(hp(id, "/designs")), get(hp(id, "/renders"))]);
-        Object.assign(this, { house, parts, designs, renders, colors: {}, designId: null, maskVersions: {} });
+        Object.assign(this, { house, parts, designs, renders, colors: {}, designId: null, maskVersions: {}, pickedColor: null });
         this.selectedPart = this.paintableParts[0]?.key ?? null;
       } finally {
         this.loading = false;
@@ -98,6 +101,28 @@ export const useHouseStore = defineStore("house", {
       this.parts = [...this.parts, part];
       this.selectedPart = key;
       return part;
+    },
+    /** The colors on screen replaced whole (an Undo, a Redo). */
+    setColors(colors) {
+      this.colors = { ...colors };
+    },
+    /** Reset (a): every paint taken off — the photo as taken. */
+    clearColors() {
+      this.colors = {};
+    },
+    /** Reset (b): back to the open design's saved colors. */
+    revertToDesign() {
+      if (this.design) this.colors = { ...this.design.colors };
+    },
+    /** A color read off the photo, for the Colors tab to match to paints. */
+    pickColor(hex) {
+      this.pickedColor = { hex, at: Date.now() };
+    },
+    /** The picked color, once — the Colors tab takes it. */
+    takePickedColor() {
+      const p = this.pickedColor;
+      this.pickedColor = null;
+      return p;
     },
     setColor(part, paintId) {
       const next = { ...this.colors };

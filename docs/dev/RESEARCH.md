@@ -41,6 +41,14 @@ Subjects: [1 · The machine](#1--the-machine) ·
   2026-10-04).
 - Node 26.5.0, npm 11.17.0; Python 3.12.9 with no torch, diffusers or onnxruntime installed; CUDA
   toolkit 12.1. — *measured, 2026-10-17*.
+- **The user's laptop:** Core Ultra 7 165U, 32 GB, Intel Arc iGPU (shared memory). JustWrite measured
+  llama.cpp on it: the iGPU wins prefill (pp8192 117 tok/s against the CPU's 55–63), the CPU wins decode
+  (15.3–16.7 tok/s), flash-attn off on Arc. — *record* · `justwrite-app/docs/dev/measured-performance.md`.
+  **This app on it — estimates, not measured** (2026-10-18, the user's question): painting, the outlines and
+  the paint search run in the window and need no GPU — fine; the AI's schemes (Gemma 4 12B, ~700 tokens)
+  ~30–60 s; finding the parts (SAM 3 on ONNX Runtime — CPU, or DirectML if it takes the iGPU) ~1–2 min a
+  photo; the AI photo (FLUX.2 [klein] 4B through sd-cli on Vulkan) likely several minutes. A 16 GB Iris Xe
+  laptop would be tighter. To be measured when the app runs there.
 
 ## 2 · How existing visualizers work
 
@@ -621,4 +629,20 @@ Playwright against that server. Screenshots: session e638ccef's scratchpad `real
   Simply Sage / Blanca Peak / Espresso Beans; Cameo White / Red Curry / Off Broadway); the first applied —
   ΔE to the chips 0.0 (body), 0.6 (trim), 0.3 (front door), 0.5 (garage door, the body's paint); saved as a
   design; its AI photo in 22.3 s.
+- **Soffits — which words find them** (2026-10-18; SAM 3 through the app's segmenter on the display copies,
+  threshold 0.3; each piece's score and share of the photo; overlays in session e638ccef's scratchpad
+  `real-ui/shots/soffit/`):
+
+  | word | house1 | house2 | house3 | the user's |
+  |---|---|---|---|---|
+  | "soffit" | 0 | 0 | 0 | 0 |
+  | "eaves" | 0 | 0 | 0 | 0 |
+  | **"roof overhang"** | 3 pieces, 0.89% (0.54, 0.53, 0.32) | 5, 3.09% (0.79–0.35) | 1, 1.45% (0.35) | 5, 2.64% (0.78–0.31) |
+  | "underside of the roof" | 0 | 2, 1.77% (0.43, 0.34) | 1, 7.37% (0.33) | 1, 5.47% (0.34) |
+
+  SAM 3 doesn't know "soffit" or "eaves". "Roof overhang" finds the overhang's boards — the soffit and the
+  fascia, as the street sees them — with no false hit down to 0.3; "underside of the roof" returns a few
+  large, low-score pieces (7% of house3). The default recipe gained a paintable **soffit** part:
+  `["roof overhang"]` at 0.3, trim group, before the roof and the trim in the priority, painted by a
+  scheme's trim color.
 

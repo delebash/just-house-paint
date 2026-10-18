@@ -22,6 +22,9 @@ export const DEFAULT_PARTS = Object.freeze(
     { key: "columns", labelKey: "parts.columns", prompts: ["column"], threshold: 0.5, paintable: true, group: "trim" },
     { key: "railings", labelKey: "parts.railings", prompts: ["railing"], threshold: 0.5, paintable: true, group: "trim" },
     { key: "gutters", labelKey: "parts.gutters", prompts: ["gutter"], threshold: 0.5, paintable: true, group: "trim" },
+    // SAM 3 doesn't know "soffit" or "eaves" (no hits on four photos); "roof overhang" finds the overhang's
+    // boards — soffit and fascia, as the street sees them — with no false hit down to 0.3 (RESEARCH §11)
+    { key: "soffit", labelKey: "parts.soffit", prompts: ["roof overhang"], threshold: 0.3, paintable: true, group: "trim" },
     { key: "chimney", labelKey: "parts.chimney", prompts: ["chimney"], threshold: 0.5, paintable: true, group: "walls" },
     { key: "roof", labelKey: "parts.roof", prompts: ["roof"], threshold: 0.5, paintable: false, group: "roof" },
     { key: "windows", labelKey: "parts.windows", prompts: ["window"], threshold: 0.5, paintable: false, group: "windows" },

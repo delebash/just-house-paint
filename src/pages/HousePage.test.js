@@ -7,8 +7,9 @@
 // events are what the page reacts to; the painter, the stores, the tabs and the kit are real). It
 // proves: the part finder's install offer and its job; the parts list; a color from the Colors tab
 // painting the selected part, with its ΔE; finding the parts again asks first; a design saved under
-// the route's own rules; the AI photo offering its install first.
-import { _resolveDialog, dialogState, installLlmUi, LlmUiHosts } from "@delebash/ui";
+// the route's own rules; the AI photo offering its install first; Undo / Redo and Reset; the
+// eyedropper and a part's color as photographed; Compare; the outlines' choice.
+import { _resolveDialog, dialogState, installLlmUi, LlmUiHosts, readPref, UiSelect } from "@delebash/ui";
 import { QUASAR_TEST_OPTIONS } from "@delebash/ui/quasar/install.js";
 import { flushPromises, mount } from "@vue/test-utils";
 import { createPinia } from "pinia";
@@ -33,7 +34,9 @@ vi.mock("../services/maskImage.js", () => ({
   pngOf: async () => new Blob(["png"], { type: "image/png" }),
   drawPixels: (_rgba, width, height) => ({ width, height }),
 }));
-vi.mock("../components/HouseCanvas.vue", () => ({ default: { name: "HouseCanvas", props: ["photo", "painted"], render: () => h("div", { class: "house-canvas-stub" }) } }));
+vi.mock("../components/HouseCanvas.vue", () => ({
+  default: { name: "HouseCanvas", props: ["photo", "painted", "overlay", "before", "split", "tool"], render: () => h("div", { class: "house-canvas-stub" }) },
+}));
 
 const { default: HousePage } = await import("./HousePage.vue");
 
@@ -67,6 +70,7 @@ function fakeFetch(input, init = {}) {
   if (p === "/v1/houses/h1/renders") return Promise.resolve(json([]));
   if (p === "/v1/houses/h1/image") return Promise.resolve(new Response(new Blob(["jpeg"])));
   const mask = p.match(/^\/v1\/houses\/h1\/parts\/(\w+)\/mask$/);
+  if (mask && method === "PUT") return Promise.resolve(json(server.parts.find((x) => x.key === mask[1])));
   if (mask) return Promise.resolve(new Response(new Blob([mask[1]])));
   if (p === "/v1/brands") return Promise.resolve(json([{ key: "behr", label: "Behr", feed: true, enabled: true, paintCount: 1, source: "feed", loadedAt: null, lastError: null }]));
   if (p === "/v1/settings") return Promise.resolve(json({ "finder.parts": [], "schemes.roleParts": { body: ["body"], trim: ["trim"], accent: [] } }));
@@ -82,6 +86,8 @@ function fakeFetch(input, init = {}) {
     server.parts = PARTS;
     return Promise.resolve(json({ id: "j-find", state: "done", progress: 1, result: { parts: 2 } }));
   }
+  if (decodeURIComponent(p) === `/v1/paints/${PAINT.id}`) return Promise.resolve(json(PAINT));
+  if (p === "/v1/paints/nearest") return Promise.resolve(json([{ paint: PAINT, deltaE: 3.2 }]));
   if (p === "/v1/paints") return Promise.resolve(json({ total: 1, rows: [PAINT] }));
   return Promise.resolve(json({}));
 }
@@ -200,4 +206,94 @@ test("the AI photo offers its install first", async () => {
   await click(byText("button", "AI photo"));
   expect(text()).toContain("Install the AI photo");
   expect(server.calls).not.toContain("POST /v1/houses/h1/aiphoto");
+});
+
+const DESIGN = { id: "d1", houseId: "h1", name: "Blue body", colors: { body: "behr:S1" }, createdAt: HOUSE.createdAt, updatedAt: HOUSE.updatedAt };
+const canvas = () => wrapper.findComponent({ name: "HouseCanvas" });
+const paintBody = async () => {
+  await click(byText(".q-tab", "Colors"));
+  await click(byText(".chip", "Sea Blue"));
+  await click(byText(".q-tab", "Parts"));
+};
+const menuItem = (words) => byText('[role="menuitem"]', words);
+
+test("Undo and Redo take a color back and put it again — the buttons and Ctrl+Z", async () => {
+  server.parts = PARTS;
+  await mountPage();
+  expect(byText("button", "Undo").disabled).toBe(true);
+  await paintBody();
+  expect(text()).toContain("Behr Sea Blue S1");
+  window.dispatchEvent(new KeyboardEvent("keydown", { key: "z", ctrlKey: true }));
+  await flushPromises();
+  expect(text()).not.toContain("Behr Sea Blue S1");
+  await click(byText("button", "Redo"));
+  expect(text()).toContain("Behr Sea Blue S1");
+});
+
+test("Reset takes every paint off, or goes back to the open design's colors", async () => {
+  server.parts = PARTS;
+  server.designs = [DESIGN];
+  await mountPage();
+  await click(byText(".q-tab", "Designs"));
+  await click(byText(".designs__row", "Blue body"));
+  await click(byText(".q-tab", "Parts"));
+  expect(text()).toContain("Behr Sea Blue S1");
+  // nothing changed yet: only "Remove all colors"
+  await click(byText("button", "Reset"));
+  expect(menuItem("Back to")).toBeUndefined();
+  await click(menuItem("Remove all colors"));
+  expect(text()).not.toContain("Behr Sea Blue S1");
+  await click(byText("button", "Reset"));
+  await click(menuItem("Back to “Blue body”"));
+  expect(text()).toContain("Behr Sea Blue S1");
+});
+
+test("the eyedropper and a part's color as photographed find the nearest paints", async () => {
+  server.parts = PARTS;
+  await mountPage();
+  // the light grey photo: every part is #c8c8c8 as photographed
+  await click(document.body.querySelector(".parts__now"));
+  expect(text()).toContain("From the photo");
+  expect(document.body.querySelector("#exact-hex").value).toBe("#c8c8c8");
+  expect(server.calls).toContain("GET /v1/paints/nearest");
+  await click(byText(".q-tab", "Parts"));
+  server.calls.length = 0;
+  await click(byText(".ui-seg button", "Pick a color"));
+  expect(canvas().props("tool")).toBe("pick");
+  canvas().vm.$emit("pick", { x: 1, y: 1 });
+  await flushPromises();
+  expect(text()).toContain("From the photo");
+  expect(server.calls).toContain("GET /v1/paints/nearest");
+});
+
+test("Compare shows the photo as taken or a saved design left of the split", async () => {
+  server.parts = PARTS;
+  server.designs = [DESIGN];
+  await mountPage();
+  expect(canvas().props("split")).toBeNull();
+  const compare = wrapper.findAllComponents(UiSelect).find((c) => c.props("options").some((o) => o.value === "photo"));
+  expect(compare.props("options").map((o) => o.label)).toEqual(["Nothing", "The photo as taken", "Blue body"]);
+  compare.vm.$emit("update:modelValue", "d1");
+  await flushPromises();
+  expect(canvas().props("split")).toBe(0.5);
+  expect(canvas().props("before")).toEqual({ width: W, height: H });
+  compare.vm.$emit("update:modelValue", "photo");
+  await flushPromises();
+  expect(canvas().props("before")).toBeNull();
+  compare.vm.$emit("update:modelValue", "off");
+  await flushPromises();
+  expect(canvas().props("split")).toBeNull();
+});
+
+test("the outlines: the selected part's by default, every part's, or none — and the choice is kept", async () => {
+  server.parts = PARTS;
+  await mountPage();
+  expect(canvas().props("overlay")).not.toBeNull();
+  await click(byText(".ui-seg button", "Off"));
+  expect(canvas().props("overlay")).toBeNull();
+  await click(byText(".ui-seg button", "All parts"));
+  expect(canvas().props("overlay")).not.toBeNull();
+  expect(readPref("outlines")).toBe("all");
+  // back to the default, for the tests after this one (the kit's prefs are one document per app)
+  await click(byText(".ui-seg button", "Selected part"));
 });

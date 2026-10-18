@@ -2,8 +2,13 @@
 
 The app finds your house's parts with a vision model (Meta's SAM 3) that runs on your own
 computer. It looks for the body (the siding or walls), the trim, the front door, the garage door,
-shutters, columns, railings, gutters and the chimney — and for what usually isn't painted: the
-roof, the windows, stone, brick and lamps.
+shutters, columns, railings, gutters, the soffits and the chimney — and for what usually isn't
+painted: the roof, the windows, stone, brick and lamps.
+
+**Soffits and fascia** are the boards under the roof's edge. The finder looks for the roof's
+overhang, so it finds them as the street sees them — the underside and the face board together.
+It finds most of them, not always all — draw the rest with the brush or a box. A scheme paints
+them the trim's color.
 
 ## The first time: installing the part finder
 
@@ -18,7 +23,7 @@ The finder is good at doors, garage doors, windows and shutters, and less sure o
 fascia boards, soffits and some trim. A white fascia it missed stays in the body and takes the
 body's color. Fix it with the tools above the photo, on the part selected on the **Parts** tab:
 
-- **Outlines** draws each part's edge on the photo.
+- **Outlines** draws the selected part's edge on the photo — or every part's, or none.
 - **Brush** adds to the selected part: drag over what belongs to it. **Eraser** takes it away.
   **Brush size** sits beside them.
 - **Box** — drag a box around something (a shutter, the fascia); the finder outlines what is inside
@@ -30,7 +35,8 @@ A pixel belongs to one part only. Where two parts overlap, the more specific one
 garage door before the door, the gutters before the trim) — the order is in **App Settings →
 Advanced**.
 
-Your fixes are kept. **Find the parts again** starts over from what the finder sees; it asks first.
+Your fixes are kept, and **Undo** takes back the last ones. **Find the parts again** starts over
+from what the finder sees; it asks first.
 
 ## Settings
 

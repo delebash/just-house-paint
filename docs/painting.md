@@ -15,8 +15,22 @@ blotchy grey. Lower **Texture** to calm it; at 1 the photo's texture is kept who
 
 ## Comparing
 
-Turn on **Before / after** and drag its slider: the photo as it is shows on the left of the line.
-**Outlines** draws the parts' edges. The mouse wheel zooms; drag with **Select** to move the photo.
+**Compare with** puts something else on the left of a line you drag across the photo: **The photo
+as taken**, or one of the house's saved designs — so two designs sit side by side (open one, compare
+with the other). The colors on screen stay on the right. **Nothing** takes the line away.
+
+**Outlines** draws the edge of the **Selected part** (the default), of **All parts**, or none
+(**Off**); the choice is kept. Zoom with the mouse wheel or the **+**, **−** and **Fit** buttons at
+the photo's top right; drag with **Select** to move the photo.
+
+## Undo and Reset
+
+**Undo** and **Redo** (Ctrl+Z and Ctrl+Y) take back a color, or a change to a part's outline made
+with the brush, the eraser or a box, and put it back again. They remember the last 50 steps while
+the house is open; **Find the parts again** starts them over.
+
+**Reset** offers **Remove all colors** — the photo as taken — and, when you changed the colors of
+an open design, **Back to** that design's saved colors. Undo brings back what a Reset took away.
 
 ## Designs
 
@@ -28,7 +42,9 @@ changes asks first.
 ## Saving the picture
 
 **Save image** writes the painted photo at full size, and **Copy the color list** gives you the
-parts and their paints (brand number and name) to take to the store.
+parts and their paints (brand number and name) to take to the store. **Save a color card** on the
+**Designs** tab makes one picture of both: the painted photo, then each painted part with its
+paint's swatch, brand number, name and hex.
 
 > Colors on a screen are never exactly the paint — your screen, the photo's light and the paint's
 > sheen all differ. Check a real sample on your house before you buy.

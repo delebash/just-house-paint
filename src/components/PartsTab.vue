@@ -16,7 +16,10 @@ import { useSettingsStore } from "../stores/settings.js";
 defineProps({
   // { part: ΔE2000 | null } — the painter's last measure
   deltaE: { type: Object, default: () => ({}) },
+  // { part: #rrggbb } — each part's color as photographed (the median inside its outline)
+  photographed: { type: Object, default: () => ({}) },
 });
+const emit = defineEmits(["find-color"]);
 
 const { t, te } = useI18n();
 const house = useHouseStore();
@@ -63,6 +66,11 @@ async function addPart() {
           <q-item-label caption class="parts__paint">{{ paints.byId[house.colors[p.key]]?.displayName || t("partsTab.unpainted") }}</q-item-label>
         </q-item-section>
         <q-item-section side class="parts__side">
+          <q-btn
+            v-if="photographed[p.key]" flat dense unelevated class="parts__now" :style="{ background: photographed[p.key] }"
+            :title="t('partsTab.photographed', { hex: photographed[p.key] })" :aria-label="t('partsTab.photographed', { hex: photographed[p.key] })"
+            @click.stop="emit('find-color', photographed[p.key])"
+          />
           <span class="muted">{{ t("partsTab.share", { n: share(p) }) }}</span>
           <UiTag
             v-if="deltaE[p.key] != null" :intent="deltaE[p.key] <= 2 ? 'success' : 'secondary'"
@@ -113,6 +121,15 @@ async function addPart() {
   flex-direction: row;
   align-items: center;
   gap: var(--sp-2);
+}
+.parts__now {
+  min-width: 18px;
+  min-height: 18px;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 50%;
 }
 .parts__add {
   display: flex;

@@ -8,7 +8,9 @@
 //   - brush / eraser: drag to paint into / out of the selected part (`stroke` when the drag ends —
 //     the page applies it to the mask, repaints and saves);
 //   - box:    drag a box; the part finder outlines what is inside (`box`).
+import { UiButton } from "@delebash/ui";
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
 
 const props = defineProps({
   // display-size sources (HTMLImageElement / HTMLCanvasElement); `painted` null = the photo alone
@@ -17,14 +19,16 @@ const props = defineProps({
   overlay: { type: Object, default: null },
   // bumps when `painted` or `overlay` was redrawn in place
   version: { type: Number, default: 0 },
-  // 0–1: the original shows left of this fraction; null = no split
+  // 0–1: `before` (the photo as taken, or another design) shows left of this fraction; null = no split
   split: { type: Number, default: null },
+  before: { type: Object, default: null },
   tool: { type: String, default: "look" },
   brushSize: { type: Number, default: 20 },
   // the brush's color while drawing (the selected part's paint, or the outline color)
   strokeColor: { type: String, default: "#ffcc00" },
 });
 const emit = defineEmits(["pick", "stroke", "box"]);
+const { t } = useI18n();
 
 const host = ref(null);
 const stage = ref(null);
@@ -42,7 +46,9 @@ function fitToStage() {
   const s = Math.min(size.value.width / imgW.value, size.value.height / imgH.value) || 1;
   view.value = { scale: s, x: (size.value.width - imgW.value * s) / 2, y: (size.value.height - imgH.value * s) / 2 };
 }
-defineExpose({ fit: fitToStage, zoomTo100: () => zoomAt(1, size.value.width / 2, size.value.height / 2, true) });
+/** The zoom buttons: by a step around the middle of the view. */
+const zoomBy = (factor) => zoomAt(view.value.scale * factor, size.value.width / 2, size.value.height / 2);
+defineExpose({ fit: fitToStage, zoomBy, zoomTo100: () => zoomAt(1, size.value.width / 2, size.value.height / 2, true) });
 
 let observer = null;
 onMounted(() => {
@@ -166,7 +172,7 @@ const splitLine = computed(() => (props.split === null ? null : { points: [imgW.
         <v-group :config="groupConfig">
           <v-image :config="imageConfig" />
           <v-group v-if="beforeClip" :config="{ clip: beforeClip }">
-            <v-image :config="{ image: photo, width: imgW, height: imgH }" />
+            <v-image :config="{ image: before || photo, width: imgW, height: imgH }" />
           </v-group>
           <v-image v-if="overlay" :config="{ image: overlay, width: imgW, height: imgH, listening: false }" />
           <v-line v-if="splitLine" :config="splitLine" />
@@ -176,6 +182,11 @@ const splitLine = computed(() => (props.split === null ? null : { points: [imgW.
         </v-group>
       </v-layer>
     </v-stage>
+    <div v-if="photo" class="house-canvas__zoom">
+      <UiButton intent="secondary" size="small" :label="t('house.zoom.out')" :title="t('house.zoom.outHint')" :aria-label="t('house.zoom.outHint')" @click="zoomBy(1 / 1.25)" />
+      <UiButton intent="secondary" size="small" :label="t('house.zoom.in')" :title="t('house.zoom.inHint')" :aria-label="t('house.zoom.inHint')" @click="zoomBy(1.25)" />
+      <UiButton intent="secondary" size="small" :label="t('house.zoom.fit')" :title="t('house.zoom.fitHint')" @click="fitToStage" />
+    </div>
   </div>
 </template>
 
@@ -194,7 +205,15 @@ const splitLine = computed(() => (props.split === null ? null : { points: [imgW.
 .house-canvas[data-tool="eraser"] {
   cursor: none;
 }
-.house-canvas[data-tool="box"] {
+.house-canvas[data-tool="box"],
+.house-canvas[data-tool="pick"] {
   cursor: crosshair;
+}
+.house-canvas__zoom {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 4px;
 }
 </style>
