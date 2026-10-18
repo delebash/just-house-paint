@@ -381,6 +381,30 @@ Not legal advice — what the sources say.
   2026-08); four tiny projects fetch SW's feed at run time. housepaint.ai names no data source.
   PaintDB claims 51,000+ colors from 27 brands under "CC BY 4.0" — its right to license brand data is
   unknown. — *agent, 2026-10-17*.
+- **Which paint makers allow what — the other brands** (2026-10-18, a research agent for the user's question "is
+  there any paint manufactures that dont forbid download or that we can get updated list without violation?"; V =
+  read on the page, S = secondhand; not legal advice — a terms page silent on robots isn't permission):
+
+  | Brand | Automated access | Official download | Reuse | API / partner | Source |
+  |---|---|---|---|---|---|
+  | Benjamin Moore | not mentioned (V); personal use only (V) | per-collection ASE | beyond personal needs "express prior written consent" (V) | none found | benjaminmoore.com/en-us/legal-benjamin-moore-co-website-terms-and-conditions (eff. 2024-09-24) |
+  | PPG / Glidden | not mentioned in either terms page (V) | 2025 XLSX, 2020 ASE/ACO (V) | "for your own personal or internal business use" (V): unmodified, keep the copyright notice, nothing against its commercial interests | none found | ppg.com/en-US/about-ppg/legal-notices (eff. 2025-10-06) · pittsburghpaintsco.com/terms-of-use (eff. 2025-04-03) |
+  | Valspar | valspar.com's terms redirect to Sherwin-Williams' (V): the robot ban applies | not checked | SW's | none | (V) |
+  | Dunn-Edwards | not mentioned (V) | swatch files; the pro library may need an account (S) | personal use; no reuse or reposting (V) | none found | dunnedwards.com/terms-of-use (eff. 2023-02-01) |
+  | Farrow & Ball | site terms cover sales (V); business use needs "a licence from Farrow & Ball" (V) | none found (S) | none | none found | farrow-ball.com/terms-and-conditions · /us/inspiration-terms-conditions |
+  | Dulux UK (AkzoNobel) | automated extraction banned "for commercial purposes" only (V); claims database rights | none found | lifted by "a written agreement" (V) | none found (S) | dulux.co.uk/en/legal |
+  | Dulux AU | not mentioned (V) | Colour Atlas RGB; Revit/ArchiCAD XML (S) | "prior written permission" (V) | none found | dulux.com.au/site-terms |
+  | Kelly-Moore | its site didn't answer (closed 2024) | no data release found | — | — | searches |
+  | Resene | no robot clause (V); one copy for personal transitory viewing (V) | colour library with RGB | its 2001 RGB list: "to use it for any purpose is granted" (V, on people.csail.mit.edu/jaffer/Color/Resene-License); it "does regularly give permission" for business use (V) | requests to update@resene.co.nz (V) | resene.co.nz/terms-conditions.htm · /image-rights-and-use.htm |
+
+  No brand runs a public programme that gives apps colour data; private deals exist (Nix: "We've partnered directly
+  with the paint brands" — SW, BM, Behr, PPG, Dulux, Farrow & Ball (V); Houzz Pro integrates SW's catalog (V, 2022);
+  Chief Architect lists Behr, BM, SW as catalog partners (S)). The only brand-granted open licence found: Resene's 2001
+  list. Cleanest routes, in order: written permission (Resene invites requests; Farrow & Ball and Dulux UK name a
+  licence or agreement route); PPG's official XLSX on the user's computer (no robot ban; personal or internal use;
+  unmodified, copyright kept); Benjamin Moore's official ASE files (no robot ban; personal use); then Dulux UK and
+  Dunn-Edwards. Not clean: Sherwin-Williams, Valspar and Behr. Not checked: Valspar's own downloads, Dulux US, the
+  licence of Resene's 2010 list. — *agent, 2026-10-18*.
 - **Law**: US — facts aren't copyrightable and a compilation is protected only for its original
   selection/arrangement (Feist v. Rural, 1991); names and short phrases aren't copyrightable (37 CFR
   202.1(a)); naming another company's product to refer to it is nominative fair use. Terms-of-use
