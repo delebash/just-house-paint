@@ -106,8 +106,9 @@ OPEN:   - the scheme AI not run for real yet (no AI model set up on this machine
         - trim recall: better with the new default recipe, but corner boards, friezes and skirts still land
           in the body (RESEARCH §11) — the Box tool is the fix today;
         - the AI photo's time varies 22–61 s on the same inputs (RESEARCH §11) — not explained;
-        - images (`<img>`, the card and render pictures) load without the bearer token — a headless
-          server with access tokens shows no photos until they go through `requestBlob`;
+        - a browser on a server that requires access tokens can't use the app at all: no family app gives
+          the kit's transport a token (the kit's TASKS) — the pictures now go through that transport
+          (the kit's `UiServerImage`, 2026-10-18), so they follow when it does;
         - the phone build: the server bundle can't carry sharp, onnxruntime-node or sd-cli; Capacitor stays
           for later (PRD: out of scope for v1).
 

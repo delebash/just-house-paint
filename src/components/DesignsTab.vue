@@ -4,7 +4,7 @@
 // designs to open, rename or delete, and the house's AI photos. The colors on screen are a draft
 // until saved; opening a design while the draft has changes asks first. A name is the §15 form
 // (NameDialog over DesignIn's rules); a delete asks first, naming what is lost.
-import { confirmDialog, Icon, relativeTime, reportError, schemaRules, serverUrl, UiButton, UiTag } from "@delebash/ui";
+import { confirmDialog, Icon, relativeTime, reportError, schemaRules, UiButton, UiServerImage, UiTag } from "@delebash/ui";
 import { DesignIn } from "just-house-paint-server/schemas/houses.js";
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
@@ -61,7 +61,7 @@ async function removeRender(render) {
 }
 
 const saveName = (name) => (naming.value?.id ? house.renameDesign(naming.value.id, name) : house.saveDesignAs(name));
-const renderUrl = (r) => serverUrl(`/v1/renders/${encodeURIComponent(r.id)}/image`);
+const renderPath = (r) => `/v1/renders/${encodeURIComponent(r.id)}/image`;
 const designName = (id) => house.designs.find((d) => d.id === id)?.name;
 </script>
 
@@ -99,7 +99,7 @@ const designName = (id) => house.designs.find((d) => d.id === id)?.name;
     <q-list v-else class="designs__renders" dense>
       <q-item v-for="r in house.renders" :key="r.id" clickable class="designs__render" :aria-label="t('designs.renders.open')" @click="emit('show-render', r)">
         <q-item-section avatar class="designs__thumb">
-          <q-img :src="renderUrl(r)" :ratio="4 / 3" fit="cover" alt="" />
+          <UiServerImage :path="renderPath(r)" :ratio="4 / 3" fit="cover" alt="" />
         </q-item-section>
         <q-item-section>
           <q-item-label>{{ designName(r.designId) || t("designs.renders.onScreen") }}</q-item-label>

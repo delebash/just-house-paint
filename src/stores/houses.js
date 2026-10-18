@@ -47,6 +47,7 @@ export const useHousesStore = defineStore("houses", {
   },
 });
 
-/** A house's photo, at one of the server's sizes, for an <img> or a canvas. */
-export const imageUrl = (serverUrl, id, size = "display", stamp = "") =>
-  serverUrl(`/v1/houses/${encodeURIComponent(id)}/image?size=${size}${stamp ? `&v=${encodeURIComponent(stamp)}` : ""}`);
+/** A house's photo, at one of the server's sizes — a server path for the kit's UiServerImage or
+ *  requestBlob (never a bare <img src>: it would carry no access token). */
+export const imagePath = (id, size = "display", stamp = "") =>
+  `/v1/houses/${encodeURIComponent(id)}/image?size=${size}${stamp ? `&v=${encodeURIComponent(stamp)}` : ""}`;

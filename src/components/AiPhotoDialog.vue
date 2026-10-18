@@ -4,8 +4,8 @@
 // first (EngineInstallCard), or an AI photo — the image the server made and kept, how close its
 // paint is to the chips (ΔE2000 after the lock), how long it took, and Save image. It is a picture
 // the AI drew: the instant preview stays the accurate one, and the dialog says so.
-import { AppModal, reportError, requestBlob, saveBlob, serverUrl, UiButton } from "@delebash/ui";
-import { computed, ref } from "vue";
+import { AppModal, reportError, requestBlob, saveBlob, UiButton, useServerImage } from "@delebash/ui";
+import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 import EngineInstallCard from "./EngineInstallCard.vue";
 
@@ -19,7 +19,8 @@ const { t } = useI18n();
 const modal = ref(null);
 const saving = ref(false);
 
-const src = computed(() => (props.render ? serverUrl(`/v1/renders/${encodeURIComponent(props.render.id)}/image`) : ""));
+// through the kit's transport (the access token, the phone's in-app server), as an object URL
+const { src } = useServerImage(() => (props.render ? `/v1/renders/${encodeURIComponent(props.render.id)}/image` : ""));
 
 async function save() {
   saving.value = true;
@@ -39,7 +40,7 @@ async function save() {
     <EngineInstallCard v-if="!render" kind="aiphoto" @installed="emit('installed')" />
     <template v-else>
       <p class="hint">{{ t("aiPhoto.note") }}</p>
-      <img class="aiphoto__img" :src="src" :alt="t('aiPhoto.alt', { name: houseName })" />
+      <img v-if="src" class="aiphoto__img" :src="src" :alt="t('aiPhoto.alt', { name: houseName })" />
       <p class="muted">
         <template v-if="render.deltaE != null">{{ t("aiPhoto.deltaE", { n: render.deltaE.toFixed(1) }) }} · </template>
         {{ t("aiPhoto.seconds", { n: Math.round(render.seconds || 0) }) }}

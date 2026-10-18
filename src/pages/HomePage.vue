@@ -17,16 +17,16 @@ import {
   relativeTime,
   reportError,
   schemaRules,
-  serverUrl,
   UiBanner,
   UiButton,
+  UiServerImage,
 } from "@delebash/ui";
 import { HousePatch } from "just-house-paint-server/schemas/houses.js";
 import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import NameDialog from "../components/NameDialog.vue";
-import { imageUrl, useHousesStore } from "../stores/houses.js";
+import { imagePath, useHousesStore } from "../stores/houses.js";
 import { useUiStore } from "../stores/ui.js";
 
 const { t } = useI18n();
@@ -93,7 +93,7 @@ async function remove(house) {
 }
 
 const open = (house) => router.push(`/house/${encodeURIComponent(house.id)}`);
-const thumb = (house) => imageUrl(serverUrl, house.id, "thumb", house.updatedAt);
+const thumb = (house) => imagePath(house.id, "thumb", house.updatedAt);
 </script>
 
 <template>
@@ -121,8 +121,8 @@ const thumb = (house) => imageUrl(serverUrl, house.id, "thumb", house.updatedAt)
       />
       <div v-else-if="houses.loaded" class="houses__grid">
         <q-card v-for="house in houses.items" :key="house.id" flat bordered class="houses__card">
-          <q-img
-            :src="thumb(house)" :ratio="4 / 3" fit="cover" :alt="house.name" class="houses__open" role="link" tabindex="0"
+          <UiServerImage
+            :path="thumb(house)" :ratio="4 / 3" fit="cover" :alt="house.name" class="houses__open" role="link" tabindex="0"
             :aria-label="t('houses.open', { name: house.name })" @click="open(house)" @keydown.enter="open(house)"
           />
           <q-card-section class="houses__meta">
