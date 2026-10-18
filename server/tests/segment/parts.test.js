@@ -169,6 +169,35 @@ describe("findParts", () => {
   });
 });
 
+describe("a part with others taken out (minus)", () => {
+  it("window trim is the window's outline minus its glass; the glass is the windows part", async () => {
+    // a window 10×10 at (5,5); its glass the 6×6 inside; "window trim" finds the same window again
+    const seg = fakeSegmenter({
+      "window glass": [inst(0.7, [7, 7, 13, 13])],
+      window: [inst(0.9, [5, 5, 15, 15])],
+      "window trim": [inst(0.6, [5, 5, 15, 15])],
+    });
+    const config = [
+      { key: "windows", labelKey: "w", prompts: ["window glass"], threshold: 0.3, paintable: false, group: "windows" },
+      { key: "windowTrim", labelKey: "t", prompts: ["window", "window trim"], paintable: true, group: "trim", minus: ["windows"] },
+    ];
+    const r = await findParts(seg, handle, config);
+    expect(r.parts.find((p) => p.key === "windows").area).toBe(36);
+    const trim = r.parts.find((p) => p.key === "windowTrim");
+    expect(trim.area).toBe(100 - 36); // the frame ring
+    expect(trim.mask[10 * W + 10]).toBe(0); // the middle is glass
+    expect(trim.mask[5 * W + 5]).toBe(255); // a corner is frame
+  });
+
+  it("a part all glass leaves nothing; minus must name a part in the list, not itself, on a text part", () => {
+    const good = { key: "a", labelKey: "x.a", prompts: ["door"], paintable: true, group: "doors" };
+    expect(() => validatePartsConfig([{ ...good, minus: ["b"] }])).toThrow(/isn't in the list/);
+    expect(() => validatePartsConfig([{ ...good, minus: ["a"] }])).toThrow(/itself/);
+    expect(() => validatePartsConfig([{ ...good, method: "subtract", minus: ["b"] }, { ...good, key: "b" }])).toThrow(/only a "text" part/);
+    expect(validatePartsConfig([{ ...good }])[0].minus).toEqual([]);
+  });
+});
+
 describe("parts stay on the house", () => {
   it("a part found outside the house (a car's door) is clipped away; one on its outline is kept", async () => {
     // the house: x 0–20; a real door on it; a "door" on a car at x 30–38; trim just past the house's edge

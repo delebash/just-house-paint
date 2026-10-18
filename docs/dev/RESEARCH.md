@@ -664,4 +664,26 @@ Playwright against that server. Screenshots: session e638ccef's scratchpad `real
   coral bands around them stay in Trim: "trim" finds those). At 0.4 it also outlined the parked SUV's
   front window on the user's photo (a 0.48 piece — the same false hit Trim had); at 0.5 that piece is gone,
   and house1 loses only the door's sidelight casings. **Kept at 0.5.**
+- **Window trim = frame, casing and sill; Windows = the glass** (2026-10-18, the user: "the frame is what i am
+  talking about"). The 0.5 part above was only a thin rim: SAM 3's "window" outline takes glass AND the white
+  frame, and Windows won the overlap (the user's two big front windows: casings in Windows). Which word finds the
+  glass alone (score ≥ 0.3; the window outline = "window" ∪ "window trim" at 0.5; overlays in session e638ccef's
+  scratchpad `real-ui/shots/glass/`):
+
+  | word | house1 | house2 | house3 | the user's |
+  |---|---|---|---|---|
+  | "glass" | 0 pieces | 16, 58% of the outline | 0 | 0 |
+  | "pane" | 30 (0.43–0.30), 65% | 16, 58% | 49, 63% | 23, 60% |
+  | "window pane" | 23, 71% | 16, 58% | 33, 73% | 20, 63% |
+  | **"window glass"** | 24, 78% (+0.67% outside: a car's windshield, door glass) | 19, 77% | 4, 78% | 13, 73% |
+
+  **Kept: Windows = "window glass" at 0.3; Window trim = ("window" ∪ "window trim" at 0.5) minus Windows** (a
+  part's new `minus` in the recipe). Through the app's pipeline (the house rule, the priority): Window trim house1
+  0.57%, house2 1.12%, house3 0.47%, the user's **1.38%** (was 0.38%) — the white casings round every window, the
+  coral bands staying in Trim; no hit on the parked SUV. Glass the finder finds off the windows (a car, a door's
+  glass) lands in Windows, which stays unpainted. Overlays: `real-ui/shots/wtrim2/`.
+- **A better default now reaches an existing install**: `upgradeSettings` (seed.js) replaces a setting that still
+  holds an EARLIER default — its fingerprint (SHA-256 of its canonical JSON) listed in `previous_defaults.js`,
+  taken from git history — and never a value its owner edited. The user's `finder.parts` was exactly the 8972a89
+  default and was upgraded on the next start.
 

@@ -6,8 +6,9 @@
 // main instance is used.
 //
 // The parts list is DATA (the app seeds it into its database): `[{ key, labelKey, prompts, threshold,
-// paintable, group, method }]`, method "text" (default — the union of what the prompts find) or
-// "subtract" (at most one part: the main instance its prompts find, minus every other part).
+// paintable, group, method, minus }]`, method "text" (default — the union of what the prompts find) or
+// "subtract" (at most one part: the main instance its prompts find, minus every other part). A "text"
+// part's `minus` lists parts taken out of it: window trim is the window's outline minus its glass.
 import { dedupeInstances, dilateMask, intersectMask, maskArea, subtractMask, unionMasks } from "./masks.js";
 
 export const DEFAULT_PARTS = Object.freeze(
@@ -25,12 +26,21 @@ export const DEFAULT_PARTS = Object.freeze(
     // SAM 3 doesn't know "soffit" or "eaves" (no hits on four photos); "roof overhang" finds the overhang's
     // boards — soffit and fascia, as the street sees them — with no false hit down to 0.3 (RESEARCH §11)
     { key: "soffit", labelKey: "parts.soffit", prompts: ["roof overhang"], threshold: 0.3, paintable: true, group: "trim" },
-    // "window trim" finds whole windows; the windows part keeps the glass, this keeps the casings and frames
-    // around them. 0.5, not 0.4: at 0.48 it outlined a parked car's window (RESEARCH §11)
-    { key: "windowTrim", labelKey: "parts.windowTrim", prompts: ["window trim"], threshold: 0.5, paintable: true, group: "trim" },
+    // the frame, casing and sill: each window's outline ("window", "window trim") minus its glass — the user's
+    // words, 2026-10-18 (RESEARCH §11). 0.5: at 0.48 "window trim" outlined a parked car's window
+    {
+      key: "windowTrim",
+      labelKey: "parts.windowTrim",
+      prompts: ["window", "window trim"],
+      threshold: 0.5,
+      paintable: true,
+      group: "trim",
+      minus: ["windows"],
+    },
     { key: "chimney", labelKey: "parts.chimney", prompts: ["chimney"], threshold: 0.5, paintable: true, group: "walls" },
     { key: "roof", labelKey: "parts.roof", prompts: ["roof"], threshold: 0.5, paintable: false, group: "roof" },
-    { key: "windows", labelKey: "parts.windows", prompts: ["window"], threshold: 0.5, paintable: false, group: "windows" },
+    // the glass only — the frame, casing and sill around it are the window trim (RESEARCH §11)
+    { key: "windows", labelKey: "parts.windows", prompts: ["window glass"], threshold: 0.3, paintable: false, group: "windows" },
     { key: "stone", labelKey: "parts.stone", prompts: ["stone wall"], threshold: 0.5, paintable: false, group: "masonry" },
     { key: "brick", labelKey: "parts.brick", prompts: ["brick wall"], threshold: 0.5, paintable: false, group: "masonry" },
     { key: "lamps", labelKey: "parts.lamps", prompts: ["lamp"], threshold: 0.5, paintable: false, group: "fixtures" },
@@ -63,7 +73,15 @@ export function validatePartsConfig(config) {
     const method = p.method ?? "text";
     if (!METHODS.includes(method)) throw bad(`method must be ${METHODS.map((m) => `"${m}"`).join(" or ")}`);
     if (method === "subtract" && ++subtract > 1) throw bad('only one part can use method "subtract"');
-    return { ...p, prompts: [...p.prompts], threshold, method };
+    const minus = p.minus ?? [];
+    if (!Array.isArray(minus) || minus.some((k) => typeof k !== "string" || !k)) throw bad("minus must be a list of part keys");
+    if (minus.length && method !== "text") throw bad('only a "text" part takes others out with minus');
+    if (minus.includes(p.key)) throw bad("a part can't take itself out");
+    return { ...p, prompts: [...p.prompts], threshold, method, minus: [...minus] };
+  }).map((p, _i, all) => {
+    const unknown = p.minus.find((k) => !all.some((q) => q.key === k));
+    if (unknown) throw new TypeError(`parts (${p.key}): minus names "${unknown}", which isn't in the list`);
+    return p;
   });
 }
 
@@ -183,6 +201,17 @@ export async function findParts(
     const mask = onHouse(unionMasks(kept.map((i) => i.mask), n));
     return { key: part.key, mask, area: maskArea(mask), score: Math.max(...kept.map((i) => i.score)), instances: kept };
   });
+  // the parts each part's `minus` names, taken out of it (window trim = the window's outline − its glass)
+  for (const part of config) {
+    if (!part.minus.length) continue;
+    const at = parts.findIndex((p) => p.key === part.key);
+    const p = parts[at];
+    if (!p.mask) continue;
+    const others = part.minus.map((k) => parts.find((q) => q.key === k)?.mask).filter(Boolean);
+    const mask = others.length ? subtractMask(p.mask, unionMasks(others, n)) : p.mask;
+    const area = maskArea(mask);
+    parts[at] = area ? { ...p, mask, area } : { key: p.key, mask: null, area: 0, score: 0, instances: [] };
+  }
   timings.combineMs = Math.round(performance.now() - ts);
   timings.totalMs = Math.round(performance.now() - t0);
   return { width, height, parts, timings };

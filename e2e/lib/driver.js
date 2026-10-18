@@ -85,6 +85,12 @@ export class Driver {
     this.serverLog = "";
     for (const s of [this.server.stdout, this.server.stderr]) s.on("data", (d) => (this.serverLog += d));
     await waitFor(async () => (await fetch(`${API}/health`)).ok, { what: `the server on ${PORT}` });
+    // the smoke never asks a brand's site for its colors: Load automatically off in this fresh folder,
+    // before the window opens (the app loads every brand by itself at start-up otherwise)
+    const brands = await (await fetch(`${API}/brands`)).json();
+    const off = Object.fromEntries(brands.map((b) => [b.key, false]));
+    const r = await fetch(`${API}/settings`, { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ "paints.autoLoad": off }) });
+    if (!r.ok) throw new Error(`couldn't turn the brands' automatic loading off: ${r.status}`);
   }
 
   get dataDir() {

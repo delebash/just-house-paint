@@ -194,7 +194,13 @@ OPEN:   - the audit the user asked for ("all common parts"): every standard in a
 DECIDED: the user, verbatim: "yes windows trim = frame caseing sill" and "you can leave it as window trim or frame what do
         you think it should be all 3 as you noted" — my rec: keep the name "Window trim" (the trade word for all three;
         "Frames" would leave out the casing and the sill). Windows becomes the glass only.
-NEXT:   measure the glass words ("window pane", "glass") on the four photos, then build it.
+BUILT:  2026-10-18 — measured (RESEARCH §11): "window glass" finds the glass on all four photos; Windows = "window
+        glass" at 0.3, Window trim = ("window" ∪ "window trim" at 0.5) minus Windows (the recipe's new `minus`). On the
+        user's house Window trim is 4% of the house (was 1%): the white frames and casings round every window, painted
+        black in the real desktop app with ΔE 0.0; the coral bands stay Trim. A better default now reaches an existing
+        install: a setting still at an earlier default (its fingerprint in previous_defaults.js) takes today's, an edited
+        one is never touched — the user's finder.parts was upgraded on the next start. Verified: 324 server tests, e2e
+        13/13, the desktop run (every feature, no page errors).
 
 ## More paint brands than Behr [2026-10-18]
 ASKED:  the user, verbatim: "also the only paints i see available to select from are behr i thought we had a wide range
@@ -220,6 +226,15 @@ BUILT:  2026-10-18 — the setting `paints.autoLoad` (every brand on; seeded, so
 OPEN:   - Benjamin Moore's collection ASE files and PPG's 2025 XLSX fetched by the app (then "Load automatically"
           for all seven) — needs the user's OK to download them to build and test it (asked 2026-10-18);
         - a real run: the four public lists loading on the user's computer — same OK.
+GO:     the user, verbatim (2026-10-18): "confirm what color list download?" — shown: the four public lists (SW's host,
+        JSON) and Benjamin Moore's collection ASE files and PPG's 2025 XLSX, with the brands' terms; then "i just want it
+        to work well, think on it and if it works well your rec go" and "color list is fine go".
+ASKED:  the user, verbatim: "is there any paint manufactures that dont forbid download or that we can get updated list
+        without violation?" — answered from RESEARCH §10 (none found with an open licence; official downloads and the
+        permission request are the cleanest); a research agent checks the other makers (2026-10-18).
+NOTE:   the four public lists loaded on the user's computer at the app's start-up (Sherwin-Williams 1,948, Valspar 1,596,
+        HGTV Home 900, Dutch Boy 1,340) — the setting doing its job. The e2e smoke turns Load automatically off in its
+        fresh folder (it had fetched three lists from the brands' sites).
 
 ## The server's port clashes with JustWrite's eval [2026-10-18]
 FOUND:  by the JustWrite session (2026-10-18): this app's server port 17497 is JustWrite's eval port

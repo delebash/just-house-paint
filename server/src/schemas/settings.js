@@ -19,6 +19,8 @@ export const PartRule = strictObject({
   paintable: T.Boolean(),
   group: T.String({ minLength: 1, maxLength: 40 }),
   method: opt(T.Union([T.Literal("text"), T.Literal("subtract")])),
+  // parts taken out of this one (window trim = the window's outline minus its glass)
+  minus: opt(T.Array(PartKey, { maxItems: 10 })),
 });
 
 export const SETTINGS = {

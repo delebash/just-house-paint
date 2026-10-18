@@ -10,7 +10,8 @@ overhang, so it finds them as the street sees them — the underside and the fac
 It finds most of them, not always all — draw the rest with the brush or a box. A scheme paints
 them the trim's color.
 
-**Window trim** is the casing and frame around each window; the glass stays with the windows. A
+**Window trim** is the frame, casing and sill around each window: the finder outlines each window
+and takes its glass out. The glass is **Windows**, which stays as it is. A
 scheme paints it the trim's color; give it its own on the **Colors** tab — black window trim on a
 white house, say.
 

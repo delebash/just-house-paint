@@ -15,7 +15,8 @@ import { DEFAULT_PROMPT_TEMPLATES } from "../aiphoto/prompts.js";
 import { DEFAULT_PART_PRIORITY } from "../finder.js";
 import { BRANDS, HARMONY_DEFAULTS } from "../paints/index.js";
 import { DEFAULT_PARTS } from "../segment/parts.js";
-import { insertSettingIfMissing } from "./settings.js";
+import { fingerprint, PREVIOUS_DEFAULTS } from "./previous_defaults.js";
+import { getSetting, insertSettingIfMissing, setSetting } from "./settings.js";
 
 const log = getLogger("just_house_paint.seed");
 
@@ -62,6 +63,25 @@ export function seedSettings(db) {
   return added;
 }
 
+/**
+ * A setting that still holds an EARLIER default (database/previous_defaults.js) — its owner never
+ * edited it — takes today's default, so a better default reaches an install made before it; a value
+ * the owner changed is left alone. Returns the keys it upgraded.
+ */
+export function upgradeSettings(db) {
+  const upgraded = [];
+  db.tx(() => {
+    for (const [key, earlier] of Object.entries(PREVIOUS_DEFAULTS)) {
+      const stored = getSetting(db, key);
+      if (stored === undefined || !earlier.includes(fingerprint(stored))) continue;
+      setSetting(db, key, SETTING_DEFAULTS[key]);
+      upgraded.push(key);
+    }
+  });
+  if (upgraded.length) log.info(`settings still at an earlier default, now today's: ${upgraded.join(", ")}`);
+  return upgraded;
+}
+
 /** The whole seed pass. Never throws: a failed step is logged and the server still starts. */
 export function seedWorkspace(db) {
   try {
@@ -71,6 +91,7 @@ export function seedWorkspace(db) {
   }
   try {
     seedSettings(db);
+    upgradeSettings(db);
   } catch (e) {
     log.warning(`the settings seed failed: ${e?.message ?? e}`);
   }

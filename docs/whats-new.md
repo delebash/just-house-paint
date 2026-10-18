@@ -14,6 +14,7 @@
 - **Pick a color** off the photo, and each part's color as photographed, to find the nearest paints.
 - **A color card**: the painted photo and its paints in one picture.
 - **Soffits**: the finder looks for the soffits and fascia under the roof's edge.
+- **Window trim**: the frame, casing and sill around each window, its own part to paint; Windows is the glass.
 - **Progress you can see**: finding the parts, the AI photo, the AI's schemes, an install and a brand's
   colors loading each show their progress where you started them, with Cancel — and in a stack at the
   bottom right if you leave that screen while they run.
