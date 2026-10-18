@@ -4,7 +4,7 @@
 // so a color click repaints at once, and only a changed mask or texture is prepared again.
 // Pure over arrays: the page hands it ImageData pixels and masks, and draws what it returns.
 
-import { chipDeltaE, luminance, preparePart, tintPhoto } from "./tint.js";
+import { applyLight, chipDeltaE, luminance, partTones, preparePart, tintPhoto } from "./tint.js";
 
 const hex2 = (v) => v.toString(16).padStart(2, "0");
 const median = (values) => {
@@ -61,9 +61,11 @@ export function createPainter({ rgba, width, height }) {
     keys: () => [...parts.keys()],
     /**
      * The painted photo for `colors` ({ part: hex }) in `order` (later parts paint over earlier
-     * ones). Returns { rgba, deltaE: { part: ΔE2000 to the chip | null } }.
+     * ones), through the Light setting (`light`, 1 = the photo's own). Returns { rgba, deltaE:
+     * { part: ΔE2000 to the chip | null } } — ΔE always at the photo's own light, so it keeps
+     * meaning how true the paint is, whatever the Light.
      */
-    paint(colors, order = Object.keys(colors)) {
+    paint(colors, order = Object.keys(colors), { light = 1 } = {}) {
       const assignments = [];
       for (const key of order) {
         const hex = colors[key];
@@ -73,7 +75,15 @@ export function createPainter({ rgba, width, height }) {
       const out = tintPhoto({ photo: rgba, Y, assignments });
       const deltaE = {};
       for (const a of assignments) deltaE[a.key] = chipDeltaE({ tinted: out, Y, part: a.part, hex: a.hex });
+      applyLight(out, light);
       return { rgba: out, deltaE };
+    },
+    /** The paint `hex` as it shows on part `key` in shade, on most of it and in light ({ shade, middle,
+     *  light } as #rrggbb, through the Light setting); null when the part has no pixels. */
+    tones(key, hex, light = 1) {
+      const part = prepared(key);
+      if (!part?.pixels || !hex) return null;
+      return partTones({ Y, part, hex, k: light });
     },
     /** The part under a pixel: the last in `order` whose mask covers it (what is painted on top). */
     partAt(x, y, order) {

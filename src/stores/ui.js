@@ -21,6 +21,8 @@ export const useUiStore = defineStore("ui", {
     // the house page's Texture slider: how much of the photo's light and grain shows through the
     // paint (0 flat paint – 1 all of it; services/tint.js)
     texture: Number(readPref("texture", 1)),
+    // the house page's Light: an exposure over the whole picture (1 = the photo's own light)
+    light: Number(readPref("light", 1)),
     // the house page's outlines: the selected part's only, every part's, or none
     outlines: ["selected", "all", "off"].includes(readPref("outlines", "selected")) ? readPref("outlines", "selected") : "selected",
   }),
@@ -54,6 +56,10 @@ export const useUiStore = defineStore("ui", {
       if (!["selected", "all", "off"].includes(v)) return;
       this.outlines = v;
       writePref("outlines", v);
+    },
+    setLight(v) {
+      this.light = Math.min(2, Math.max(0.5, Number(v) || 1));
+      writePref("light", this.light);
     },
     setTexture(v) {
       this.texture = Math.min(1, Math.max(0, Number(v) || 0));

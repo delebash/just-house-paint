@@ -169,6 +169,10 @@ test("a color from the Colors tab paints the selected part, and the Parts tab sh
   await click(byText(".q-tab", "Colors"));
   expect(text()).toContain("Colors for the Body");
   await click(byText(".chip", "Sea Blue"));
+  // the paint as it shows on this wall: in shade, on most of it, in light — the light one is the chip
+  const tones = document.body.querySelector(".colors__tones");
+  expect(tones?.textContent).toContain("On this wall:");
+  expect([...tones.querySelectorAll(".swatch")].map((s) => s.title)).toContain("#3366aa");
   await click(byText(".q-tab", "Parts"));
   expect(text()).toContain("Behr Sea Blue S1");
   expect(text()).toMatch(/ΔE \d+\.\d/);

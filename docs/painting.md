@@ -10,6 +10,13 @@ photo's own shadows, texture and lap lines: a wall in shade is the same paint, d
 painted part the **Parts** tab says how close the painted wall comes to the paint chip — **ΔE**
 under 1 is a difference most people can't see, under 2 is a close match.
 
+**On this wall** — under the chosen paint on the **Colors** tab, the same paint as it shows on the
+selected part: **in shade**, on **most of it** and **in light**. The light one is the chip; a wall in the shade of a
+roof or a tree shows mostly the darker ones, as real paint would.
+
+**Light** — a brighter or duller day over the whole picture, photo and paint alike: 1 is the photo's own light.
+The ΔE beside each part is always measured at the photo's own light.
+
 **Texture** — painting a dark, stained wall a light color can show the old grain through as a
 blotchy grey. Lower **Texture** to calm it; at 1 the photo's texture is kept whole.
 

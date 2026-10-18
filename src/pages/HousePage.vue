@@ -90,6 +90,13 @@ const texture = computed({
   get: () => ui.texture,
   set: (v) => ui.setTexture(v),
 });
+// the Light: a brighter or duller day over the whole picture (1 = the photo's own light)
+const light = computed({
+  get: () => ui.light,
+  set: (v) => ui.setLight(v),
+});
+// the selected part's paint in shade, on most of it and in light — for the Colors tab
+const tones = ref(null);
 const outlines = computed({
   get: () => ui.outlines,
   set: (v) => ui.setOutlines(v),
@@ -172,9 +179,11 @@ const hexOf = (colors) => Object.fromEntries(Object.entries(colors).map(([part, 
 
 function repaint() {
   if (!painter) return;
-  const { rgba, deltaE: dE } = painter.paint(hexOf(house.colors), order.value);
+  const colors = hexOf(house.colors);
+  const { rgba, deltaE: dE } = painter.paint(colors, order.value, { light: light.value });
   painted.value = drawPixels(rgba, painter.width, painter.height, painted.value);
   deltaE.value = dE;
+  tones.value = house.selectedPart ? painter.tones(house.selectedPart, colors[house.selectedPart], light.value) : null;
   drawOverlay();
   refreshCompare();
   version.value++;
@@ -191,6 +200,13 @@ watch(texture, (v) => {
   painter?.setTexture(v);
   repaint();
 });
+watch(light, repaint);
+watch(
+  () => house.selectedPart,
+  (key) => {
+    if (painter) tones.value = key ? painter.tones(key, hexOf(house.colors)[key], light.value) : null;
+  },
+);
 
 /** Each part's color as photographed — every part's, or only `keys`' after their outlines changed. */
 function refreshPhotographed(keys = house.parts.map((p) => p.key)) {
@@ -245,12 +261,19 @@ const compareOptions = computed(() => [
 ]);
 async function refreshCompare() {
   const d = house.designs.find((x) => x.id === compareWith.value);
+  // the photo as taken, under the same Light as the paint (else the comparison isn't fair)
+  if (painter && compareWith.value === "photo" && light.value !== 1) {
+    const { rgba } = painter.paint({}, order.value, { light: light.value });
+    before.value = drawPixels(rgba, painter.width, painter.height, before.value?.width === painter.width ? before.value : null);
+    version.value++;
+    return;
+  }
   if (!painter || !d) {
     before.value = null;
     return;
   }
   await paints.paints(Object.values(d.colors));
-  const { rgba } = painter.paint(hexOf(d.colors), order.value);
+  const { rgba } = painter.paint(hexOf(d.colors), order.value, { light: light.value });
   before.value = drawPixels(rgba, painter.width, painter.height, before.value?.width === painter.width ? before.value : null);
   version.value++;
 }
@@ -426,7 +449,7 @@ async function saveImage() {
       const mask = painter.mask(key);
       if (mask) big.setMask(key, await maskOf(await pngOf(mask, painter.width, painter.height), W, H), texture.value);
     }
-    const { rgba } = big.paint(hexOf(house.colors), order.value);
+    const { rgba } = big.paint(hexOf(house.colors), order.value, { light: light.value });
     const canvas = drawPixels(rgba, W, H);
     const out = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.92));
     await saveBlob(out, `${name} — ${t("house.export.suffix")}.jpg`, { title: t("house.export.save"), filterName: "JPEG", filterExt: "jpg" });
@@ -566,6 +589,10 @@ const canRevert = computed(() => !!house.design && house.dirty);
             <span>{{ t("house.tools.texture") }}</span>
             <UiSlider v-model="texture" :min="0" :max="1" :step="0.05" width="short" :aria-label="t('house.tools.texture')" />
           </label>
+          <label class="house__tool" :title="t('house.tools.lightHint')">
+            <span>{{ t("house.tools.light") }}</span>
+            <UiSlider v-model="light" :min="0.5" :max="2" :step="0.05" width="short" :aria-label="t('house.tools.light')" />
+          </label>
         </div>
         <HouseCanvas
           class="house__canvas"
@@ -587,7 +614,7 @@ const canRevert = computed(() => !!house.design && house.dirty);
             />
             <PartsTab v-else :delta-e="deltaE" :photographed="photographed" @find-color="findColor" />
           </template>
-          <ColorsTab v-else-if="tab === 'colors'" />
+          <ColorsTab v-else-if="tab === 'colors'" :tones="tones" />
           <SchemesTab v-else-if="tab === 'schemes'" />
           <DesignsTab v-else @show-render="(r) => (aiDialog = { render: r })" @color-card="saveColorCard" />
         </div>

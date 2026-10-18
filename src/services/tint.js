@@ -148,6 +148,49 @@ export function tintPhoto({ photo, Y, assignments }) {
 }
 
 /**
+ * The Light setting as a lookup table: each 8-bit value through linear light × `k` and back — a
+ * brighter (k > 1) or duller (k < 1) day over the whole picture, photo and paint alike, the same
+ * at every pixel, so shadows keep their shape. k = 1 is the photo's own light.
+ */
+export function lightTable(k) {
+  const t = new Uint8ClampedArray(256);
+  for (let v = 0; v < 256; v++) t[v] = Math.round(255 * toSrgb(TO_LINEAR[v] * k));
+  return t;
+}
+
+/** `rgba` (in place) through the Light setting `k`; alpha untouched. */
+export function applyLight(rgba, k) {
+  if (k === 1) return rgba;
+  const t = lightTable(k);
+  for (let p = 0; p < rgba.length; p += 4) {
+    rgba[p] = t[rgba[p]];
+    rgba[p + 1] = t[rgba[p + 1]];
+    rgba[p + 2] = t[rgba[p + 2]];
+  }
+  return rgba;
+}
+
+/** Where on a part the tones are read: the light that falls on its shaded quarter, its middle, and
+ *  its normally lit level (the chip by definition — RESEARCH §9). */
+export const TONE_PERCENTILES = Object.freeze({ shade: 20, middle: 50, light: 75 });
+
+/**
+ * The paint `hex` as it shows on this part in shade, on most of it and in light — the chip scaled
+ * by the light that falls there (ratio = Y ÷ the part's base level), through the Light setting `k`.
+ * Returns { shade, middle, light } as #rrggbb.
+ */
+export function partTones({ Y, part, hex, k = 1 }) {
+  const ratios = [];
+  for (let i = 0; i < part.mask.length; i++) if (part.mask[i] === 255) ratios.push(Y[i] / part.base);
+  const [pr, pg, pb] = paintLinear(hex);
+  const toHex = (ratio) =>
+    `#${[pr, pg, pb].map((c) => Math.round(255 * toSrgb(c * ratio * k)).toString(16).padStart(2, "0")).join("")}`;
+  const out = {};
+  for (const [name, q] of Object.entries(TONE_PERCENTILES)) out[name] = toHex(ratios.length ? percentile(ratios, q) : 1);
+  return out;
+}
+
+/**
  * How close the painted part reads to the paint chip: ΔE2000 between the paint and the median
  * color of the part's normally lit pixels (lighting within ±10% of its base level) in `tinted`.
  * Below 1 is not visible to most people; below 2 is a close match. null when no pixel is lit.

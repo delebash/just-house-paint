@@ -64,3 +64,31 @@ test("a part's color as photographed is the median inside its outline", () => {
   painter.setMask("empty", new Uint8Array(w * h));
   expect(painter.photographed("empty")).toBeNull();
 });
+
+test("the Light brightens or dulls the whole picture alike, and ΔE stays measured at the photo's own light", () => {
+  const p = createPainter({ rgba, width: W, height: H });
+  p.setMask("body", maskOf((x) => x < 4));
+  const base = p.paint({ body: "#64695c" }, ["body"]);
+  const bright = p.paint({ body: "#64695c" }, ["body"], { light: 1.5 });
+  // painted and unpainted pixels both brighter
+  expect(bright.rgba[0]).toBeGreaterThan(base.rgba[0]);
+  expect(bright.rgba[6 * 4]).toBeGreaterThan(base.rgba[6 * 4]);
+  expect(bright.deltaE.body).toBeCloseTo(base.deltaE.body, 5);
+  expect(p.paint({ body: "#64695c" }, ["body"], { light: 1 }).rgba).toEqual(base.rgba);
+});
+
+test("a part's tones: the paint in shade, on most of it and in light — the light one is the chip", () => {
+  // a wall half in shade (100) and half lit (200)
+  const lit = new Uint8ClampedArray(W * H * 4).fill(200);
+  for (let i = 0; i < W * H; i++) if (i % W < 4) lit.fill(100, i * 4, i * 4 + 3);
+  const p = createPainter({ rgba: lit, width: W, height: H });
+  p.setMask("body", maskOf(() => true));
+  const tones = p.tones("body", "#64695c");
+  expect(tones.light).toBe("#64695c");
+  const value = (hex) => Number.parseInt(hex.slice(1, 3), 16);
+  expect(value(tones.shade)).toBeLessThan(value(tones.light));
+  expect(value(tones.middle)).toBeLessThanOrEqual(value(tones.light));
+  expect(p.tones("body", null)).toBeNull();
+  // through the Light, every tone moves with it
+  expect(value(p.tones("body", "#64695c", 1.5).light)).toBeGreaterThan(value(tones.light));
+});

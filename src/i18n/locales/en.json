@@ -240,7 +240,9 @@
       "split": "Where the before ends",
       "texture": "Texture",
       "pick": "Pick a color",
-      "pickHint": "Click the photo to read its color there and find the brand's nearest paints"
+      "pickHint": "Click the photo to read its color there and find the brand's nearest paints",
+      "light": "Light",
+      "lightHint": "A brighter or duller day over the whole picture — 1 is the photo's own light"
     },
     "tabs": {
       "label": "House panel",
@@ -332,7 +334,13 @@
       "placeholder": "#a1b2c3",
       "picked": "From the photo — its light and shadow are in this color, so the nearest paint is close, not exact."
     },
-    "moreBrands": "{n} more brand on Paint colors | {n} more brands on Paint colors"
+    "moreBrands": "{n} more brand on Paint colors | {n} more brands on Paint colors",
+    "tones": {
+      "label": "On this wall:",
+      "shade": "In shade",
+      "middle": "Most of it",
+      "light": "In light"
+    }
   },
   "schemes": {
     "hint": "Body, trim and front door colors that go together — all real paints. Apply paints this house's parts.",

@@ -18,6 +18,10 @@ const PAGE = 120;
 
 const { t, te } = useI18n();
 const router = useRouter();
+defineProps({
+  // the chosen paint on this part in shade, on most of it and in light ({ shade, middle, light }), or null
+  tones: { type: Object, default: null },
+});
 const house = useHouseStore();
 const paints = usePaintsStore();
 
@@ -110,6 +114,15 @@ async function match() {
         <span>{{ current.displayName }}</span>
         <UiButton intent="ghost" size="small" :label="t('colors.clear')" @click="house.setColor(house.selectedPart, null)" />
       </div>
+      <!-- the same paint as it shows on this wall: in shade, on most of it, in light (the chip at the
+           photo's own light) — why the painted wall looks darker than the chip -->
+      <div v-if="current && tones" class="colors__tones" :aria-label="t('colors.tones.label')">
+        <span class="hint">{{ t("colors.tones.label") }}</span>
+        <span v-for="level in ['shade', 'middle', 'light']" :key="level" class="colors__tone">
+          <span class="swatch" :style="{ background: tones[level] }" :title="tones[level]" />
+          <span class="hint">{{ t(`colors.tones.${level}`) }}</span>
+        </span>
+      </div>
       <div class="colors__filters">
         <UiSelect v-model="brand" :options="brandOptions" width="name" :aria-label="t('colors.brand')" />
         <UiButton
@@ -165,6 +178,17 @@ async function match() {
 </template>
 
 <style scoped>
+.colors__tones {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin: 0 0 var(--sp-3);
+}
+.colors__tone {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+}
 .colors__current,
 .colors__filters {
   display: flex;
