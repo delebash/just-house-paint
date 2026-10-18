@@ -74,7 +74,7 @@ export const useHouseStore = defineStore("house", {
     },
     /** Find the parts (a server job on the task strip); `label` names it there. */
     async findParts(label) {
-      await runServerJob({ start: () => post(hp(this.house.id, "/find-parts")), feature: "parts.find", label });
+      await runServerJob({ start: () => post(hp(this.house.id, "/find-parts")), feature: "parts.find", label, meta: { houseId: this.house.id } });
       const [house, parts] = await Promise.all([get(hp(this.house.id)), get(hp(this.house.id, "/parts"))]);
       this.house = house;
       this.parts = parts;
@@ -162,7 +162,7 @@ export const useHouseStore = defineStore("house", {
     },
     /** An AI photo of the colors on screen (a server job). Resolves with the kept render. */
     async aiPhoto(label) {
-      const render = await runServerJob({ start: () => post(hp(this.house.id, "/aiphoto"), { colors: this.colors }), feature: "aiphoto.render", label });
+      const render = await runServerJob({ start: () => post(hp(this.house.id, "/aiphoto"), { colors: this.colors }), feature: "aiphoto.render", label, meta: { houseId: this.house.id } });
       this.renders = [render, ...this.renders];
       return render;
     },

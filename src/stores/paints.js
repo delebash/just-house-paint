@@ -35,7 +35,7 @@ export const usePaintsStore = defineStore("paints", {
     },
     /** Load a brand's public list (a server job on the task strip). */
     async loadFeed(brand, label) {
-      const result = await runServerJob({ start: () => post(`/v1/brands/${encodeURIComponent(brand)}/load`), feature: "paints.load", label });
+      const result = await runServerJob({ start: () => post(`/v1/brands/${encodeURIComponent(brand)}/load`), feature: "paints.load", label, meta: { brand } });
       await this.loadBrands();
       return result;
     },

@@ -5,7 +5,7 @@
 // strip), or from the palette file the user downloaded from the brand (ASE, ACO, CSV, Excel —
 // imported here). The list is the kit's UiTable (QTable); the states are §17's (loading, failed with
 // Retry). Removing a brand's colors asks first; designs that use them keep their ids.
-import { confirmDialog, errorMessage, PaneHeader, pageFlow, relativeTime, reportError, UiBanner, UiButton, UiTable, UiTag } from "@delebash/ui";
+import { AiTaskStrip, confirmDialog, errorMessage, PaneHeader, pageFlow, relativeTime, reportError, UiBanner, UiButton, UiTable, UiTag, useSurfaceTask } from "@delebash/ui";
 import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { usePaintsStore } from "../stores/paints.js";
@@ -44,6 +44,10 @@ const columns = computed(() => [
 const mark = (key, on) => {
   busy.value = { ...busy.value, [key]: on };
 };
+
+// a brand's public list loading, shown above the table while it runs (app-structure §8); a second
+// brand loading at the same time shows in the kit's global stack
+const loadTask = useSurfaceTask("paints.load");
 
 async function loadFeed(brand) {
   mark(brand.key, true);
@@ -105,6 +109,7 @@ async function clear(brand) {
     </UiBanner>
 
     <div v-else class="paint-colors">
+      <AiTaskStrip :task="loadTask" />
       <UiTable v-if="paints.brandsLoaded" :data="paints.brands" :columns="columns" data-key="key">
         <template #label="{ row }">
           <strong>{{ row.label }}</strong>

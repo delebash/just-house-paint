@@ -18,7 +18,7 @@ before you install.
 ## Making one
 
 Pick colors for the parts, then press **AI photo**. It takes from about 20 seconds to a minute on an
-RTX 2070-class card and shows under **AI tasks** while it runs. Before it starts, the app frees the
+RTX 2070-class card; its progress shows under the house's name while it runs, with **Cancel**. Before it starts, the app frees the
 graphics card — the part finder and a local AI model let go of it, and load again when next needed.
 The picture opens when it is done, with **Save image**; every AI photo is kept on the house's
 **Designs** tab.

@@ -27,6 +27,6 @@ show none.
 The app tells it the colors it found on your photo — the body's current color, the roof, the stone,
 what stays — and which parts will be painted, and the AI answers with schemes; every color it names
 is matched to the brand's nearest real paint. Add a few words about what you like ("warm",
-"coastal", "historic") to steer it. Find the parts first: the AI reads the house's colors from
+"coastal", "historic") to steer it. Its progress shows under the button while it works, with **Cancel**. Find the parts first: the AI reads the house's colors from
 them. This needs an AI model — see [Set up the AI](ai-providers.md); what the AI is told can be
 changed — see [The AI features](ai-features.md).

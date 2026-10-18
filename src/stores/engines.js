@@ -6,6 +6,13 @@ import { get, post } from "@delebash/ui";
 import { defineStore } from "pinia";
 import { runServerJob } from "../services/jobs.js";
 
+// Each engine's install: its route and its task's feature (literal — EngineInstallCard shows it in
+// place with useSurfaceTask, and the family guard's check 17 follows the literals).
+const INSTALLS = {
+  finder: { path: "/v1/segment/install", feature: "finder.install" },
+  aiphoto: { path: "/v1/aiphoto/install", feature: "aiphoto.install" },
+};
+
 export const useEnginesStore = defineStore("engines", {
   state: () => ({
     // { installed, downloadBytes }
@@ -28,8 +35,8 @@ export const useEnginesStore = defineStore("engines", {
     async install(kind, label) {
       this.installing = { ...this.installing, [kind]: true };
       try {
-        const path = kind === "finder" ? "/v1/segment/install" : "/v1/aiphoto/install";
-        await runServerJob({ start: () => post(path), feature: `${kind}.install`, label });
+        const { path, feature } = INSTALLS[kind];
+        await runServerJob({ start: () => post(path), feature, label });
       } finally {
         this.installing = { ...this.installing, [kind]: false };
         await this.loadStatus().catch(() => {});

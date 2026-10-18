@@ -17,9 +17,10 @@ white house, say.
 ## The first time: installing the part finder
 
 Until it is installed, a house's **Parts** tab offers the part finder: **Install** downloads about
-3.1 GB, once. The download shows under **AI tasks** in the sidebar; its Cancel stops it. On a
+3.1 GB, once. Its progress shows on the card while it downloads; **Cancel** there stops it. On a
 computer with a graphics card the finder uses the card; finding the parts of one photo takes about
-half a minute (40 seconds the first time, while the model loads).
+half a minute (40 seconds the first time, while the model loads); its progress shows under the
+house's name while it works, with **Cancel**.
 
 ## When a part is wrong
 

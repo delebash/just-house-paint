@@ -161,7 +161,50 @@ DECIDED: the user, verbatim: "A" — "Compare with" stays as built.
 GO:     the user, verbatim: "your rec on all just think on it again go" (2026-10-18) — the window trim rec, the
         rest of this batch (the help's Compare line, the real run on the user's house, TASKS, the commit), and the
         recs still waiting: the port move (below) and the kit's shared-cache warning (the kit's TASKS).
+FOUND:  the user (2026-10-18), verbatim: "the window trim i think you are not getting the correct it whould be the
+        windows the white part the wood, in my house picture you are not selecting that, can you check" — and:
+        "the frame is what i am talking about when i say window trim so lets rename to frame". Checked on the
+        overlay: the white casings around the two big front windows sit in Windows (SAM 3's "window" outline takes
+        glass and frame, and Windows wins the overlap), so Window trim got only thin rims. Next: measure the glass
+        ("window pane", "glass") so Windows = the glass and the frame part = the rest of each window; the label
+        asked ("Window frames", my rec, or "Frames").
 STATE:  BUILDING.
+
+## Every AI task shows its progress — the template's gap [2026-10-18]
+FOUND:  the user, verbatim: "your not following standard ai progress bar and tasks as per part of our standard app
+        design no feedback on any ai task no progress bar"; "this should be part of any ai and part of our just product
+        template, why did you not use our standardd desgin that was the whole point of the temolate"; "the standard is
+        that we use ai task panel and the ai progress bar, this is standard for any ai task and has always been, why is
+        it not standard in this app and the new template?". Root cause: app-structure §8's in-place AiTaskStrip was prose
+        only — the template's AI example never mounted it, nothing checked it, and my jobs.js assumed a global strip.
+GO:     the user, verbatim: "think on how to fix this again, and think on the template, i want all apps the same i dont
+        want any missing parts like this, how can you fix it so we get all common parts, this should not have happened";
+        then "so i asked you repeated to think on a good template design and you failed, do it right fix it rightk, do it
+        professional, think adversially of the fix and go code it".
+BUILT:  2026-10-18 — the kit (bc34207): a global task stack every app mounts, in-place strips that claim their task,
+        useSurfaceTask, the template's example and tests, the guard's check 17, app-structure §8. This app: in-place
+        progress on Find the parts and AI photo (under the house's name), Suggest schemes, the two installs (on the
+        card) and a brand's colors loading (above the list); each trigger disabled while its task runs; job progress as
+        a percent; a mounted test holds a find job open and checks the page. Verified: 50 renderer tests, the guard.
+OPEN:   - the audit the user asked for ("all common parts"): every standard in app-structure, where it lives (kit code,
+          template code + test, prose only) and what checks it — each prose-only one becomes code + a check;
+        - a screenshot of the progress in the real window, during Find the parts on the user's house.
+
+## Window trim = frame, casing and sill [2026-10-18]
+DECIDED: the user, verbatim: "yes windows trim = frame caseing sill" and "you can leave it as window trim or frame what do
+        you think it should be all 3 as you noted" — my rec: keep the name "Window trim" (the trade word for all three;
+        "Frames" would leave out the casing and the sill). Windows becomes the glass only.
+NEXT:   measure the glass words ("window pane", "glass") on the four photos, then build it.
+
+## More paint brands than Behr [2026-10-18]
+ASKED:  the user, verbatim: "also the only paints i see available to select from are behr i thought we had a wide range
+        of paints to choose from?"; "behr is the only one in the dropdown"; "ok but user dosnt know that all they see is 1
+        dropdown seletion, and why do we have a button import why is it not just automatic for all?". Only Behr was
+        loaded (the real run); loading stays user-started by the decision of 2026-10-17 (B, the brands' terms).
+MY REC (shown 2026-10-18): 1. on the Colors tab under the brand list, while brands are missing: "More brands" with one
+        Load all for the four public lists and links to the two palette downloads; 2. Load all on Paint colors; 3. check
+        whether Benjamin Moore's and PPG's palette files sit at stable addresses, so they can join Load all. And: load the
+        four public lists on the user's computer now (a download — needs the user's OK). Waiting for the user's go.
 
 ## The server's port clashes with JustWrite's eval [2026-10-18]
 FOUND:  by the JustWrite session (2026-10-18): this app's server port 17497 is JustWrite's eval port

@@ -8,7 +8,7 @@
 //   - the AI (the feature `schemes.suggest`): it reads the house's current colors — the roof, the
 //     stone, what stays — and the owner's mood, through the kit's withAiTask (the task strip shows
 //     it; app code never owns a task, §8). Its colors are snapped to real paints by the server.
-import { post, reportError, schemaRules, UiButton, UiField, UiInput, UiSelect, UiTag, withAiTask } from "@delebash/ui";
+import { AiTaskStrip, post, reportError, schemaRules, UiButton, UiField, UiInput, UiSelect, UiTag, useSurfaceTask, withAiTask } from "@delebash/ui";
 import { AiSchemesIn } from "just-house-paint-server/schemas/paints.js";
 import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
@@ -58,11 +58,14 @@ async function loadHarmony() {
 }
 watch([() => base.value?.id, brand], loadHarmony, { immediate: true });
 
+// this house's AI schemes run, shown under the form while it runs (app-structure §8)
+const aiTask = useSurfaceTask("schemes.suggest", () => ({ houseId: house.house?.id }));
+
 async function askAi() {
   busy.value.ai = true;
   try {
     const body = { houseId: house.house.id, brand: brand.value, ...(mood.value.trim() ? { mood: mood.value.trim() } : {}) };
-    const out = await withAiTask({ feature: "schemes.suggest", label: t("schemes.ai.task", { name: house.house.name }) }, async (task) => {
+    const out = await withAiTask({ feature: "schemes.suggest", label: t("schemes.ai.task", { name: house.house.name }), meta: { houseId: house.house.id } }, async (task) => {
       const r = await post("/v1/schemes/ai", body, { signal: task.signal });
       return { result: r, usage: r.usage, model: r.model };
     });
@@ -114,8 +117,9 @@ const kindLabel = (s) => (s.kind === "ai" ? s.name : s.kind === "coordinating" ?
         <UiField :label="t('schemes.ai.mood')" layout="block" for="schemes-mood">
           <UiInput id="schemes-mood" v-model="mood" width="prose" :placeholder="t('schemes.ai.moodPlaceholder')" lazy-rules :rules="rules.mood" />
         </UiField>
-        <UiButton type="submit" intent="primary" :disabled="busy.ai || !house.parts.length" :label="busy.ai ? t('schemes.ai.asking') : t('schemes.ai.ask')" />
+        <UiButton type="submit" intent="primary" :disabled="busy.ai || !!aiTask || !house.parts.length" :label="busy.ai ? t('schemes.ai.asking') : t('schemes.ai.ask')" />
       </q-form>
+      <AiTaskStrip :task="aiTask" />
       <p v-if="!house.parts.length" class="muted">{{ t("schemes.ai.needParts") }}</p>
       <ul class="schemes__list">
         <li v-for="(s, i) in ai" :key="`a${i}`" class="scheme">

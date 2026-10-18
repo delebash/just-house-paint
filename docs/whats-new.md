@@ -14,6 +14,9 @@
 - **Pick a color** off the photo, and each part's color as photographed, to find the nearest paints.
 - **A color card**: the painted photo and its paints in one picture.
 - **Soffits**: the finder looks for the soffits and fascia under the roof's edge.
+- **Progress you can see**: finding the parts, the AI photo, the AI's schemes, an install and a brand's
+  colors loading each show their progress where you started them, with Cancel — and in a stack at the
+  bottom right if you leave that screen while they run.
 - **Paint colors**: load Behr, Sherwin-Williams, Valspar, HGTV Home and Dutch Boy colors from
   their public lists, or import Benjamin Moore and PPG / Glidden palette files.
 - **Color schemes**: harmony schemes around a paint, the brand's coordinating colors, and schemes

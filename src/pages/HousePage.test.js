@@ -82,6 +82,7 @@ function fakeFetch(input, init = {}) {
     server.finderInstalled = true;
     return Promise.resolve(json({ id: "j-install", state: "done", progress: 1, result: { installed: true } }));
   }
+  if (p === "/v1/jobs/j-find" && server.holdFind) return Promise.resolve(json({ id: "j-find", state: "running", progress: 0.4 }));
   if (p === "/v1/jobs/j-find") {
     server.parts = PARTS;
     return Promise.resolve(json({ id: "j-find", state: "done", progress: 1, result: { parts: 2 } }));
@@ -297,3 +298,24 @@ test("the outlines: the selected part's by default, every part's, or none — an
   // back to the default, for the tests after this one (the kit's prefs are one document per app)
   await click(byText(".ui-seg button", "Selected part"));
 });
+
+test("finding the parts shows its progress on the page — not twice in the global stack — and its button waits", async () => {
+  server.parts = PARTS;
+  server.holdFind = true;
+  await mountPage();
+  await click(byText("button", "Find the parts again"));
+  _resolveDialog(true);
+  await flushPromises();
+  await new Promise((r) => setTimeout(r, 450));
+  await flushPromises();
+  const strip = document.querySelector(".q-page .sts");
+  expect(strip?.textContent).toContain("Finding the parts of Main street");
+  expect(strip?.textContent).toContain("40%");
+  expect(strip.querySelector(".sts-fill").style.width).toBe("40%");
+  expect(document.querySelector(".ai-task-stack")).toBeNull();
+  expect(byText("button", "Find the parts again").disabled).toBe(true);
+  server.holdFind = false;
+  await settle();
+  expect(document.querySelector(".q-page .sts")).toBeNull();
+  expect(byText("button", "Find the parts again").disabled).toBe(false);
+}, 20000);

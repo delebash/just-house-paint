@@ -9,6 +9,7 @@
 // Reset takes every paint off, or goes back to the open design. The page fills its area
 // (pageFill): the canvas and the panel each scroll on their own.
 import {
+  AiTaskStrip,
   confirmDialog,
   EmptyState,
   errorMessage,
@@ -26,6 +27,7 @@ import {
   UiSelect,
   UiSlider,
   UiTabStrip,
+  useSurfaceTask,
 } from "@delebash/ui";
 import { onKeyStroke } from "@vueuse/core";
 import { stroke as brushStroke } from "just-house-paint-server/shared/masks.js";
@@ -91,6 +93,11 @@ const outlines = computed({
 });
 
 const history = useHouseHistory({ apply: applyRecord });
+
+// this house's long work, shown here while it runs (app-structure §8): finding the parts, the AI photo
+const houseMeta = () => ({ houseId: house.house?.id });
+const findTask = useSurfaceTask("parts.find", houseMeta);
+const photoTask = useSurfaceTask("aiphoto.render", houseMeta);
 
 const imagePath = (size) => `/v1/houses/${encodeURIComponent(house.house.id)}/image?size=${size}`;
 
@@ -492,13 +499,15 @@ const canRevert = computed(() => !!house.design && house.dirty);
     <PaneHeader :eyebrow="t('houses.title')" :title="house.house?.name || ''" help-key="painting">
       <UiButton intent="ghost" :label="t('house.back')" @click="router.push('/')" />
       <UiButton
-        intent="secondary" :disabled="!house.house || busy.find"
+        intent="secondary" :disabled="!house.house || busy.find || !!findTask"
         :label="house.parts.length ? t('house.find.again') : t('house.find.button')" @click="findParts"
       />
-      <UiButton intent="secondary" :disabled="!house.paintableParts.length || busy.ai || !hasColors" :label="t('house.ai.button')" @click="aiPhoto" />
+      <UiButton intent="secondary" :disabled="!house.paintableParts.length || busy.ai || !!photoTask || !hasColors" :label="t('house.ai.button')" @click="aiPhoto" />
       <UiButton intent="ghost" :disabled="!hasColors" :label="t('house.export.copyList')" @click="copyColorList" />
       <UiButton intent="primary" :disabled="!painted || busy.export" :label="t('house.export.save')" @click="saveImage" />
     </PaneHeader>
+    <AiTaskStrip :task="findTask" />
+    <AiTaskStrip :task="photoTask" />
 
     <UiBanner v-if="loadFailed" class="page__banner">
       {{ t("house.loadFailed", { reason: failedReason }) }}

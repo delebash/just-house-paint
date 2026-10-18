@@ -443,7 +443,8 @@
     "note": "Colors on a screen are close to the paint, never the same: check a real paint chip before you buy. Brand names belong to their owners; this app isn't connected to any of them."
   },
   "jobs": {
-    "failed": "The work stopped with an error."
+    "failed": "The work stopped with an error.",
+    "percent": "{n}%"
   },
   "colorCard": {
     "onScreen": "Colors on screen",

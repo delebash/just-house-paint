@@ -19,8 +19,8 @@ the house's colors from them.
 trim and fascia boards are its weak spot. Select the part it belongs to and draw a **Box** around
 it, or use the **Brush**. See [Finding the parts](finding-parts.md).
 
-**The part finder or the AI photo won't install.** The download shows under **AI tasks** with its
-reason; a cancelled or broken download resumes where it stopped the next time you press
+**The part finder or the AI photo won't install.** The **AI tasks** panel (the sidebar) keeps the failed
+download with its reason; a cancelled or broken download resumes where it stopped the next time you press
 **Install**. A file that doesn't match its checksum is deleted and downloaded again.
 
 **The AI photo fails on "out of memory".** It needs about 8 GB of graphics memory. The app lets go

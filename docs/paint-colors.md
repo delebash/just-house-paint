@@ -8,7 +8,7 @@ PPG / Glidden, HGTV Home by Sherwin-Williams and Dutch Boy.
 
 Behr, Sherwin-Williams, Valspar, HGTV Home and Dutch Boy publish their colors on their websites.
 **Load the colors** downloads that list once and keeps it on your computer; **Load again** fetches
-it again. The download shows under **AI tasks**. Each brand's own website terms apply to what you
+it again. Its progress shows above the list while it runs, with **Cancel**. Each brand's own website terms apply to what you
 download — the app downloads only when you press the button, and only for your own use.
 
 ## Importing a brand's palette file
