@@ -92,3 +92,24 @@ test("a part's tones: the paint in shade, on most of it and in light — the lig
   // through the Light, every tone moves with it
   expect(value(p.tones("body", "#64695c", 1.5).light)).toBeGreaterThan(value(tones.light));
 });
+
+test("the paint a part has now sets its light: the photo's color there ÷ that paint, per channel, capped", () => {
+  // a white wall photographed bluish-grey (overcast): 180/190/210
+  const photo = new Uint8ClampedArray(W * H * 4);
+  for (let i = 0; i < W * H; i++) photo.set([180, 190, 210, 255], i * 4);
+  const p = createPainter({ rgba: photo, width: W, height: H });
+  p.setMask("body", maskOf(() => true));
+  // without a paint now, a lit pixel is the chip; with white known, the gain is photo ÷ white
+  expect(p.gain("body", null)).toEqual([1, 1, 1]);
+  const g = p.gain("body", "#ffffff");
+  expect(g[0]).toBeCloseTo(0.456, 2); // (180/255) in linear light
+  expect(g[2]).toBeGreaterThan(g[0]); // the blue cast kept
+  // a new paint shows as the camera would have taken it: white now → the photo itself
+  const { rgba: out } = p.paint({ body: "#ffffff" }, ["body"], { current: { body: "#ffffff" } });
+  expect([out[0], out[1], out[2]]).toEqual([180, 190, 210]);
+  // the tones follow the same light
+  expect(p.tones("body", "#ffffff", 1, "#ffffff").light).toBe("#b4bed2");
+  // a wrong pick (black, for a light wall) is capped, not wild
+  expect(p.gain("body", "#000000")).toEqual([1, 1, 1]); // no channel to divide by
+  expect(p.gain("body", "#101010").every((v) => v === 4)).toBe(true);
+});

@@ -8,6 +8,10 @@ import { randomUUID } from "node:crypto";
 /** The current UTC time as stored (ISO-8601). */
 const nowIso = () => new Date().toISOString();
 
+/** { partKey: paintId } — the paint each part has now, where its owner said. */
+const currentPaintsOf = (h, houseId) =>
+  Object.fromEntries(h.all("SELECT key, paint_id FROM current_paints WHERE house_id = ? ORDER BY key", [houseId]).map((r) => [r.key, r.paint_id]));
+
 const house = (r) =>
   r && {
     id: r.id,
@@ -54,7 +58,22 @@ export function listHouses(h) {
     .map((r) => ({ ...house(r), designCount: r.design_count }));
 }
 
-export const getHouse = (h, id) => house(h.one("SELECT * FROM houses WHERE id = ?", [id]));
+export function getHouse(h, id) {
+  const one = house(h.one("SELECT * FROM houses WHERE id = ?", [id]));
+  return one && { ...one, currentPaints: currentPaintsOf(h, id) };
+}
+
+/** Set the paint each part has now: `paints` ({ part: paintId }) replaces the house's whole map. */
+export function setCurrentPaints(h, id, paints) {
+  h.tx(() => {
+    h.run("DELETE FROM current_paints WHERE house_id = ?", [id]);
+    for (const [key, paintId] of Object.entries(paints)) {
+      h.run("INSERT INTO current_paints (house_id, key, paint_id) VALUES (?, ?, ?)", [id, key, paintId]);
+    }
+    h.run("UPDATE houses SET updated_at = ? WHERE id = ?", [nowIso(), id]);
+  });
+  return getHouse(h, id);
+}
 
 export function renameHouse(h, id, name) {
   const r = h.run("UPDATE houses SET name = ?, updated_at = ? WHERE id = ?", [name, nowIso(), id]);

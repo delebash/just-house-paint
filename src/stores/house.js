@@ -2,7 +2,7 @@
 // The open house — what the house page shows and edits: its parts (and their masks), the colors on
 // the screen, its saved designs and its AI photos. The server owns all of it (family rule 2); the
 // colors on screen are a draft until saved as a design.
-import { del, get, patch as patchJson, post, request } from "@delebash/ui";
+import { del, get, patch as patchJson, post, put, request } from "@delebash/ui";
 import { defineStore } from "pinia";
 import { runServerJob } from "../services/jobs.js";
 
@@ -127,6 +127,12 @@ export const useHouseStore = defineStore("house", {
       this.parts = [...this.parts, part];
       this.selectedPart = key;
       return part;
+    },
+    /** The paint part `key` has NOW (null clears it): the light on it is worked out from it. Kept on the
+     *  server with the house (finding the parts again keeps it). */
+    async setCurrentPaint(key, paintId) {
+      const { [key]: _, ...rest } = this.house.currentPaints || {};
+      this.house = await put(hp(this.house.id, "/current-paints"), paintId ? { ...rest, [key]: paintId } : rest);
     },
     /** The colors on screen replaced whole (an Undo, a Redo). */
     setColors(colors) {

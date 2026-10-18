@@ -14,6 +14,15 @@ under 1 is a difference most people can't see, under 2 is a close match.
 selected part: **in shade**, on **most of it** and **in light**. The light one is the chip; a wall in the shade of a
 roof or a tree shows mostly the darker ones, as real paint would.
 
+**On it now** — if you know the paint a part has today, tell the app: on the **Colors** tab switch
+**The new color** to **On it now** and click that paint (search for it, or type its color under the
+list). It doesn't paint anything: the app compares that paint with how your camera photographed it
+on the part's normally lit areas, which gives the photo's real light there — how bright, and its tint
+(shade and an overcast sky are bluish). Every new color on that part then shows in that light, as
+your camera would have taken it. The line **On it now: …** shows the paint; **Clear** forgets it.
+It is kept with the house. Not sure what's on it? Leave it: the paint then shows at its chip color
+in the part's normal light.
+
 **Light** — a brighter or duller day over the whole picture, photo and paint alike: 1 is the photo's own light.
 The ΔE beside each part is always measured at the photo's own light.
 

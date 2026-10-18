@@ -111,8 +111,12 @@ export function preparePart({ Y, mask, width, height, texture = 1, blurRadius = 
  * Paint one part into `out` (RGBA, the photo's size), reading the photo's own pixels from
  * `photo`. Pixels outside the mask are left as they are in `out`; the mask's soft edge blends.
  */
-export function tintPart({ photo, out, Y, part, hex }) {
-  const [pr, pg, pb] = paintLinear(hex);
+export function tintPart({ photo, out, Y, part, hex, gain = [1, 1, 1] }) {
+  const [pr0, pg0, pb0] = paintLinear(hex);
+  // the light the paint on it now says falls there (lightGain): the photo's exposure and its color cast
+  const pr = pr0 * gain[0];
+  const pg = pg0 * gain[1];
+  const pb = pb0 * gain[2];
   const { mask, base, texture, blurred } = part;
   for (let i = 0, p = 0; i < mask.length; i++, p += 4) {
     const m = mask[i];
@@ -143,7 +147,7 @@ export function tintPart({ photo, out, Y, part, hex }) {
  */
 export function tintPhoto({ photo, Y, assignments }) {
   const out = new Uint8ClampedArray(photo);
-  for (const { part, hex } of assignments) if (hex) tintPart({ photo, out, Y, part, hex });
+  for (const { part, hex, gain } of assignments) if (hex) tintPart({ photo, out, Y, part, hex, gain });
   return out;
 }
 
@@ -170,6 +174,38 @@ export function applyLight(rgba, k) {
   return rgba;
 }
 
+/** How far the light on a part may differ from the chip's, per channel, from the paint on it now:
+ *  a wrong pick can't turn the picture to nonsense. */
+export const GAIN_LIMITS = Object.freeze([0.25, 4]);
+
+/**
+ * The light on a part, worked out from the paint it has NOW (`currentHex`, when its owner knows it):
+ * on the part's normally lit pixels (lighting within ±10% of its base level) the camera recorded
+ * that paint as the photo's color there, so per channel the light is (the photo's median there) ÷
+ * (the paint's own color) — the photo's real exposure and its color cast (overcast and shade light
+ * is bluish). A new paint × this gain shows as the camera would have recorded it. Linear light;
+ * [1, 1, 1] without a current paint or lit pixels.
+ */
+export function lightGain({ photo, Y, part, currentHex }) {
+  if (!currentHex) return [1, 1, 1];
+  const ch = [[], [], []];
+  for (let i = 0, p = 0; i < part.mask.length; i++, p += 4) {
+    if (part.mask[i] < 255) continue;
+    const ratio = Y[i] / part.base;
+    if (ratio < 0.9 || ratio > 1.1) continue;
+    ch[0].push(TO_LINEAR[photo[p]]);
+    ch[1].push(TO_LINEAR[photo[p + 1]]);
+    ch[2].push(TO_LINEAR[photo[p + 2]]);
+  }
+  if (!ch[0].length) return [1, 1, 1];
+  const now = paintLinear(currentHex);
+  return ch.map((values, c) => {
+    const seen = percentile(values, 50);
+    const g = now[c] > 1e-4 ? seen / now[c] : 1;
+    return Math.min(GAIN_LIMITS[1], Math.max(GAIN_LIMITS[0], g));
+  });
+}
+
 /** Where on a part the tones are read: the light that falls on its shaded quarter, its middle, and
  *  its normally lit level (the chip by definition — RESEARCH §9). */
 export const TONE_PERCENTILES = Object.freeze({ shade: 20, middle: 50, light: 75 });
@@ -179,10 +215,10 @@ export const TONE_PERCENTILES = Object.freeze({ shade: 20, middle: 50, light: 75
  * by the light that falls there (ratio = Y ÷ the part's base level), through the Light setting `k`.
  * Returns { shade, middle, light } as #rrggbb.
  */
-export function partTones({ Y, part, hex, k = 1 }) {
+export function partTones({ Y, part, hex, k = 1, gain = [1, 1, 1] }) {
   const ratios = [];
   for (let i = 0; i < part.mask.length; i++) if (part.mask[i] === 255) ratios.push(Y[i] / part.base);
-  const [pr, pg, pb] = paintLinear(hex);
+  const [pr, pg, pb] = paintLinear(hex).map((v, c) => v * gain[c]);
   const toHex = (ratio) =>
     `#${[pr, pg, pb].map((c) => Math.round(255 * toSrgb(c * ratio * k)).toString(16).padStart(2, "0")).join("")}`;
   const out = {};

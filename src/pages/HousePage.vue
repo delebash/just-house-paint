@@ -120,7 +120,7 @@ async function load() {
   history.reset();
   try {
     await Promise.all([house.open(route.params.id), paints.loadBrands(), engines.loadStatus(), settings.load()]);
-    await paints.paints(Object.values(house.colors));
+    await paints.paints([...Object.values(house.colors), ...Object.values(house.house.currentPaints || {})]);
     await loadPhoto();
     const masks = await loadMasks(house.parts.map((p) => p.key));
     history.reset({ colors: house.colors, masks });
@@ -175,15 +175,17 @@ watch(
 /** The painting order: the parts' own (the server's), so a later part paints over an earlier one. */
 const order = computed(() => house.parts.map((p) => p.key));
 
+// the paint each part has now, as hex (its light is worked out from it — services/tint.js lightGain)
+const currentHex = () => hexOf(house.house?.currentPaints || {});
 const hexOf = (colors) => Object.fromEntries(Object.entries(colors).map(([part, id]) => [part, paints.byId[id]?.hex || null]));
 
 function repaint() {
   if (!painter) return;
   const colors = hexOf(house.colors);
-  const { rgba, deltaE: dE } = painter.paint(colors, order.value, { light: light.value });
+  const { rgba, deltaE: dE } = painter.paint(colors, order.value, { light: light.value, current: currentHex() });
   painted.value = drawPixels(rgba, painter.width, painter.height, painted.value);
   deltaE.value = dE;
-  tones.value = house.selectedPart ? painter.tones(house.selectedPart, colors[house.selectedPart], light.value) : null;
+  tones.value = house.selectedPart ? painter.tones(house.selectedPart, colors[house.selectedPart], light.value, currentHex()[house.selectedPart]) : null;
   drawOverlay();
   refreshCompare();
   version.value++;
@@ -201,10 +203,18 @@ watch(texture, (v) => {
   repaint();
 });
 watch(light, repaint);
+// a part's paint-now set or cleared: its light changes
+watch(
+  () => JSON.stringify(house.house?.currentPaints || {}),
+  async () => {
+    await paints.paints(Object.values(house.house?.currentPaints || {}));
+    repaint();
+  },
+);
 watch(
   () => house.selectedPart,
   (key) => {
-    if (painter) tones.value = key ? painter.tones(key, hexOf(house.colors)[key], light.value) : null;
+    if (painter) tones.value = key ? painter.tones(key, hexOf(house.colors)[key], light.value, currentHex()[key]) : null;
   },
 );
 
@@ -273,7 +283,7 @@ async function refreshCompare() {
     return;
   }
   await paints.paints(Object.values(d.colors));
-  const { rgba } = painter.paint(hexOf(d.colors), order.value, { light: light.value });
+  const { rgba } = painter.paint(hexOf(d.colors), order.value, { light: light.value, current: currentHex() });
   before.value = drawPixels(rgba, painter.width, painter.height, before.value?.width === painter.width ? before.value : null);
   version.value++;
 }
@@ -449,7 +459,7 @@ async function saveImage() {
       const mask = painter.mask(key);
       if (mask) big.setMask(key, await maskOf(await pngOf(mask, painter.width, painter.height), W, H), texture.value);
     }
-    const { rgba } = big.paint(hexOf(house.colors), order.value, { light: light.value });
+    const { rgba } = big.paint(hexOf(house.colors), order.value, { light: light.value, current: currentHex() });
     const canvas = drawPixels(rgba, W, H);
     const out = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.92));
     await saveBlob(out, `${name} — ${t("house.export.suffix")}.jpg`, { title: t("house.export.save"), filterName: "JPEG", filterExt: "jpg" });

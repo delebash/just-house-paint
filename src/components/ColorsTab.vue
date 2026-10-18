@@ -5,7 +5,7 @@
 // to the brand's nearest paints, each with its ΔE2000, so a color seen elsewhere becomes a paint you
 // can buy. Only brands with colors on this computer are offered; adding one is the Paint colors
 // page's (the app ships no brand data).
-import { EmptyState, reportError, schemaRules, UiButton, UiColorPicker, UiField, UiInput, UiSelect, UiTag, UiToggle } from "@delebash/ui";
+import { EmptyState, reportError, schemaRules, UiButton, UiColorPicker, UiField, UiInput, UiSegmented, UiSelect, UiTag, UiToggle } from "@delebash/ui";
 import { NearestQuery } from "just-house-paint-server/schemas/paints.js";
 import { computed, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
@@ -69,10 +69,37 @@ watch(q, () => {
   timer = setTimeout(() => search(), 250);
 });
 
-function choose(paint) {
+// what a click on a paint sets: the part's new color, or the paint it has on it now (its light is
+// worked out from that — the most accurate the photo allows)
+const target = ref("new");
+const targets = computed(() => [
+  { value: "new", label: t("colors.target.new") },
+  { value: "now", label: t("colors.target.now") },
+]);
+const nowPaint = computed(() => paints.byId[house.house?.currentPaints?.[house.selectedPart]] || null);
+// the chip lit as chosen: the part's color, or (picking the paint on it now) that paint
+const chosenId = computed(() => (target.value === "now" ? nowPaint.value?.id : house.colors[house.selectedPart]));
+
+async function choose(paint) {
   if (!house.selectedPart) return;
   paints.remember([paint]);
-  house.setColor(house.selectedPart, paint.id);
+  if (target.value === "new") {
+    house.setColor(house.selectedPart, paint.id);
+    return;
+  }
+  try {
+    await house.setCurrentPaint(house.selectedPart, paint.id);
+    target.value = "new";
+  } catch (e) {
+    reportError(e);
+  }
+}
+async function clearNow() {
+  try {
+    await house.setCurrentPaint(house.selectedPart, null);
+  } catch (e) {
+    reportError(e);
+  }
 }
 
 // a color read off the photo: into "An exact color", matched at once
@@ -114,6 +141,17 @@ async function match() {
         <span>{{ current.displayName }}</span>
         <UiButton intent="ghost" size="small" :label="t('colors.clear')" @click="house.setColor(house.selectedPart, null)" />
       </div>
+      <!-- what a click on a paint sets: the new color, or the paint the part has on it now -->
+      <div class="colors__target">
+        <UiSegmented v-model="target" :options="targets" :aria-label="t('colors.target.label')" />
+      </div>
+      <p v-if="target === 'now'" class="hint">{{ t("colors.now.hint") }}</p>
+      <div v-if="nowPaint" class="colors__current colors__now">
+        <span class="hint">{{ t("colors.now.label") }}</span>
+        <span class="swatch" :style="{ background: nowPaint.hex }" />
+        <span>{{ nowPaint.displayName }}</span>
+        <UiButton intent="ghost" size="small" :label="t('colors.now.clear')" @click="clearNow" />
+      </div>
       <!-- the same paint as it shows on this wall: in shade, on most of it, in light (the chip at the
            photo's own light) — why the painted wall looks darker than the chip -->
       <div v-if="current && tones" class="colors__tones" :aria-label="t('colors.tones.label')">
@@ -141,7 +179,7 @@ async function match() {
       </div>
       <div class="colors__grid" :aria-busy="searching">
         <q-btn
-          v-for="p in rows" :key="p.id" flat no-caps unelevated class="chip" :class="{ 'chip--on': house.colors[house.selectedPart] === p.id }"
+          v-for="p in rows" :key="p.id" flat no-caps unelevated class="chip" :class="{ 'chip--on': chosenId === p.id }"
           :title="p.displayName" :aria-label="p.displayName" :disable="!house.selectedPart" @click="choose(p)"
         >
           <span class="chip__body">
@@ -178,6 +216,9 @@ async function match() {
 </template>
 
 <style scoped>
+.colors__target {
+  margin: 0 0 var(--sp-2);
+}
 .colors__tones {
   display: flex;
   align-items: center;

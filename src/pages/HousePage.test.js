@@ -10,7 +10,7 @@
 // the route's own rules; the AI photo offering its install first; Undo / Redo and Reset; the
 // eyedropper and a part's color as photographed; Compare; the outlines' choice; an old design's
 // trim-group parts offered the trim's color (painted only on the click); the Designs tab's empty
-// states.
+// states; the paint a part has now, picked with "On it now", setting the light new paints show in.
 import { _resolveDialog, dialogState, installLlmUi, LlmUiHosts, readPref, UiSelect } from "@delebash/ui";
 import { QUASAR_TEST_OPTIONS } from "@delebash/ui/quasar/install.js";
 import { flushPromises, mount } from "@vue/test-utils";
@@ -61,7 +61,11 @@ function fakeFetch(input, init = {}) {
   const method = (init.method || "GET").toUpperCase();
   const p = url.pathname;
   server.calls.push(`${method} ${p}`);
-  if (p === "/v1/houses/h1") return Promise.resolve(json(HOUSE));
+  if (p === "/v1/houses/h1") return Promise.resolve(json({ ...HOUSE, currentPaints: server.currentPaints }));
+  if (p === "/v1/houses/h1/current-paints" && method === "PUT") {
+    server.currentPaints = JSON.parse(init.body);
+    return Promise.resolve(json({ ...HOUSE, currentPaints: server.currentPaints }));
+  }
   if (p === "/v1/houses/h1/parts") return Promise.resolve(json(server.parts));
   if (p === "/v1/houses/h1/designs" && method === "GET") return Promise.resolve(json(server.designs));
   if (p === "/v1/houses/h1/designs" && method === "POST") {
@@ -93,7 +97,7 @@ function fakeFetch(input, init = {}) {
   if (decodeURIComponent(p) === `/v1/paints/${PAINT.id}`) return Promise.resolve(json(PAINT));
   if (decodeURIComponent(p) === `/v1/paints/${WHITE.id}`) return Promise.resolve(json(WHITE));
   if (p === "/v1/paints/nearest") return Promise.resolve(json([{ paint: PAINT, deltaE: 3.2 }]));
-  if (p === "/v1/paints") return Promise.resolve(json({ total: 1, rows: [PAINT] }));
+  if (p === "/v1/paints") return Promise.resolve(json({ total: 2, rows: [PAINT, WHITE] }));
   return Promise.resolve(json({}));
 }
 
@@ -134,7 +138,7 @@ const settle = async () => {
 };
 
 beforeEach(() => {
-  server = { calls: [], parts: [], designs: [], finderInstalled: true };
+  server = { calls: [], parts: [], designs: [], finderInstalled: true, currentPaints: {} };
   vi.stubGlobal("fetch", vi.fn(fakeFetch));
   vi.stubGlobal("ResizeObserver", class { observe() {} unobserve() {} disconnect() {} });
   vi.stubGlobal("matchMedia", vi.fn(() => ({ matches: false, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {} })));
@@ -421,4 +425,32 @@ test("the Designs tab without designs or AI photos shows the kit's empty states"
   await click(byText(".q-tab", "Designs"));
   const empties = [...document.body.querySelectorAll(".designs .ui-empty")].map((e) => e.textContent.trim());
   expect(empties).toEqual(["No designs saved yet.", "No AI photos yet — the AI photo button makes one from the colors on screen."]);
+});
+
+test("the paint on a part now: picked with On it now (not painted), kept on the house, and new paints show in its light", async () => {
+  server.parts = PARTS;
+  await mountPage();
+  await click(byText(".q-tab", "Colors"));
+  await click(byText(".ui-seg button", "On it now"));
+  expect(text()).toContain("Pick the paint this part has today");
+  await click(byText(".chip", "Chalk White"));
+  expect(server.currentPaints).toEqual({ body: WHITE.id });
+  expect(server.calls).toContain("PUT /v1/houses/h1/current-paints");
+  const now = document.body.querySelector(".colors__now");
+  expect(now?.textContent).toContain("On it now:");
+  expect(now.textContent).toContain("Behr Chalk White W1");
+  // not painted: the part has no color yet, and the next click is a new color again
+  expect(document.body.querySelector(".colors__tones")).toBeNull();
+  expect(text()).not.toContain("Pick the paint this part has today");
+  await click(byText(".chip", "Sea Blue"));
+  // the photo's grey wall IS that white in this light: Sea Blue shows darker than its chip there
+  const light = () => [...document.body.querySelectorAll(".colors__tones .swatch")].at(-1).title;
+  const value = (hex) => Number.parseInt(hex.slice(5, 7), 16);
+  expect(light()).not.toBe("#3366aa");
+  expect(value(light())).toBeLessThan(0xaa);
+  // Clear: back to the chip in the photo's own light
+  await click(byText(".colors__now .q-btn", "Clear"));
+  expect(server.currentPaints).toEqual({});
+  expect(document.body.querySelector(".colors__now")).toBeNull();
+  expect(light()).toBe("#3366aa");
 });

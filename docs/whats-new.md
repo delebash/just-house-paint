@@ -9,8 +9,12 @@
   the chip, texture, and the painted photo saved at full size.
 - **Undo and Redo** (Ctrl+Z, Ctrl+Y) for colors and outline fixes; **Reset** removes every color
   or goes back to the open design's.
-- **Compare** the colors on screen with the photo as taken or with another design; **Outlines** for
-  the selected part, every part or none; zoom buttons.
+- **Compare** the colors on screen with the photo as taken or with another design, across a line or
+  **side by side**; **Outlines** for the selected part, every part or none; zoom buttons.
+- **On this wall**: the chosen paint as it shows on the part in shade, on most of it and in light;
+  **Light** for a brighter or duller day.
+- **On it now**: tell the app the paint a part has today, and new colors show in the photo's real
+  light and tint.
 - **Pick a color** off the photo, and each part's color as photographed, to find the nearest paints.
 - **A color card**: the painted photo and its paints in one picture.
 - **Soffits**: the finder looks for the soffits and fascia under the roof's edge.

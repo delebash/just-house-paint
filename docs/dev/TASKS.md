@@ -283,6 +283,16 @@ GO:     the user, verbatim: "your rec on all go" (2026-10-18). 5a is NOT STANDAR
 ORDER:  the user, verbatim: "are you doing thsese ? - Show lit and shaded samples next to the chip on the Colors tab ... -
         A "Light" slider that brightens the photo's lighting"; then "do the stuff that lets use see the rosemary more
         accuralty first" and "do both" (2026-10-18): the samples and the Light slider first, then 3, then 1, 2, 4.
+3:      BUILT 2026-10-18 (not yet seen in the real app) — the Colors tab's switch **The new color | On it now** (as shown
+        to the user before the go): in On it now a click records the paint the part has today (PUT
+        /v1/houses/:id/current-paints, a `current_paints` table, kept when the parts are found again), the line
+        "On it now: <paint> [Clear]"; the light on the part = the photo's median on its normally lit pixels ÷ that
+        paint, per channel in linear light, capped 0.25–4 (services/tint.js lightGain); every paint, the tones, Compare
+        and Save image use it. Verified: 326 server and 69 renderer tests (the gain, a mounted pick → PUT → darker
+        tones → Clear), lint, i18n. OPEN: the real-app check on the user's house (the running dev app holds the data
+        folder's lock and the old server — it needs a restart); the e2e smoke (port 17499 is that app's); ASKED: the
+        Parts tab's ΔE — still against the chip, so a known paint now raises it by the light's own effect; the AI
+        photo's color lock still locks to the chip.
 STATE:  BUILDING.
 
 ## The server's port clashes with JustWrite's eval [2026-10-18]

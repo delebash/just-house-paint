@@ -122,6 +122,21 @@ export const MIGRATIONS = [
       CREATE INDEX renders_by_house ON renders(house_id);
     `,
   },
+  {
+    version: 3,
+    name: "the paint on each part now",
+    up: `
+      -- The paint a part has today, when its owner knows it: the light on the photo is worked out
+      -- from it (src/services/tint.js). Kept per house, not per part row, so finding the parts
+      -- again keeps it.
+      CREATE TABLE current_paints (
+        house_id TEXT NOT NULL REFERENCES houses(id) ON DELETE CASCADE,
+        key TEXT NOT NULL,
+        paint_id TEXT NOT NULL,
+        PRIMARY KEY (house_id, key)
+      );
+    `,
+  },
 ];
 
 /**

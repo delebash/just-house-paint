@@ -7,10 +7,10 @@ import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { Hono, input } from "@delebash/core/platform";
 import { ApiError, notFound, RequestValidationError } from "@delebash/core/platform/errors";
-import { createHouse, deleteHouse, getHouse, listHouses, renameHouse } from "../database/houses.js";
+import { createHouse, deleteHouse, getHouse, listHouses, renameHouse, setCurrentPaints } from "../database/houses.js";
 import { displayPath, originalPath, removeHouseDir, thumbPath } from "../files.js";
 import { ingestPhoto, NotAnImage } from "../images.js";
-import { HousePatch, IdParams, ImageQuery } from "../schemas/houses.js";
+import { CurrentPaintsIn, HousePatch, IdParams, ImageQuery } from "../schemas/houses.js";
 import { getState } from "../app_state.js";
 
 const CONTENT_TYPES = { jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp" };
@@ -69,6 +69,12 @@ export function router(ctx = getState()) {
   app.patch("/v1/houses/:id", input({ params: IdParams, body: HousePatch }), (c) => {
     must(c.req.valid("param").id);
     return c.json(renameHouse(ctx.db, c.req.valid("param").id, c.req.valid("json").name.trim()));
+  });
+
+  // The paint each part has now (the light on the photo is worked out from it): the whole map.
+  app.put("/v1/houses/:id/current-paints", input({ params: IdParams, body: CurrentPaintsIn }), (c) => {
+    must(c.req.valid("param").id);
+    return c.json(setCurrentPaints(ctx.db, c.req.valid("param").id, c.req.valid("json")));
   });
 
   app.delete("/v1/houses/:id", input({ params: IdParams }), (c) => {

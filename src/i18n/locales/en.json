@@ -340,6 +340,16 @@
       "shade": "In shade",
       "middle": "Most of it",
       "light": "In light"
+    },
+    "target": {
+      "label": "What a paint you pick sets",
+      "new": "The new color",
+      "now": "On it now"
+    },
+    "now": {
+      "label": "On it now:",
+      "hint": "Pick the paint this part has today, if you know it: the app works out the photo's real light from it, so every new paint shows as your camera would have seen it. Not sure? The color as photographed (the dot on the Parts tab) finds the closest paints.",
+      "clear": "Clear"
     }
   },
   "schemes": {

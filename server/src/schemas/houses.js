@@ -27,6 +27,11 @@ export const HousePatch = strictObject({
   name: T.String({ minLength: 1, maxLength: 80 }),
 });
 
+/** PUT /v1/houses/:id/current-paints — the paint each part has now, { part: paintId }, the whole map. */
+export const CurrentPaintsIn = T.Record(T.String({ pattern: PART_KEY }), T.String({ minLength: 1, maxLength: 120 }), {
+  additionalProperties: false, // a key that isn't a part name is refused, not stored
+});
+
 /** { partKey: paintId | null } — null (or absent) leaves a part unpainted. */
 export const DesignColors = T.Record(T.String({ pattern: PART_KEY }), T.Union([T.String({ minLength: 1, maxLength: 120 }), T.Null()]), {
   additionalProperties: false, // a key that isn't a part name is refused, not stored

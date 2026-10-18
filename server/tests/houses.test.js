@@ -57,6 +57,27 @@ describe("houses", () => {
     expect((await s.app.request(`/v1/houses/${house.id}`)).status).toBe(404);
   });
 
+  test("the paint each part has now is kept on the house: set, replaced whole, gone with the house", async () => {
+    s = makeServer();
+    const house = await (await s.upload(await jpeg(100, 80))).json();
+    expect(house.currentPaints).toEqual({});
+    const url = `/v1/houses/${house.id}/current-paints`;
+    const set = await (await s.json("PUT", url, { body: "sherwin-williams:6187", trim: "behr:S1" })).json();
+    expect(set.currentPaints).toEqual({ body: "sherwin-williams:6187", trim: "behr:S1" });
+    expect(set.name).toBe(house.name); // the rest of the house as it was
+    const replaced = await (await s.json("PUT", url, { body: "sherwin-williams:6187" })).json();
+    expect(replaced.currentPaints).toEqual({ body: "sherwin-williams:6187" });
+    expect((await (await s.app.request(`/v1/houses/${house.id}`)).json()).currentPaints).toEqual({ body: "sherwin-williams:6187" });
+    // a rename keeps them; a key that isn't a part name, an empty id or another house is refused
+    expect((await (await s.json("PATCH", `/v1/houses/${house.id}`, { name: "Home" })).json()).currentPaints).toEqual({ body: "sherwin-williams:6187" });
+    expect((await s.json("PUT", url, { "Not a part!": "x" })).status).toBe(422);
+    expect((await s.json("PUT", url, { body: "" })).status).toBe(422);
+    expect((await s.json("PUT", "/v1/houses/nope/current-paints", {})).status).toBe(404);
+    expect((await s.json("PATCH", `/v1/houses/${house.id}`, {})).status).toBe(422); // a rename still needs its name
+    expect((await s.app.request(`/v1/houses/${house.id}`, { method: "DELETE" })).status).toBe(204);
+    expect(s.db.all("SELECT * FROM current_paints")).toEqual([]); // ON DELETE CASCADE
+  });
+
   test("a photo's name comes from its file name", () => {
     expect(nameFromFile("C:/photos/my-house_2024.jpeg")).toBe("my house 2024");
     expect(nameFromFile(".jpg")).toBe("My house");

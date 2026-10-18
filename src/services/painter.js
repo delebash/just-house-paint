@@ -4,7 +4,7 @@
 // so a color click repaints at once, and only a changed mask or texture is prepared again.
 // Pure over arrays: the page hands it ImageData pixels and masks, and draws what it returns.
 
-import { applyLight, chipDeltaE, luminance, partTones, preparePart, tintPhoto } from "./tint.js";
+import { applyLight, chipDeltaE, lightGain, luminance, partTones, preparePart, tintPhoto } from "./tint.js";
 
 const hex2 = (v) => v.toString(16).padStart(2, "0");
 const median = (values) => {
@@ -38,6 +38,15 @@ export function createPainter({ rgba, width, height }) {
     p.prepared ??= preparePart({ Y, mask: p.mask, width, height, texture: p.texture });
     return p.prepared;
   };
+  // a part's light from the paint it has now, kept until its mask or that paint changes
+  const gainOf = (key, currentHex) => {
+    if (!currentHex) return [1, 1, 1];
+    const p = parts.get(key);
+    const part = prepared(key);
+    if (!p || !part?.pixels) return [1, 1, 1];
+    if (p.gainFor !== currentHex || p.gainPart !== part) Object.assign(p, { gainFor: currentHex, gainPart: part, gain: lightGain({ photo: rgba, Y, part, currentHex }) });
+    return p.gain;
+  };
 
   return {
     width,
@@ -65,12 +74,12 @@ export function createPainter({ rgba, width, height }) {
      * { part: ΔE2000 to the chip | null } } — ΔE always at the photo's own light, so it keeps
      * meaning how true the paint is, whatever the Light.
      */
-    paint(colors, order = Object.keys(colors), { light = 1 } = {}) {
+    paint(colors, order = Object.keys(colors), { light = 1, current = {} } = {}) {
       const assignments = [];
       for (const key of order) {
         const hex = colors[key];
         const part = hex ? prepared(key) : null;
-        if (part?.pixels) assignments.push({ key, part, hex });
+        if (part?.pixels) assignments.push({ key, part, hex, gain: gainOf(key, current[key]) });
       }
       const out = tintPhoto({ photo: rgba, Y, assignments });
       const deltaE = {};
@@ -80,11 +89,13 @@ export function createPainter({ rgba, width, height }) {
     },
     /** The paint `hex` as it shows on part `key` in shade, on most of it and in light ({ shade, middle,
      *  light } as #rrggbb, through the Light setting); null when the part has no pixels. */
-    tones(key, hex, light = 1) {
+    tones(key, hex, light = 1, currentHex = null) {
       const part = prepared(key);
       if (!part?.pixels || !hex) return null;
-      return partTones({ Y, part, hex, k: light });
+      return partTones({ Y, part, hex, k: light, gain: gainOf(key, currentHex) });
     },
+    /** The light on part `key` worked out from the paint it has now (lightGain), per channel. */
+    gain: (key, currentHex) => gainOf(key, currentHex),
     /** The part under a pixel: the last in `order` whose mask covers it (what is painted on top). */
     partAt(x, y, order) {
       const i = y * width + x;
