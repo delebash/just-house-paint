@@ -5,13 +5,29 @@
 // strip), or from the palette file the user downloaded from the brand (ASE, ACO, CSV, Excel —
 // imported here). The list is the kit's UiTable (QTable); the states are §17's (loading, failed with
 // Retry). Removing a brand's colors asks first; designs that use them keep their ids.
-import { AiTaskStrip, confirmDialog, errorMessage, PaneHeader, pageFlow, relativeTime, reportError, UiBanner, UiButton, UiTable, UiTag, useSurfaceTask } from "@delebash/ui";
+import {
+  AiTaskStrip,
+  confirmDialog,
+  errorMessage,
+  PaneHeader,
+  pageFlow,
+  relativeTime,
+  reportError,
+  UiBanner,
+  UiButton,
+  UiTable,
+  UiTag,
+  UiToggle,
+  useSurfaceTask,
+} from "@delebash/ui";
 import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { usePaintsStore } from "../stores/paints.js";
+import { useSettingsStore } from "../stores/settings.js";
 
 const { t } = useI18n();
 const paints = usePaintsStore();
+const settings = useSettingsStore();
 
 const loadFailed = ref(null);
 const busy = ref({});
@@ -21,7 +37,7 @@ const importFor = ref(null);
 async function load() {
   loadFailed.value = null;
   try {
-    await paints.loadBrands();
+    await Promise.all([paints.loadBrands(), settings.load()]);
   } catch (e) {
     loadFailed.value = e;
   }
@@ -38,6 +54,7 @@ const columns = computed(() => [
   { id: "label", header: t("paintColors.columns.brand"), accessorKey: "label" },
   { id: "paintCount", header: t("paintColors.columns.colors"), accessorKey: "paintCount" },
   { id: "source", header: t("paintColors.columns.from"), accessorKey: "source" },
+  { id: "auto", header: t("paintColors.columns.auto") },
   { id: "actions", header: "" },
 ]);
 
@@ -48,6 +65,19 @@ const mark = (key, on) => {
 // a brand's public list loading, shown above the table while it runs (app-structure §8); a second
 // brand loading at the same time shows in the kit's global stack
 const loadTask = useSurfaceTask("paints.load");
+
+// "Load automatically" per brand (the setting paints.autoLoad; a brand missing from it counts as on)
+const autoLoad = computed(() => settings.values["paints.autoLoad"] || {});
+async function setAutoLoad(brand, on) {
+  try {
+    await settings.save({ "paints.autoLoad": { ...autoLoad.value, [brand.key]: on } });
+  } catch (e) {
+    reportError(e);
+    return;
+  }
+  // turned on with no colors yet: load them now
+  if (on && !brand.paintCount && !busy.value[brand.key]) await loadFeed(brand);
+}
 
 async function loadFeed(brand) {
   mark(brand.key, true);
@@ -124,6 +154,13 @@ async function clear(brand) {
             <UiTag intent="ghost" :value="row.source === 'feed' ? t('paintColors.fromFeed') : t('paintColors.fromFile')" />
             <span v-if="row.loadedAt" class="muted"> {{ relativeTime(row.loadedAt) }}</span>
           </template>
+        </template>
+        <template #auto="{ row }">
+          <UiToggle
+            v-if="row.feed" :model-value="autoLoad[row.key] !== false" :aria-label="t('paintColors.autoAria', { brand: row.label })"
+            @update:model-value="(on) => setAutoLoad(row, on)"
+          />
+          <span v-else class="muted">{{ t("paintColors.fileOnly") }}</span>
         </template>
         <template #actions="{ row }">
           <span class="paint-colors__actions">

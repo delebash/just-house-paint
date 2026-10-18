@@ -22,6 +22,8 @@ import { useRouter } from "vue-router";
 import splashPlate from "../assets/splash-plate.svg";
 import TitleBar from "../components/TitleBar.vue";
 import { onShellEvent, setKeepRunning } from "../services/native.js";
+import { usePaintsStore } from "../stores/paints.js";
+import { useSettingsStore } from "../stores/settings.js";
 import { useUiStore } from "../stores/ui.js";
 
 const { t } = useI18n();
@@ -43,8 +45,22 @@ const aiTasksNav = useAiTasksNav();
 const NAV_WIDTH = 200;
 
 const unsubscribe = [];
+// Every brand's colors out of the box: the brands set to load automatically and still empty load
+// now, as tasks (paint-colors.md). A failure here stays on the brand's row, never a start-up toast.
+const paints = usePaintsStore();
+const settings = useSettingsStore();
+async function autoLoadBrands() {
+  try {
+    await settings.load();
+    await paints.autoLoadBrands({ autoLoad: settings.values["paints.autoLoad"] || {}, label: (b) => t("paintColors.loadTask", { brand: b.label }) });
+  } catch {
+    // the server unreachable: the connection page says so
+  }
+}
+
 onMounted(() => {
   if (ui.keepServerRunning) setKeepRunning(true);
+  autoLoadBrands();
   unsubscribe.push(
     onShellEvent("tray:open-settings", () => router.push("/settings")),
     onShellEvent("tray:about", () => router.push("/settings/about")),

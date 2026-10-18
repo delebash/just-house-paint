@@ -1,15 +1,20 @@
 # Paint colors
 
-The app comes with no paint colors — you add the brands you want on the **Paint colors** page (in
-the sidebar). Seven brands are listed: Sherwin-Williams, Behr, Benjamin Moore, Valspar,
-PPG / Glidden, HGTV Home by Sherwin-Williams and Dutch Boy.
+The app carries no paint colors of its own: it fetches each brand's colors from the brand, and keeps
+them on your computer. Seven brands are listed on the **Paint colors** page (in the sidebar):
+Sherwin-Williams, Behr, Benjamin Moore, Valspar, PPG / Glidden, HGTV Home by Sherwin-Williams and
+Dutch Boy. The **Colors** tab lists the brands whose colors are here, and says how many more wait on
+Paint colors.
 
 ## Loading a brand's public list
 
-Behr, Sherwin-Williams, Valspar, HGTV Home and Dutch Boy publish their colors on their websites.
-**Load the colors** downloads that list once and keeps it on your computer; **Load again** fetches
-it again. Its progress shows above the list while it runs, with **Cancel**. Each brand's own website terms apply to what you
-download — the app downloads only when you press the button, and only for your own use.
+Behr, Sherwin-Williams, Valspar, HGTV Home and Dutch Boy publish their colors on their websites. The
+first time the app starts, it loads each of those lists by itself, one after another, and keeps them on
+your computer — their progress shows at the bottom right, with **Cancel**. **Load automatically** on a
+brand's row turns that off for the brand (its colors already here stay; **Remove** clears them) or on
+again (an empty brand loads at once). **Load again** fetches a list again; its progress shows above the
+list. Each brand's own website terms apply to what you download — the app downloads each list for your
+own use.
 
 ## Importing a brand's palette file
 

@@ -29,6 +29,9 @@ export const SETTINGS = {
   "photos.maxMegabytes": T.Integer({ minimum: 1, maximum: 200 }),
   "designs.maxPerHouse": T.Integer({ minimum: 1, maximum: 200 }),
   "paints.maxImportMegabytes": T.Integer({ minimum: 1, maximum: 200 }),
+  // Which brands' colors the app loads by itself ({ brand: true | false }; a brand missing counts as
+  // on) — on for every brand out of the box (the user's decision, 2026-10-18).
+  "paints.autoLoad": T.Record(T.String({ maxLength: 40 }), T.Boolean()),
   // The part finder: what it looks for (each part's prompts and threshold), which part keeps a
   // pixel two parts claim, whether the graphics card does the photo's encode, and when it lets go.
   "finder.parts": T.Array(PartRule, { minItems: 1, maxItems: 40 }),

@@ -205,6 +205,21 @@ MY REC (shown 2026-10-18): 1. on the Colors tab under the brand list, while bran
         Load all for the four public lists and links to the two palette downloads; 2. Load all on Paint colors; 3. check
         whether Benjamin Moore's and PPG's palette files sit at stable addresses, so they can join Load all. And: load the
         four public lists on the user's computer now (a download — needs the user's OK). Waiting for the user's go.
+DECIDED: the user, verbatim (2026-10-18): "look lets juest have a setting that says auto load on off per each provider
+        with them being on, that is the same thing as having a button user can turn off if they want but out of box
+        eveything just works, make it all just work!" — this replaces the decision of 2026-10-17 ("B as a setting you
+        turn on"): every brand loads by itself unless turned off. Asked then: "and what do you mean about the load from
+        file, do we have afile to load" — no: Benjamin Moore and PPG / Glidden publish palette files on their sites
+        (RESEARCH §10); my rec: the app fetches those too, so all seven load by themselves.
+BUILT:  2026-10-18 — the setting `paints.autoLoad` (every brand on; seeded, so an existing install gets it on its next
+        start); at start-up the shell loads each brand set to load, fetchable and still empty, one after another, as
+        tasks (the kit's stack shows them; a failure stays on the brand's row, no toast); "Load automatically" per brand
+        on Paint colors (on with no colors → loads at once); the Colors tab says how many brands wait on Paint colors.
+        Verified: 320 server and 51 renderer tests (the start-up loads: which, in order, a failure doesn't stop the
+        rest, a second call joins the first), lint, i18n, the guard.
+OPEN:   - Benjamin Moore's collection ASE files and PPG's 2025 XLSX fetched by the app (then "Load automatically"
+          for all seven) — needs the user's OK to download them to build and test it (asked 2026-10-18);
+        - a real run: the four public lists loading on the user's computer — same OK.
 
 ## The server's port clashes with JustWrite's eval [2026-10-18]
 FOUND:  by the JustWrite session (2026-10-18): this app's server port 17497 is JustWrite's eval port

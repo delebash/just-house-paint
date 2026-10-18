@@ -12,6 +12,9 @@ const query = (params) => {
   return q.toString();
 };
 
+// the start-up loads in flight (autoLoadBrands), so a second call joins them
+let autoLoading = null;
+
 export const usePaintsStore = defineStore("paints", {
   state: () => ({
     brands: [],
@@ -38,6 +41,29 @@ export const usePaintsStore = defineStore("paints", {
       const result = await runServerJob({ start: () => post(`/v1/brands/${encodeURIComponent(brand)}/load`), feature: "paints.load", label, meta: { brand } });
       await this.loadBrands();
       return result;
+    },
+    /**
+     * Every brand's colors out of the box (the user's decision, 2026-10-18): each brand the app can
+     * fetch, with "Load automatically" on (`autoLoad`, the setting — a brand missing from it counts as
+     * on) and no colors yet, loads — one after another, so the brands' sites aren't asked all at once.
+     * Each load is a task (the kit's stack shows it, with Cancel); a failure stays on the brand's row
+     * and in the AI tasks panel, never as a toast at start-up. One run at a time.
+     */
+    autoLoadBrands({ autoLoad = {}, label }) {
+      autoLoading ??= (async () => {
+        if (!this.brandsLoaded) await this.loadBrands();
+        for (const b of this.brands) {
+          if (!b.feed || b.paintCount || autoLoad[b.key] === false) continue;
+          try {
+            await this.loadFeed(b.key, label(b));
+          } catch {
+            // recorded on the brand's row (lastError) and kept in the AI tasks panel
+          }
+        }
+      })().finally(() => {
+        autoLoading = null;
+      });
+      return autoLoading;
     },
     async importFile(brand, file) {
       const form = new FormData();

@@ -13,7 +13,7 @@ import { getLogger } from "@delebash/core/platform/log";
 import { DEFAULT_COMPOSE, DEFAULT_WORKING_SIZE } from "../aiphoto/pixels.js";
 import { DEFAULT_PROMPT_TEMPLATES } from "../aiphoto/prompts.js";
 import { DEFAULT_PART_PRIORITY } from "../finder.js";
-import { HARMONY_DEFAULTS } from "../paints/index.js";
+import { BRANDS, HARMONY_DEFAULTS } from "../paints/index.js";
 import { DEFAULT_PARTS } from "../segment/parts.js";
 import { insertSettingIfMissing } from "./settings.js";
 
@@ -32,6 +32,8 @@ export const SETTING_DEFAULTS = {
   "photos.maxMegabytes": 40,
   "designs.maxPerHouse": 30,
   "paints.maxImportMegabytes": 30,
+  // every brand's colors out of the box: each loads by itself until its owner turns it off
+  "paints.autoLoad": Object.fromEntries(Object.keys(BRANDS).map((key) => [key, true])),
   "finder.parts": plain(DEFAULT_PARTS),
   "finder.priority": [...DEFAULT_PART_PRIORITY],
   "finder.useGpu": true,

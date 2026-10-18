@@ -35,6 +35,8 @@ const hexRule = schemaRules(NearestQuery).hex;
 // the exact color came off the photo (the eyedropper, a part as photographed) — its light is in it
 const picked = ref(false);
 
+// brands with no colors here yet (loading, turned off, or a palette file to import) — Paint colors has them
+const missingBrands = computed(() => paints.brands.length - paints.ready.length);
 const brandOptions = computed(() => paints.ready.map((b) => ({ value: b.key, label: t("colors.brandCount", { brand: b.label, n: b.paintCount }) })));
 const selectedName = computed(() => (house.selectedPart ? partName(house.selectedPart, { t, te }) : ""));
 const current = computed(() => paints.byId[house.colors[house.selectedPart]] || null);
@@ -110,6 +112,10 @@ async function match() {
       </div>
       <div class="colors__filters">
         <UiSelect v-model="brand" :options="brandOptions" width="name" :aria-label="t('colors.brand')" />
+        <UiButton
+          v-if="missingBrands" intent="ghost" size="small" :label="t('colors.moreBrands', { n: missingBrands }, missingBrands)"
+          @click="router.push('/colors')"
+        />
         <UiInput v-model="q" type="search" width="name" :placeholder="t('colors.search')" :aria-label="t('colors.search')" />
         <label class="colors__toggle">
           <UiToggle v-model="exterior" :aria-label="t('colors.exterior')" />

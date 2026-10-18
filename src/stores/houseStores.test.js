@@ -95,6 +95,27 @@ describe("the paints store", () => {
     expect(await p.paint("behr:1")).toMatchObject({ name: "Snow" });
     expect(calls.filter((c) => c[1].startsWith("/v1/paints/behr"))).toHaveLength(0);
   });
+
+  test("out of the box the brands load by themselves: the empty ones set to load, one after another, a failure doesn't stop the rest", async () => {
+    answer("GET /v1/brands", [
+      { key: "sherwin-williams", label: "Sherwin-Williams", feed: true, paintCount: 0 },
+      { key: "behr", label: "Behr", feed: true, paintCount: 5178 },
+      { key: "valspar", label: "Valspar", feed: true, paintCount: 0 },
+      { key: "dutch-boy", label: "Dutch Boy", feed: true, paintCount: 0 },
+      { key: "benjamin-moore", label: "Benjamin Moore", feed: false, paintCount: 0 },
+    ]);
+    answer("POST /v1/brands/sherwin-williams/load", () => {
+      throw new Error("the site refused");
+    });
+    answer("POST /v1/brands/dutch-boy/load", { id: "j-db", state: "done", result: { paints: 1340 } });
+    const p = usePaintsStore();
+    const label = (b) => `Loading ${b.label}`;
+    // Valspar is turned off; Behr has its colors; Benjamin Moore has no list to fetch. A second call
+    // while the first runs joins it — nothing loads twice.
+    await Promise.all([p.autoLoadBrands({ autoLoad: { valspar: false }, label }), p.autoLoadBrands({ autoLoad: {}, label })]);
+    expect(calls.filter((c) => c[0] === "POST").map((c) => c[1])).toEqual(["/v1/brands/sherwin-williams/load", "/v1/brands/dutch-boy/load"]);
+    expect(calls.filter((c) => c[0] === "TASK").map((c) => c[2])).toEqual(["Loading Sherwin-Williams", "Loading Dutch Boy"]);
+  });
 });
 
 describe("the open house", () => {

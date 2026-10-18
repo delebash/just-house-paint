@@ -327,7 +327,8 @@
       "match": "Find the closest paints",
       "placeholder": "#a1b2c3",
       "picked": "From the photo — its light and shadow are in this color, so the nearest paint is close, not exact."
-    }
+    },
+    "moreBrands": "{n} more brand on Paint colors | {n} more brands on Paint colors"
   },
   "schemes": {
     "hint": "Body, trim and front door colors that go together — all real paints. Apply paints this house's parts.",
@@ -419,12 +420,13 @@
   },
   "paintColors": {
     "title": "Paint colors",
-    "lede": "The brands' real paint colors, kept on this computer. The app comes with none: load a brand's public color list, or import the palette file you downloaded from the brand.",
+    "lede": "The brands' real paint colors, kept on this computer. Each brand's public color list loads by itself the first time the app starts; turn Load automatically off for a brand you don't want. Benjamin Moore and PPG / Glidden come from the palette file you download from the brand.",
     "loadFailed": "Couldn't load the brands: {reason}",
     "columns": {
       "brand": "Brand",
       "colors": "Colors",
-      "from": "From"
+      "from": "From",
+      "auto": "Load automatically"
     },
     "none": "None yet",
     "fromFeed": "public list",
@@ -440,7 +442,9 @@
       "message": "The {n} {brand} colors will be removed from this computer. Designs that use them show no color until they are added again.",
       "confirm": "Remove colors"
     },
-    "note": "Colors on a screen are close to the paint, never the same: check a real paint chip before you buy. Brand names belong to their owners; this app isn't connected to any of them."
+    "note": "Colors on a screen are close to the paint, never the same: check a real paint chip before you buy. Brand names belong to their owners; this app isn't connected to any of them.",
+    "autoAria": "Load the {brand} colors automatically",
+    "fileOnly": "From its palette file"
   },
   "jobs": {
     "failed": "The work stopped with an error.",
