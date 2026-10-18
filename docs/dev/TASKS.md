@@ -264,6 +264,27 @@ GO:     the user, verbatim: "your rec go" (2026-10-18) — 1–5. The attack on 
         move of the user's coral bands on theirs).
 STATE:  BUILDING.
 
+## Wide-color photos — the most accurate colors [2026-10-18]
+ASKED:  the user, verbatim: "the orignal picture is different color from one uploaded in our current dev app, why";
+        "example orig is on left one in our app is on right the colors do not match it should be same photo";
+        "whateve we need to do to make it match the original image can we auto detect and add what is needed?";
+        "i want you to think on the photo problem above, i want  the best most accurate results, so whateverr we need
+        ot acieve the most accurate results give me your rec". Found (RESEARCH §11): an iPhone Display P3 photo on a
+        wide-gamut screen; the app flattens to sRGB, clipping strong reds/oranges; not the HDR gain map.
+MY REC (shown 2026-10-18): 1. P3 end to end — the display copy keeps P3, canvases in display-p3, the painter in
+        linear P3 (paints converted exactly, ΔE from P3), the eyedropper back to sRGB for matching, exports tagged P3,
+        the AI schemes / AI photo given sRGB; 2. drawing: 5a — a native P3 canvas under Konva (NOT STANDARD; Konva
+        has no color-space option) — or 5b, patch Konva; 3. (right after) the paint on the house now, picked per part,
+        calibrates the light exactly; 4. checks: the user's house in Photos vs the app within ΔE 2, a P3 test image
+        vs Chromium's own rendering within ΔE 1, the painter's tests in P3. Dropped after the attack: the brands' Lab
+        (computed from hex), the HDR gain map (Photos doesn't apply it on this screen), higher bit depth.
+GO:     the user, verbatim: "your rec on all go" (2026-10-18). 5a is NOT STANDARD: asked for the user's word on it
+        by name before it is built (a blanket go doesn't cover it).
+ORDER:  the user, verbatim: "are you doing thsese ? - Show lit and shaded samples next to the chip on the Colors tab ... -
+        A "Light" slider that brightens the photo's lighting"; then "do the stuff that lets use see the rosemary more
+        accuralty first" and "do both" (2026-10-18): the samples and the Light slider first, then 3, then 1, 2, 4.
+STATE:  BUILDING.
+
 ## The server's port clashes with JustWrite's eval [2026-10-18]
 FOUND:  by the JustWrite session (2026-10-18): this app's server port 17497 is JustWrite's eval port
         (`npm run eval`, scripts/eval.js `JW_EVAL_PORT || 17497`), and 17498 its flow tests

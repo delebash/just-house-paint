@@ -750,4 +750,8 @@ Playwright against that server. Screenshots: session e638ccef's scratchpad `real
   - **What it takes:** a display copy kept in Display P3 and canvases opened with `colorSpace: "display-p3"`
     (Chromium since 94; WebKit — webkit.org/blog/12058). Konva 10.9 opens its contexts with only
     `{ willReadFrequently }` (lib/Context.js:668,798) — no color-space option, and no upstream support found.
+  - **Intake without clipping:** `sharp(original).resize().keepIccProfile()` keeps the P3 numbers and the profile
+    (a coral pixel: 139/131/108 in the original, 139/131/108 in the copy, 536-byte profile kept); sharp reading that
+    copy (`.raw()`, what the finder and the AI schemes do) still gets sRGB (141/131/105) — so the server's readers
+    need no change. Today's copy (converted at intake): 140/130/103, no profile.
 
