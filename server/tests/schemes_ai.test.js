@@ -1,0 +1,108 @@
+// SPDX-License-Identifier: MIT
+// AI color schemes (schemes.suggest): the house's facts, the AI's JSON, every color snapped to a
+// real paint, and the refusals (no paints, no parts, no AI set up, an unusable answer).
+import { afterEach, describe, expect, test } from "vitest";
+import { medianColor, parseSchemes, schemeVariables } from "../src/schemes_ai.js";
+import { aiAnswer, jpeg, makeServer } from "./domain_helpers.js";
+import { syntheticPalette } from "./paints/fixtures/palette.js";
+
+let s;
+afterEach(() => {
+  s?.close();
+  aiAnswer.text = "{}";
+  aiAnswer.error = null;
+  aiAnswer.calls.length = 0;
+});
+
+describe("the pieces", () => {
+  test("the median color inside a mask", () => {
+    const rgba = new Uint8ClampedArray([10, 20, 30, 255, 200, 100, 50, 255, 12, 22, 32, 255]);
+    expect(medianColor(rgba, new Uint8Array([255, 0, 255]))).toBe("#0c1620");
+    expect(medianColor(rgba, new Uint8Array([0, 0, 0]))).toBeNull();
+  });
+
+  test("the prompt's variables say what is painted and what stays", () => {
+    const v = schemeVariables(
+      [
+        { label: "body", paintable: true, hex: "#e0d4b5", share: 0.6 },
+        { label: "roof", paintable: false, hex: "#333333", share: 0.3 },
+      ],
+      { mood: "warm and calm", count: 2 },
+    );
+    expect(v.current).toBe("- body: #e0d4b5 (about 60% of the house)\n- roof: #333333 (about 30% of the house)");
+    expect(v.paintable).toBe("body");
+    expect(v.fixed).toBe("roof #333333");
+    expect(v.mood).toBe("The owner would like: warm and calm");
+    expect(v.count).toBe("2");
+  });
+
+  test("the AI's JSON is read through fences and prose; bad schemes are skipped", () => {
+    const text = 'Sure!\n```json\n{"schemes":[{"name":"Sea Breeze","body":"#7fa3b5","trim":"#f4f1e8","accent":"#8b2e2e","why":"Calm."},{"name":"Bad","body":"blue"}]}\n```';
+    expect(parseSchemes(text)).toEqual([{ name: "Sea Breeze", body: "#7fa3b5", trim: "#f4f1e8", accent: "#8b2e2e", why: "Calm." }]);
+    expect(() => parseSchemes("no json here")).toThrow(/holds no JSON/);
+    expect(() => parseSchemes('{"schemes":[{"name":"x","body":"#123456"}]}')).toThrow(/no usable scheme/);
+  });
+});
+
+describe("POST /v1/schemes/ai", () => {
+  async function houseWithParts(withPaints = true) {
+    s = makeServer();
+    const house = await (await s.upload(await jpeg(400, 300))).json();
+    await s.settle((await (await s.json("POST", `/v1/houses/${house.id}/find-parts`)).json()).id);
+    if (withPaints) {
+      const rows = syntheticPalette({ brand: "behr" });
+      const csv = ["code,name,hex,exterior", ...rows.map((r) => `${r.code},${r.name},${r.hex},yes`)].join("\n");
+      const form = new FormData();
+      form.append("file", new Blob([csv]), "t.csv");
+      form.append("brand", "behr");
+      await s.app.request("/v1/paints/import", { method: "POST", body: form });
+    }
+    return house;
+  }
+
+  test("the house's current colors go to the AI; every color comes back as a real paint", async () => {
+    const house = await houseWithParts();
+    aiAnswer.text = JSON.stringify({
+      schemes: [
+        { name: "Harbor", body: "#5b7a8c", trim: "#f2efe6", accent: "#a33a2f", why: "Cool body, crisp trim." },
+        { name: "Sand", body: "#d8c7a3", trim: "#ffffff", accent: "#2f4a3a", why: "Warm and light." },
+      ],
+    });
+    const r = await s.json("POST", "/v1/schemes/ai", { houseId: house.id, brand: "behr", mood: "coastal" });
+    expect(r.status).toBe(200);
+    const out = await r.json();
+    expect(out.usage).toEqual({ prompt_tokens: 120, completion_tokens: 80 });
+    expect(out.schemes.map((x) => x.name)).toEqual(["Harbor", "Sand"]);
+    for (const sc of out.schemes) {
+      expect(sc.complete).toBe(true);
+      for (const role of ["body", "trim", "accent"]) expect(sc.roles[role].paint.id).toMatch(/^behr:/);
+    }
+    const call = aiAnswer.calls[0];
+    expect(call).toMatchObject({ action: "schemes.suggest" });
+    expect(call.variables.current).toContain("- body: #");
+    expect(call.variables.fixed).toBe("nothing named"); // the fake roof covers no pixels
+    expect(call.variables.mood).toBe("The owner would like: coastal");
+  });
+
+  test("it needs the brand's colors and the house's parts", async () => {
+    const house = await houseWithParts(false);
+    expect((await s.json("POST", "/v1/schemes/ai", { houseId: house.id, brand: "behr" })).status).toBe(409);
+    s.close();
+    s = makeServer();
+    const bare = await (await s.upload(await jpeg(100, 80))).json();
+    expect((await s.json("POST", "/v1/schemes/ai", { houseId: bare.id, brand: "behr" })).status).toBe(409);
+    expect((await s.json("POST", "/v1/schemes/ai", { houseId: bare.id, brand: "" })).status).toBe(422);
+  });
+
+  test("no AI set up is a 501; an unusable answer a 502", async () => {
+    const house = await houseWithParts();
+    aiAnswer.error = Object.assign(new Error("no provider"), { name: "LLMNotConfiguredError" });
+    expect((await s.json("POST", "/v1/schemes/ai", { houseId: house.id, brand: "behr" })).status).toBe(501);
+    aiAnswer.error = null;
+    aiAnswer.text = "I can't help with that.";
+    const bad = await s.json("POST", "/v1/schemes/ai", { houseId: house.id, brand: "behr" });
+    expect(bad.status).toBe(502);
+    expect((await bad.json()).type).toMatch(/ai-answer-unusable$/);
+  });
+
+});

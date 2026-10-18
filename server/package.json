@@ -3,13 +3,23 @@
   "version": "0.0.1",
   "private": true,
   "type": "module",
-  "description": "The template app's Node server — every family app's server has this shape: Hono on the kit's platform, run by the desktop app in a utilityProcess, headless as `just-house-paint-server serve`, or `npm run server` in a checkout. Its own package because the packaged app installs only what src-electron/package.json names (app-structure §Q.3).",
+  "description": "Just House Paint's Node server — Hono on the kit's platform, run by the desktop app in a utilityProcess, headless as `just-house-paint-server serve`, or `npm run server` in a checkout. It owns the houses, the paint lists, the part finder (SAM 3 on ONNX Runtime) and the AI photo (stable-diffusion.cpp). Its own package because the packaged app installs only what src-electron/package.json names (app-structure §Q.3).",
   "license": "MIT",
   "exports": {
     "./serve": "./src/serve.js",
-    "./schemas/*.js": "./src/schemas/*.js"
+    "./schemas/*.js": "./src/schemas/*.js",
+    "./shared/*.js": "./src/shared/*.js"
   },
   "dependencies": {
-    "@delebash/core": "file:../../just-core/packages/core"
+    "@delebash/core": "file:../../just-core/packages/core",
+    "@huggingface/tokenizers": "^0.2.0",
+    "csv-parse": "^7.0.3",
+    "culori": "^4.0.2",
+    "onnxruntime-node": "^1.30.0",
+    "read-excel-file": "^9.3.12",
+    "sharp": "^0.35.5"
+  },
+  "devDependencies": {
+    "write-excel-file": "^4.1.1"
   }
 }

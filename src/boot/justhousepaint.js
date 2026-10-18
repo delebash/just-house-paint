@@ -26,6 +26,7 @@ import {
   startWarmOnBoot,
   tooltipDirective,
 } from "@delebash/ui";
+import VueKonva from "vue-konva";
 import { i18n } from "../i18n/index.js";
 import { hasDoc, loadDoc, titleForSlug } from "../services/helpDocs.js";
 import { hasShell, openPath, openUrl, saveFile, shellServerUrl } from "../services/native.js";
@@ -52,6 +53,8 @@ async function boot({ app, router, store: pinia }) {
   });
 
   installErrorReporting(app);
+  // The house page's canvas (components/HouseCanvas.vue): Konva's <v-stage>, <v-layer>, … (vue-konva)
+  app.use(VueKonva);
   app.directive("tooltip", tooltipDirective);
   // Every file the app makes (Settings → Backups) goes through the kit's saveBlob: the shell's
   // Save-as dialog in the desktop app, a browser download elsewhere (§5, door 3).

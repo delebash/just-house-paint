@@ -1,11 +1,12 @@
 <script setup>
 // SPDX-License-Identifier: MIT
-// Settings → General — the app's own settings (/v1/settings, a schema per key; family rule 1: a
-// value a user might change is a seeded row, never a constant). The §15 form: the rules are the
-// route's own schema (`schemaRules(SettingsPatch)` from the server package), a 422 lands under its
-// field (`fieldErrors`), any other failure goes through `reportError`, Save is disabled while it
-// runs and sits on the row of the field it saves.
-import { fieldErrors, reportError, schemaRules, UiButton, UiField, UiNumber } from "@delebash/ui";
+// Settings → General — the app's own settings that are numbers or switches (/v1/settings, a schema
+// per key; family rule 1: a value a user might change is a seeded row, never a constant). The §15
+// form: the rules are the route's own schema (`schemaRules(SettingsPatch)` from the server
+// package), a 422 lands under its field (`fieldErrors`), any other failure goes through
+// `reportError`, Save is disabled while it runs. The structured settings (the finder's parts, the
+// scheme rules, the AI photo's prompts) are Settings → Advanced.
+import { fieldErrors, reportError, schemaRules, UiButton, UiField, UiNumber, UiToggle } from "@delebash/ui";
 import { SettingsPatch } from "just-house-paint-server/schemas/settings.js";
 import { computed, onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
@@ -14,19 +15,28 @@ import { useSettingsStore } from "../../stores/settings.js";
 const { t } = useI18n();
 const settings = useSettingsStore();
 
-const KEY = "notes.pageSize";
+// [card, [[key, kind]]] — the words are settings.general.<card>.* and settings.general.fields.<key>
+const GROUPS = [
+  ["photos", [["photos.displayMax", "number"], ["photos.thumbMax", "number"], ["photos.jpegQuality", "number"], ["photos.maxMegabytes", "number"]]],
+  ["designs", [["designs.maxPerHouse", "number"], ["paints.maxImportMegabytes", "number"]]],
+  ["finder", [["finder.useGpu", "toggle"], ["finder.idleMinutes", "number"]]],
+  ["aiphoto", [["aiphoto.workingPixels", "number"]]],
+];
+const KEYS = GROUPS.flatMap(([, fields]) => fields.map(([key]) => key));
+const idOf = (key) => `setting-${key.replace(".", "-")}`;
+
 const rules = schemaRules(SettingsPatch);
-const draft = reactive({ [KEY]: null });
+const draft = reactive(Object.fromEntries(KEYS.map((k) => [k, null])));
 const serverErrors = ref({});
 const saving = ref(false);
 const loaded = ref(false);
 
-const changed = computed(() => loaded.value && draft[KEY] !== settings.values[KEY]);
+const changes = computed(() => (loaded.value ? Object.fromEntries(KEYS.filter((k) => draft[k] !== settings.values[k]).map((k) => [k, draft[k]])) : {}));
 
 onMounted(async () => {
   try {
     await settings.load();
-    draft[KEY] = settings.values[KEY] ?? null;
+    for (const k of KEYS) draft[k] = settings.values[k] ?? null;
     loaded.value = true;
   } catch (e) {
     reportError(e);
@@ -37,33 +47,46 @@ async function save() {
   saving.value = true;
   serverErrors.value = {};
   try {
-    await settings.save({ [KEY]: draft[KEY] });
-    draft[KEY] = settings.values[KEY];
+    await settings.save(changes.value);
+    for (const k of KEYS) draft[k] = settings.values[k];
   } catch (e) {
     const fields = fieldErrors(e);
-    if (fields[KEY]) serverErrors.value = fields;
-    else reportError(e);
+    const mine = Object.fromEntries(Object.entries(fields).filter(([k]) => KEYS.includes(k)));
+    serverErrors.value = mine;
+    if (!Object.keys(mine).length) reportError(e);
   } finally {
     saving.value = false;
   }
 }
+
+function edited(key) {
+  if (serverErrors.value[key]) serverErrors.value = { ...serverErrors.value, [key]: undefined };
+}
 </script>
 
 <template>
-  <section class="card">
-    <h2>{{ t("settings.general.notesTitle") }}</h2>
-    <p class="hint">{{ t("settings.general.notesHint") }}</p>
-    <q-form class="form" greedy @submit="save">
+  <q-form class="form" greedy @submit="save">
+    <section v-for="[group, fields] in GROUPS" :key="group" class="card">
+      <h2>{{ t(`settings.general.${group}.title`) }}</h2>
+      <p class="hint">{{ t(`settings.general.${group}.hint`) }}</p>
       <div class="form__row">
-        <UiField :label="t('settings.general.pageSize')" layout="block" for="setting-page-size">
-          <UiNumber
-            id="setting-page-size" v-model="draft[KEY]" width="num" :disabled="!loaded" lazy-rules
-            :rules="rules[KEY]" :error="!!serverErrors[KEY]" :error-message="serverErrors[KEY]"
-            @update:model-value="serverErrors = {}"
-          />
-        </UiField>
-        <UiButton type="submit" intent="primary" :disabled="saving || !changed" :label="saving ? t('kit.common.saving') : t('kit.common.save')" />
+        <template v-for="[key, kind] in fields" :key="key">
+          <label v-if="kind === 'toggle'" class="toggle-row">
+            <UiToggle v-model="draft[key]" :disabled="!loaded" :aria-label="t(`settings.general.fields.${key}`)" @update:model-value="edited(key)" />
+            <span>{{ t(`settings.general.fields.${key}`) }}</span>
+          </label>
+          <UiField v-else :label="t(`settings.general.fields.${key}`)" layout="block" :for="idOf(key)">
+            <UiNumber
+              :id="idOf(key)" v-model="draft[key]" width="num" :disabled="!loaded" lazy-rules
+              :rules="rules[key]" :error="!!serverErrors[key]" :error-message="serverErrors[key]"
+              @update:model-value="edited(key)"
+            />
+          </UiField>
+        </template>
       </div>
-    </q-form>
-  </section>
+    </section>
+    <div class="form__actions settings__save">
+      <UiButton type="submit" intent="primary" :disabled="saving || !Object.keys(changes).length" :label="saving ? t('kit.common.saving') : t('kit.common.save')" />
+    </div>
+  </q-form>
 </template>

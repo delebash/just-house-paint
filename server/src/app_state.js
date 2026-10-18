@@ -1,14 +1,19 @@
 // SPDX-License-Identifier: MIT
-// Application-wide state — the family setState/getState seam (JW, JV, docgen): the data folder and
-// the open database, set once by createApp and read by the routes and the stores' callers.
+// Application-wide state — the family setState/getState seam (JW, JV, docgen): the data folder,
+// the open database and the house-paint services (services.js — the jobs, the part finder, the AI
+// photo, the settings readers), set once by createApp and read by the routes.
 
 import { RuntimeError } from "@delebash/core/platform/py";
 
 export class AppState {
-  /** @param {string} dataDir  @param {object} db the kit's database handle (platform/sql.js) */
-  constructor(dataDir, db) {
+  /**
+   * @param {string} dataDir  @param {object} db the kit's database handle (platform/sql.js)
+   * @param {object} services services.js createServices — each becomes a field (`state.jobs`, …)
+   */
+  constructor(dataDir, db, services = {}) {
     this.dataDir = dataDir;
     this.db = db;
+    Object.assign(this, services);
   }
 }
 

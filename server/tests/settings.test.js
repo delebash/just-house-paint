@@ -22,20 +22,20 @@ test("every setting has a schema and a seeded first value", async () => {
 });
 
 test("a change is kept, and a reseed never overwrites it", async () => {
-  const r = await client.patch("/v1/settings", { json: { "notes.pageSize": 50 } });
+  const r = await client.patch("/v1/settings", { json: { "designs.maxPerHouse": 50 } });
   expect(r.statusCode).toBe(200);
-  expect(r.json()["notes.pageSize"]).toBe(50);
+  expect(r.json()["designs.maxPerHouse"]).toBe(50);
   expect(seedSettings(getDb())).toBe(0);
-  expect((await client.get("/v1/settings")).json()["notes.pageSize"]).toBe(50);
+  expect((await client.get("/v1/settings")).json()["designs.maxPerHouse"]).toBe(50);
 });
 
 test("a value outside its schema is a 422 with the limit", async () => {
-  const r = await client.patch("/v1/settings", { json: { "notes.pageSize": 500 } });
+  const r = await client.patch("/v1/settings", { json: { "designs.maxPerHouse": 500 } });
   expect(r.statusCode).toBe(422);
   expect(r.json().errors).toEqual([
-    { loc: ["body", "notes.pageSize"], msg: "Input should be less than or equal to 100", type: "less_than_equal", ctx: { le: 100 } },
+    { loc: ["body", "designs.maxPerHouse"], msg: "Input should be less than or equal to 200", type: "less_than_equal", ctx: { le: 200 } },
   ]);
-  const half = await client.patch("/v1/settings", { json: { "notes.pageSize": 7.5 } });
+  const half = await client.patch("/v1/settings", { json: { "designs.maxPerHouse": 7.5 } });
   expect(half.json().errors[0].type).toBe("int_from_float");
 });
 

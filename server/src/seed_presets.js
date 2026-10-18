@@ -27,22 +27,11 @@ export const DEFAULT_ENGINE_PRESETS = [
     think: false,
     samplers: { min_p: "0.05" },
   },
-  // Short, factual answers — a note's title. Low temperature, no thinking: it's latency-bound.
-  {
-    id: "p_short",
-    name: "Short answers",
-    provider_id: "local-llamacpp",
-    model: "",
-    temperature: 0.3,
-    top_p: 0.9,
-    position: 1,
-    think: false,
-    samplers: { min_p: "0.05" },
-  },
 ];
 
 export const DEFAULT_FEATURE_PRESETS = {
-  "notes.suggestTitle": "p_short",
+  // Color schemes want some variety (temperature 0.7) and a quick answer (no thinking).
+  "schemes.suggest": "p_general",
 };
 
 export const DEFAULT_PRESET_ID = "p_general";

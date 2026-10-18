@@ -98,14 +98,18 @@ body {
 .form__actions { display: flex; justify-content: flex-end; gap: var(--sp-2); margin-top: var(--sp-2); }
 .toggle-row { display: flex; align-items: center; gap: 10px; margin-top: var(--sp-3); cursor: pointer; }
 
-/* ── Notes ─────────────────────────────────────────────────────────────── */
-/* the page is as wide as its list, so New note sits at the list's right edge */
+/* ── Your houses, Paint colors ───────────────────────────────────────── */
+/* a content page is as wide as its list, so its header buttons sit at the list's right edge */
 .page--content { max-width: var(--w-edit); }
-.notes { position: relative; min-height: 160px; }
-.notes__tools { display: flex; align-items: center; gap: var(--sp-2); margin-bottom: 10px; }
-.notes__title { display: inline-flex; align-items: center; gap: 6px; }
-.notes__pin { color: var(--accent); }
-.notes__actions { display: inline-flex; gap: 2px; }
+.houses { position: relative; min-height: 160px; }
+/* Quasar's QFile, opened by a button (its pickFiles()) — never shown itself */
+.houses__picker { display: none; }
+.houses__grid { display: flex; flex-wrap: wrap; gap: var(--sp-4); align-items: flex-start; }
+.houses__card { width: 260px; }
+.houses__open { cursor: pointer; }
+.houses__meta { padding: var(--sp-2) var(--sp-3) 0; }
+.houses__name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.houses__actions { justify-content: flex-end; padding: 0 var(--sp-2) var(--sp-1); }
 
 /* ── Settings, AI ───────────────────────────────────────────────────────── */
 .settings { display: flex; flex-direction: column; height: 100%; min-height: 0; }

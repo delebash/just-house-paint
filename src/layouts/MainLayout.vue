@@ -3,7 +3,7 @@
 // The app's chrome — Quasar's layout as its CLI creates it (app-structure §Q.1), carrying the
 // standard chrome every family app has (§11; docgen's layouts/MainLayout.vue is the donor):
 //   - the title bar (components/TitleBar.vue — the kit's frame, the mode cycler, AiStatusButton);
-//   - the nav in the drawer: Home and Notes, then the kit's "AI Settings" / "App Settings", then
+//   - the nav in the drawer: Your houses and Paint colors, then the kit's "AI Settings" / "App Settings", then
 //     the "AI tasks" row, which spreads the kit's navAttrs (its data-panel-toggle keeps the panel
 //     from closing on the very click that opens it) — Quasar's QList/QItem, so the rows are
 //     Quasar's own links;
@@ -31,8 +31,8 @@ const router = useRouter();
 // The app's pages, then the family's two (their words are the kit's, `kit.nav.*`, the same in
 // every app). Icon names are ids, not words.
 const NAV = computed(() => [
-  { to: "/", label: t("nav.home"), icon: "Home", exact: true },
-  { to: "/notes", label: t("nav.notes"), icon: "Note" },
+  { to: "/", label: t("nav.houses"), icon: "Home", exact: true },
+  { to: "/colors", label: t("nav.colors"), icon: "Palette" },
 ]);
 const TOOLS = computed(() => [
   { to: "/ai", label: t("kit.nav.aiSettings"), icon: "Cpu" },
@@ -123,7 +123,7 @@ onBeforeUnmount(() => {
 
     <LlmUiHosts />
     <HelpDrawer />
-    <!-- The once-ever AI offer (ruling R3): opened by the first note's save on a machine with no
+    <!-- The once-ever AI offer (ruling R3): opened by the first house added on a machine with no
          default AI provider; the flag is kept whatever the user picks. -->
     <AiSetupOffer
       v-if="ui.aiOfferOpen" :app-name="t('app.name')"

@@ -3,19 +3,24 @@
     "group": "Start here",
     "items": [
       { "slug": "getting-started", "title": "Getting started" },
+      { "slug": "your-houses", "title": "Your houses" },
+      { "slug": "finding-parts", "title": "Finding the parts" }
+    ]
+  },
+  {
+    "group": "Painting",
+    "items": [
+      { "slug": "painting", "title": "Painting your house" },
+      { "slug": "paint-colors", "title": "Paint colors" },
+      { "slug": "color-schemes", "title": "Color schemes" },
+      { "slug": "ai-photo", "title": "The AI photo" }
+    ]
+  },
+  {
+    "group": "AI and help",
+    "items": [
       { "slug": "ai-providers", "title": "Set up the AI" },
-      { "slug": "ai-features", "title": "The AI features" }
-    ]
-  },
-  {
-    "group": "Using the app",
-    "items": [
-      { "slug": "notes", "title": "Notes" }
-    ]
-  },
-  {
-    "group": "Reference",
-    "items": [
+      { "slug": "ai-features", "title": "The AI features" },
       { "slug": "troubleshooting", "title": "Troubleshooting" },
       { "slug": "whats-new", "title": "What's new" }
     ]

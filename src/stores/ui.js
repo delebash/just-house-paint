@@ -18,15 +18,18 @@ export const useUiStore = defineStore("ui", {
     keepServerRunning: readPref("keepServerRunning", false) === true,
     // the interface language the user picked (Settings → Appearance); null = English
     locale: readPref("locale", null),
+    // the house page's Texture slider: how much of the photo's light and grain shows through the
+    // paint (0 flat paint – 1 all of it; services/tint.js)
+    texture: Number(readPref("texture", 1)),
   }),
   actions: {
     boot() {
       applyAppearance(this.appearance);
       if (this.locale && LOCALE_CODES.includes(this.locale)) i18n.global.locale.value = this.locale;
     },
-    /** The once-ever AI offer, at this app's first-note moment (pages/NotesPage.vue, after a note is
-     *  created — docgen's is Setup's first save, JustWrite's the first project): shown only when no
-     *  AI provider is the default at all — an online default is AI too (§11). */
+    /** The once-ever AI offer, at this app's first-house moment (pages/HomePage.vue, after the first
+     *  photo is added — docgen's is Setup's first save, JustWrite's the first project): shown only
+     *  when no AI provider is the default at all — an online default is AI too (§11). */
     async maybeOfferAiSetup() {
       if (this.aiOfferShown) return;
       try {
@@ -44,6 +47,10 @@ export const useUiStore = defineStore("ui", {
     markAiOfferShown() {
       this.aiOfferShown = true;
       writePref("aiOfferShown", true);
+    },
+    setTexture(v) {
+      this.texture = Math.min(1, Math.max(0, Number(v) || 0));
+      writePref("texture", this.texture);
     },
     setKeepServerRunning(v) {
       this.keepServerRunning = !!v;

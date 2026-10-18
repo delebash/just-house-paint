@@ -1,7 +1,7 @@
 {
   "name": "just-house-paint",
   "version": "0.0.1",
-  "description": "The family's reference app — every new family app starts as a copy of it.",
+  "description": "Just House Paint — see your house in real brand paint colors: it finds the house's parts in your photo, paints them with real paints, suggests color schemes and can make an AI photo.",
   "productName": "Just House Paint",
   "author": "delebash",
   "license": "MIT",
@@ -33,11 +33,14 @@
     "@floating-ui/dom": "^1.8.0",
     "@quasar/extras": "^2.1.0",
     "@vueuse/core": "^15.0.0",
+    "culori": "^4.0.2",
+    "konva": "^10.9.0",
     "marked": "^18.1.0",
     "pinia": "^4.0.3",
     "quasar": "^2.35.0",
     "vue": "^3.5.43",
     "vue-i18n": "^11.4.14",
+    "vue-konva": "^4.0.1",
     "vue-router": "^5.4.0"
   },
   "devDependencies": {
@@ -67,6 +70,7 @@
     "better-sqlite3": true,
     "koffi": true,
     "esbuild": true,
-    "@parcel/watcher": true
+    "@parcel/watcher": true,
+    "onnxruntime-node": false
   }
 }

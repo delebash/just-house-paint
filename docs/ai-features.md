@@ -4,11 +4,15 @@ Each AI feature is a row under **AI Settings → Routing by feature**, with its 
 the model and settings it runs on. One model can serve every feature, or a feature can point at a
 stronger one.
 
-## Suggest a note title
+## Suggest color schemes
 
-The **Suggest a title** button in the note editor ([Notes](notes.md)). It reads the note's text
-and answers with a short title in the note's own language. It runs on the **Short answers**
-preset: a low temperature and no thinking, because a title should come back quickly.
+**Suggest schemes** on a house's **Schemes** tab ([Color schemes](color-schemes.md)). The app tells
+the AI the house's current colors — read from your photo, part by part — which parts will be
+painted and what you'd like, and asks for schemes as JSON; it matches every color to the brand's
+nearest real paint. It runs on the **General** preset.
+
+The AI photo isn't an AI feature in this sense: it runs its own image model on your computer — see
+[The AI photo](ai-photo.md).
 
 ## Changing what a feature says or runs on
 

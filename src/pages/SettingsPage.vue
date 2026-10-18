@@ -4,6 +4,7 @@
 // top) over JustWrite's /settings/:section? route, the sections in services/settingsSections.js's
 // order (the canon test asserts it). Each section names its donor:
 //   General    — this app's own settings (components/settings/GeneralSection.vue);
+//   Advanced   — the structured ones, as JSON (components/settings/AdvancedSection.vue);
 //   Appearance — the kit's AppearancePanel + LanguagePicker (JustVoice's rows, one shared surface);
 //   Backups    — the kit's DataManagement over the server's /v1/data;
 //   Storage    — JustWrite's Data location + Disk usage (StorageSection.vue);
@@ -29,6 +30,7 @@ import { computed, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import AboutSection from "../components/settings/AboutSection.vue";
+import AdvancedSection from "../components/settings/AdvancedSection.vue";
 import GeneralSection from "../components/settings/GeneralSection.vue";
 import ServerSection from "../components/settings/ServerSection.vue";
 import StorageSection from "../components/settings/StorageSection.vue";
@@ -46,7 +48,7 @@ const { t } = useI18n();
 // The family's sections take the kit's words (`kit.settingsSections.*`); the app's own its own,
 // one t() per section so the i18n report sees each key.
 const FAMILY = new Set(SETTINGS_SECTION_ORDER);
-const OWN = computed(() => ({ general: t("settings.sections.general") }));
+const OWN = computed(() => ({ general: t("settings.sections.general"), advanced: t("settings.sections.advanced") }));
 const SECTIONS = computed(() =>
   SETTINGS_SECTION_IDS.map((id) => ({ id, label: FAMILY.has(id) ? t(`kit.settingsSections.${id}`) : OWN.value[id] })),
 );
@@ -79,6 +81,7 @@ watch(
     <PaneHeader :eyebrow="t('app.name')" :title="t('settings.title')" help-key="getting-started" />
     <SettingsShell :sections="SECTIONS" :model-value="active" @update:model-value="go">
       <GeneralSection v-if="active === 'general'" />
+      <AdvancedSection v-else-if="active === 'advanced'" />
 
       <template v-else-if="active === 'appearance'">
         <section class="card">

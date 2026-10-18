@@ -50,10 +50,14 @@ test("Settings builds its sections from settingsSections.js, with the kit's word
   }
 });
 
-test("the form's rules are the route's schema, imported from the server package", () => {
-  const dialog = read("src/components/NoteDialog.vue");
-  assert.ok(dialog.includes('from "just-house-paint-server/schemas/notes.js"'), "NoteIn comes from the server package");
-  assert.ok(dialog.includes("schemaRules(NoteIn)"), "the rules are schemaRules(NoteIn)");
+test("the forms' rules are the routes' schemas, imported from the server package", () => {
+  const home = read("src/pages/HomePage.vue");
+  assert.ok(home.includes('from "just-house-paint-server/schemas/houses.js"'), "HousePatch comes from the server package");
+  assert.ok(home.includes("schemaRules(HousePatch)"), "the rename's rule is schemaRules(HousePatch)");
+  const dialog = read("src/components/NameDialog.vue");
   assert.ok(dialog.includes("fieldErrors(") && dialog.includes("reportError("), "422s under their fields, the rest through reportError");
-  assert.ok(dialog.includes("runAiFeature("), "the AI feature runs through the kit's runner");
+  const general = read("src/components/settings/GeneralSection.vue");
+  assert.ok(general.includes("schemaRules(SettingsPatch)"), "Settings → General's rules are the route's schema");
+  const schemes = read("src/components/SchemesTab.vue");
+  assert.ok(schemes.includes("withAiTask("), "the AI schemes run through the kit's runner");
 });

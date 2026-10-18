@@ -1,0 +1,26 @@
+# The AI photo
+
+**AI photo** makes a new picture of your house with the colors you picked, drawn by an image model
+(FLUX.2 [klein] 4B) on your own computer. It repaints only inside the parts' outlines and puts your
+original photo back everywhere else, then locks the painted areas to the paint colors.
+
+Use it to see a whole scheme with the model's own sense of light. Its colors are approximate: the
+model decides how the light falls, so one paint can look lighter on one wing than another. The
+painted photo on the house page is the color-accurate view.
+
+## Installing it
+
+The first time, **AI photo** offers to download the engine (stable-diffusion.cpp) and the model —
+about 9 GB, once. It needs a graphics card (NVIDIA, or one that supports Vulkan) with 8 GB of
+memory; on a computer without one, a picture would take about ten minutes, and the app says so
+before you install.
+
+## Making one
+
+Pick colors for the parts, then press **AI photo**. It takes about 20 seconds on an RTX 2070-class
+card and shows under **AI tasks** while it runs. Before it starts, the app frees the graphics card
+— the part finder and a local AI model let go of it, and load again when next needed. The picture
+opens when it is done, with **Save image**; every AI photo is kept on the house's **Designs** tab.
+
+The size the AI draws at, its prompts and how its picture is put back on your photo are in
+**App Settings → General** and **Advanced**.

@@ -8,15 +8,16 @@
 //
 // The prompt text is what the model reads, so it stays English on purpose (§Q.11).
 
-const SUGGEST_TITLE_SYSTEM = `You suggest a title for a note.
-Reply with the title only: at most eight words, no quotation marks, no ending punctuation.
-Write it in the language the note is written in.`;
+import { SCHEMES_FEATURE, SCHEMES_PROMPT } from "./schemes_ai.js";
 
 export const DEFAULT_FEATURE_PROMPTS = {
-  "notes.suggestTitle": {
-    feature: "notes.suggestTitle",
-    system: SUGGEST_TITLE_SYSTEM,
-    user_template: "{{body}}",
-    json_mode: false,
+  // Color schemes for a house: the variables are schemes_ai.js schemeVariables' (the house's
+  // current colors, what is repainted, what stays, the owner's mood, how many). The answer is
+  // JSON the server reads (parseSchemes).
+  [SCHEMES_FEATURE]: {
+    feature: SCHEMES_FEATURE,
+    system: SCHEMES_PROMPT.system,
+    user_template: SCHEMES_PROMPT.user,
+    json_mode: true,
   },
 };

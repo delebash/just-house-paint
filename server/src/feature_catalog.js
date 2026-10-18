@@ -11,12 +11,13 @@
 import { FeatureCatalogEntry } from "@delebash/core/llm";
 
 export const FEATURE_CATALOG = [
-  // The Notes page's "Suggest a title" (pages/NotesPage.vue through the kit's runAiFeature): the
+  // The house page's "Ask the AI" color schemes (POST /v1/schemes/ai, run in the server through the
+  // kit's runAction — the server reads the house's colors and snaps the answer to real paints): the
   // action key is the feature key, so the Workbench shows this label for it.
   FeatureCatalogEntry({
-    key: "notes.suggestTitle",
-    label: "Suggest a note title",
-    hint: "Suggests a short title for a note from what it says — the Suggest a title button in the note editor.",
-    group: "Notes",
+    key: "schemes.suggest",
+    label: "Suggest color schemes",
+    hint: "Suggests exterior color schemes that suit the house's roof, stone and other parts that stay — Ask the AI on a house's Schemes tab.",
+    group: "Color schemes",
   }),
 ];

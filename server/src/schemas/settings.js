@@ -1,14 +1,51 @@
 // SPDX-License-Identifier: MIT
-// The app's settings — one schema per key (app-structure §16). A key is a `settings` row seeded
-// with its first value (database/seed.js SETTING_DEFAULTS); /v1/settings reads and writes only the
-// keys listed here, and Settings → General builds its form rules from the same schemas.
+// The app's settings — one schema per key (app-structure §16, family rule 1: a value a user might
+// change is a row, seeded, editable in Settings). A key is a `settings` row seeded with its first
+// value (database/seed.js SETTING_DEFAULTS); /v1/settings reads and writes only the keys listed
+// here, and Settings builds its form rules from the same schemas.
 // Browser-safe: this file imports only the kit's `platform/schema` (TypeBox).
 
 import { opt, strictObject, T } from "@delebash/core/platform/schema";
+import { PART_KEY } from "./houses.js";
+
+const PartKey = T.String({ pattern: PART_KEY });
+
+/** One part the finder looks for: its words to the model, its threshold, whether it is painted. */
+export const PartRule = strictObject({
+  key: PartKey,
+  labelKey: T.String({ minLength: 1, maxLength: 80 }),
+  prompts: T.Array(T.String({ minLength: 1, maxLength: 60 }), { minItems: 1, maxItems: 6 }),
+  threshold: opt(T.Number({ exclusiveMinimum: 0, exclusiveMaximum: 1 })),
+  paintable: T.Boolean(),
+  group: T.String({ minLength: 1, maxLength: 40 }),
+  method: opt(T.Union([T.Literal("text"), T.Literal("subtract")])),
+});
 
 export const SETTINGS = {
-  // Notes per page in the Notes list.
-  "notes.pageSize": T.Integer({ minimum: 5, maximum: 100 }),
+  // The photo copies made when a photo is added.
+  "photos.displayMax": T.Integer({ minimum: 512, maximum: 4096 }),
+  "photos.thumbMax": T.Integer({ minimum: 128, maximum: 1024 }),
+  "photos.jpegQuality": T.Integer({ minimum: 50, maximum: 100 }),
+  "photos.maxMegabytes": T.Integer({ minimum: 1, maximum: 200 }),
+  "designs.maxPerHouse": T.Integer({ minimum: 1, maximum: 200 }),
+  "paints.maxImportMegabytes": T.Integer({ minimum: 1, maximum: 200 }),
+  // The part finder: what it looks for (each part's prompts and threshold), which part keeps a
+  // pixel two parts claim, whether the graphics card does the photo's encode, and when it lets go.
+  "finder.parts": T.Array(PartRule, { minItems: 1, maxItems: 40 }),
+  "finder.priority": T.Array(PartKey, { maxItems: 40 }),
+  "finder.useGpu": T.Boolean(),
+  "finder.idleMinutes": T.Integer({ minimum: 1, maximum: 240 }),
+  // Color schemes: which parts each role paints, and the harmony rules. (The AI's prompt is the
+  // kit's prompt row `schemes.suggest`, edited in the AI Lab.)
+  "schemes.roleParts": strictObject({ body: T.Array(PartKey), trim: T.Array(PartKey), accent: T.Array(PartKey) }),
+  "schemes.harmony": T.Record(
+    T.String({ maxLength: 40 }),
+    T.Union([T.Number(), T.Boolean(), T.String({ maxLength: 40 }), T.Array(T.String({ maxLength: 40 }))]),
+  ),
+  // The AI photo: the model's working size (pixels), its prompt templates, how it is put back.
+  "aiphoto.workingPixels": T.Integer({ minimum: 256 * 256, maximum: 1600 * 1200 }),
+  "aiphoto.templates": T.Record(T.String({ maxLength: 40 }), T.String({ maxLength: 2000 })),
+  "aiphoto.compose": T.Record(T.String({ maxLength: 40 }), T.Union([T.Number(), T.Boolean(), T.Array(T.Number())])),
 };
 
 export const SETTING_KEYS = Object.keys(SETTINGS);

@@ -33,9 +33,15 @@ import {
 import { purePath } from "@delebash/core/platform/data_paths";
 import { HttpError } from "@delebash/core/platform/errors";
 import { getLogger } from "@delebash/core/platform/log";
+import { router as designsRouter } from "./api/designs_api.js";
+import { router as enginesRouter } from "./api/engines_api.js";
 import { router as healthRouter } from "./api/health_api.js";
-import { router as notesRouter } from "./api/notes_api.js";
+import { router as housesRouter } from "./api/houses_api.js";
+import { router as jobsRouter } from "./api/jobs_api.js";
+import { router as paintsRouter } from "./api/paints_api.js";
+import { router as partsRouter } from "./api/parts_api.js";
 import { router as prefsRouter } from "./api/prefs_api.js";
+import { router as schemesAiRouter } from "./api/schemes_ai_api.js";
 import { router as serverAuthRouter } from "./api/server_auth_api.js";
 import { router as settingsRouter } from "./api/settings_api.js";
 import { AppState, setState } from "./app_state.js";
@@ -53,6 +59,7 @@ import {
   DEFAULT_PRESET_ID,
   MODEL_CATALOG,
 } from "./seed_presets.js";
+import { createServices } from "./services.js";
 import { PRODUCT } from "./version.js";
 
 const log = getLogger("just_house_paint.app");
@@ -108,8 +115,11 @@ const llmArgs = (db, dataDir) => ({
   classTuneIdentity: CLASS_TUNE_IDENTITY,
 });
 
-/** The Hono app, not yet listening. `dataDir` defaults to the family data-folder ladder. */
-export async function createApp(dataDir = null) {
+/**
+ * The Hono app, not yet listening. `dataDir` defaults to the family data-folder ladder; `services`
+ * replaces some of services.js's (a test's fake part finder, AI photo, fetch or AI run).
+ */
+export async function createApp(dataDir = null, { services = {} } = {}) {
   dataDir = dataDir ? purePath(String(dataDir)) : defaultDataDir();
 
   // 1. Server logs → the in-memory ring (Settings → Logs) and a day file that survives a crash.
@@ -129,9 +139,9 @@ export async function createApp(dataDir = null) {
   app.use("*", starletteCors({ allowOrigins: ["*"], allowMethods: ["*"], allowHeaders: ["*"] }));
   app.use("*", bearerAuth({ readAuth, typeBase: TYPE_BASE, loopbackOpenPaths: [SHUTDOWN_PATH] }));
 
-  // 4. The database and the app state the routes read.
+  // 4. The database and the app state the routes read: the house-paint services ride on it.
   const db = openAppDatabase(dataDir);
-  setState(new AppState(dataDir, db));
+  setState(new AppState(dataDir, db, createServices({ db, dataDir }, services)));
 
   // 5. The family routers.
   app.route("/", healthRouter());
@@ -151,7 +161,13 @@ export async function createApp(dataDir = null) {
 
   // 7. The app's own routes.
   app.route("/", settingsRouter());
-  app.route("/", notesRouter());
+  app.route("/", housesRouter());
+  app.route("/", partsRouter());
+  app.route("/", designsRouter());
+  app.route("/", jobsRouter());
+  app.route("/", paintsRouter());
+  app.route("/", schemesAiRouter());
+  app.route("/", enginesRouter());
 
   // 8. The built UI, served for the headless path — a browser at this address is the whole app.
   // Every /v1 route above wins first (Hono runs routes in the order added).

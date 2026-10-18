@@ -10,14 +10,41 @@
 
 import { loadFromConfigs, seedLlm, stores } from "@delebash/core/llm";
 import { getLogger } from "@delebash/core/platform/log";
+import { DEFAULT_COMPOSE, DEFAULT_WORKING_SIZE } from "../aiphoto/pixels.js";
+import { DEFAULT_PROMPT_TEMPLATES } from "../aiphoto/prompts.js";
+import { DEFAULT_PART_PRIORITY } from "../finder.js";
+import { HARMONY_DEFAULTS } from "../paints/index.js";
+import { DEFAULT_PARTS } from "../segment/parts.js";
 import { insertSettingIfMissing } from "./settings.js";
 
 const log = getLogger("just_house_paint.seed");
 
-/** The app's settings and their first values — each key has its schema in schemas/settings.js. */
+const plain = (v) => JSON.parse(JSON.stringify(v));
+
+/**
+ * The app's settings and their first values — each key has its schema in schemas/settings.js. The
+ * numbers are the measured ones (docs/dev/RESEARCH.md) or the engines' own.
+ */
 export const SETTING_DEFAULTS = {
-  // Notes per page in the Notes list (Settings → General).
-  "notes.pageSize": 25,
+  "photos.displayMax": 2048,
+  "photos.thumbMax": 480,
+  "photos.jpegQuality": 88,
+  "photos.maxMegabytes": 40,
+  "designs.maxPerHouse": 30,
+  "paints.maxImportMegabytes": 30,
+  "finder.parts": plain(DEFAULT_PARTS),
+  "finder.priority": [...DEFAULT_PART_PRIORITY],
+  "finder.useGpu": true,
+  "finder.idleMinutes": 10,
+  "schemes.roleParts": {
+    body: ["body", "chimney", "garageDoor"],
+    trim: ["trim", "columns", "railings", "gutters"],
+    accent: ["frontDoor", "shutters"],
+  },
+  "schemes.harmony": plain(HARMONY_DEFAULTS),
+  "aiphoto.workingPixels": DEFAULT_WORKING_SIZE.targetPixels,
+  "aiphoto.templates": { ...DEFAULT_PROMPT_TEMPLATES },
+  "aiphoto.compose": plain(DEFAULT_COMPOSE),
 };
 
 /** Add every missing setting; returns how many were added. */

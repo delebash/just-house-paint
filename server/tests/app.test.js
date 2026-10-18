@@ -47,7 +47,25 @@ test("routing by feature lists exactly this app's features, each on its preset",
   expect(routing.statusCode).toBe(200);
   const keys = (routing.json().features || []).map((f) => f.key);
   expect(keys).toEqual(FEATURE_CATALOG.map((f) => f.key));
-  expect(keys).toEqual(["notes.suggestTitle"]);
+  expect(keys).toEqual(["schemes.suggest"]);
+});
+
+test("the house-paint routes are mounted on the app, its settings and its AI prompt seeded", async () => {
+  expect((await client.get("/v1/houses")).json()).toEqual([]);
+  // the engines are not installed in a fresh data folder, and the status says how much to download
+  const segment = (await client.get("/v1/segment/status")).json();
+  expect(segment.installed).toBe(false);
+  expect(segment.downloadBytes).toBeGreaterThan(1e9);
+  const aiphoto = (await client.get("/v1/aiphoto/status")).json();
+  expect(aiphoto).toMatchObject({ engineInstalled: false, modelsInstalled: false });
+  expect((await client.get("/v1/settings")).json()["finder.idleMinutes"]).toBe(10);
+  // the color-scheme prompt is a prompt row the AI Lab edits, asking for JSON
+  const prompt = (await client.get("/v1/ai/prompts/schemes.suggest")).json();
+  expect(prompt).toMatchObject({ feature: "schemes.suggest", jsonMode: true });
+  expect(prompt.userTemplate).toContain("{{current}}");
+  // an id that could leave the data folder is refused by the route's schema, not by a file error
+  const bad = await client.get("/v1/houses/..%2Fsecrets/image");
+  expect(bad.statusCode).toBe(422);
 });
 
 test("the runner's cache lands in the app's data folder", () => {
@@ -91,18 +109,18 @@ test("health answers the family's base wire plus this app's extras", async () =>
 });
 
 test("bearer auth gates /v1 only once a token exists", async () => {
-  expect((await client.get("/v1/notes")).statusCode).toBe(200); // off by default
+  expect((await client.get("/v1/houses")).statusCode).toBe(200); // off by default
 
   const r = await client.put("/v1/server-auth", { json: { tokens: ["s3cret"] } });
   expect(r.statusCode).toBe(200);
   try {
-    expect((await client.get("/v1/notes")).statusCode, "no header → 401").toBe(401);
-    expect((await client.get("/v1/notes", { headers: { authorization: "Bearer wrong" } })).statusCode, "bad token → 403").toBe(403);
-    expect((await client.get("/v1/notes", { headers: { authorization: "Bearer s3cret" } })).statusCode, "good token").toBe(200);
+    expect((await client.get("/v1/houses")).statusCode, "no header → 401").toBe(401);
+    expect((await client.get("/v1/houses", { headers: { authorization: "Bearer wrong" } })).statusCode, "bad token → 403").toBe(403);
+    expect((await client.get("/v1/houses", { headers: { authorization: "Bearer s3cret" } })).statusCode, "good token").toBe(200);
   } finally {
     await client.put("/v1/server-auth", { json: { tokens: [] }, headers: { authorization: "Bearer s3cret" } });
   }
-  expect((await client.get("/v1/notes")).statusCode).toBe(200);
+  expect((await client.get("/v1/houses")).statusCode).toBe(200);
 });
 
 test("the lockout escape: health and the token door stay open from this machine", async () => {
@@ -112,7 +130,7 @@ test("the lockout escape: health and the token door stay open from this machine"
   try {
     expect((await client.get("/v1/health", { from: "127.0.0.1" })).statusCode).toBe(200);
     expect((await client.get("/v1/server-auth", { from: "127.0.0.1" })).statusCode).toBe(200);
-    expect((await client.get("/v1/notes", { from: "127.0.0.1" })).statusCode, "the rest stays gated").toBe(401);
+    expect((await client.get("/v1/houses", { from: "127.0.0.1" })).statusCode, "the rest stays gated").toBe(401);
   } finally {
     await client.put("/v1/server-auth", { json: { tokens: [] }, from: "127.0.0.1" });
   }
@@ -134,7 +152,7 @@ test("the access tokens are checked by their schema and never logged", async () 
 
 test("a browser origin gets CORS headers (the dev server and the desktop window call this port directly)", async () => {
   for (const origin of ["http://localhost:1460", "app://justhousepaint"]) {
-    const r = await client.get("/v1/notes", { headers: { origin } });
+    const r = await client.get("/v1/houses", { headers: { origin } });
     expect(r.statusCode).toBe(200);
     expect(r.headers["access-control-allow-origin"]).toBe("*");
   }

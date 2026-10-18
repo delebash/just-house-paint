@@ -3,8 +3,9 @@
 // surface and saves PNGs of its real rendering into e2e/shots/ (gitignored). `npm run screenshots`
 // from the app's root (app-structure §10). docgen's capture-direct.js is the donor.
 //
-// Hermetic like the smoke (lib/driver.js): a temp data folder with one example note, the harness's
-// own server, the shell's <ID>_DEV_NO_SERVER=1 — the shots never show or change your own data.
+// Hermetic like the smoke (lib/driver.js): a temp data folder with one example house, the harness's
+// own server, the shell's <ID>_DEV_NO_SERVER=1 — the shots never show or change your own data. (A
+// fresh folder has no engines and no brand colors: the house shows the part finder's install offer.)
 
 import fs from "node:fs";
 import path from "node:path";
@@ -14,11 +15,19 @@ import { Driver } from "./lib/driver.js";
 const here = path.dirname(fileURLToPath(import.meta.url));
 const OUT_DIR = path.resolve(here, "shots");
 
+// A 48×36 PNG — sky, a beige wall, grass (the smoke's own).
+const PHOTO = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAADAAAAAkCAIAAABAJy5dAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAAY0lEQVRYhe2UQQ3AMAwDg64giqRIgqTvwEj+RjIWSzadZACnk23zW6Ni7QQOUGHo0iFnZdV+P84x1mcNKWNUrJ1AAAWGkg6JlUX7/YhjDAwlHdI7K9tnjYq1E2yAFobOrzv0AOh9AsNw1hDnAAAAAElFTkSuQmCC",
+  "base64",
+);
+
 const SURFACES = [
-  { name: "home", hash: "#/" },
-  { name: "notes", hash: "#/notes", ready: "tr.ui-table-row" },
+  { name: "your-houses", hash: "#/", ready: ".houses__card" },
+  { name: "house", hash: "#/house/{house}", ready: ".engine" },
+  { name: "paint-colors", hash: "#/colors", ready: ".ui-table-row" },
   { name: "ai", hash: "#/ai" },
   { name: "settings-general", hash: "#/settings/general" },
+  { name: "settings-advanced", hash: "#/settings/advanced" },
   { name: "settings-appearance", hash: "#/settings/appearance" },
   { name: "settings-backups", hash: "#/settings/backups" },
   { name: "settings-storage", hash: "#/settings/storage" },
@@ -34,8 +43,11 @@ async function main() {
   const d = new Driver();
   console.log("→ starting the server and the desktop app (hermetic)");
   await d.startServer();
-  // one example note, through the API, so the list has something to show
-  await d.api("/notes", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ title: "An example note", body: "Written for the screenshots.", pinned: true }) });
+  // one example house, through the API, so Your houses has something to show
+  const form = new FormData();
+  form.append("file", new Blob([PHOTO], { type: "image/png" }), "example-house.png");
+  form.append("name", "An example house");
+  const house = await d.api("/houses", { method: "POST", body: form });
   await d.api("/prefs", { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ aiOfferShown: true }) });
   await d.launch();
   await d.maximize();
@@ -43,19 +55,19 @@ async function main() {
   try {
     for (const s of SURFACES) {
       console.log(`→ ${s.name} (${s.hash})`);
-      await d.navigate(s.hash);
+      await d.navigate(s.hash.replace("{house}", house.id));
       if (s.ready) await d.page.waitForSelector(s.ready, { timeout: 10_000 });
       await d.page.waitForLoadState("networkidle").catch(() => {});
       await d.page.waitForTimeout(600); // let transitions settle before the picture
       await d.screenshot(path.join(OUT_DIR, `${s.name}.png`));
     }
-    // the note editor, open — a dialog never shows in a route's shot
-    console.log("→ note-editor (dialog)");
-    await d.navigate("#/notes");
-    await d.page.locator("tr.ui-table-row").first().click();
-    await d.page.waitForSelector("#note-title");
+    // the rename dialog, open — a dialog never shows in a route's shot
+    console.log("→ rename-house (dialog)");
+    await d.navigate("#/");
+    await d.page.locator('[aria-label="Rename “An example house”"]').click();
+    await d.page.waitForSelector("#name-dialog-input");
     await d.page.waitForTimeout(400);
-    await d.screenshot(path.join(OUT_DIR, "note-editor.png"));
+    await d.screenshot(path.join(OUT_DIR, "rename-house.png"));
   } finally {
     console.log("→ closing");
     await d.close();

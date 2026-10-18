@@ -14,7 +14,7 @@ app's [data folder](getting-started.md).
 on this computer, the wizard offers to use those files instead of downloading them again. Nothing
 on disk moves, and you can change your mind later.
 
-**The once-ever offer.** After your first note, if no AI is set up yet, the app asks once whether
+**The once-ever offer.** After your first house, if no AI is set up yet, the app asks once whether
 to run Quick Setup, connect an online provider, or skip. Whatever you pick, it doesn't ask again;
 AI Settings is always there.
 

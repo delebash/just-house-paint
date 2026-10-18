@@ -1,15 +1,15 @@
 # Just House Paint — instructions for any AI working in this repo
 
-The family's reference app: the Quasar app every family app starts as a copy of (the
-`/new-just-app` skill generates one from it). It carries everything the family's apps share — the
-desktop app on the kit's shell, its own Node server (Hono) with a SQLite database, the AI stack,
-the standard chrome (title bar, AI tasks, Help, Settings with its seven family sections, backups,
-logs), help pages and tests at every level — plus one small example area, **notes**, that is the
-reference for validation, errors, data, screens and tests. Plain JavaScript, `"type": "module"`
-everywhere; Vue SFCs; Quasar's components under the kit's (`@delebash/ui`).
+See your house in real paint colors before you buy paint: a photo of the house, its parts found by
+a vision model (SAM 3, on ONNX Runtime) on the user's computer, painted with real brand paints in
+the photo's own light, color schemes (harmony, the brands' pairings, an AI model), designs, and an
+AI photo (stable-diffusion.cpp + FLUX.2 [klein], on the user's computer). A family app: the desktop
+app on the kit's shell, its own Node server (Hono) with a SQLite database, the AI stack, the
+standard chrome. Plain JavaScript, `"type": "module"` everywhere; Vue SFCs; Quasar's components
+under the kit's (`@delebash/ui`).
 
 `README.md` lists the layout and every difference from Quasar's default; `docs/dev/PRD.md` is what
-an app made from it is for.
+the app is for; `docs/plans/2026-10-18-v1.md` how v1 was planned.
 
 ## Commands
 
@@ -25,7 +25,7 @@ npm run lint           # Biome
 npm run i18n:lint      # no word written into a template or built in code (must be 0)
 npm run i18n:report    # keys used but missing from the English catalog (must be none)
 npm run test:server    # the server's tests, on Electron's Node
-npm run test:unit      # the renderer's tests (stores, the mounted Notes page, the boot smoke)
+npm run test:unit      # the renderer's tests (the painter, the stores, the mounted pages, the boot smoke)
 npm test               # the e2e smoke on the unpacked desktop build (build:unpacked first)
 npm run screenshots    # every surface as a PNG in e2e/shots/
 npm run test:coverage  # coverage (Vitest's v8), no gate
@@ -41,17 +41,23 @@ and `npm run build:unpacked && npm test`.
 - **The server owns the data.** The renderer keeps nothing durable: it asks `/v1/*`. A value a user
   might change is a seeded row (`server/src/database/seed.js`) with a schema
   (`server/src/schemas/settings.js`), never a constant.
-- **SQL lives only in the stores** (`server/src/database/notes.js`, `settings.js`). A schema change is
-  a new entry in `database/schema.js` `MIGRATIONS` — never an edit to an applied one.
+- **SQL lives only in the stores** (`server/src/database/houses.js`, `paints.js`, `settings.js`). A
+  schema change is a new entry in `database/schema.js` `MIGRATIONS` — never an edit to an applied
+  one. A house's files are `data/houses/<id>/` (`files.js`); the backup takes that folder.
 - **A route's schema is its form's rules.** `server/src/schemas/<area>.js` imports only
   `@delebash/core/platform/schema`, because the renderer imports it too
   (`just-house-paint-server/schemas/<area>.js`, `schemaRules(...)`).
 - **Errors:** a refusal is the kit's `notFound`/`ApiError`, never hand-built JSON; the renderer shows
   a failure through `reportError`, a 422 under its field through `fieldErrors`. Never log a secret or
   the user's content.
-- **AI calls go through the kit's runners** (`runAiFeature`, `withAiTask`) — never the task store
-  directly. A new AI feature is a `feature_catalog.js` row + a prompt + a preset, registered the day
-  it calls the engine.
+- **AI calls go through the kit's runners** (`runAiFeature`, `withAiTask`, the server's `runAction`)
+  — never the task store directly. A new AI feature is a `feature_catalog.js` row + a prompt row +
+  a preset, registered the day it calls the engine. Long server work (finding parts, downloads, the
+  AI photo) is a job (`jobs.js`, `GET /v1/jobs/:id`), shown by the renderer's `services/jobs.js`
+  inside `withAiTask`.
+- **The engines are heavy and optional.** Nothing downloads until the user presses Install; the
+  AI photo frees the GPU first (the finder's session, the local AI model). The routes take their
+  engines from the app state (`services.js`), so a test passes fakes (`tests/domain_helpers.js`).
 - **Seeding is serve.js's**, not `createApp`'s: a test's `createApp(tmp)` starts empty.
 - **Server tests use `useHermeticKit()`** (`server/tests/helpers.js`): the kit's singletons, the fake
   hardware, `JUST_AI_HOME` in a temp folder.
@@ -67,7 +73,8 @@ and `npm run build:unpacked && npm test`.
 | What this app is for | `docs/dev/PRD.md` |
 | Open work · ideas | `docs/dev/TASKS.md` · `docs/dev/IDEAS.md` |
 | What is already known | `docs/dev/RESEARCH.md` (the kit's: `../just-core/docs/dev/RESEARCH.md`) |
-| The example to copy | `server/src/{schemas,database,api}/notes*` · `src/pages/NotesPage.vue` · `src/components/NoteDialog.vue` · their tests |
+| A route, its schema and its test | `server/src/{api,schemas}/houses*` · `server/tests/houses.test.js` |
+| A screen and its mounted test | `src/pages/HomePage.vue` · `src/pages/HomePage.test.js` (the template's notes area is the family's reference) |
 
 ## The family rules
 

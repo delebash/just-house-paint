@@ -5,8 +5,8 @@
     "couldNotStart": "The app could not start: {error}"
   },
   "nav": {
-    "home": "Home",
-    "notes": "Notes"
+    "houses": "Your houses",
+    "colors": "Paint colors"
   },
   "tray": {
     "urlCopied": "Server address copied",
@@ -16,91 +16,71 @@
     "theme": "Theme: {mode} — click to change"
   },
   "connectionError": {
-    "need": "keep your notes and run its AI features",
+    "need": "keep your houses, paint colors and designs",
     "devHint": "Development: `npm run dev` starts it, or run it yourself with `npm run server`, then retry.",
     "portTaken": "Another program is using port {port}. Close it, then press {retry}."
   },
   "notFound": {
     "title": "There's no page here",
     "message": "The address doesn't match any page of the app.",
-    "home": "Go to Home"
-  },
-  "home": {
-    "title": "Welcome",
-    "lede": "This is the family's reference app: everything a new app starts with, and one small example area to show how the pieces fit.",
-    "notes": {
-      "title": "Notes",
-      "body": "Write short notes, pin the ones you need, and let the AI suggest a title.",
-      "open": "Open Notes"
-    },
-    "ai": {
-      "title": "AI",
-      "body": "Set up a local model or connect an online provider. The app's AI features run on what you choose.",
-      "open": "Open AI Settings"
-    },
-    "help": {
-      "title": "Help",
-      "body": "How the app works, how to set up the AI, and what to do when something goes wrong.",
-      "open": "Read Getting started"
-    }
+    "home": "Go to Your houses"
   },
   "ai": {
     "eyebrow": "AI",
     "title": "Providers, models and usage"
   },
-  "notes": {
-    "title": "Notes",
-    "new": "New note",
-    "loadFailed": "Couldn't load your notes: {reason}",
-    "empty": {
-      "title": "No notes yet",
-      "message": "Your notes are kept by the app's server, in its data folder."
-    },
-    "filter": "Filter notes",
-    "noMatch": "No note matches the filter.",
-    "pinned": "Pinned",
-    "edit": "Edit “{title}”",
-    "columns": {
-      "title": "Title",
-      "changed": "Changed"
-    },
-    "delete": {
-      "action": "Delete “{title}”",
-      "title": "Delete this note?",
-      "message": "“{title}” and everything in it will be deleted. This can't be undone.",
-      "confirm": "Delete note"
-    },
-    "form": {
-      "newTitle": "New note",
-      "editTitle": "Edit note",
-      "title": "Title",
-      "body": "Note",
-      "pinned": "Pin to the top of the list"
-    },
-    "suggest": {
-      "button": "Suggest a title",
-      "hint": "Ask the AI for a title from what the note says",
-      "needsBody": "Write the note first — the title is suggested from it",
-      "task": "Suggesting a title"
-    }
-  },
   "settings": {
     "title": "Settings",
     "sections": {
-      "general": "General"
+      "general": "General",
+      "advanced": "Advanced"
     },
     "general": {
-      "notesTitle": "Notes",
-      "notesHint": "How the Notes list shows your notes.",
-      "pageSize": "Notes per page"
+      "photos": {
+        "title": "Photos",
+        "hint": "The copies made when a photo is added: the one the screen paints on, the card in Your houses, and how big a photo may be."
+      },
+      "designs": {
+        "title": "Designs and paint files",
+        "hint": "How many designs a house keeps, and how big a palette file may be."
+      },
+      "finder": {
+        "title": "Part finder",
+        "hint": "Whether the graphics card helps find the parts, and when the finder lets go of its memory."
+      },
+      "aiphoto": {
+        "title": "AI photo",
+        "hint": "The size the AI draws at, in pixels: bigger is sharper and slower."
+      },
+      "fields": {
+        "photos": {
+          "displayMax": "Screen copy, longest side (px)",
+          "thumbMax": "Card copy, longest side (px)",
+          "jpegQuality": "JPEG quality",
+          "maxMegabytes": "Largest photo (MB)"
+        },
+        "designs": {
+          "maxPerHouse": "Designs per house"
+        },
+        "paints": {
+          "maxImportMegabytes": "Largest palette file (MB)"
+        },
+        "finder": {
+          "useGpu": "Use the graphics card",
+          "idleMinutes": "Let go after (minutes idle)"
+        },
+        "aiphoto": {
+          "workingPixels": "Working size (pixels)"
+        }
+      }
     },
     "appearanceHint": "How the app looks — applied at once and kept by the app.",
     "accentNote": "The default, 166°, is green.",
-    "backupsHint": "A backup holds everything the app keeps: your notes, your settings and your AI setup. Downloaded models aren't in it — they download again.",
+    "backupsHint": "A backup holds everything the app keeps: your houses with their photos and designs, the paint colors, your settings and your AI setup. The downloaded engines and models aren't in it — they download again.",
     "logsHint": "What the server and this window reported, newest last.",
     "storage": {
       "locationTitle": "Data location",
-      "locationHint": "One folder holds everything the app saves — your notes, the AI engine and downloaded models, and logs. Changing it moves all of that to the new folder and restarts the app.",
+      "locationHint": "One folder holds everything the app saves — your houses and their photos, the paint colors, the engines and downloaded models, and logs. Changing it moves all of that to the new folder and restarts the app.",
       "folder": "Folder",
       "type": "Type",
       "portable": "Portable — beside the app",
@@ -110,10 +90,10 @@
       "desktopOnly": "Changing the folder is available in the desktop app.",
       "chooseFolder": "Choose a data folder",
       "moveTitle": "Move all app data?",
-      "moveMessage": "Everything the app saves — your notes, the AI engine and models, and logs — moves to {folder}. The app restarts when the move finishes.",
+      "moveMessage": "Everything the app saves — your houses, the engines and models, and logs — moves to {folder}. The app restarts when the move finishes.",
       "moveConfirm": "Move & restart",
       "diskTitle": "Disk usage",
-      "diskHint": "Where the data folder's space goes. Downloaded models and engine logs can be cleared to make room — your notes and settings are never touched.",
+      "diskHint": "Where the data folder's space goes. Downloaded models and engine logs can be cleared to make room — your houses and settings are never touched.",
       "modelsCache": "Models cache",
       "spawnLogs": "Engine logs",
       "engineBuilds": "Engine builds",
@@ -148,6 +128,272 @@
       "electron": "Electron {version}",
       "data": "Data folder",
       "source": "Source"
+    },
+    "advanced": {
+      "title": "Advanced",
+      "hint": "The structured settings, as JSON. Each is checked by the app's server when you save it.",
+      "notJson": "This isn't JSON: {reason}",
+      "fields": {
+        "finder": {
+          "parts": "What the part finder looks for",
+          "priority": "Which part keeps a pixel two parts claim"
+        },
+        "schemes": {
+          "roleParts": "Which parts each scheme color paints",
+          "harmony": "The harmony rules"
+        },
+        "aiphoto": {
+          "templates": "The AI photo's prompts",
+          "compose": "How the AI photo is put back on the photo"
+        }
+      },
+      "hints": {
+        "finder": {
+          "parts": "Each part: its key, its words to the finder, its threshold, and whether it is painted.",
+          "priority": "Part keys, first wins."
+        },
+        "schemes": {
+          "roleParts": "For body, trim and accent: the part keys each paints.",
+          "harmony": "The thresholds the schemes are built and checked with."
+        },
+        "aiphoto": {
+          "templates": "The words the AI photo model reads.",
+          "compose": "The blend and the color lock after the AI draws."
+        }
+      }
     }
+  },
+  "houses": {
+    "title": "Your houses",
+    "add": "Add a photo",
+    "adding": "Adding the photo…",
+    "loadFailed": "Couldn't load your houses: {reason}",
+    "empty": {
+      "title": "No houses yet",
+      "message": "Add a photo of your house — taken from the front, in daylight, with the whole house in view."
+    },
+    "open": "Open {name}",
+    "designs": "No designs | 1 design | {n} designs",
+    "rename": {
+      "action": "Rename “{name}”",
+      "title": "Rename the house",
+      "label": "Name"
+    },
+    "delete": {
+      "action": "Delete “{name}”",
+      "title": "Delete this house?",
+      "message": "“{name}”, its photo, its parts, its designs and its AI photos will be deleted. This can't be undone.",
+      "confirm": "Delete house"
+    }
+  },
+  "house": {
+    "back": "Your houses",
+    "loadFailed": "Couldn't open this house: {reason}",
+    "find": {
+      "button": "Find the parts",
+      "again": "Find the parts again",
+      "againTitle": "Find the parts again?",
+      "againMessage": "The parts found now replace the ones this house has, with the changes you made to them.",
+      "task": "Finding the parts of {name}",
+      "emptyTitle": "Find the parts first",
+      "emptyMessage": "The part finder outlines the body, the trim, the doors and the rest, so each can be painted on its own."
+    },
+    "ai": {
+      "button": "AI photo",
+      "task": "AI photo of {name}"
+    },
+    "export": {
+      "save": "Save image",
+      "suffix": "painted",
+      "copyList": "Copy the color list",
+      "copied": "Color list copied"
+    },
+    "tools": {
+      "label": "Tool",
+      "look": "Select",
+      "lookHint": "Click a part to select it; drag to move the photo; the wheel zooms",
+      "brush": "Brush",
+      "brushHint": "Paint more of the photo into the selected part",
+      "eraser": "Eraser",
+      "eraserHint": "Take some of the photo out of the selected part",
+      "box": "Box",
+      "boxHint": "Draw a box around something the selected part should take in",
+      "size": "Brush size",
+      "outlines": "Outlines",
+      "compare": "Before / after",
+      "split": "Where the before ends",
+      "texture": "Texture"
+    },
+    "tabs": {
+      "label": "House panel",
+      "parts": "Parts",
+      "colors": "Colors",
+      "schemes": "Schemes",
+      "designs": "Designs"
+    }
+  },
+  "parts": {
+    "body": "Body",
+    "trim": "Trim",
+    "frontDoor": "Front door",
+    "garageDoor": "Garage door",
+    "shutters": "Shutters",
+    "columns": "Columns",
+    "railings": "Railings",
+    "gutters": "Gutters",
+    "chimney": "Chimney",
+    "roof": "Roof",
+    "windows": "Windows",
+    "stone": "Stone",
+    "brick": "Brick",
+    "lamps": "Lamps"
+  },
+  "partsTab": {
+    "hint": "Select a part to paint it, or to fix its outline with the brush, the eraser or a box.",
+    "toPaint": "To paint",
+    "staying": "Staying as they are",
+    "unpainted": "No color",
+    "share": "{n}%",
+    "deltaE": "ΔE {n}",
+    "deltaEHint": "How far the paint on the screen is from the paint chip (ΔE2000). Under 2 is hard to tell apart.",
+    "edited": "edited",
+    "add": "Add the part",
+    "addPlaceholder": "A part the finder missed"
+  },
+  "colors": {
+    "none": "No paint colors on this computer yet. Add a brand's colors first.",
+    "addBrand": "Add paint colors",
+    "forPart": "Colors for the {part}",
+    "pickPart": "Select a part (Parts tab, or click it on the photo) to paint it.",
+    "brand": "Brand",
+    "brandCount": "{brand} ({n})",
+    "search": "Search by name or number",
+    "exterior": "Exterior colors only",
+    "archived": "Show discontinued colors",
+    "clear": "No color",
+    "noMatch": "No color matches.",
+    "more": "Show more ({n} left)",
+    "exact": {
+      "title": "An exact color",
+      "hint": "A color you saw somewhere else: the brand's closest paints, closest first.",
+      "hex": "Color",
+      "pick": "Pick a color",
+      "match": "Find the closest paints",
+      "placeholder": "#a1b2c3"
+    }
+  },
+  "schemes": {
+    "hint": "Body, trim and front door colors that go together — all real paints. Apply paints this house's parts.",
+    "apply": "Apply",
+    "harmony": {
+      "title": "From a paint you chose",
+      "needBase": "Give the body a color first (Colors tab) — the schemes are built around it.",
+      "from": "Around {paint}"
+    },
+    "kinds": {
+      "complementary": "Complementary",
+      "analogous": "Analogous",
+      "triadic": "Triadic",
+      "monochrome": "One color, three shades",
+      "classic": "Classic",
+      "coordinating": "The brand's coordinating colors"
+    },
+    "ai": {
+      "title": "Ask the AI",
+      "hint": "The AI looks at what stays — the roof, the stone, the windows — and suggests schemes that suit it.",
+      "mood": "What you'd like (optional)",
+      "moodPlaceholder": "warm and welcoming, a coastal look…",
+      "ask": "Suggest schemes",
+      "asking": "Asking…",
+      "task": "Color schemes for {name}",
+      "needParts": "Find the parts first: the AI reads the house's colors from them.",
+      "tag": "AI"
+    }
+  },
+  "designs": {
+    "hint": "Save the colors on screen as a design to compare later. The colors stay a draft until you save them.",
+    "save": "Save “{name}”",
+    "saveAs": "Save as a new design",
+    "saveAsTitle": "Save as a new design",
+    "renameTitle": "Rename the design",
+    "name": "Name",
+    "none": "No designs saved yet.",
+    "colors": "no colors | 1 color | {n} colors",
+    "changed": "changed",
+    "rename": "Rename “{name}”",
+    "discard": {
+      "title": "Leave the colors on screen?",
+      "message": "The colors on screen have changes that aren't saved in a design. Opening another design replaces them.",
+      "confirm": "Open the design"
+    },
+    "delete": {
+      "action": "Delete “{name}”",
+      "title": "Delete this design?",
+      "message": "The design “{name}” will be deleted. Its AI photos stay.",
+      "confirm": "Delete design"
+    },
+    "renders": {
+      "title": "AI photos",
+      "none": "No AI photos yet — the AI photo button makes one from the colors on screen.",
+      "open": "Open the AI photo",
+      "onScreen": "Colors on screen",
+      "delete": "Delete the AI photo",
+      "deleteTitle": "Delete this AI photo?",
+      "deleteMessage": "The AI photo will be deleted. This can't be undone.",
+      "deleteConfirm": "Delete AI photo"
+    }
+  },
+  "aiPhoto": {
+    "title": "AI photo",
+    "note": "A picture the AI drew with your colors: the light and shadows look real, but small details can change. The instant preview stays the accurate one.",
+    "alt": "The AI photo of {name}",
+    "deltaE": "ΔE {n} from the chips",
+    "seconds": "made in {n} s",
+    "save": "Save image",
+    "suffix": "AI photo",
+    "fallbackName": "House"
+  },
+  "engines": {
+    "install": "Install ({size})",
+    "installing": "Installing…",
+    "finder": {
+      "title": "Install the part finder",
+      "body": "The part finder outlines the body, the trim, the doors and the rest of the house on your photo. It runs on this computer: a one-time download of {size}.",
+      "task": "Installing the part finder"
+    },
+    "aiphoto": {
+      "title": "Install the AI photo",
+      "body": "The AI photo redraws your photo with the colors you chose, with real light and shadow. It runs on this computer: a one-time download of {size}.",
+      "task": "Installing the AI photo",
+      "slow": "This computer has no graphics card the AI photo can use: one AI photo would take about ten minutes."
+    }
+  },
+  "paintColors": {
+    "title": "Paint colors",
+    "lede": "The brands' real paint colors, kept on this computer. The app comes with none: load a brand's public color list, or import the palette file you downloaded from the brand.",
+    "loadFailed": "Couldn't load the brands: {reason}",
+    "columns": {
+      "brand": "Brand",
+      "colors": "Colors",
+      "from": "From"
+    },
+    "none": "None yet",
+    "fromFeed": "public list",
+    "fromFile": "palette file",
+    "load": "Load the colors",
+    "reload": "Load again",
+    "loadTask": "Loading the {brand} colors",
+    "import": "Import a file…",
+    "lastError": "The last try failed: {error}",
+    "remove": {
+      "action": "Remove",
+      "title": "Remove the {brand} colors?",
+      "message": "The {n} {brand} colors will be removed from this computer. Designs that use them show no color until they are added again.",
+      "confirm": "Remove colors"
+    },
+    "note": "Colors on a screen are close to the paint, never the same: check a real paint chip before you buy. Brand names belong to their owners; this app isn't connected to any of them."
+  },
+  "jobs": {
+    "failed": "The work stopped with an error."
   }
 }

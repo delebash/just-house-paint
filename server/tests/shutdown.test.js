@@ -16,7 +16,7 @@ test("shutdown is refused from another machine", async () => {
 test("shutdown from this machine needs no token, even when tokens are required there", async () => {
   const c = testClient(await createApp(tmpDir()));
   await c.put("/v1/server-auth", { json: { tokens: ["s3cret"], requireForLoopback: true }, from: "127.0.0.1" });
-  expect((await c.get("/v1/notes", { from: "127.0.0.1" })).statusCode).toBe(401);
+  expect((await c.get("/v1/houses", { from: "127.0.0.1" })).statusCode).toBe(401);
   const r = await c.post("/v1/shutdown", { from: "127.0.0.1" });
   expect(r.statusCode).toBe(200);
   expect(r.json()).toEqual({ ok: true, exiting: false }); // no running server in a test

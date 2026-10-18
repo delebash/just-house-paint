@@ -44,30 +44,30 @@ function send(method, path, { headers = {}, body } = {}) {
 }
 
 test("a read from the dev server's origin gets its CORS answer", async () => {
-  const r = await send("GET", "/v1/notes", { headers: { origin: "http://localhost:1460" } });
+  const r = await send("GET", "/v1/houses", { headers: { origin: "http://localhost:1460" } });
   expect(r.status).toBe(200);
   expect(r.headers["access-control-allow-origin"]).toBe("*");
 });
 
 test("the desktop window's preflight and JSON write go through", async () => {
   const origin = "app://justhousepaint";
-  const pre = await send("OPTIONS", "/v1/notes", {
-    headers: { origin, "access-control-request-method": "POST", "access-control-request-headers": "content-type" },
+  const pre = await send("OPTIONS", "/v1/settings", {
+    headers: { origin, "access-control-request-method": "PATCH", "access-control-request-headers": "content-type" },
   });
   expect(pre.status).toBeLessThan(300);
   expect(pre.headers["access-control-allow-origin"]).toBeTruthy();
-  expect(String(pre.headers["access-control-allow-methods"])).toMatch(/POST/);
+  expect(String(pre.headers["access-control-allow-methods"])).toMatch(/PATCH/);
 
-  const body = JSON.stringify({ title: "Through the socket" });
-  const r = await send("POST", "/v1/notes", { headers: { origin, "content-type": "application/json", "content-length": Buffer.byteLength(body) }, body });
-  expect(r.status).toBe(201);
+  const body = JSON.stringify({ "designs.maxPerHouse": 12 });
+  const r = await send("PATCH", "/v1/settings", { headers: { origin, "content-type": "application/json", "content-length": Buffer.byteLength(body) }, body });
+  expect(r.status).toBe(200);
   expect(r.headers["access-control-allow-origin"]).toBe("*");
-  expect(JSON.parse(r.text).title).toBe("Through the socket");
+  expect(JSON.parse(r.text)["designs.maxPerHouse"]).toBe(12);
 });
 
 test("an error answer carries CORS too, so the browser sees the error and not a CORS block", async () => {
-  const body = JSON.stringify({});
-  const r = await send("POST", "/v1/notes", {
+  const body = JSON.stringify({ "designs.maxPerHouse": 0 });
+  const r = await send("PATCH", "/v1/settings", {
     headers: { origin: "http://127.0.0.1:1460", "content-type": "application/json", "content-length": Buffer.byteLength(body) },
     body,
   });

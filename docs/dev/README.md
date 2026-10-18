@@ -11,7 +11,8 @@ Read in this order:
    researching anything.
 4. **The family standard** — `../../../just-core/docs/app-structure.md`: §Q the layout, §8 the AI stack,
    §11 the standard chrome, §13 these docs, §15 validation and errors, §16 data, §17 screens and
-   forms, §18 tests. This app's `notes` area is the reference for §15–§18.
+   forms, §18 tests. The template's `notes` area (`../../../just-core/template/`) is the reference
+   for §15–§18; here Your houses (`src/pages/HomePage.vue` and its test) follows it.
 5. **The shared stack** — `../../../just-core/docs/dev/README.md` (the kit this app embeds) and its research
    register, `../../../just-core/docs/dev/RESEARCH.md`.
 

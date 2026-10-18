@@ -538,3 +538,32 @@ re-run by this session; code in the app's `server/src/aiphoto/`; outputs in sess
   renders lighter, so one paint reads as two colors; holes in the mask show the old siding. With French
   surface labels the AI barely changed the color (ΔE 32.9) — the prompt's words must stay English.
 - sharp returns 3 channels after blurring a 1-channel image (it silently broke the paste-back once).
+
+## 11 · The app, run for real (2026-10-18)
+
+*Measured by this session on this machine (RTX 2070-class, 8 GB), through the app's own server on the
+checkout's data folder (`npm run server`), then the desktop app (`dist/electron/UnPackaged`) driven by
+Playwright against that server. Screenshots: session e638ccef's scratchpad `real-ui/shots/`.*
+
+- **Installing the part finder through the app:** with the four ONNX files already in `data/models/sam3`
+  (hard links to the probe's), `POST /v1/segment/install` checked each one's SHA-256 and downloaded only the
+  missing `tokenizer.json` and `tokenizer_config.json` (the kit's `streamDownload`) — the job finished in a few
+  seconds. The status's `downloadBytes` stays the whole bundle (3,364,167,120 B) even when most of it is
+  present, so the install card says "3.1 GB" for a 2 MB download.
+- **Finding the parts of house1** (2765×2074, display copy 2048×1536): **39 s** for the job, the model's load
+  included; 10 parts — body 492,210 px (0.91), trim 13,859 (0.58), front door 13,880 (0.71), garage door 61,370
+  (0.97), shutters 55,835 (0.90), columns 2,500 (0.58), chimney 8,076 (0.92), roof 186,637 (0.95), windows 78,121
+  (0.90), lamps 2,496 (0.75).
+- **Behr's public list through the app:** 5,178 colors loaded and saved in 0.6 s; `exterior` is unknown (null)
+  on every Behr row, and the "exterior only" filter keeps unknowns (2,629 left — the rest are marked
+  interior). Nearest to #3a5f7d: M510-6 Tidal ΔE 1.13, M500-6 Express Blue 2.34, M490-7 Shasta Lake 3.06.
+- **The instant preview** on house1, body M510-6 Tidal and trim PR-W08 Ambience White: the Parts tab's ΔE to the
+  chip **0.4** (body) and **0.0** (trim). The trim the finder found is 2% of the house: the white fascia and the
+  scalloped boards stay in the body's mask and take the body's color at their own brightness (light blue).
+- **The AI photo through the app:** body Tidal, trim Ambience White, front door PPU2-16 — **22.1 s** of render,
+  28 s for the job. The worst surface's ΔE after the lock **14.47**: the same fascia boards (in the body's mask,
+  painted the body's paint at white's brightness). A finder recall gap on thin trim, not the lock; the user's
+  fix is a Box or the Brush on Trim.
+- **A kit bug the settings form found:** the kit's `UiNumber` handed Quasar its formatted text ("2,048"), so a
+  schema rule said "Must be a number" for every value of 1,000 and more — fixed in the kit (`3d83749`): the
+  rules now judge the parsed number.
