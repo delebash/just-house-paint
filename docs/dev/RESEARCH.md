@@ -590,4 +590,17 @@ Playwright against that server. Screenshots: session e638ccef's scratchpad `real
 - **"Classic" schemes' door** — a complementary flip gave a green body a purple door (SW's data). Now
   the door takes the first traditional door hue (`classicAccentHues`: brick red 25°, navy 255°, forest
   green 150° — data in `schemes.harmony`) at least 60° from the body's: green → brick red, red → navy.
+- **The AI's color schemes, for real** (2026-10-18): the app had no cache chosen, so the kit shared
+  JustWrite's (`justwrite-app/data/ai-cache` — llama.cpp b11239 and Gemma 4 12B / 26B already there; no
+  download). The General preset set to `gemma-4-12b-qat` (what Quick Setup does); `POST /v1/schemes/ai` on
+  house1, Behr, "classic and welcoming": 3 schemes, every color snapped to a Behr paint (ΔE to the AI's
+  target 0.5–7.1), 416 prompt / 272 answer tokens. Through the desktop app's Schemes tab: shown 16.2 s after
+  the click, Apply paints the house. Times vary widely — 29 s, 16 s, then 66 s / 33 s and 99 s after server
+  restarts (the model loaded again each time) — not explained yet.
+- **The prompt's first answers described what isn't there** ("mossy window frames", "warm wood tones" on a
+  white house); with "base each reason on [the listed parts and colors]" they quoted hex codes ("the #373530
+  roof"); with "name colors in plain words" too: "the dark roof and the olive windows". Both lines are in the
+  default prompt (`schemes_ai.js` SCHEMES_PROMPT — the prompt row, editable in the AI Lab).
+- **A scheme painted the brick chimney** (the body role included the chimney): the default roles now leave
+  it out — the chimney is often brick or stone; the Colors tab still paints it.
 

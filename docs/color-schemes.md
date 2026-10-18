@@ -1,8 +1,11 @@
 # Color schemes
 
 The **Schemes** tab suggests whole schemes — a body color, a trim color and an accent for the front
-door — always as real paints of the brand you choose. **Apply** puts a scheme on the house: which
-parts each of the three colors paints is in **App Settings → Advanced**.
+door — always as real paints of the brand you choose. **Apply** puts a scheme on the house: the body
+color on the body and the garage door, the trim color on the trim, columns, railings and gutters, the
+accent on the front door and shutters. The chimney stays as it is — often brick or stone; give it a
+color on the **Colors** tab if yours is painted. Which parts each color paints is in **App Settings →
+Advanced**.
 
 ## From a paint you chose
 

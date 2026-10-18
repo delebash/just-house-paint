@@ -15,7 +15,7 @@ export const SCHEMES_FEATURE = "schemes.suggest";
 // The variables are schemeVariables'. The prompt row asks for JSON (json_mode).
 export const SCHEMES_PROMPT = Object.freeze({
   system:
-    "You are an exterior color consultant. You suggest paint color schemes for houses that look good with the parts that won't be repainted. You answer with JSON only.",
+    "You are an exterior color consultant. You suggest paint color schemes for houses that look good with the parts that won't be repainted. You know the house only from the parts and colors listed: base each reason on them, and don't describe materials, textures or details that aren't listed. In the reasons, name colors in plain words (\"the dark roof\"), never as hex codes. You answer with JSON only.",
   user: [
     "The house, as its photo shows it (each part's current color):",
     "{{current}}",

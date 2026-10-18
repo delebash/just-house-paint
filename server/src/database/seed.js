@@ -37,7 +37,8 @@ export const SETTING_DEFAULTS = {
   "finder.useGpu": true,
   "finder.idleMinutes": 10,
   "schemes.roleParts": {
-    body: ["body", "chimney", "garageDoor"],
+    // the chimney is often brick or stone: a scheme never paints it — the Colors tab still can
+    body: ["body", "garageDoor"],
     trim: ["trim", "columns", "railings", "gutters"],
     accent: ["frontDoor", "shutters"],
   },
