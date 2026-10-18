@@ -585,6 +585,17 @@ re-run by this session; code in the app's `server/src/aiphoto/`; outputs in sess
   surface labels the AI barely changed the color (ΔE 32.9) — the prompt's words must stay English.
 - sharp returns 3 channels after blurring a 1-channel image (it silently broke the paste-back once).
 
+- **Ordering by color** (measured 2026-10-18 on the user's ~17,100 loaded colors): the brands' own color
+  families can't order a mixed list — Benjamin Moore and PPG / Glidden carry none; SW splits "White & Pastel"
+  from "Neutral"; Valspar adds "Pink" and "Teal"; Dutch Boy and HGTV Home "Brown". The stored CIELAB gives
+  every paint a hue angle and chroma (CIE LCh: h = atan2(b*, a*), C = √(a*² + b*²)). Chroma against the brands'
+  labels: their Gray p50 3.8 / p90 7.7, Black 3.1 / 6.4, White 6.3 / 13.3, Neutral 9.4 / 17.1 (beiges), Brown
+  15.3 / 26.1. A near-gray cut at C < 8 catches 62% of their Neutral/White/Gray/Black and pulls in 11% of their
+  hue families (pale tints); at 6: 46% / 5%; at 10: 73% / 18%; at 12: 82% / 25%. The server's better-sqlite3
+  has SQLite's math functions (`atan2`, `degrees`, `sqrt` — checked), so the order can be an ORDER BY over
+  `lab_a`/`lab_b`/`lab_l` with no new column. The npm package color-sorter sorts an in-memory array by HSL —
+  no paging, and HSL's hue is less even than LCh's.
+
 ## 11 · The app, run for real (2026-10-18)
 
 *Measured by this session on this machine (RTX 2070-class, 8 GB), through the app's own server on the

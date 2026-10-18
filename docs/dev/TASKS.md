@@ -295,6 +295,17 @@ ORDER:  the user, verbatim: "are you doing thsese ? - Show lit and shaded sample
         photo's color lock still locks to the chip.
 STATE:  BUILDING.
 
+## Order the colors by color, not only by name [2026-10-18]
+ASKED:  the user, verbatim: "we need option to sour by color types shade graients instead of just alphbetaclly".
+MY REC (shown 2026-10-18, waiting for the go): on the Colors tab, **Order: Color · Name** (the choice kept, as
+        Outlines; default Color). Color = a paint store's color wall: near-grays first (whites → grays → blacks, light
+        to dark — CIE chroma under 8), then 12 hue bands of 30° in rainbow order (red, orange, yellow, green, blue,
+        purple), each light to dark. Worked out from the CIELAB every paint already has (all seven brands), in the
+        server's SQL (ORDER BY, so paging and search keep working); the two numbers a seeded setting. Optional, its
+        own go: a **Color family** filter (Neutrals, Reds, … Purples) from the same bands. Attack: the brands' own
+        families were dropped (Benjamin Moore and PPG have none; the rest disagree — "White & Pastel", "Pink", "Teal",
+        "Brown"), and neutrals moved first (most exterior paints are). RESEARCH §10, "Ordering by color".
+
 ## The server's port clashes with JustWrite's eval [2026-10-18]
 FOUND:  by the JustWrite session (2026-10-18): this app's server port 17497 is JustWrite's eval port
         (`npm run eval`, scripts/eval.js `JW_EVAL_PORT || 17497`), and 17498 its flow tests
