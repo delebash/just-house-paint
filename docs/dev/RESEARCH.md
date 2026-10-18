@@ -731,4 +731,23 @@ Playwright against that server. Screenshots: session e638ccef's scratchpad `real
   coral bands round the windows, which the user keeps apart from the white frames; "window frame" does the same
   there (+0.15%, 0.09% from Trim); "window casing" adds nothing. A gain on one photo and a wrong move on another —
   not kept. The missed coral pieces stay a Box-tool fix.
+- **Why the app's photo looked duller than Windows Photos** (2026-10-18; the user's "the colors do not match it
+  should be same photo", their side-by-side screenshot measured):
+  - **The photo:** an iPhone JPEG, 3580×1224, a 536-byte ICC profile (wide gamut), and an **HDR gain map** (Apple
+    `HDRGainMap`, an ISO 21496-1 marker, an MPF secondary JPEG of 1790×612, one channel). A copy pasted into a chat
+    loses the profile and EXIF and is shrunk (2000×684), but its colors were already converted: its mean RGB
+    (119.5, 116.2, 102.0) equals the original converted to sRGB (119.5, 116.3, 102.0).
+  - **The app's intake converts correctly to sRGB:** a Display P3 test red stored as 202/60/50 comes out 220/40/39
+    in the app's display copy (sharp converts an embedded profile by default); the copy keeps no profile.
+  - **Not the gain map:** sharp 0.35.5 (libvips 8.18.7) reads it (`metadata().gainMap`) and applies it
+    (`withGainMap()` → HDR scRGB, up to 2.75× SDR white on the gable); clipped to SDR the gable's mean goes 156 →
+    190 with blown whites and streaks from the map's half resolution — not what Photos shows.
+  - **The gamut:** in the user's screenshot the walls and the white door match (wall 148/148/115 in Photos, 148/147/118
+    in the app; door 211/213/205 vs 209/211/202); the coral band doesn't (red 173 vs 157). The monitor is wide-gamut
+    (`WmiMonitorColorCharacteristics`, 1/4096 units: red 0.632/0.332, green 0.204/0.700, blue 0.148/0.080 — green well
+    past sRGB's 0.300/0.600; panel SHP1079): Photos shows the photo's P3 colors on it, the app's sRGB canvases clip
+    the out-of-sRGB reds and oranges.
+  - **What it takes:** a display copy kept in Display P3 and canvases opened with `colorSpace: "display-p3"`
+    (Chromium since 94; WebKit — webkit.org/blog/12058). Konva 10.9 opens its contexts with only
+    `{ willReadFrequently }` (lib/Context.js:668,798) — no color-space option, and no upstream support found.
 
