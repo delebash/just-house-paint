@@ -83,8 +83,8 @@ STATE:  ROUNDS 1 AND 2 DONE 2026-10-17 — the user's go: "so yes go do your tes
         Throwaway: inputs and outputs in `data/probe/` (gitignored).
 OPEN:   the user's own house photo(s) (asked for, not yet given) and a ΔE check on one; ONNX Runtime's
         DirectML and WebGPU timings (not yet run); dark-to-light tint shows the old wood grain (tint v2
-        helps only a little); a cloud render (needs a Gemini key); the brand-request draft for D, for the
-        user to send.
+        helps only a little); a cloud render (needs a Gemini key). The brand request for D is drafted
+        (`docs/plans/2026-10-18-brand-permission-request.md`, 2026-10-18) — for the user to send, edit or drop.
 
 ## Build it all — the go [2026-10-18]
 GO:     the user, verbatim: "keep going finihs it all i want all this done and a complete working app
