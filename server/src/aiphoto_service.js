@@ -5,7 +5,7 @@
 // installing them (a job), and one render — which first frees the GPU (the part finder's image
 // session and the local AI model), because sd.cpp doesn't wait for memory (RESEARCH §10).
 
-import { existsSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readdirSync, rmSync, statSync } from "node:fs";
 import path from "node:path";
 import { ApiError } from "@delebash/core/platform/errors";
 import { getLogger } from "@delebash/core/platform/log";
@@ -63,6 +63,11 @@ export function createAiPhoto(ctx) {
         slow: !row || row.backend === "cpu",
         downloadBytes,
       };
+    },
+
+    /** Remove the engine and the models (Settings → Storage); no render runs (the route checks). */
+    async uninstall() {
+      for (const dir of [ctx.modelDir, ctx.engineDir]) rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
     },
 
     /** Install the engine and the models (a job); `download` is the kit's streamDownload. */

@@ -158,6 +158,37 @@ describe("the engine routes", () => {
     expect(st.downloadBytes).toBeGreaterThan(8e9);
   });
 
+  test("removing an engine: its files go; never while it works", async () => {
+    let dirs;
+    s = makeServer({
+      aiphoto: (ctx) => {
+        const made = aiphotoFactory([])(ctx);
+        return {
+          ...made,
+          uninstall: async () => {
+            dirs = "removed";
+            await made.uninstall();
+          },
+        };
+      },
+    });
+    // the part finder: the GPU let go and the model removed (the fake records it)
+    fakeFinder.calls.length = 0;
+    expect((await s.app.request("/v1/segment/install", { method: "DELETE" })).status).toBe(204);
+    expect(fakeFinder.calls).toContainEqual(["uninstall"]);
+    // the AI photo: both folders go, so the status says not installed
+    expect((await s.app.request("/v1/aiphoto/install", { method: "DELETE" })).status).toBe(204);
+    expect(dirs).toBe("removed");
+    expect(await (await s.app.request("/v1/aiphoto/status")).json()).toMatchObject({ engineInstalled: false, modelsInstalled: false });
+    // not while it works: a running job of the engine's kind refuses with a 409
+    let release;
+    s.ctx.jobs.start({ kind: "find-parts", key: "h" }, () => new Promise((r) => (release = r)));
+    const busy = await s.app.request("/v1/segment/install", { method: "DELETE" });
+    expect(busy.status).toBe(409);
+    expect((await busy.json()).type).toMatch(/engine-busy$/);
+    release();
+  });
+
   test("the AI photo paints the design's paintable parts, frees the GPU first, and is kept", async () => {
     const calls = [];
     s = makeServer({ aiphoto: aiphotoFactory(calls) });

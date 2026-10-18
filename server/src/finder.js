@@ -9,7 +9,7 @@
 // of GPU memory on DirectML, so the segmenter is released when it has been idle a while and
 // before the AI photo runs (releaseGpu).
 
-import { existsSync, statSync } from "node:fs";
+import { existsSync, rmSync, statSync } from "node:fs";
 import { ApiError } from "@delebash/core/platform/errors";
 import { getLogger } from "@delebash/core/platform/log";
 import { displayPath } from "./files.js";
@@ -149,6 +149,11 @@ export function createFinder(ctx) {
     installed,
     /** What Install still downloads: the files not here at their full size (the install card's figure). */
     downloadBytes: () => MODEL_FILES.filter((f) => !hasFile(`${ctx.modelDir}/${f.name}`, f.size)).reduce((n, f) => n + f.size, 0),
+    /** Remove the downloaded model (Settings → Storage): the GPU is let go first, then its folder. */
+    async uninstall() {
+      await releaseGpu();
+      rmSync(ctx.modelDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+    },
     /** Download the models (a job): `download` is the kit's streamDownload. */
     install: ({ download, onProgress, signal }) =>
       ensureModels(ctx.modelDir, { download, onProgress, cancelCheck: () => signal?.aborted }),

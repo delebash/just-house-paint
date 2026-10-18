@@ -5,7 +5,7 @@
 // shell's "Change folder…" (it moves everything and restarts the app), then where the folder's
 // space goes (the kit's /v1/disk/usage) with the two things that can be reclaimed — the downloaded
 // models and the engine's logs. Failures go through `reportError` (§15).
-import { confirmDialog, fmtBytes, post, pushToast, refreshRunnerModels, reportError, safeRequest, UiButton } from "@delebash/ui";
+import { confirmDialog, del, fmtBytes, post, pushToast, refreshRunnerModels, reportError, safeRequest, UiButton } from "@delebash/ui";
 import { onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { pickDirectory, storageGetRoot, storageRelocate } from "../../services/native.js";
@@ -20,7 +20,7 @@ const { t } = useI18n();
 const storageRoot = ref(null); // { root, default, portable } — the desktop shell's answer
 const relocating = ref(false);
 const diskUsage = ref(null);
-const diskBusy = ref(""); // "models" | "spawn" | ""
+const diskBusy = ref(""); // "models" | "spawn" | "partFinder" | "aiPhoto" | ""
 
 async function loadStorageRoot() {
   storageRoot.value = await storageGetRoot();
@@ -59,7 +59,10 @@ async function clearModelsCache() {
   const size = fmtBytes(diskUsage.value?.modelsCache) || "0 MB";
   const yes = await confirmDialog({
     title: t("settings.storage.clearModelsTitle"),
-    message: t("settings.storage.clearModelsMessage", { size }),
+    // a cache shared with the family's other apps (the kit's `cacheShared`): clearing it clears theirs too
+    message: diskUsage.value?.cacheShared
+      ? `${t("settings.storage.clearModelsMessage", { size })} ${t("settings.storage.clearModelsShared")}`
+      : t("settings.storage.clearModelsMessage", { size }),
     confirmLabel: t("settings.storage.clearModelsConfirm"),
     danger: true,
   });
@@ -78,6 +81,27 @@ async function clearModelsCache() {
     await loadDiskUsage();
     // the AI page's catalog re-reads which models are on disk (they now download again)
     refreshRunnerModels();
+  }
+}
+
+/** Remove one of this app's engines — the part finder or the AI photo; Install brings it back. */
+async function removeEngine(kind) {
+  const size = fmtBytes(diskUsage.value?.extras?.[kind]) || "0 MB";
+  const yes = await confirmDialog({
+    title: t(`settings.storage.remove.${kind}Title`),
+    message: t(`settings.storage.remove.${kind}Message`, { size }),
+    confirmLabel: t("settings.storage.remove.confirm"),
+    danger: true,
+  });
+  if (!yes) return;
+  diskBusy.value = kind;
+  try {
+    await del(kind === "partFinder" ? "/v1/segment/install" : "/v1/aiphoto/install");
+  } catch (e) {
+    reportError(e);
+  } finally {
+    diskBusy.value = "";
+    await loadDiskUsage();
   }
 }
 
@@ -131,6 +155,18 @@ async function clearSpawnLogs() {
         <UiButton intent="secondary" size="small" :disabled="!!diskBusy" :label="diskBusy === 'spawn' ? t('settings.storage.clearing') : t('kit.storage.clearShort')" @click="clearSpawnLogs" />
       </div>
       <span class="muted">{{ t("settings.storage.engineBuilds") }}</span><span>{{ diskSize(diskUsage?.engineBuilds) }}</span>
+      <!-- this app's own stores (the server's extra disk buckets) -->
+      <span class="muted">{{ t("settings.storage.houses") }}</span><span>{{ diskSize(diskUsage?.extras?.houses) }}</span>
+      <template v-for="kind in ['partFinder', 'aiPhoto']" :key="kind">
+        <span class="muted">{{ t(`settings.storage.${kind}`) }}</span>
+        <div class="row">
+          <span>{{ diskSize(diskUsage?.extras?.[kind]) }}</span>
+          <UiButton
+            v-if="diskUsage?.extras?.[kind]" intent="secondary" size="small" :disabled="!!diskBusy"
+            :label="diskBusy === kind ? t('settings.storage.clearing') : t('settings.storage.remove.action')" @click="removeEngine(kind)"
+          />
+        </div>
+      </template>
       <span class="muted">{{ t("settings.storage.database") }}</span><span>{{ diskSize(diskUsage?.database) }}</span>
       <span class="muted">{{ t("kit.storage.serverLogs") }}</span><span>{{ diskSize(diskUsage?.appLogs) }}</span>
       <span class="muted"><b>{{ t("kit.storage.total") }}</b></span><span><b>{{ diskSize(diskUsage?.total) }}</b></span>

@@ -59,7 +59,8 @@ import {
   DEFAULT_PRESET_ID,
   MODEL_CATALOG,
 } from "./seed_presets.js";
-import { createServices } from "./services.js";
+import { housesRoot } from "./files.js";
+import { aiphotoEngineDir, aiphotoModelDir, createServices, finderModelDir } from "./services.js";
 import { PRODUCT } from "./version.js";
 
 const log = getLogger("just_house_paint.app");
@@ -152,7 +153,16 @@ export async function createApp(dataDir = null, { services = {} } = {}) {
   app.route("/", serverAuthRouter());
   app.route("/", prefsRouter());
   app.route("/", makeLogsRouter(PRODUCT));
-  app.route("/", makeDiskRouter(dataDir));
+  // Settings → Storage's sizes: the kit's buckets plus this app's own stores — the houses' photos,
+  // the part finder's model, the AI photo's models and engine (they live outside the kit's cache)
+  app.route(
+    "/",
+    makeDiskRouter(dataDir, {
+      houses: housesRoot(dataDir),
+      partFinder: finderModelDir(dataDir),
+      aiPhoto: [aiphotoModelDir(dataDir), aiphotoEngineDir(dataDir)],
+    }),
+  );
   app.route("/", dataRouter(dataDir));
 
   // 6. The AI stack: the host mounts the runner's process API, installLlm mounts the rest.

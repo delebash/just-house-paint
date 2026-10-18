@@ -26,6 +26,12 @@ export class JobRegistry {
     return null;
   }
 
+  /** A running job of any of these kinds (for any house), or null. */
+  busy(kinds) {
+    for (const j of this.jobs.values()) if (kinds.includes(j.kind) && j.state === "running") return j;
+    return null;
+  }
+
   /**
    * Start `fn({ signal, progress })` as a job (or answer the one already running for this kind
    * and key). `progress(fraction 0–1, message?)` reports along the way; the returned value is the

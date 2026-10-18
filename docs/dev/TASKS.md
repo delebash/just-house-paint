@@ -132,22 +132,27 @@ DECIDED (my recs, as built and shown in the report of 2026-10-18 — the user's 
         - The AI's color-scheme prompt is a kit prompt row (`schemes.suggest`, edited in the AI Lab), not an
           app setting — the family's "prompt-row-owned" kind (app-structure §11); the staged
           `/v1/ai/prompt-preview` route went with it.
-NOT COVERED — NOT STANDARD pieces wait for the user's word on each by name (a blanket go never covers
-        one — the user's rule); each is built and tested, the standard option beside it:
-        1. The Adobe swatch readers (`server/src/paints/swatches.js`): ASE in ~80 lines (no maintained npm
-           parser: adobe-ase 1.0.0 is one release, 46 downloads/week; Adobe publishes no spec) and ACO (no
-           npm package; follows Adobe's Photoshop File Formats Specification). Checked on Benjamin Moore's
-           and PPG's real files. The standard option: depend on adobe-ase (ASE only; ACO has none).
-        2. SAM 3's pre- and post-processing (`server/src/segment/`) — our JS port of samexporter's Python
-           around ONNX Runtime's official binding; no JS runtime for this export exists (RESEARCH §10);
-           measured equal to sam3.cpp (mask IoU 0.991). The standard alternative, sam3.cpp, has no
-           upstream CUDA build (our own CUDA fork would be less standard) (plan §2).
-        3. The AI photo around sd-cli (`server/src/aiphoto/`): its progress read from sd-cli's log lines
-           (the standard option: sd-server's HTTP API, `POST /v1/images/edits` — RESEARCH §6); the mask
-           feather, paste-back and color lock as our own pixel loops (the standard option: sharp's
-           composite for the paste-back; no library does the lock); the engine and models installed by
-           our own layout (`data/engines/sdcpp`, `data/models/flux2-klein`) instead of the kit's model
-           cache and `acquireModel` (built for GGUF chat models).
+NOT STANDARD — DECIDED 2026-10-18, the user, verbatim: "your rec even non standard but think on your rec
+        again go on all finish the app". Each rec attacked again before it was kept (RESEARCH §4, §6, §10):
+        1. The Adobe swatch readers (`server/src/paints/swatches.js`) — KEPT: ASE in ~80 lines and ACO,
+           checked on Benjamin Moore's and PPG's real files. The standard option, adobe-ase 1.0.0 (one
+           release, 46 downloads/week), reads ASE only; ACO has no package at all.
+        2. SAM 3's pre- and post-processing (`server/src/segment/`), our JS port of samexporter's Python
+           around ONNX Runtime's official binding — KEPT: transformers.js v4 runs "SAM3 Tracker" with
+           points and boxes only, and the finder needs SAM 3's text prompts ("trim", "door"); sam3.cpp
+           has no upstream CUDA build. Measured equal to sam3.cpp (mask IoU 0.991).
+        3. The AI photo around sd-cli (`server/src/aiphoto/`) — KEPT, all three parts:
+           - sd-cli per render, its progress read from its log lines: a resident sd-server would hold
+             ~6.5 GB of the 8 GB card the part finder (~5.7 GB) and the chat model also need; a process
+             per render frees it every time. The log format is pinned to the release and fixture-tested.
+           - the feather, paste-back and color lock as our pixel loops: no library does the lock.
+           - the models and engine in the app's own folders (`data/models/*`, `data/engines/sdcpp`), not
+             the kit's model cache: the attack reversed my first "move them into the kit's cache" — the
+             kit's "Clear models cache" wipes the cache's whole `hf/` with a guard that knows only the
+             chat model (not the finder's open ONNX files or a running sd-cli), and a SHARED cache would
+             let a sibling app's Clear delete these 12 GB, which come back only by Install. What it
+             found instead: Settings → Storage didn't count them — now it does (the kit's
+             `makeDiskRouter` extra buckets: houses, the part finder, the AI photo).
 
 ## How the app is started [2026-10-17]
 STATE:  the Claude Code setup items 1–8 became the `/new-just-app` skill's 8 decisions ("your rec on

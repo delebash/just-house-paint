@@ -42,6 +42,9 @@ export const fakeFinder = {
   async releaseGpu() {
     this.calls.push(["releaseGpu"]);
   },
+  async uninstall() {
+    this.calls.push(["uninstall"]);
+  },
   async find(house, { progress }) {
     const w = house.displayWidth;
     const h = house.displayHeight;

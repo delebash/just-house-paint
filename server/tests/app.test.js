@@ -90,6 +90,8 @@ test("the disk route reports the data folder", async () => {
   const r = await client.get("/v1/disk/usage");
   expect(r.statusCode).toBe(200);
   expect(r.json().database).toBeGreaterThan(0); // the app's database file is measured
+  // this app's own stores, outside the kit's cache: empty in a fresh folder, but there
+  expect(r.json().extras).toEqual({ houses: 0, partFinder: 0, aiPhoto: 0 });
 });
 
 test("health answers the family's base wire plus this app's extras", async () => {

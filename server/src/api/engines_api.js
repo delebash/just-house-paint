@@ -5,7 +5,7 @@
 
 import { existsSync, readFileSync, rmSync } from "node:fs";
 import { Hono, input } from "@delebash/core/platform";
-import { notFound } from "@delebash/core/platform/errors";
+import { ApiError, notFound } from "@delebash/core/platform/errors";
 import { addRender, deleteRender, getDesign, getHouse, getRender, listParts, listRenders } from "../database/houses.js";
 import { paintsById } from "../database/paints.js";
 import { renderPath } from "../files.js";
@@ -29,7 +29,25 @@ export function router(ctx = getState()) {
     return c.json(job, 202);
   });
 
+  // Remove the part finder's model (Settings → Storage) — not while it finds parts or installs.
+  app.delete("/v1/segment/install", async (c) => {
+    if (ctx.jobs.busy(["find-parts", "install-finder"])) {
+      throw new ApiError(409, "engine-busy", "The part finder is busy", "wait until it has finished finding the parts or installing");
+    }
+    await ctx.finder.uninstall();
+    return c.body(null, 204);
+  });
+
   app.get("/v1/aiphoto/status", async (c) => c.json(await ctx.aiphoto.status()));
+
+  // Remove the AI photo's engine and models (Settings → Storage) — not while it draws or installs.
+  app.delete("/v1/aiphoto/install", async (c) => {
+    if (ctx.jobs.busy(["aiphoto", "install-aiphoto"])) {
+      throw new ApiError(409, "engine-busy", "The AI photo is busy", "wait until it has finished drawing or installing");
+    }
+    await ctx.aiphoto.uninstall();
+    return c.body(null, 204);
+  });
 
   app.post("/v1/aiphoto/install", (c) => {
     const job = ctx.jobs.start({ kind: "install-aiphoto", key: "" }, ({ signal, progress }) => ctx.aiphoto.install({ download: ctx.download, signal, progress }));

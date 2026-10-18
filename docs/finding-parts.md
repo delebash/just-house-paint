@@ -36,4 +36,5 @@ Your fixes are kept. **Find the parts again** starts over from what the finder s
 
 **App Settings → General → Part finder**: whether the graphics card helps, and after how many idle
 minutes the finder lets go of its memory. What the finder looks for — each part's words and
-threshold — is in **App Settings → Advanced**.
+threshold — is in **App Settings → Advanced**. **App Settings → Storage** shows how much space it
+takes; **Remove** there frees it (the parts already found stay) and Install brings it back.
