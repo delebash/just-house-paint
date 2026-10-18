@@ -126,6 +126,10 @@ MY RECS (shown 2026-10-18, each argued against first; ranked):
         3. Reset — the user's word "default colors" has two readings, ASKED which (or both): (a) take all
            paint off, the photo as taken; (b) back to the open design's saved colors. The attack: with
            Undo (1) a mis-clicked Reset isn't permanent.
+           DECIDED 2026-10-18, the user, verbatim: "on reset both" — two actions: (a) take all paint off (the
+           photo as taken) and (b) back to the open design's saved colors (shown only when a design is open
+           and has unsaved changes). Labels proposed, not yet confirmed: "Remove all colors" and "Back to
+           “{design}”". Built with Undo (1), on the user's go.
         4. An eyedropper: click the photo to read a color (the trim, a neighbour's house) → the brand's
            nearest paints; the Parts tab shows each part's current color and nearest paint (touch-ups).
            Labelled "as photographed" with the ΔE — light and shadow are in the photo's colors.
