@@ -13,7 +13,9 @@ import { dedupeInstances, maskArea, subtractMask, unionMasks } from "./masks.js"
 export const DEFAULT_PARTS = Object.freeze(
   [
     { key: "body", labelKey: "parts.body", prompts: ["house"], threshold: 0.5, paintable: true, group: "walls", method: "subtract" },
-    { key: "trim", labelKey: "parts.trim", prompts: ["trim"], threshold: 0.5, paintable: true, group: "trim" },
+    // "fascia" and "window trim" catch the rake boards and window casings plain "trim" misses (RESEARCH §11:
+    // trim 0.44 → 1.56% of house1, no false hits on three photos); 0.35 alone took a road's painted line
+    { key: "trim", labelKey: "parts.trim", prompts: ["trim", "fascia", "window trim"], threshold: 0.4, paintable: true, group: "trim" },
     { key: "frontDoor", labelKey: "parts.frontDoor", prompts: ["door"], threshold: 0.5, paintable: true, group: "doors" },
     { key: "garageDoor", labelKey: "parts.garageDoor", prompts: ["garage door"], threshold: 0.5, paintable: true, group: "doors" },
     { key: "shutters", labelKey: "parts.shutters", prompts: ["shutter"], threshold: 0.5, paintable: true, group: "accents" },

@@ -40,7 +40,7 @@ export const SETTINGS = {
   "schemes.roleParts": strictObject({ body: T.Array(PartKey), trim: T.Array(PartKey), accent: T.Array(PartKey) }),
   "schemes.harmony": T.Record(
     T.String({ maxLength: 40 }),
-    T.Union([T.Number(), T.Boolean(), T.String({ maxLength: 40 }), T.Array(T.String({ maxLength: 40 }))]),
+    T.Union([T.Number(), T.Boolean(), T.String({ maxLength: 40 }), T.Array(T.String({ maxLength: 40 })), T.Array(T.Number())]),
   ),
   // The AI photo: the model's working size (pixels), its prompt templates, how it is put back.
   "aiphoto.workingPixels": T.Integer({ minimum: 256 * 256, maximum: 1600 * 1200 }),

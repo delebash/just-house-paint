@@ -52,7 +52,11 @@ export const HARMONY_DEFAULTS = Object.freeze({
   classicTrimL: 0.95,
   classicTrimMaxChroma: 0.02,
   classicAccentL: 0.32,
-  classicAccentHueShift: 180,
+  /** Classic: the door is a traditional door color — the first of these hues (brick red, navy,
+   *  forest green) at least classicAccentMinHueGap degrees from the body's (a complementary flip
+   *  gave a green house a purple door on Sherwin-Williams' data). */
+  classicAccentHues: Object.freeze([25, 255, 150]),
+  classicAccentMinHueGap: 60,
   /** Below this OKLCH chroma the base has no usable hue (white, gray, black). */
   achromaticChroma: 0.02,
   /** The accent hue a hue-less base gets in "classic" (25° is a brick red). */
@@ -63,6 +67,17 @@ export const HARMONY_DEFAULTS = Object.freeze({
 
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 const hue = (h) => ((h % 360) + 360) % 360;
+/** The smaller angle between two hues, in degrees. */
+const hueGap = (a, b) => {
+  const d = Math.abs(hue(a) - hue(b));
+  return Math.min(d, 360 - d);
+};
+
+/** Classic's door hue: the first traditional hue far enough from the body's. */
+function classicDoorHue(bodyHue, t) {
+  const hues = t.classicAccentHues?.length ? t.classicAccentHues : HARMONY_DEFAULTS.classicAccentHues;
+  return hues.find((h) => hueGap(h, bodyHue) >= t.classicAccentMinHueGap) ?? hues[0];
+}
 
 // OKLCH per row, computed once per row object.
 const lchCache = new WeakMap();
@@ -113,7 +128,7 @@ export function schemeTargets(kind, base, t) {
         accent: {
           l: t.classicAccentL,
           c: Math.max(base.c, t.accentTargetChroma),
-          h: hue(achromatic ? t.achromaticAccentHue : h + t.classicAccentHueShift),
+          h: hue(achromatic ? t.achromaticAccentHue : classicDoorHue(h, t)),
         },
       };
     }

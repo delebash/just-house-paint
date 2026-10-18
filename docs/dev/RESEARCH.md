@@ -568,3 +568,26 @@ Playwright against that server. Screenshots: session e638ccef's scratchpad `real
 - **A kit bug the settings form found:** the kit's `UiNumber` handed Quasar its formatted text ("2,048"), so a
   schema rule said "Must be a number" for every value of 1,000 and more — fixed in the kit (`3d83749`): the
   rules now judge the parsed number.
+- **House2 and house3 through the app** (2026-10-18): house2 (3840×2880) 11 parts in 40.1 s — body 11.6%,
+  trim 0.7%, front door 0.7%, garage door 4.8%, gutters 1.2%, chimney 1.5%, roof 4.6%, windows 4.4%,
+  stone 8.0%, brick 0.0%, lamps 0.1%; house3 (4032×3024) 8 parts in 30.0 s — body 30.9%, trim 2.4%,
+  front door 2.1%, gutters 1.3%, chimney 2.9%, roof 7.6%, windows 1.8%, brick 0.0%.
+- **Trim recall, three recipes on the three photos** (the app's own `finder.parts` setting, the share
+  of the display photo; overlays in session e638ccef's scratchpad `real-ui/shots/trim-*.jpg`):
+
+  | recipe | house1 | house2 | house3 |
+  |---|---|---|---|
+  | `["trim"]` at 0.5 (was the default) | 0.44% — the main eave only | 0.70% | 2.42% |
+  | `["trim"]` at 0.35 | 1.23% | 1.84% | 4.69% — **takes the road's painted line** and the plinth |
+  | `["trim", "fascia", "window trim"]` at 0.4 (**now the default**) | 1.56% — + the gable rake boards, the window casings | 1.62% — + the garage door casing, a corner board, the window frames | 3.05% — no road line |
+
+  Still missed by every recipe: house1's corner boards, the frieze under the main eave, the scalloped
+  skirt, the garage door's casing; house2's white eave fascia (in no part — it stays unpainted).
+- **The AI photo after the trim change** (house1, the same three colors): the rake boards and window
+  casings now come out white; the boards above stay light blue (in the body's mask). Worst surface ΔE
+  after the lock 13.97 (was 14.47). Render time 60.9 s, then 34.4 s on a repeat with the GPU otherwise
+  idle — against 22.1 s on the first run, same inputs; not explained yet.
+- **"Classic" schemes' door** — a complementary flip gave a green body a purple door (SW's data). Now
+  the door takes the first traditional door hue (`classicAccentHues`: brick red 25°, navy 255°, forest
+  green 150° — data in `schemes.harmony`) at least 60° from the body's: green → brick red, red → navy.
+

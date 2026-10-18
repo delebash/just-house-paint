@@ -60,6 +60,17 @@ describe("suggestSchemes", () => {
     }
   });
 
+  test("classic: the door is a traditional door color, never the body's flip", () => {
+    const paints = syntheticPalette({ brand: "behr" });
+    const door = (bodyHex, opts = {}) => hexToOklch(suggestSchemes(bodyHex, paints, { kinds: ["classic"], ...opts })[0].roles.accent.target).h;
+    // a green body gets brick red, not purple; a red body gets navy (red is too close)
+    expect(hueGap(door("#5a7a52"), 25)).toBeLessThan(10);
+    expect(hueGap(door("#9b3a2e"), 255)).toBeLessThan(10);
+    // the list is data: a saved setting without it falls back to the default list
+    expect(hueGap(door("#5a7a52", { classicAccentHues: [] }), 25)).toBeLessThan(10);
+    expect(hueGap(door("#5a7a52", { classicAccentHues: [150, 255] }), 255)).toBeLessThan(10);
+  });
+
   test("a hue-less base: the hue schemes are skipped with a reason; classic gets the set accent hue", () => {
     const schemes = suggestSchemes("#808080", paints);
     for (const s of schemes.slice(0, 4)) {
