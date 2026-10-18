@@ -237,6 +237,20 @@ NOTE:   the four public lists loaded on the user's computer at the app's start-u
         HGTV Home 900, Dutch Boy 1,340) — the setting doing its job. The e2e smoke turns Load automatically off in its
         fresh folder (it had fetched three lists from the brands' sites).
 
+## What's next — the go [2026-10-18]
+ASKED:  the user, verbatim: "whats next on this app". MY RECS (shown 2026-10-18, in this order): 1. fix what the template
+        audit finds (here and in the template); 2. trim recall — measure "window surround", "molding", "band", "corner
+        board" on the four photos, keep only what helps without false hits; 3. a design saved before soffits and window
+        trim existed leaves them unpainted — opening it offers to paint the trim-group parts the design's trim color; 4. a
+        mounted test for Paint colors (Load automatically, its progress); 5. the installer built, installed as a user would,
+        run on the user's house. Later: the obstruction test set (download OK needed), the brand permission letter (the
+        user's to send). Not started: the AI photo / schemes timing, the template's copied sections into the kit, the phone.
+GO:     the user, verbatim: "your rec go" (2026-10-18) — 1–5. The attack on 3 changed it from painting the new parts
+        silently to a one-click offer: an old design can't tell a part that didn't exist from one left unpainted on purpose.
+2:      DONE (2026-10-18) — no word kept: RESEARCH §11 "More trim words — none kept" (a gain on house1, a wrong
+        move of the user's coral bands on theirs).
+STATE:  BUILDING.
+
 ## The server's port clashes with JustWrite's eval [2026-10-18]
 FOUND:  by the JustWrite session (2026-10-18): this app's server port 17497 is JustWrite's eval port
         (`npm run eval`, scripts/eval.js `JW_EVAL_PORT || 17497`), and 17498 its flow tests

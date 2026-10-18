@@ -722,4 +722,13 @@ Playwright against that server. Screenshots: session e638ccef's scratchpad `real
   holds an EARLIER default — its fingerprint (SHA-256 of its canonical JSON) listed in `previous_defaults.js`,
   taken from git history — and never a value its owner edited. The user's `finder.parts` was exactly the 8972a89
   default and was upgraded on the next start.
+- **More trim words — none kept** (2026-10-18, the user's "your rec go" on trim recall; the app's pipeline on the four
+  photos, each word added to Trim's prompts at 0.4, then to Window trim's outline; overlays in session e638ccef's
+  scratchpad `real-ui/shots/trimwords/`, `wtwords/`): "molding" (found on three photos, 0.40–0.76), "band", "corner
+  board", "trim band", "stucco band" add **nothing** — not found, or what they find is already another part.
+  "window surround" on Trim adds 0.17% on house1 (window casings — Window trim's, not Trim's), ~0 elsewhere; on
+  Window trim it adds house1's missed casings (+0.11%, from Body) but on the user's house takes **0.11% of Trim** — the
+  coral bands round the windows, which the user keeps apart from the white frames; "window frame" does the same
+  there (+0.15%, 0.09% from Trim); "window casing" adds nothing. A gain on one photo and a wrong move on another —
+  not kept. The missed coral pieces stay a Box-tool fix.
 
