@@ -30,6 +30,8 @@ const VALUES = {
   "paints.maxImportMegabytes": 30,
   "finder.useGpu": true,
   "finder.idleMinutes": 10,
+  "finder.houseMargin": 0.02,
+  "finder.houseMinShare": 0.5,
   "aiphoto.workingPixels": 786432,
   "finder.parts": [{ key: "body", labelKey: "parts.body", prompts: ["house"], paintable: true, group: "walls" }],
   "finder.priority": ["windows"],

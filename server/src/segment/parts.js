@@ -8,7 +8,7 @@
 // The parts list is DATA (the app seeds it into its database): `[{ key, labelKey, prompts, threshold,
 // paintable, group, method }]`, method "text" (default — the union of what the prompts find) or
 // "subtract" (at most one part: the main instance its prompts find, minus every other part).
-import { dedupeInstances, maskArea, subtractMask, unionMasks } from "./masks.js";
+import { dedupeInstances, dilateMask, intersectMask, maskArea, subtractMask, unionMasks } from "./masks.js";
 
 export const DEFAULT_PARTS = Object.freeze(
   [
@@ -104,7 +104,20 @@ export function pickMainInstance(instances, width, height) {
  * order; a part nothing was found for has `mask: null, area: 0, score: 0, instances: []`.
  * `timings`: `{ prompts: [{ part, phrase, ms, found }], combineMs, totalMs }`.
  */
-export async function findParts(segmenter, handle, partsConfig = DEFAULT_PARTS, { onProgress, signal } = {}) {
+/**
+ * Parts stay on the house ("door" found a parked SUV's doors on a user's photo, 2026-10-18). The
+ * house is the union of what the "subtract" part's prompts found ("house"), grown by `houseMargin`
+ * (a fraction of the photo's longer side; 0 = off) so the trim and gutters on its outline count.
+ * Each instance a part's prompts find is kept only when at least `houseMinShare` of it lies on the
+ * house — a car in front of the garage sits inside the house's outline, so clipping pixels alone
+ * kept part of its door — and what is kept is clipped to the house.
+ */
+export async function findParts(
+  segmenter,
+  handle,
+  partsConfig = DEFAULT_PARTS,
+  { onProgress, signal, houseMargin = 0, houseMinShare = 0.5 } = {},
+) {
   const config = validatePartsConfig(partsConfig);
   const { width, height } = handle;
   const t0 = performance.now();
@@ -132,6 +145,25 @@ export async function findParts(segmenter, handle, partsConfig = DEFAULT_PARTS, 
     config.filter((p) => p.method === "text").flatMap((p) => found.get(p.key).map((i) => i.mask)),
     n,
   );
+  // the house's area: every instance the "subtract" part's prompts found, grown by the margin
+  const houseInstances = config.filter((p) => p.method === "subtract").flatMap((p) => found.get(p.key));
+  const houseArea =
+    houseMargin > 0 && houseInstances.length
+      ? dilateMask(unionMasks(houseInstances.map((i) => i.mask), n), width, height, Math.round(houseMargin * Math.max(width, height)))
+      : null;
+  const onHouse = (mask) => (houseArea ? intersectMask(mask, houseArea) : mask);
+  const mostlyOnHouse = (inst) => {
+    if (!houseArea) return true;
+    let all = 0;
+    let on = 0;
+    for (let i = 0; i < inst.mask.length; i++) {
+      if (!inst.mask[i]) continue;
+      all++;
+      if (houseArea[i]) on++;
+    }
+    return all > 0 && on / all >= houseMinShare;
+  };
+
   const parts = config.map((part) => {
     const instances = found.get(part.key);
     if (part.method === "subtract") {
@@ -140,9 +172,10 @@ export async function findParts(segmenter, handle, partsConfig = DEFAULT_PARTS, 
       const mask = subtractMask(main.mask, textUnion);
       return { key: part.key, mask, area: maskArea(mask), score: main.score, instances: [main] };
     }
-    if (!instances.length) return { key: part.key, mask: null, area: 0, score: 0, instances: [] };
-    const mask = unionMasks(instances.map((i) => i.mask), n);
-    return { key: part.key, mask, area: maskArea(mask), score: Math.max(...instances.map((i) => i.score)), instances };
+    const kept = instances.filter(mostlyOnHouse);
+    if (!kept.length) return { key: part.key, mask: null, area: 0, score: 0, instances: [] };
+    const mask = onHouse(unionMasks(kept.map((i) => i.mask), n));
+    return { key: part.key, mask, area: maskArea(mask), score: Math.max(...kept.map((i) => i.score)), instances: kept };
   });
   timings.combineMs = Math.round(performance.now() - ts);
   timings.totalMs = Math.round(performance.now() - t0);

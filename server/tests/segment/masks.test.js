@@ -67,3 +67,23 @@ describe("set operations", () => {
     expect(kept[1]).toBe(c);
   });
 });
+
+describe("dilateMask and intersectMask", () => {
+  it("grows a mask by r pixels each way (a square), clipped to the image", async () => {
+    const { dilateMask, intersectMask } = await import("../../src/segment/masks.js");
+    const w = 7;
+    const h = 5;
+    const m = new Uint8Array(w * h);
+    m[2 * w + 3] = 255; // one pixel in the middle
+    const d = dilateMask(m, w, h, 1);
+    const set = [];
+    for (let i = 0; i < d.length; i++) if (d[i]) set.push([i % w, Math.floor(i / w)]);
+    expect(set).toEqual([[2, 1], [3, 1], [4, 1], [2, 2], [3, 2], [4, 2], [2, 3], [3, 3], [4, 3]]);
+    const edge = new Uint8Array(w * h);
+    edge[0] = 255;
+    expect([...dilateMask(edge, w, h, 2)].filter(Boolean).length).toBe(9); // a 3×3 corner
+    expect([...dilateMask(m, w, h, 0)]).toEqual([...m]);
+    expect([...intersectMask(d, edge)].filter(Boolean).length).toBe(0);
+    expect([...intersectMask(d, m)].filter(Boolean).length).toBe(1);
+  });
+});

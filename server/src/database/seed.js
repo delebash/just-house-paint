@@ -36,6 +36,9 @@ export const SETTING_DEFAULTS = {
   "finder.priority": [...DEFAULT_PART_PRIORITY],
   "finder.useGpu": true,
   "finder.idleMinutes": 10,
+  // parts stay on the house: a parked car's doors aren't the front door (RESEARCH §11)
+  "finder.houseMargin": 0.02,
+  "finder.houseMinShare": 0.5,
   "schemes.roleParts": {
     // the chimney is often brick or stone: a scheme never paints it — the Colors tab still can
     body: ["body", "garageDoor"],

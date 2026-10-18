@@ -35,6 +35,10 @@ export const SETTINGS = {
   "finder.priority": T.Array(PartKey, { maxItems: 40 }),
   "finder.useGpu": T.Boolean(),
   "finder.idleMinutes": T.Integer({ minimum: 1, maximum: 240 }),
+  // How far past the house a part may reach, as a share of the photo's longer side (0 = no limit).
+  "finder.houseMargin": T.Number({ minimum: 0, maximum: 0.2 }),
+  // How much of a found piece must lie on the house for it to count (a car's door in front doesn't).
+  "finder.houseMinShare": T.Number({ minimum: 0, maximum: 1 }),
   // Color schemes: which parts each role paints, and the harmony rules. (The AI's prompt is the
   // kit's prompt row `schemes.suggest`, edited in the AI Lab.)
   "schemes.roleParts": strictObject({ body: T.Array(PartKey), trim: T.Array(PartKey), accent: T.Array(PartKey) }),

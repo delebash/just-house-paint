@@ -46,7 +46,7 @@
       },
       "finder": {
         "title": "Part finder",
-        "hint": "Whether the graphics card helps find the parts, and when the finder lets go of its memory."
+        "hint": "Whether the graphics card helps find the parts, when the finder lets go of its memory, and how far past the house a part may reach — so a car parked in front isn't taken for a door."
       },
       "aiphoto": {
         "title": "AI photo",
@@ -67,7 +67,9 @@
         },
         "finder": {
           "useGpu": "Use the graphics card",
-          "idleMinutes": "Let go after (minutes idle)"
+          "idleMinutes": "Let go after (minutes idle)",
+          "houseMargin": "Parts reach past the house by (share of the photo)",
+          "houseMinShare": "A piece counts when this share of it is on the house"
         },
         "aiphoto": {
           "workingPixels": "Working size (pixels)"

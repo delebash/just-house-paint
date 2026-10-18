@@ -606,4 +606,19 @@ Playwright against that server. Screenshots: session e638ccef's scratchpad `real
   default prompt (`schemes_ai.js` SCHEMES_PROMPT — the prompt row, editable in the AI Lab).
 - **A scheme painted the brick chimney** (the body role included the chimney): the default roles now leave
   it out — the chimney is often brick or stone; the Colors tab still paints it.
+- **The user's own house, through the app** (2026-10-18; the photo and its results stay in the gitignored
+  data folder): a 2000×684 PNG — a single-storey stucco house, coral trim bands, two trees in front, an SUV
+  parked across the garage's corner, a second car at the edge. Parts in 44 s: body 14.4%, trim 4.9–5.0%, front
+  door, garage door, roof, windows, lamps. The trees and the plants were left out of every part from the
+  start. **The SUV was not**: "door" found its doors (front door 2.3% → 1.4% once fixed) and "trim" its
+  running board. Fix (`segment/parts.js`): every piece a part's prompts find must lie mostly on the house —
+  the union of the "house" instances grown by `finder.houseMargin` (0.02 of the longer side), kept when at
+  least `finder.houseMinShare` (0.5) of it is on it, then clipped to it. Clipping pixels alone (the first
+  try) left part of the car door: the car stands inside the house's outline in front of the garage.
+  Left: a thin trim outline on the SUV's front window ("window trim"); the coral gable medallions sit in the
+  body. The probe houses kept every part (house1 and house2 unchanged; house3 trim 3.05 → 2.7%, stray bits).
+- **Painting it**: the AI's schemes in 29.5 s (3 schemes: Pebbled Shore / Blanca Peak / Chipotle Paste;
+  Simply Sage / Blanca Peak / Espresso Beans; Cameo White / Red Curry / Off Broadway); the first applied —
+  ΔE to the chips 0.0 (body), 0.6 (trim), 0.3 (front door), 0.5 (garage door, the body's paint); saved as a
+  design; its AI photo in 22.3 s.
 

@@ -15,11 +15,11 @@ import { useSettingsStore } from "../../stores/settings.js";
 const { t } = useI18n();
 const settings = useSettingsStore();
 
-// [card, [[key, kind]]] — the words are settings.general.<card>.* and settings.general.fields.<key>
+// [card, [[key, kind, step?]]] — the words are settings.general.<card>.* and settings.general.fields.<key>
 const GROUPS = [
   ["photos", [["photos.displayMax", "number"], ["photos.thumbMax", "number"], ["photos.jpegQuality", "number"], ["photos.maxMegabytes", "number"]]],
   ["designs", [["designs.maxPerHouse", "number"], ["paints.maxImportMegabytes", "number"]]],
-  ["finder", [["finder.useGpu", "toggle"], ["finder.idleMinutes", "number"]]],
+  ["finder", [["finder.useGpu", "toggle"], ["finder.idleMinutes", "number"], ["finder.houseMargin", "number", 0.01], ["finder.houseMinShare", "number", 0.05]]],
   ["aiphoto", [["aiphoto.workingPixels", "number"]]],
 ];
 const KEYS = GROUPS.flatMap(([, fields]) => fields.map(([key]) => key));
@@ -31,7 +31,7 @@ const serverErrors = ref({});
 const saving = ref(false);
 const loaded = ref(false);
 
-const changes = computed(() => (loaded.value ? Object.fromEntries(KEYS.filter((k) => draft[k] !== settings.values[k]).map((k) => [k, draft[k]])) : {}));
+const changes = computed(() => (loaded.value ? Object.fromEntries(KEYS.filter((k) => draft[k] !== (settings.values[k] ?? null)).map((k) => [k, draft[k]])) : {}));
 
 onMounted(async () => {
   try {
@@ -70,14 +70,14 @@ function edited(key) {
       <h2>{{ t(`settings.general.${group}.title`) }}</h2>
       <p class="hint">{{ t(`settings.general.${group}.hint`) }}</p>
       <div class="form__row">
-        <template v-for="[key, kind] in fields" :key="key">
+        <template v-for="[key, kind, step] in fields" :key="key">
           <label v-if="kind === 'toggle'" class="toggle-row">
             <UiToggle v-model="draft[key]" :disabled="!loaded" :aria-label="t(`settings.general.fields.${key}`)" @update:model-value="edited(key)" />
             <span>{{ t(`settings.general.fields.${key}`) }}</span>
           </label>
           <UiField v-else :label="t(`settings.general.fields.${key}`)" layout="block" :for="idOf(key)">
             <UiNumber
-              :id="idOf(key)" v-model="draft[key]" width="num" :disabled="!loaded" lazy-rules
+              :id="idOf(key)" v-model="draft[key]" width="num" :step="step || 1" :disabled="!loaded" lazy-rules
               :rules="rules[key]" :error="!!serverErrors[key]" :error-message="serverErrors[key]"
               @update:model-value="edited(key)"
             />

@@ -44,6 +44,46 @@ export function subtractMask(base, cut) {
   return out;
 }
 
+/**
+ * `mask` grown by `r` pixels in every direction (a square), in O(n): a running count along each
+ * row, then along each column. A new mask; r 0 is a copy.
+ */
+export function dilateMask(mask, width, height, r) {
+  const rows = new Uint8Array(mask.length);
+  const out = new Uint8Array(mask.length);
+  if (r <= 0) {
+    for (let i = 0; i < mask.length; i++) out[i] = mask[i] ? 255 : 0;
+    return out;
+  }
+  for (let y = 0; y < height; y++) {
+    const o = y * width;
+    let count = 0;
+    for (let x = 0; x < Math.min(r, width); x++) if (mask[o + x]) count++;
+    for (let x = 0; x < width; x++) {
+      if (x + r < width && mask[o + x + r]) count++;
+      if (count) rows[o + x] = 255;
+      if (x - r >= 0 && mask[o + x - r]) count--;
+    }
+  }
+  for (let x = 0; x < width; x++) {
+    let count = 0;
+    for (let y = 0; y < Math.min(r, height); y++) if (rows[y * width + x]) count++;
+    for (let y = 0; y < height; y++) {
+      if (y + r < height && rows[(y + r) * width + x]) count++;
+      if (count) out[y * width + x] = 255;
+      if (y - r >= 0 && rows[(y - r) * width + x]) count--;
+    }
+  }
+  return out;
+}
+
+/** `a` where `b` is set too: a new mask. */
+export function intersectMask(a, b) {
+  const out = new Uint8Array(a.length);
+  for (let i = 0; i < a.length; i++) out[i] = a[i] && b[i] ? 255 : 0;
+  return out;
+}
+
 /** IoU of two full-size masks, sampled every `step` pixels each way (step 1 = exact). */
 export function maskIoU(a, b, width, height, step = 1) {
   let inter = 0;

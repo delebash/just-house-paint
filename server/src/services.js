@@ -53,6 +53,8 @@ export function createServices({ db, dataDir }, overrides = {}) {
       partsConfig: () => setting("finder.parts"),
       priority: () => setting("finder.priority"),
       idleMs: () => setting("finder.idleMinutes") * 60_000,
+      houseMargin: () => setting("finder.houseMargin"),
+      houseMinShare: () => setting("finder.houseMinShare"),
     });
 
   const aiphoto =

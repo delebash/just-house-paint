@@ -165,6 +165,8 @@ export function createFinder(ctx) {
       const config = validatePartsConfig(ctx.partsConfig() || DEFAULT_PARTS);
       const result = await findParts(s, h, config, {
         signal,
+        houseMargin: ctx.houseMargin?.() ?? 0,
+        houseMinShare: ctx.houseMinShare?.() ?? 0.5,
         onProgress: ({ part, index, total }) => progress(0.1 + (0.85 * index) / total, part),
       });
       touch();

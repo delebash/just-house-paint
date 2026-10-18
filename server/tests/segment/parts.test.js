@@ -166,3 +166,40 @@ describe("findParts", () => {
     expect(seg.calls).toHaveLength(0);
   });
 });
+
+describe("parts stay on the house", () => {
+  it("a part found outside the house (a car's door) is clipped away; one on its outline is kept", async () => {
+    // the house: x 0–20; a real door on it; a "door" on a car at x 30–38; trim just past the house's edge
+    const seg = fakeSegmenter({
+      house: [inst(0.9, [0, 0, 20, 30])],
+      door: [inst(0.9, [5, 10, 10, 30]), inst(0.8, [30, 10, 38, 30])],
+      trim: [inst(0.8, [20, 0, 21, 30])],
+    });
+    const config = [
+      { key: "body", labelKey: "b", prompts: ["house"], paintable: true, group: "walls", method: "subtract" },
+      { key: "frontDoor", labelKey: "d", prompts: ["door"], paintable: true, group: "doors" },
+      { key: "trim", labelKey: "t", prompts: ["trim"], paintable: true, group: "trim" },
+    ];
+    const free = await findParts(seg, handle, config);
+    expect(free.parts.find((p) => p.key === "frontDoor").area).toBe(5 * 20 + 8 * 20); // both doors
+    const clipped = await findParts(seg, handle, config, { houseMargin: 0.05 }); // 2 px of 40
+    expect(clipped.parts.find((p) => p.key === "frontDoor").area).toBe(5 * 20); // the car's door is gone
+    expect(clipped.parts.find((p) => p.key === "trim").area).toBe(30); // within the margin: kept
+  });
+
+  it("a piece mostly off the house is dropped whole, even where it touches the house", async () => {
+    // a car door that starts just inside the house's grown outline (x 19–30): only part of it is on
+    const seg = fakeSegmenter({
+      house: [inst(0.9, [0, 0, 20, 30])],
+      door: [inst(0.9, [5, 10, 10, 30]), inst(0.8, [19, 10, 30, 30])],
+    });
+    const config = [
+      { key: "body", labelKey: "b", prompts: ["house"], paintable: true, group: "walls", method: "subtract" },
+      { key: "frontDoor", labelKey: "d", prompts: ["door"], paintable: true, group: "doors" },
+    ];
+    const r = await findParts(seg, handle, config, { houseMargin: 0.05, houseMinShare: 0.5 });
+    const door = r.parts.find((p) => p.key === "frontDoor");
+    expect(door.area).toBe(5 * 20); // only the house's own door
+    expect(door.instances).toHaveLength(1);
+  });
+});
