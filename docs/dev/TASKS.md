@@ -146,7 +146,9 @@ MY RECS (shown 2026-10-18, each argued against first; ranked):
         Dropped after the attack: a paint quantity estimate (a photo gives no real wall sizes — it would
         mislead); a sheen/finish preview (the tint can't show sheen honestly); "order a sample" links (the
         brands' terms, the not-affiliated notice); several photos per house (v2-sized).
-STATE:  waiting for the user's go, and the Reset question.
+GO:     the user, verbatim: "on the other features do it all go" (2026-10-18) — recs 1–8 as shown, Reset as
+        decided ("on reset both"). The port move (below) is not a feature: still waiting.
+STATE:  BUILDING.
 
 ## The server's port clashes with JustWrite's eval [2026-10-18]
 FOUND:  by the JustWrite session (2026-10-18): this app's server port 17497 is JustWrite's eval port
