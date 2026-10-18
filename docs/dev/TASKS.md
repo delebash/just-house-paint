@@ -133,6 +133,12 @@ MY RECS (shown 2026-10-18, each argued against first; ranked):
         6. Zoom buttons (+, −, Fit) — the wheel only today.
         7. A one-page "color card" (the painted photo + the paint list) — low: Save image and Copy the
            color list exist.
+        8. Soffits — the user, verbatim: "also shouldnt we be able to select and identify soffets?". Today
+           neither: the finder has no soffit part and "Add the part" offers only the recipe's parts. My rec:
+           a paintable "soffit" part (trim group; a scheme's trim color paints it), its words measured on
+           the four photos first ("soffit", "eaves", "roof overhang" — the one that finds them without false
+           hits; ~2 s a word per photo); kept in the recipe even when the finder misses it, so it can be added
+           and drawn with the Box or the Brush. With the obstruction test set, or alone on a go.
         Dropped after the attack: a paint quantity estimate (a photo gives no real wall sizes — it would
         mislead); a sheen/finish preview (the tint can't show sheen honestly); "order a sample" links (the
         brands' terms, the not-affiliated notice); several photos per house (v2-sized).
