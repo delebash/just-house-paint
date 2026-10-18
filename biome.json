@@ -1,0 +1,62 @@
+{
+	"$schema": "https://biomejs.dev/schemas/2.5.15/schema.json",
+	"files": {
+		"includes": [
+			"src/**/*.{js,vue}",
+			"!src/phone/worker-bundle",
+			"scripts/**/*.js",
+			"quasar.config.js",
+			"src-electron/**/*.js",
+			"!src-electron/node_modules",
+			"server/src/**/*.js",
+			"server/tests/**/*.js",
+			"server/scripts/**/*.js"
+		]
+	},
+	"linter": {
+		"enabled": true,
+		"rules": {
+			"preset": "recommended",
+			"correctness": {
+				"noUnusedImports": "error",
+				"noUnusedVariables": "warn"
+			},
+			"style": {
+				"useVueMultiWordComponentNames": "off"
+			}
+		}
+	},
+	"assist": {
+		"actions": {
+			"source": {
+				"organizeImports": "off"
+			}
+		}
+	},
+	"formatter": { "enabled": false },
+	"overrides": [
+		{
+			"includes": ["server/**", "src-electron/**"],
+			"linter": {
+				"rules": {
+					"recommended": false,
+					"correctness": {
+						"noUndeclaredVariables": "error",
+						"noUnusedImports": "error"
+					}
+				}
+			}
+		},
+		{
+			"includes": ["**/*.vue"],
+			"linter": {
+				"rules": {
+					"correctness": {
+						"noUnusedImports": "off",
+						"noUnusedVariables": "off"
+					}
+				}
+			}
+		}
+	]
+}
