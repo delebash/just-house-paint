@@ -526,12 +526,12 @@ const canRevert = computed(() => !!house.design && house.dirty);
             <UiButton intent="secondary" size="small" :disabled="!history.canUndo.value" :label="t('house.undo')" :title="t('house.undoHint')" @click="history.undo()" />
             <UiButton intent="secondary" size="small" :disabled="!history.canRedo.value" :label="t('house.redo')" :title="t('house.redoHint')" @click="history.redo()" />
             <UiMenu
-              :label="t('house.reset.label')" trigger-class="ui-btn ui-btn--secondary ui-btn--small" content-class="hp-menu"
+              :label="t('house.reset.label')" trigger-class="ui-btn ui-btn--secondary ui-btn--small"
               :disabled="!hasColors && !canRevert"
             >
               <template #trigger>{{ t("house.reset.button") }}</template>
-              <UiMenuItem class="hp-menu__item" :disabled="!hasColors" @select="house.clearColors()">{{ t("house.reset.clear") }}</UiMenuItem>
-              <UiMenuItem v-if="canRevert" class="hp-menu__item" @select="house.revertToDesign()">
+              <UiMenuItem :disabled="!hasColors" @select="house.clearColors()">{{ t("house.reset.clear") }}</UiMenuItem>
+              <UiMenuItem v-if="canRevert" @select="house.revertToDesign()">
                 {{ t("house.reset.revert", { name: house.design.name }) }}
               </UiMenuItem>
             </UiMenu>
