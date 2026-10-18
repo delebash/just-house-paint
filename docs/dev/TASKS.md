@@ -148,6 +148,19 @@ MY RECS (shown 2026-10-18, each argued against first; ranked):
         brands' terms, the not-affiliated notice); several photos per house (v2-sized).
 GO:     the user, verbatim: "on the other features do it all go" (2026-10-18) — recs 1–8 as shown, Reset as
         decided ("on reset both"). The port move (below) is not a feature: still waiting.
+ASKED:  the user, verbatim: "what happened to the before after slider i liked that?" (2026-10-18). It is the
+        "Compare with" choice "The photo as taken". Shown: A keep "Compare with" as built; B rename it "Before /
+        after" (my rec); C bring back the one-click switch beside a design-only Compare.
+DECIDED: the user, verbatim: "A" — "Compare with" stays as built.
+        9. Window trim — the user, verbatim: "can we idetify the window trim as a part, if so we should add that as
+           well". Today "window trim" is one of the Trim part's three words, so the casings take the trim's color.
+           My rec (shown 2026-10-18): its own paintable part "Window trim" — the word moved out of Trim's; trim group
+           (a scheme paints it the trim's color); after the windows and before the trim in the priority; measured
+           alone on the four photos first and kept only if it finds casings without many false hits (threshold
+           0.3–0.5), else left in Trim; then added to the user's settings and the house's parts found again.
+GO:     the user, verbatim: "your rec on all just think on it again go" (2026-10-18) — the window trim rec, the
+        rest of this batch (the help's Compare line, the real run on the user's house, TASKS, the commit), and the
+        recs still waiting: the port move (below) and the kit's shared-cache warning (the kit's TASKS).
 STATE:  BUILDING.
 
 ## The server's port clashes with JustWrite's eval [2026-10-18]
@@ -159,7 +172,8 @@ FOUND:  by the JustWrite session (2026-10-18): this app's server port 17497 is J
 MY REC: reserve 17497 and 17498 in the kit (new-app.js RESERVED, the guard, app-structure §1's note) and move
         this app to 17499 — its server default (version.js), the desktop shell's `port`, the boot file's
         fallback, the e2e driver, the guard's APP_PORTS, AGENTS.md, README and the help's troubleshooting
-        page. Waiting for the user's go.
+        page.
+GO:     the user, verbatim: "your rec on all just think on it again go" (2026-10-18).
 
 ## The obstruction test set — agreed, for later [2026-10-18]
 ASKED:  the user, verbatim: "one way to test would be to go grab a bunch of pictures of houses with cars

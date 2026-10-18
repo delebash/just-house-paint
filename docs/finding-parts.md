@@ -2,13 +2,17 @@
 
 The app finds your house's parts with a vision model (Meta's SAM 3) that runs on your own
 computer. It looks for the body (the siding or walls), the trim, the front door, the garage door,
-shutters, columns, railings, gutters, the soffits and the chimney — and for what usually isn't
-painted: the roof, the windows, stone, brick and lamps.
+shutters, columns, railings, gutters, the soffits, the window trim and the chimney — and for what
+usually isn't painted: the roof, the windows, stone, brick and lamps.
 
 **Soffits and fascia** are the boards under the roof's edge. The finder looks for the roof's
 overhang, so it finds them as the street sees them — the underside and the face board together.
 It finds most of them, not always all — draw the rest with the brush or a box. A scheme paints
 them the trim's color.
+
+**Window trim** is the casing and frame around each window; the glass stays with the windows. A
+scheme paints it the trim's color; give it its own on the **Colors** tab — black window trim on a
+white house, say.
 
 ## The first time: installing the part finder
 

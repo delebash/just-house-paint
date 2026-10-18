@@ -645,4 +645,23 @@ Playwright against that server. Screenshots: session e638ccef's scratchpad `real
   large, low-score pieces (7% of house3). The default recipe gained a paintable **soffit** part:
   `["roof overhang"]` at 0.3, trim group, before the roof and the trim in the priority, painted by a
   scheme's trim color.
+- **Window trim as its own part** (2026-10-18; the app's own `findParts` + `resolveOverlaps` with the house
+  rule, "window trim" moved out of Trim's words into a `windowTrim` part placed after the soffit in the
+  priority — so after the windows; SAM 3 asked once at 0.3, higher thresholds filtered by score; overlays
+  in session e638ccef's scratchpad `real-ui/shots/wtrim/`):
+
+  | | house1 | house2 | house3 | the user's |
+  |---|---|---|---|---|
+  | Trim today (with "window trim") | 1.12% | 1.60% | 2.64% | 4.41% |
+  | what "window trim" finds at 0.5 | 12 pieces, 1.59% | 7, 2.23% | 4, 0.80% | 5, 2.16% |
+  | — of it inside the windows part | 59% | 81% | 62% | 82% |
+  | Window trim paints at 0.3 / 0.4 / **0.5** | 0.81 / 0.69 / **0.56%** | 0.42 / 0.42 / **0.42%** | 0.31% at all three | 0.60 / 0.45 / **0.38%** |
+  | Trim after the move | 0.43% | 1.21% | 2.35% | 3.98% |
+
+  "Window trim" finds whole windows; the windows part keeps the glass (first in the priority), so the new
+  part is the ring of casing and frame around each window — on house1 every window's casing, on house2 the
+  white frames, on house3 the frames (the sills stay in Trim), on the user's house the white frames (the
+  coral bands around them stay in Trim: "trim" finds those). At 0.4 it also outlined the parked SUV's
+  front window on the user's photo (a 0.48 piece — the same false hit Trim had); at 0.5 that piece is gone,
+  and house1 loses only the door's sidelight casings. **Kept at 0.5.**
 

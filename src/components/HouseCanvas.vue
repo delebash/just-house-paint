@@ -209,11 +209,18 @@ const splitLine = computed(() => (props.split === null ? null : { points: [imgW.
 .house-canvas[data-tool="pick"] {
   cursor: crosshair;
 }
+/* on a panel of the app's own surface, as map zoom controls are: the buttons' text stays readable
+   over the dark backdrop and any photo, in either theme */
 .house-canvas__zoom {
   position: absolute;
   top: 8px;
   right: 8px;
   display: flex;
   gap: 4px;
+  padding: 3px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  box-shadow: var(--shadow-2);
 }
 </style>

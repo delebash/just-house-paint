@@ -28,6 +28,8 @@ export const DEFAULT_PART_PRIORITY = Object.freeze([
   "gutters",
   // before the roof and the trim: the overhang's boards are the soffit's, not the roof's edge
   "soffit",
+  // after the windows (they keep the glass), before the trim (it keeps the casings)
+  "windowTrim",
   "railings",
   "columns",
   "chimney",

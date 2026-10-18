@@ -44,7 +44,7 @@ install`), and `npm run dev`. The instructions for an AI are `AGENTS.md`.
 ```bash
 npm run dev            # the desktop app, live (quasar dev -m electron)
 npm run dev:spa        # the renderer alone in a browser tab on :1460 (start the server yourself)
-npm run server         # the server alone on :17497 (scripts/node24.js — Electron's Node); the UI at /
+npm run server         # the server alone on :17499 (scripts/node24.js — Electron's Node); the UI at /
 npm run build          # the installer → dist/electron/Packaged
 npm run build:spa      # the browser build → dist/spa
 npm run build:unpacked # the desktop app unpackaged → dist/electron/UnPackaged (what e2e drives)

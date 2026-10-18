@@ -17,7 +17,7 @@ the app is for; `docs/plans/2026-10-18-v1.md` how v1 was planned.
 npm install            # the renderer and the server/ workspace; once each: (cd src-electron && npm install), (cd e2e && npm install)
 npm run dev            # the desktop app, live (the shell starts the server on <repo>/data)
 npm run dev:spa        # the renderer alone in a browser tab on :1460 (run `npm run server` beside it)
-npm run server         # the server alone (headless) on :17497, the built UI at /
+npm run server         # the server alone (headless) on :17499, the built UI at /
 npm run build          # the installer (dist/electron/Packaged)
 npm run build:spa      # the browser build (dist/spa), what the headless server serves
 npm run build:unpacked # the desktop app unpackaged — what the e2e smoke drives
@@ -62,7 +62,7 @@ and `npm run build:unpacked && npm test`.
 - **Server tests use `useHermeticKit()`** (`server/tests/helpers.js`): the kit's singletons, the fake
   hardware, `JUST_AI_HOME` in a temp folder.
 - **`window.appShell` is read only by `src/services/native.js`.** Every word is a vue-i18n key.
-- **The e2e smoke needs port 17497 free** — it runs its own server there and won't touch yours.
+- **The e2e smoke needs port 17499 free** — it runs its own server there and won't touch yours.
 
 ## Where to look
 

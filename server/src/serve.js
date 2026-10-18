@@ -4,7 +4,7 @@
 // reads the `ready` message runServer posts), headless as `just-house-paint-server serve` (the
 // app's own exe run as Node — build/launcher/), and `npm run server` in a checkout.
 //
-// Defaults: host 127.0.0.1, port 17497 (the registry's), the data folder `--data-dir`, else
+// Defaults: host 127.0.0.1, port 17499 (the registry's), the data folder `--data-dir`, else
 // JUST_HOUSE_PAINT_DATA_DIR, else the family ladder (paths.js; a checkout's is <repo>/data).
 // runServer also reads JUST_HOUSE_PAINT_HOST / _PORT / _LOG_LEVEL.
 //

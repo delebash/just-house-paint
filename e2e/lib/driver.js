@@ -9,7 +9,7 @@
 //     Node — scripts/node24.js) and stops it after (POST /v1/shutdown);
 //   - the app runs with the shell's <ID>_DEV_NO_SERVER=1 (§10), so the shell never starts, evicts or
 //     strands a server of its own.
-// The window talks to the registered port (17497): a run refuses to start while something already
+// The window talks to the registered port (17499): a run refuses to start while something already
 // listens there — your dev server, say — rather than touch it.
 //
 // What it launches: the built desktop app before packaging — Quasar's dist/electron/UnPackaged
@@ -38,7 +38,7 @@ const ID = "justhousepaint";
 const NO_SERVER = `${ID.toUpperCase()}_DEV_NO_SERVER`;
 
 /** The registered server port (app-structure §1) — where the window looks for its server. */
-export const PORT = 17497;
+export const PORT = 17499;
 export const API = `http://127.0.0.1:${PORT}/v1`;
 
 const listening = (port) =>

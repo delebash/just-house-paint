@@ -13,9 +13,9 @@ import { dedupeInstances, dilateMask, intersectMask, maskArea, subtractMask, uni
 export const DEFAULT_PARTS = Object.freeze(
   [
     { key: "body", labelKey: "parts.body", prompts: ["house"], threshold: 0.5, paintable: true, group: "walls", method: "subtract" },
-    // "fascia" and "window trim" catch the rake boards and window casings plain "trim" misses (RESEARCH §11:
-    // trim 0.44 → 1.56% of house1, no false hits on three photos); 0.35 alone took a road's painted line
-    { key: "trim", labelKey: "parts.trim", prompts: ["trim", "fascia", "window trim"], threshold: 0.4, paintable: true, group: "trim" },
+    // "fascia" catches the rake boards plain "trim" misses (RESEARCH §11); 0.35 alone took a road's painted
+    // line. The window casings are their own part (windowTrim) since 2026-10-18
+    { key: "trim", labelKey: "parts.trim", prompts: ["trim", "fascia"], threshold: 0.4, paintable: true, group: "trim" },
     { key: "frontDoor", labelKey: "parts.frontDoor", prompts: ["door"], threshold: 0.5, paintable: true, group: "doors" },
     { key: "garageDoor", labelKey: "parts.garageDoor", prompts: ["garage door"], threshold: 0.5, paintable: true, group: "doors" },
     { key: "shutters", labelKey: "parts.shutters", prompts: ["shutter"], threshold: 0.5, paintable: true, group: "accents" },
@@ -25,6 +25,9 @@ export const DEFAULT_PARTS = Object.freeze(
     // SAM 3 doesn't know "soffit" or "eaves" (no hits on four photos); "roof overhang" finds the overhang's
     // boards — soffit and fascia, as the street sees them — with no false hit down to 0.3 (RESEARCH §11)
     { key: "soffit", labelKey: "parts.soffit", prompts: ["roof overhang"], threshold: 0.3, paintable: true, group: "trim" },
+    // "window trim" finds whole windows; the windows part keeps the glass, this keeps the casings and frames
+    // around them. 0.5, not 0.4: at 0.48 it outlined a parked car's window (RESEARCH §11)
+    { key: "windowTrim", labelKey: "parts.windowTrim", prompts: ["window trim"], threshold: 0.5, paintable: true, group: "trim" },
     { key: "chimney", labelKey: "parts.chimney", prompts: ["chimney"], threshold: 0.5, paintable: true, group: "walls" },
     { key: "roof", labelKey: "parts.roof", prompts: ["roof"], threshold: 0.5, paintable: false, group: "roof" },
     { key: "windows", labelKey: "parts.windows", prompts: ["window"], threshold: 0.5, paintable: false, group: "windows" },

@@ -32,11 +32,13 @@ describe("the parts config", () => {
     expect(Object.isFrozen(DEFAULT_PARTS)).toBe(true);
     expect(Object.isFrozen(DEFAULT_PARTS[0])).toBe(true);
     const keys = DEFAULT_PARTS.map((p) => p.key);
-    for (const k of ["body", "trim", "frontDoor", "garageDoor", "shutters", "columns", "railings", "gutters", "soffit", "chimney"]) {
+    for (const k of ["body", "trim", "frontDoor", "garageDoor", "shutters", "columns", "railings", "gutters", "soffit", "windowTrim", "chimney"]) {
       expect(DEFAULT_PARTS.find((p) => p.key === k).paintable).toBe(true);
     }
     for (const k of ["roof", "windows", "stone", "brick", "lamps"]) expect(DEFAULT_PARTS.find((p) => p.key === k).paintable).toBe(false);
-    expect(keys.length).toBe(15);
+    expect(keys.length).toBe(16);
+    // the window casings are their own part, not the trim's
+    expect(DEFAULT_PARTS.find((p) => p.key === "trim").prompts).not.toContain("window trim");
     expect(DEFAULT_PARTS.filter((p) => p.method === "subtract").map((p) => p.key)).toEqual(["body"]);
   });
 

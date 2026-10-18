@@ -35,7 +35,7 @@ import { useUiStore } from "../stores/ui.js";
 // The registered ports (app-structure §1): the dev server's — the same number as quasar.config.js
 // `devServer` and the server's APP_ORIGINS — and the server's default.
 const DEV_PORTS = ["1460"];
-const SERVER_FALLBACK = "http://127.0.0.1:17497";
+const SERVER_FALLBACK = "http://127.0.0.1:17499";
 
 async function boot({ app, router, store: pinia }) {
   const shellBase = await Promise.race([shellServerUrl(), new Promise((resolve) => setTimeout(() => resolve(null), CHECK_SERVER_MS))]);

@@ -1,6 +1,6 @@
 # Troubleshooting
 
-**"Can't reach the server".** The app's server isn't running, or its port (17497) is taken by
+**"Can't reach the server".** The app's server isn't running, or its port (17499) is taken by
 another program — the screen says which when it knows. The desktop app starts the server itself:
 the tray's **Restart server** starts it again and **Open log file** shows why it stopped.
 Headless, start it with `just-house-paint-server serve` (`npm run server` from a source checkout).

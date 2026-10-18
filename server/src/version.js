@@ -12,5 +12,6 @@ import pkg from "../package.json" with { type: "json" };
 export const PRODUCT = "Just House Paint";
 export const VERSION = pkg.version;
 export const API_VERSION = "v1";
-/** The family port registry (app-structure §1): JW 17495 · JV 17494 · docgen 8742 · template 17497. */
-export const DEFAULT_PORT = 17497;
+/** The family port registry (app-structure §1): JW 17495 · JV 17494 · docgen 8742 · template 17490 · this app
+ *  17499 (17496–17498 are JustWrite's smoke, eval and flow-test ports). */
+export const DEFAULT_PORT = 17499;

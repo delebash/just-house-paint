@@ -19,7 +19,7 @@ Every run gets a temp folder: the data folder lives there and `JUST_AI_HOME` poi
 nothing reads or writes your data or the family's cache registry. The harness starts the app's own
 server on that folder (from source, on Electron's Node) and stops it after; the app runs with
 the shell's `<ID>_DEV_NO_SERVER=1`, so it starts no server of its own. The window looks for its
-server on the registered port, **17497**: a run refuses to start while something listens there
+server on the registered port, **17499**: a run refuses to start while something listens there
 (your dev server, say) rather than touch it.
 
 ## Scripts (from the app's root)
