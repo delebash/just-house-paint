@@ -598,7 +598,8 @@ Playwright against that server. Screenshots: session e638ccef's scratchpad `real
   house1, Behr, "classic and welcoming": 3 schemes, every color snapped to a Behr paint (ΔE to the AI's
   target 0.5–7.1), 416 prompt / 272 answer tokens. Through the desktop app's Schemes tab: shown 16.2 s after
   the click, Apply paints the house. Times vary widely — 29 s, 16 s, then 66 s / 33 s and 99 s after server
-  restarts (the model loaded again each time) — not explained yet.
+  restarts (the model loaded again each time) — not explained yet. Not the disk: E: is an NVMe SSD
+  (Samsung 990 PRO); other sessions ran builds and tests on this machine at the same time.
 - **The prompt's first answers described what isn't there** ("mossy window frames", "warm wood tones" on a
   white house); with "base each reason on [the listed parts and colors]" they quoted hex codes ("the #373530
   roof"); with "name colors in plain words" too: "the dark roof and the olive windows". Both lines are in the
