@@ -210,6 +210,8 @@
       "againTitle": "Find the parts again?",
       "againMessage": "The parts found now replace the ones this house has, with the changes you made to them.",
       "task": "Finding the parts of {name}",
+      "loading": "Loading the part finder · {n}%",
+      "progress": "{part} · {n}%",
       "emptyTitle": "Find the parts first",
       "emptyMessage": "The part finder outlines the body, the trim, the doors and the rest, so each can be painted on its own."
     },

@@ -85,7 +85,7 @@ function fakeFetch(input, init = {}) {
     server.finderInstalled = true;
     return Promise.resolve(json({ id: "j-install", state: "done", progress: 1, result: { installed: true } }));
   }
-  if (p === "/v1/jobs/j-find" && server.holdFind) return Promise.resolve(json({ id: "j-find", state: "running", progress: 0.4 }));
+  if (p === "/v1/jobs/j-find" && server.holdFind) return Promise.resolve(json({ id: "j-find", state: "running", progress: 0.4, message: "trim" }));
   if (p === "/v1/jobs/j-find") {
     server.parts = PARTS;
     return Promise.resolve(json({ id: "j-find", state: "done", progress: 1, result: { parts: 2 } }));
@@ -314,7 +314,8 @@ test("finding the parts shows its progress on the page — not twice in the glob
   await flushPromises();
   const strip = document.querySelector(".q-page .sts");
   expect(strip?.textContent).toContain("Finding the parts of Main street");
-  expect(strip?.textContent).toContain("40%");
+  // which part it is looking for now, as the percent goes up
+  expect(strip?.textContent).toContain("Trim · 40%");
   expect(strip.querySelector(".sts-fill").style.width).toBe("40%");
   expect(document.querySelector(".ai-task-stack")).toBeNull();
   expect(byText("button", "Find the parts again").disabled).toBe(true);

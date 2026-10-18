@@ -32,16 +32,17 @@ export function jobError(job) {
 /**
  * Run a server job as one task. `start()` posts the request and answers the job's snapshot;
  * `feature` and `label` name the task on the strip, `meta` tells its screen which run is its own
- * (a house's id, a brand). Resolves with the job's result; a cancel rejects with an AbortError (the
+ * (a house's id, a brand); `describe(job, percent)` words the progress from the job's own message
+ * (the part being found — "Trim · 40%"), else the percent alone. Resolves with the job's result; a cancel rejects with an AbortError (the
  * strip shows it as cancelled, never as a failure).
  */
-export function runServerJob({ start, feature, label, meta, pollMs = POLL_MS }) {
+export function runServerJob({ start, feature, label, meta, describe, pollMs = POLL_MS }) {
   return withAiTask({ feature, label, meta }, async (task) => {
     let job = await start();
     task.signal.addEventListener("abort", () => del(`/v1/jobs/${encodeURIComponent(job.id)}`).catch(() => {}), { once: true });
     while (job.state === "running") {
       const pct = Math.round((job.progress || 0) * 100);
-      task.setProgress(pct, 100, i18n.global.t("jobs.percent", { n: pct }));
+      task.setProgress(pct, 100, describe?.(job, pct) || i18n.global.t("jobs.percent", { n: pct }));
       await wait(pollMs, task.signal);
       job = await get(`/v1/jobs/${encodeURIComponent(job.id)}`);
     }

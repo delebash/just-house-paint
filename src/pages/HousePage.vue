@@ -364,6 +364,14 @@ onKeyStroke(["z", "Z", "y", "Y"], (e) => {
   else history.redo();
 });
 
+/** The finder's progress in words: the part it is looking for now (the job's message is its key),
+ *  or the model loading first — "Trim · 40%". */
+function findProgress(job, n) {
+  if (job.message === "loading") return t("house.find.loading", { n });
+  if (job.message) return t("house.find.progress", { part: partName(job.message, { t, te }), n });
+  return "";
+}
+
 async function findParts() {
   if (!engines.finderInstalled) {
     tab.value = "parts";
@@ -375,7 +383,7 @@ async function findParts() {
   }
   busy.value.find = true;
   try {
-    await house.findParts(t("house.find.task", { name: house.house.name }));
+    await house.findParts(t("house.find.task", { name: house.house.name }), findProgress);
     // new parts: their outlines, and the history starts over from them
     const masks = await loadMasks(house.parts.map((p) => p.key));
     history.reset({ colors: house.colors, masks });
