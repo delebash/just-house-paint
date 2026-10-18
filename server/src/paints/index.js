@@ -3,6 +3,7 @@
 // color math and palette suggestions.
 export { BRANDS, FAMILY_NAMES, displayName, normalizeRow, dedupeByCode, tidyName } from "./normalize.js";
 export { BRAND_FEEDS, FEED_PARSERS, FeedError, loadFeed } from "./feeds.js";
+export { BRAND_FILE_PAGES, loadPaletteFiles, paletteLinks } from "./files.js";
 export { HEADER_ALIASES, LABEL_PATTERNS, detectFormat, importFile, splitLabel } from "./importers.js";
 export { parseAco, parseAse } from "./swatches.js";
 export {

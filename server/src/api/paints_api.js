@@ -18,7 +18,7 @@ import {
   replaceBrandPaints,
   searchPaints,
 } from "../database/paints.js";
-import { BRAND_FEEDS, BRANDS, displayName, importFile, loadFeed, nearestPaints, schemesFromCoordinating, suggestSchemes } from "../paints/index.js";
+import { BRAND_FEEDS, BRAND_FILE_PAGES, BRANDS, displayName, importFile, loadFeed, loadPaletteFiles, nearestPaints, schemesFromCoordinating, suggestSchemes } from "../paints/index.js";
 import { BrandParams, HarmonyIn, NearestQuery, PaintParams, PaintSearch } from "../schemas/paints.js";
 
 /** A role of a scheme on the wire: the target color and the real paint it snapped to. */
@@ -39,6 +39,9 @@ const wireScheme = (s) => ({
  * `ctx`: { db, jobs, fetch, harmony() → HARMONY_DEFAULTS overrides (settings rows),
  *          maxImportBytes() }.
  */
+/** The app can fetch this brand's colors: a public list, or palette files linked from its page. */
+const fetchable = (brand) => BRAND_FEEDS.some((f) => f.brand === brand) || BRAND_FILE_PAGES.some((p) => p.brand === brand);
+
 export function router(ctx = getState()) {
   const app = new Hono();
   const mustBrand = (key) => {
@@ -53,7 +56,8 @@ export function router(ctx = getState()) {
       Object.entries(BRANDS).map(([key, b]) => ({
         key,
         label: b.label,
-        feed: BRAND_FEEDS.some((f) => f.brand === key),
+        // the app can fetch the brand's colors: a public list, or the palette files its page links
+        feed: fetchable(key),
         enabled: rows[key]?.enabled ?? false,
         paintCount: rows[key]?.paintCount ?? 0,
         source: rows[key]?.source ?? null,
@@ -63,16 +67,19 @@ export function router(ctx = getState()) {
     );
   });
 
-  // Option B: load the brand's public list (the user asked — this is the switch turned on).
+  // Load a brand's colors: its public list, or the palette files its page links to (Benjamin Moore,
+  // PPG / Glidden) — at start-up for the brands set to load automatically, or on Load.
   app.post("/v1/brands/:key/load", input({ params: BrandParams }), (c) => {
     const brand = mustBrand(c.req.valid("param").key);
-    if (!BRAND_FEEDS.some((f) => f.brand === brand)) {
-      throw new ApiError(409, "no-public-list", "No public list", `${BRANDS[brand].label} has no public color list — import its palette file instead`);
+    if (!fetchable(brand)) {
+      throw new ApiError(409, "no-public-list", "No public list", `${BRANDS[brand].label} has no color list the app can fetch — import its palette file instead`);
     }
     const job = ctx.jobs.start({ kind: "load-brand", key: brand, label: BRANDS[brand].label }, async ({ signal, progress }) => {
       progress(0.05, "downloading");
       try {
-        const rows = await loadFeed(brand, { fetch: ctx.fetch, signal });
+        const rows = BRAND_FEEDS.some((f) => f.brand === brand)
+          ? await loadFeed(brand, { fetch: ctx.fetch, signal })
+          : await loadPaletteFiles(brand, { fetch: ctx.fetch, signal, onFile: (done, total) => progress(0.05 + (0.75 * done) / total, "downloading") });
         progress(0.8, "saving");
         const saved = replaceBrandPaints(ctx.db, brand, rows, { source: "feed" });
         return { brand, paintCount: saved.paintCount };

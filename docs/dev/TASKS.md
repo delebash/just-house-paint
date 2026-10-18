@@ -223,9 +223,10 @@ BUILT:  2026-10-18 — the setting `paints.autoLoad` (every brand on; seeded, so
         on Paint colors (on with no colors → loads at once); the Colors tab says how many brands wait on Paint colors.
         Verified: 320 server and 51 renderer tests (the start-up loads: which, in order, a failure doesn't stop the
         rest, a second call joins the first), lint, i18n, the guard.
-OPEN:   - Benjamin Moore's collection ASE files and PPG's 2025 XLSX fetched by the app (then "Load automatically"
-          for all seven) — needs the user's OK to download them to build and test it (asked 2026-10-18);
-        - a real run: the four public lists loading on the user's computer — same OK.
+BUILT:  2026-10-18 — Benjamin Moore and PPG / Glidden load like the others: the app reads the brand's palette page and
+        its current file links (paints/files.js) with the Import button's importers, so "Load automatically" covers all
+        seven. On the user's computer: Benjamin Moore 4,056 colors (4 s), PPG / Glidden 2,108 (2 s); all seven loaded,
+        ~17,100 colors (RESEARCH §10). Import stays for a brand that moves its files.
 GO:     the user, verbatim (2026-10-18): "confirm what color list download?" — shown: the four public lists (SW's host,
         JSON) and Benjamin Moore's collection ASE files and PPG's 2025 XLSX, with the brands' terms; then "i just want it
         to work well, think on it and if it works well your rec go" and "color list is fine go".

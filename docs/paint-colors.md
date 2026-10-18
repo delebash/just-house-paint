@@ -8,8 +8,10 @@ Paint colors.
 
 ## Loading a brand's public list
 
-Behr, Sherwin-Williams, Valspar, HGTV Home and Dutch Boy publish their colors on their websites. The
-first time the app starts, it loads each of those lists by itself, one after another, and keeps them on
+Behr, Sherwin-Williams, Valspar, HGTV Home and Dutch Boy publish their colors on their websites;
+Benjamin Moore and PPG / Glidden publish palette files for designers (Benjamin Moore one per
+collection, PPG one Excel file of every color), which the app finds on the brand's palette page. The
+first time the app starts, it loads each brand by itself, one after another, and keeps them on
 your computer — their progress shows at the bottom right, with **Cancel**. **Load automatically** on a
 brand's row turns that off for the brand (its colors already here stay; **Remove** clears them) or on
 again (an empty brand loads at once). **Load again** fetches a list again; its progress shows above the
@@ -18,14 +20,11 @@ own use.
 
 ## Importing a brand's palette file
 
-Benjamin Moore and PPG / Glidden publish palette files for designers instead:
-
-- **Benjamin Moore** — the ASE files on its "Download Benjamin Moore color palettes" page, one per
-  collection (Classic Colors, Color Preview, Historical Colors, …). Import each collection you want.
-- **PPG / Glidden** — the Excel file ("Voice of Colour Palette … RGB and LRV Values") on PPG's
-  palette downloads page.
-
-On the brand's row press **Import a file…** and choose the file. The app reads Adobe swatch files
+If a brand moves its list or its files and loading fails (the brand's row says why), you can still
+download the brand's palette file from its website yourself — Benjamin Moore's ASE files on its
+"Download Benjamin Moore color palettes" page, PPG's "Voice of Colour Palette … RGB and LRV Values"
+Excel file, or Sherwin-Williams' and Behr's palette downloads. On the brand's row press **Import a
+file…** and choose the file. The app reads Adobe swatch files
 (.ase, .aco), Excel (.xlsx) and CSV. How big a file may be is in **App Settings → General**.
 
 **Remove** takes a brand's colors off this computer; it asks first. Designs that use them show no

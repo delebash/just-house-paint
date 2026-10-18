@@ -420,7 +420,7 @@
   },
   "paintColors": {
     "title": "Paint colors",
-    "lede": "The brands' real paint colors, kept on this computer. Each brand's public color list loads by itself the first time the app starts; turn Load automatically off for a brand you don't want. Benjamin Moore and PPG / Glidden come from the palette file you download from the brand.",
+    "lede": "The brands' real paint colors, kept on this computer. Each brand's colors load by themselves the first time the app starts — from the brand's public list or the palette files on its website; turn Load automatically off for a brand you don't want.",
     "loadFailed": "Couldn't load the brands: {reason}",
     "columns": {
       "brand": "Brand",
