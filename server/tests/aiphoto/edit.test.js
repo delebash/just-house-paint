@@ -285,3 +285,43 @@ describe("the lock covers only what the AI repainted (RESEARCH §10: the pink tr
     expect(trim[0]).toBeGreaterThan(trim[1] + 60); // the trim turned paint-colored
   });
 });
+
+describe("a surface whose paint now is known (the light on it)", () => {
+  test("the lock paints the new color in the light the paint now gives; its ΔE is to that", async () => {
+    const photo = await photoPng();
+    const sd = fakeSd();
+    // the wall is photographed ~#e6e3dc where lit: say it is white paint now — a dimmer, warmer light
+    const r = await aiRepaint({
+      engine: "sd-cli",
+      models,
+      photo,
+      mask: await rectMask(WALL),
+      colorHex: "#AD2C34",
+      colorName: "Positive Red",
+      surfaceLabel: "siding",
+      currentHex: "#ffffff",
+      outPath: join(tmp(), "o.png"),
+      size: { width: 320, height: 240 },
+      spawn: sd.spawn,
+    });
+    const s = r.surfaces[0];
+    expect(s.gain.every((g) => g < 1)).toBe(true);
+    expect(s.gain[0]).toBeGreaterThan(s.gain[2]); // the photo's wall is warmer than white
+    expect(s.litHex).not.toBe("#ad2c34");
+    expect(s.litMedian).toBe(s.litHex);
+    expect(s.deltaE).toBeLessThan(0.5);
+    // the same run without it locks to the chip
+    const plain = await aiRepaint({
+      engine: "sd-cli",
+      models,
+      photo,
+      mask: await rectMask(WALL),
+      colorHex: "#AD2C34",
+      surfaceLabel: "siding",
+      outPath: join(tmp(), "p.png"),
+      size: { width: 320, height: 240 },
+      spawn: fakeSd().spawn,
+    });
+    expect(plain.surfaces[0]).toMatchObject({ litHex: "#ad2c34", litMedian: "#ad2c34", gain: [1, 1, 1] });
+  });
+});

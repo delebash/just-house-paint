@@ -4,7 +4,7 @@
 // so a color click repaints at once, and only a changed mask or texture is prepared again.
 // Pure over arrays: the page hands it ImageData pixels and masks, and draws what it returns.
 
-import { applyLight, chipDeltaE, lightGain, luminance, partTones, preparePart, tintPhoto } from "./tint.js";
+import { applyLight, chipDeltaE, lightGain, litHex, luminance, partTones, preparePart, tintPhoto } from "./tint.js";
 
 const hex2 = (v) => v.toString(16).padStart(2, "0");
 const median = (values) => {
@@ -70,9 +70,10 @@ export function createPainter({ rgba, width, height }) {
     keys: () => [...parts.keys()],
     /**
      * The painted photo for `colors` ({ part: hex }) in `order` (later parts paint over earlier
-     * ones), through the Light setting (`light`, 1 = the photo's own). Returns { rgba, deltaE:
-     * { part: ΔE2000 to the chip | null } } — ΔE always at the photo's own light, so it keeps
-     * meaning how true the paint is, whatever the Light.
+     * ones), through the Light setting (`light`, 1 = the photo's own), each part in the light its
+     * paint now (`current`, { part: hex }) says falls there. Returns { rgba, deltaE: { part: ΔE2000
+     * to the paint in that light — the chip without a paint now | null } } — ΔE always at the photo's
+     * own light, so it keeps meaning how true the paint is, whatever the Light.
      */
     paint(colors, order = Object.keys(colors), { light = 1, current = {} } = {}) {
       const assignments = [];
@@ -83,7 +84,7 @@ export function createPainter({ rgba, width, height }) {
       }
       const out = tintPhoto({ photo: rgba, Y, assignments });
       const deltaE = {};
-      for (const a of assignments) deltaE[a.key] = chipDeltaE({ tinted: out, Y, part: a.part, hex: a.hex });
+      for (const a of assignments) deltaE[a.key] = chipDeltaE({ tinted: out, Y, part: a.part, hex: litHex(a.hex, a.gain) });
       applyLight(out, light);
       return { rgba: out, deltaE };
     },

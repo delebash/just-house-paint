@@ -80,7 +80,8 @@ export function createAiPhoto(ctx) {
     },
 
     /**
-     * One AI photo of `house` with `surfaces`: [{ key, hex, name }] (paintable parts with a paint).
+     * One AI photo of `house` with `surfaces`: [{ key, hex, name, currentHex? }] (paintable parts with
+     * a paint; `currentHex` the paint the part has now, when its owner said).
      * Returns { file, deltaE, seconds, engine }.
      */
     async render(house, surfaces, { renderId, signal, progress }) {
@@ -104,6 +105,7 @@ export function createAiPhoto(ctx) {
           mask: maskPath(ctx.dataDir, house.id, s.key),
           colorHex: s.hex,
           colorName: s.name,
+          currentHex: s.currentHex ?? null,
           surfaceLabel: surfaceWords(s.key),
         })),
         outPath: out,

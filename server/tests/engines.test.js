@@ -139,7 +139,7 @@ describe("the engine routes", () => {
         ensureEngine: async () => "C:/engine/sd-cli.exe",
         ensureModels: async () => ({ diffusion: "d", llm: "l", vae: "v" }),
         aiRepaint: async (args) => {
-          calls.push(["aiRepaint", args.surfaces.map((x) => [x.surfaceLabel, x.colorHex])]);
+          calls.push(["aiRepaint", args.surfaces.map((x) => [x.surfaceLabel, x.colorHex, x.currentHex])]);
           args.onProgress({ fraction: 0.5, stage: "generate" });
           writeFileSync(args.outPath, "png");
           return { deltaE: 0.3 };
@@ -199,6 +199,8 @@ describe("the engine routes", () => {
     form.append("file", new Blob(["code,name,hex\nX-1,Brick Red,#a33a2f\nX-2,Snow,#f4f4f2"]), "p.csv");
     form.append("brand", "behr");
     await s.app.request("/v1/paints/import", { method: "POST", body: form });
+    // the body's paint now is known: it goes with the body, so the lock paints in its light
+    await s.json("PUT", `/v1/houses/${house.id}/current-paints`, { body: "behr:X-2" });
     const r = await s.json("POST", `/v1/houses/${house.id}/aiphoto`, { colors: { body: "behr:X-1", trim: "behr:X-2", roof: "behr:X-2" } });
     expect(r.status).toBe(202);
     const done = await s.settle((await r.json()).id);
@@ -206,8 +208,8 @@ describe("the engine routes", () => {
     expect(done.result).toMatchObject({ houseId: house.id, deltaE: 0.3 });
     // the roof isn't paintable, so only body and trim go to the model, in English words
     expect(calls.find((c) => c[0] === "aiRepaint")[1]).toEqual([
-      ["body", "#a33a2f"],
-      ["trim", "#f4f4f2"],
+      ["body", "#a33a2f", "#f4f4f2"],
+      ["trim", "#f4f4f2", null],
     ]);
     expect(calls).toContain("stopLocalModel");
     expect(fakeFinder.calls.some((c) => c[0] === "releaseGpu")).toBe(true);

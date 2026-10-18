@@ -104,9 +104,11 @@ test("the paint a part has now sets its light: the photo's color there ÷ that p
   const g = p.gain("body", "#ffffff");
   expect(g[0]).toBeCloseTo(0.456, 2); // (180/255) in linear light
   expect(g[2]).toBeGreaterThan(g[0]); // the blue cast kept
-  // a new paint shows as the camera would have taken it: white now → the photo itself
-  const { rgba: out } = p.paint({ body: "#ffffff" }, ["body"], { current: { body: "#ffffff" } });
+  // a new paint shows as the camera would have taken it: white now → the photo itself; its ΔE is
+  // to the paint in that light, so the light itself doesn't count against it
+  const { rgba: out, deltaE } = p.paint({ body: "#ffffff" }, ["body"], { current: { body: "#ffffff" } });
   expect([out[0], out[1], out[2]]).toEqual([180, 190, 210]);
+  expect(deltaE.body).toBeLessThan(0.5);
   // the tones follow the same light
   expect(p.tones("body", "#ffffff", 1, "#ffffff").light).toBe("#b4bed2");
   // a wrong pick (black, for a light wall) is capped, not wild

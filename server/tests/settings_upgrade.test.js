@@ -15,7 +15,12 @@ afterEach(() => {
 
 // Today's defaults. A change here means a default changed: add the OLD fingerprint to
 // PREVIOUS_DEFAULTS (so installs still holding it get the new one), then update this line.
-const TODAY = { "finder.parts": "b77e3afbbe282820", "finder.priority": "69c2dcc097840fab", "schemes.roleParts": "ab90c1fb04750be9" };
+const TODAY = {
+  "finder.parts": "b77e3afbbe282820",
+  "finder.priority": "69c2dcc097840fab",
+  "schemes.roleParts": "ab90c1fb04750be9",
+  "aiphoto.compose": "2349559042b9098d",
+};
 
 test("today's defaults are the ones this test knows, and none of them is listed as earlier", () => {
   for (const [key, print] of Object.entries(TODAY)) {

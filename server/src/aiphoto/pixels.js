@@ -31,6 +31,9 @@ export const DEFAULT_COMPOSE = Object.freeze({
   // …unless the paint is close to the surface's old color anyway (ΔE2000 below this): then the AI
   // had little to change, and the whole surface is locked.
   sameColorDeltaE: 10,
+  // The light a part's paint now says falls on it (lightGain), per channel, is capped to this range:
+  // a wrong pick can't turn the picture to nonsense (the painter's own cap — src/services/tint.js).
+  gainLimits: Object.freeze([0.25, 4]),
 });
 
 /** The model's working size — the defaults are the measured recipe's 1024×768 for a 4:3 photo. */
@@ -122,13 +125,14 @@ export function pasteBack(photo, render, alpha) {
 }
 
 /**
- * The color lock over `under`: inside `alpha`, paint × (render luminance ÷ the surface's
- * normally lit luminance `stats.base`), in linear light, clipped at white. The render keeps
- * only its light and shade; the hue and the lit level come from the paint.
+ * The color lock over `under`: inside `alpha`, paint × `gain` (the part's light — lightGain) ×
+ * (render luminance ÷ the surface's normally lit luminance `stats.base`), in linear light, clipped
+ * at white. The render keeps only its light and shade; the hue and the lit level come from the
+ * paint in the part's light.
  */
-export function colorLock(under, render, alpha, paintHex, stats, Y = luminanceOf(render)) {
+export function colorLock(under, render, alpha, paintHex, stats, Y = luminanceOf(render), gain = [1, 1, 1]) {
   const p = paintColor(paintHex);
-  const paint = [toLinear(p.r), toLinear(p.g), toLinear(p.b)];
+  const paint = [toLinear(p.r) * gain[0], toLinear(p.g) * gain[1], toLinear(p.b) * gain[2]];
   const base = stats.base;
   return blendOver(under, alpha, (i) => paint.map((v) => toSrgb(Math.min(1, (v * Y[i]) / base))));
 }
@@ -172,6 +176,34 @@ export function medianColor(rgb, idx) {
     }
   }
   return { mode: "rgb", r: med[0] / 255, g: med[1] / 255, b: med[2] / 255 };
+}
+
+/**
+ * The light on a surface, worked out from the paint it has NOW (`currentHex`): per channel, the
+ * photo's median over its normally lit pixels `idx` ÷ that paint, in linear light, capped to
+ * `limits` — the photo's real exposure and color cast (the painter's lightGain, src/services/
+ * tint.js). [1, 1, 1] without a paint now or lit pixels.
+ */
+export function lightGain(photo, idx, currentHex, limits = DEFAULT_COMPOSE.gainLimits) {
+  if (!currentHex || !idx.length) return [1, 1, 1];
+  const seen = medianColor(photo, idx);
+  const now = paintColor(currentHex);
+  return [
+    [seen.r, now.r],
+    [seen.g, now.g],
+    [seen.b, now.b],
+  ].map(([s, n]) => {
+    const lin = toLinear(n);
+    const g = lin > 1e-4 ? toLinear(s) / lin : 1;
+    return Math.min(limits[1], Math.max(limits[0], g));
+  });
+}
+
+/** The paint `paintHex` in a part's light (`gain`) as #rrggbb, clipped at white — the chip at [1, 1, 1]. */
+export function litHexOf(paintHex, gain) {
+  if (gain.every((g) => g === 1)) return paintHex.toLowerCase();
+  const p = paintColor(paintHex);
+  return hexOf({ mode: "rgb", r: toSrgb(Math.min(1, toLinear(p.r) * gain[0])), g: toSrgb(Math.min(1, toLinear(p.g) * gain[1])), b: toSrgb(Math.min(1, toLinear(p.b) * gain[2])) });
 }
 
 /** #rrggbb of a culori rgb color. */

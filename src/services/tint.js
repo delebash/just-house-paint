@@ -175,8 +175,17 @@ export function applyLight(rgba, k) {
 }
 
 /** How far the light on a part may differ from the chip's, per channel, from the paint on it now:
- *  a wrong pick can't turn the picture to nonsense. */
+ *  a wrong pick can't turn the picture to nonsense. The AI photo's lock uses the same cap
+ *  (server/src/aiphoto/pixels.js DEFAULT_COMPOSE.gainLimits). */
 export const GAIN_LIMITS = Object.freeze([0.25, 4]);
+
+/** The paint `hex` in a part's light (`gain`, lightGain's) as #rrggbb — what its normally lit pixels
+ *  show; the chip itself when the gain is [1, 1, 1]. */
+export function litHex(hex, gain = [1, 1, 1]) {
+  if (gain.every((g) => g === 1)) return hex;
+  const lin = paintLinear(hex);
+  return `#${lin.map((v, c) => Math.round(255 * toSrgb(v * gain[c])).toString(16).padStart(2, "0")).join("")}`;
+}
 
 /**
  * The light on a part, worked out from the paint it has NOW (`currentHex`, when its owner knows it):
@@ -227,8 +236,9 @@ export function partTones({ Y, part, hex, k = 1, gain = [1, 1, 1] }) {
 }
 
 /**
- * How close the painted part reads to the paint chip: ΔE2000 between the paint and the median
- * color of the part's normally lit pixels (lighting within ±10% of its base level) in `tinted`.
+ * How close the painted part reads to the paint: ΔE2000 between `hex` (the chip, or the chip in the
+ * part's light — litHex) and the median color of the part's normally lit pixels (lighting within
+ * ±10% of its base level) in `tinted`.
  * Below 1 is not visible to most people; below 2 is a close match. null when no pixel is lit.
  */
 export function chipDeltaE({ tinted, Y, part, hex }) {

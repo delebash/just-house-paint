@@ -65,10 +65,12 @@ export function router(ctx = getState()) {
       chosen = d.colors;
     }
     const paintable = new Set(listParts(ctx.db, house.id).filter((p) => p.paintable && p.area > 0).map((p) => p.key));
-    const paints = paintsById(ctx.db, Object.values(chosen).filter(Boolean));
+    // each part's paint now, where its owner said: the lock paints in the light it gives
+    const now = house.currentPaints || {};
+    const paints = paintsById(ctx.db, [...Object.values(chosen), ...Object.values(now)].filter(Boolean));
     const surfaces = Object.entries(chosen)
       .filter(([key, id]) => id && paintable.has(key) && paints[id])
-      .map(([key, id]) => ({ key, hex: paints[id].hex, name: paints[id].name }));
+      .map(([key, id]) => ({ key, hex: paints[id].hex, name: paints[id].name, currentHex: paints[now[key]]?.hex ?? null }));
     const job = ctx.jobs.start({ kind: "aiphoto", key: house.id, label: house.name }, async ({ signal, progress }) => {
       const renderId = crypto.randomUUID();
       const r = await ctx.aiphoto.render(house, surfaces, { renderId, signal, progress });

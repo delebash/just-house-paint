@@ -7,6 +7,8 @@ import {
   DEFAULT_COMPOSE,
   deltaEAt,
   featherMask,
+  lightGain,
+  litHexOf,
   luminanceOf,
   medianColor,
   pasteBack,
@@ -167,5 +169,37 @@ describe("repaintedAlpha", () => {
     // the same small distance counts as repainted on a dark pixel
     const dark = repaintedAlpha(Buffer.from([40, 30, 28]), Buffer.from([19, 10, 9]), Float32Array.from([1]), [0.08, 0.16]);
     expect(dark[0]).toBe(1);
+  });
+});
+
+describe("the light from the paint on a part now", () => {
+  // a white wall photographed bluish-grey (overcast): 180/190/210
+  const photo = image(4, 2, () => [180, 190, 210]);
+  const all = [0, 1, 2, 3, 4, 5, 6, 7];
+
+  test("the photo there ÷ the paint now, per channel in linear light; none without a paint now", () => {
+    const g = lightGain(photo, all, "#ffffff");
+    expect(g[0]).toBeCloseTo(0.456, 2);
+    expect(g[2]).toBeGreaterThan(g[0]); // the blue cast kept
+    expect(lightGain(photo, all, null)).toEqual([1, 1, 1]);
+    expect(lightGain(photo, [], "#ffffff")).toEqual([1, 1, 1]);
+  });
+
+  test("a wrong pick is capped; the paint in that light, clipped at white", () => {
+    expect(lightGain(photo, all, "#101010")).toEqual([4, 4, 4]);
+    expect(lightGain(photo, all, "#000000")).toEqual([1, 1, 1]); // nothing to divide by
+    expect(litHexOf("#FFFFFF", lightGain(photo, all, "#ffffff"))).toBe("#b4bed2");
+    expect(litHexOf("#AD2C34", [1, 1, 1])).toBe("#ad2c34");
+    expect(litHexOf("#ffffff", [4, 4, 4])).toBe("#ffffff");
+  });
+
+  test("the lock paints the paint in that light: a lit pixel is the paint × the gain", () => {
+    const render = image(4, 2, () => [150, 150, 150]);
+    const Y = luminanceOf(render);
+    const mask = new Float32Array(8).fill(1);
+    const stats = surfaceStats(Y, mask, DEFAULT_COMPOSE);
+    const gain = lightGain(photo, all, "#ffffff");
+    const out = colorLock(photo, render, mask, "#ffffff", stats, Y, gain);
+    expect(px(out, 0)).toEqual([180, 190, 210]);
   });
 });

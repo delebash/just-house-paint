@@ -289,10 +289,15 @@ ORDER:  the user, verbatim: "are you doing thsese ? - Show lit and shaded sample
         "On it now: <paint> [Clear]"; the light on the part = the photo's median on its normally lit pixels ÷ that
         paint, per channel in linear light, capped 0.25–4 (services/tint.js lightGain); every paint, the tones, Compare
         and Save image use it. Verified: 326 server and 69 renderer tests (the gain, a mounted pick → PUT → darker
-        tones → Clear), lint, i18n. OPEN: the real-app check on the user's house (the running dev app holds the data
-        folder's lock and the old server — it needs a restart); the e2e smoke (port 17499 is that app's); ASKED: the
-        Parts tab's ΔE — still against the chip, so a known paint now raises it by the light's own effect; the AI
-        photo's color lock still locks to the chip.
+        tones → Clear), lint, i18n.
+        ASKED then (2026-10-18): the Parts tab's ΔE (still against the chip, so a known paint now raised it by the
+        light's own effect) — my rec: against the paint in the part's light; the AI photo's lock (still to the chip) —
+        my rec: the same light; and may I restart the dev app. DECIDED, the user, verbatim: "on above questions your
+        rec all go". BUILT 2026-10-18: ΔE against the chip in the part's light (tint.js litHex); the AI photo locks
+        to it — the route sends each part's paint now, the server reads the light off the photo (aiphoto/pixels.js
+        lightGain, the cap `aiphoto.compose` gainLimits, an unedited compose upgraded). Verified: 330 server and 69
+        renderer tests, lint, i18n. OPEN: restarting the dev app was refused by Claude Code's permission check — the
+        user restarts it; then the real-app check on the user's house and the e2e smoke (port 17499).
 STATE:  BUILDING.
 
 ## Order the colors by color, not only by name [2026-10-18]

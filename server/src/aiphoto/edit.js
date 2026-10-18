@@ -24,12 +24,14 @@ import {
   deltaEAt,
   featherMask,
   fromRgb,
+  lightGain,
+  litHexOf,
   luminanceOf,
   paintColor,
   pasteBack,
-  repaintedAlpha,
   readMask,
   readRgb,
+  repaintedAlpha,
   surfaceStats,
   unionMaskPng,
   workingSize,
@@ -42,15 +44,18 @@ export { colorLock, pasteBack } from "./pixels.js";
 /** Where each phase sits in the 0..1 progress (sd-cli dominates: ~18 s of ~20 s). */
 export const PHASES = Object.freeze({ prepare: [0, 0.03], generate: [0.03, 0.95], compose: [0.95, 1] });
 
-function surfacesOf({ surfaces, mask, colorHex, colorName, surfaceLabel }) {
-  const list = surfaces ?? [{ mask, colorHex, colorName, surfaceLabel }];
+function surfacesOf({ surfaces, mask, colorHex, colorName, surfaceLabel, currentHex }) {
+  const list = surfaces ?? [{ mask, colorHex, colorName, surfaceLabel, currentHex }];
   if (!Array.isArray(list) || !list.length) throw new TypeError("aiRepaint: no surfaces");
   return list.map((s, i) => {
     if (!s?.mask) throw new TypeError(`aiRepaint: surface ${i} has no mask`);
     paintColor(s.colorHex); // throws on a malformed hex
+    if (s.currentHex) paintColor(s.currentHex);
     const label = String(s.surfaceLabel ?? "").trim();
     if (!label) throw new TypeError(`aiRepaint: surface ${i} has no surfaceLabel`);
-    return { mask: s.mask, colorHex: s.colorHex.toLowerCase(), colorName: s.colorName ?? null, surfaceLabel: label };
+    // currentHex: the paint the surface has now, when its owner knows it — the lock works out the
+    // light on it from that (lightGain) and paints the new color in that light
+    return { mask: s.mask, colorHex: s.colorHex.toLowerCase(), colorName: s.colorName ?? null, surfaceLabel: label, currentHex: s.currentHex ?? null };
   });
 }
 
@@ -166,30 +171,38 @@ export async function aiRepaint(opts) {
     // Each surface's lighting statistics over the pixels it owns (a later surface wins). The lock
     // goes over the paste-back, only where the AI repainted (c.lockOnlyRepainted) — unless the paint
     // is close to the surface's old color, when the whole surface is locked.
+    // A surface whose paint now is known is locked in the light that paint says falls on it, read
+    // off the photo's own pixels (not the render's); its ΔE is to the paint in that light.
     let locked = c.lockOnlyRepainted ? unlocked : full.data;
+    const photoY = list.some((s) => s.currentHex) ? luminanceOf(full.data) : null;
     const results = [];
     for (let s = 0; s < list.length; s++) {
       const owned = Float32Array.from(hard[s]);
       for (let t = s + 1; t < list.length; t++) for (let i = 0; i < owned.length; i++) if (hard[t][i] >= c.insideAt) owned[i] = 0;
       const stats = surfaceStats(Y, owned, c);
+      const gain = list[s].currentHex ? lightGain(full.data, surfaceStats(photoY, hard[s], c).lit, list[s].currentHex, c.gainLimits) : [1, 1, 1];
+      const target = litHexOf(list[s].colorHex, gain);
       let lockAlpha = soft[s];
       if (c.lockOnlyRepainted) {
-        const old = deltaEAt(full.data, stats.inside, list[s].colorHex).deltaE;
+        const old = deltaEAt(full.data, stats.inside, target).deltaE;
         if (old === null || old >= c.sameColorDeltaE) lockAlpha = repaintedAlpha(full.data, ai.data, soft[s], c.repaintedRange);
       }
-      locked = colorLock(locked, ai.data, lockAlpha, list[s].colorHex, stats, Y);
-      results.push({ stats });
+      locked = colorLock(locked, ai.data, lockAlpha, list[s].colorHex, stats, Y, gain);
+      results.push({ stats, gain, target });
       signal?.throwIfAborted();
     }
     const surfaces = list.map((s, i) => {
-      const { lit, inside } = results[i].stats;
-      const after = deltaEAt(locked, lit, s.colorHex);
-      const before = deltaEAt(unlocked, lit, s.colorHex);
+      const { stats, gain, target } = results[i];
+      const { lit, inside } = stats;
+      const after = deltaEAt(locked, lit, target);
+      const before = deltaEAt(unlocked, lit, target);
       // The whole surface's median, shade included — how far "one paint" spreads (RESEARCH §10).
-      const whole = deltaEAt(locked, inside, s.colorHex);
+      const whole = deltaEAt(locked, inside, target);
       return {
         surfaceLabel: s.surfaceLabel,
         colorHex: s.colorHex,
+        litHex: target,
+        gain: gain.map(round2),
         deltaE: round2(after.deltaE),
         deltaEUnlocked: round2(before.deltaE),
         deltaESurface: round2(whole.deltaE),

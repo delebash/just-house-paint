@@ -33,4 +33,7 @@ export const PREVIOUS_DEFAULTS = Object.freeze({
     "17bb9a6fbb12c2e6", // v1
     "b8c404bde753f94f", // + the soffit (3922292)
   ]),
+  "aiphoto.compose": Object.freeze([
+    "c7df3921fb6c1e9f", // before gainLimits (the paint on a part now)
+  ]),
 });
