@@ -23,6 +23,20 @@ export function schemeColors(scheme, partKeys, roleParts) {
   return out;
 }
 
+/**
+ * A design's trim-group parts this house has that the design gives no color, when the design colors
+ * the trim: { parts: [key…], paintId: the trim's paint } or null. A design saved before the house
+ * had a part (soffits, window trim) leaves it unpainted; it can't tell that part from one left
+ * unpainted on purpose, so this is only offered (the Designs tab), never painted unasked.
+ */
+export function unpaintedTrim(colors, partKeys, roleParts) {
+  const paintId = colors.trim;
+  if (!paintId) return null;
+  const have = new Set(partKeys);
+  const parts = (roleParts?.trim || []).filter((key) => have.has(key) && !colors[key]);
+  return parts.length ? { parts, paintId } : null;
+}
+
 const sameColors = (a, b) => {
   const ka = Object.keys(a).filter((k) => a[k]);
   const kb = Object.keys(b).filter((k) => b[k]);
@@ -46,6 +60,9 @@ export const useHouseStore = defineStore("house", {
     // a color read off the photo (the eyedropper, a part's color as photographed) for the Colors tab:
     // { hex, at } until the tab takes it
     pickedColor: null,
+    // the open design's trim-group parts with no color, offered on the Designs tab (unpaintedTrim):
+    // { parts, paintId } until painted, dismissed or another design is opened
+    trimOffer: null,
   }),
   getters: {
     design: (s) => s.designs.find((d) => d.id === s.designId) || null,
@@ -55,13 +72,21 @@ export const useHouseStore = defineStore("house", {
       return !sameColors(this.colors, base);
     },
     paintableParts: (s) => s.parts.filter((p) => p.paintable && p.area > 0),
+    /** The trim offer's parts still without a color on screen — one painted by hand drops out. None
+     *  once the offer is stale: its design isn't the open one any more (deleted, another opened, saved
+     *  as a new one), or the trim on screen isn't the color it would paint (Reset, a new trim). */
+    trimOfferParts: (s) => {
+      const o = s.trimOffer;
+      if (!o || s.designId !== o.designId || s.colors.trim !== o.paintId) return [];
+      return o.parts.filter((key) => !s.colors[key]);
+    },
   },
   actions: {
     async open(id) {
       this.loading = true;
       try {
         const [house, parts, designs, renders] = await Promise.all([get(hp(id)), get(hp(id, "/parts")), get(hp(id, "/designs")), get(hp(id, "/renders"))]);
-        Object.assign(this, { house, parts, designs, renders, colors: {}, designId: null, maskVersions: {}, pickedColor: null });
+        Object.assign(this, { house, parts, designs, renders, colors: {}, designId: null, maskVersions: {}, pickedColor: null, trimOffer: null });
         this.selectedPart = this.paintableParts[0]?.key ?? null;
       } finally {
         this.loading = false;
@@ -133,11 +158,25 @@ export const useHouseStore = defineStore("house", {
     applyScheme(scheme, roleParts) {
       this.colors = { ...this.colors, ...schemeColors(scheme, this.paintableParts.map((p) => p.key), roleParts) };
     },
-    openDesign(id) {
+    /** `roleParts` (the `schemes.roleParts` setting) names the trim group the design is checked for. */
+    openDesign(id, roleParts) {
       const d = this.designs.find((x) => x.id === id);
       if (!d) return;
       this.designId = id;
       this.colors = { ...d.colors };
+      const offer = unpaintedTrim(d.colors, this.paintableParts.map((p) => p.key), roleParts);
+      this.trimOffer = offer ? { ...offer, designId: id } : null;
+    },
+    /** The trim offer taken: its parts painted the design's trim color, in one step (one Undo). */
+    applyTrimOffer() {
+      if (!this.trimOfferParts.length) return;
+      const { paintId } = this.trimOffer;
+      const add = Object.fromEntries(this.trimOfferParts.map((key) => [key, paintId]));
+      this.trimOffer = null;
+      this.colors = { ...this.colors, ...add };
+    },
+    dismissTrimOffer() {
+      this.trimOffer = null;
     },
     async saveDesignAs(name) {
       const d = await post(hp(this.house.id, "/designs"), { name, colors: this.colors });

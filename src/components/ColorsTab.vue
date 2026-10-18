@@ -5,7 +5,7 @@
 // to the brand's nearest paints, each with its ΔE2000, so a color seen elsewhere becomes a paint you
 // can buy. Only brands with colors on this computer are offered; adding one is the Paint colors
 // page's (the app ships no brand data).
-import { reportError, schemaRules, UiButton, UiColorPicker, UiField, UiInput, UiSelect, UiTag, UiToggle } from "@delebash/ui";
+import { EmptyState, reportError, schemaRules, UiButton, UiColorPicker, UiField, UiInput, UiSelect, UiTag, UiToggle } from "@delebash/ui";
 import { NearestQuery } from "just-house-paint-server/schemas/paints.js";
 import { computed, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
@@ -97,10 +97,10 @@ async function match() {
 
 <template>
   <div class="colors">
-    <template v-if="!paints.ready.length">
-      <p class="hint">{{ t("colors.none") }}</p>
-      <UiButton intent="primary" :label="t('colors.addBrand')" @click="router.push('/colors')" />
-    </template>
+    <EmptyState
+      v-if="!paints.ready.length" icon="Palette" compact :message="t('colors.none')" :action-label="t('colors.addBrand')"
+      @action="router.push('/colors')"
+    />
     <template v-else>
       <p class="hint">
         {{ house.selectedPart ? t("colors.forPart", { part: selectedName }) : t("colors.pickPart") }}
@@ -232,7 +232,7 @@ async function match() {
   white-space: nowrap;
 }
 .chip__code {
-  font-size: 11px;
+  font-size: var(--fs-small);
 }
 .swatch--big {
   width: 28px;

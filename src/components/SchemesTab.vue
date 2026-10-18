@@ -8,15 +8,30 @@
 //   - the AI (the feature `schemes.suggest`): it reads the house's current colors — the roof, the
 //     stone, what stays — and the owner's mood, through the kit's withAiTask (the task strip shows
 //     it; app code never owns a task, §8). Its colors are snapped to real paints by the server.
-import { AiTaskStrip, post, reportError, schemaRules, UiButton, UiField, UiInput, UiSelect, UiTag, useSurfaceTask, withAiTask } from "@delebash/ui";
+import {
+  AiTaskStrip,
+  EmptyState,
+  post,
+  reportError,
+  schemaRules,
+  UiButton,
+  UiField,
+  UiInput,
+  UiSelect,
+  UiTag,
+  useSurfaceTask,
+  withAiTask,
+} from "@delebash/ui";
 import { AiSchemesIn } from "just-house-paint-server/schemas/paints.js";
 import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
+import { useRouter } from "vue-router";
 import { useHouseStore } from "../stores/house.js";
 import { usePaintsStore } from "../stores/paints.js";
 import { useSettingsStore } from "../stores/settings.js";
 
 const { t } = useI18n();
+const router = useRouter();
 const house = useHouseStore();
 const paints = usePaintsStore();
 const settings = useSettingsStore();
@@ -87,7 +102,11 @@ const kindLabel = (s) => (s.kind === "ai" ? s.name : s.kind === "coordinating" ?
 
 <template>
   <div class="schemes">
-    <p v-if="!paints.ready.length" class="hint">{{ t("colors.none") }}</p>
+    <!-- no paint colors yet: the one way forward, as the Colors tab (was a dead end — the template audit) -->
+    <EmptyState
+      v-if="!paints.ready.length" icon="Palette" compact :message="t('colors.none')" :action-label="t('colors.addBrand')"
+      @action="router.push('/colors')"
+    />
     <template v-else>
       <p class="hint">{{ t("schemes.hint") }}</p>
       <div class="schemes__row">

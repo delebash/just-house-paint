@@ -40,6 +40,10 @@ house keeps several; click one to put its colors back on. Once you change a colo
 shows **changed** and **Save** keeps the change. Opening another design while there are unsaved
 changes asks first.
 
+A design saved before the house had some of its trim parts (soffits and fascia, window trim) leaves
+them unpainted. Opening it says which parts have no color, and **Paint them the trim's color** paints
+them the design's trim color — nothing changes until you press it, and **Undo** takes it back.
+
 ## Saving the picture
 
 **Save image** writes the painted photo at full size, and **Copy the color list** gives you the

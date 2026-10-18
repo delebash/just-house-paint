@@ -381,6 +381,10 @@
       "message": "The design “{name}” will be deleted. Its AI photos stay.",
       "confirm": "Delete design"
     },
+    "trimOffer": {
+      "message": "{parts} has no color in this design. | {parts} have no color in this design.",
+      "paint": "Paint it the trim's color | Paint them the trim's color"
+    },
     "renders": {
       "title": "AI photos",
       "none": "No AI photos yet — the AI photo button makes one from the colors on screen.",

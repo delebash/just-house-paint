@@ -6,7 +6,7 @@
 // imported here). The list is the kit's UiTable (QTable); the states are §17's (loading, failed with
 // Retry). Removing a brand's colors asks first; designs that use them keep their ids.
 import {
-  AiTaskStrip,
+  AiTaskStrips,
   confirmDialog,
   errorMessage,
   PaneHeader,
@@ -18,14 +18,14 @@ import {
   UiTable,
   UiTag,
   UiToggle,
-  useSurfaceTask,
+  useAiTasksStore,
 } from "@delebash/ui";
 import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { usePaintsStore } from "../stores/paints.js";
 import { useSettingsStore } from "../stores/settings.js";
 
-const { t } = useI18n();
+const { t, n } = useI18n();
 const paints = usePaintsStore();
 const settings = useSettingsStore();
 
@@ -62,9 +62,11 @@ const mark = (key, on) => {
   busy.value = { ...busy.value, [key]: on };
 };
 
-// a brand's public list loading, shown above the table while it runs (app-structure §8); a second
-// brand loading at the same time shows in the kit's global stack
-const loadTask = useSurfaceTask("paints.load");
+// the brands' loads above the table — every one, started here or at start-up (app-structure §8;
+// <AiTaskStrips> below), a failure lingering until dismissed — and a row waits while its brand loads
+const tasks = useAiTasksStore();
+const loadingBrand = (key) => tasks.runningTasks.some((task) => task.feature === "paints.load" && task.meta?.brand === key);
+const waits = (key) => !!busy.value[key] || loadingBrand(key);
 
 // "Load automatically" per brand (the setting paints.autoLoad; a brand missing from it counts as on)
 const autoLoad = computed(() => settings.values["paints.autoLoad"] || {});
@@ -76,7 +78,7 @@ async function setAutoLoad(brand, on) {
     return;
   }
   // turned on with no colors yet: load them now
-  if (on && !brand.paintCount && !busy.value[brand.key]) await loadFeed(brand);
+  if (on && !brand.paintCount && !waits(brand.key)) await loadFeed(brand);
 }
 
 async function loadFeed(brand) {
@@ -139,14 +141,14 @@ async function clear(brand) {
     </UiBanner>
 
     <div v-else class="paint-colors">
-      <AiTaskStrip :task="loadTask" />
+      <AiTaskStrips :features="['paints.load']" />
       <UiTable v-if="paints.brandsLoaded" :data="paints.brands" :columns="columns" data-key="key">
         <template #label="{ row }">
           <strong>{{ row.label }}</strong>
           <div v-if="row.lastError" class="paint-colors__error">{{ t("paintColors.lastError", { error: row.lastError }) }}</div>
         </template>
         <template #paintCount="{ row }">
-          <span v-if="row.paintCount">{{ row.paintCount.toLocaleString() }}</span>
+          <span v-if="row.paintCount">{{ n(row.paintCount) }}</span>
           <span v-else class="muted">{{ t("paintColors.none") }}</span>
         </template>
         <template #source="{ row }">
@@ -165,11 +167,11 @@ async function clear(brand) {
         <template #actions="{ row }">
           <span class="paint-colors__actions">
             <UiButton
-              v-if="row.feed" intent="secondary" size="small" :disabled="busy[row.key]"
+              v-if="row.feed" intent="secondary" size="small" :disabled="waits(row.key)"
               :label="row.paintCount ? t('paintColors.reload') : t('paintColors.load')" @click="loadFeed(row)"
             />
-            <UiButton intent="ghost" size="small" :disabled="busy[row.key]" :label="t('paintColors.import')" @click="pickFile(row)" />
-            <UiButton v-if="row.paintCount" intent="ghost" size="small" :disabled="busy[row.key]" :label="t('paintColors.remove.action')" @click="clear(row)" />
+            <UiButton intent="ghost" size="small" :disabled="waits(row.key)" :label="t('paintColors.import')" @click="pickFile(row)" />
+            <UiButton v-if="row.paintCount" intent="ghost" size="small" :disabled="waits(row.key)" :label="t('paintColors.remove.action')" @click="clear(row)" />
           </span>
         </template>
       </UiTable>

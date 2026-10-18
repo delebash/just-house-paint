@@ -68,6 +68,8 @@ describe("brands", () => {
     const done = await s.settle((await (await s.json("POST", "/v1/brands/benjamin-moore/load")).json()).id);
     expect(done.state).toBe("done");
     expect(done.result.paintCount).toBe(3); // White Dove is in both collections: once
+    // its row says the colors came from palette files, not a public list
+    expect((await (await s.app.request("/v1/brands")).json()).find((b) => b.key === "benjamin-moore").source).toBe("file");
     expect(fetched.filter((u) => u.endsWith(".pdf"))).toEqual([]); // only the swatch files
     const found = await (await s.app.request("/v1/paints?brand=benjamin-moore&q=lace")).json();
     expect(found.rows.map((p) => p.name)).toEqual(["Chantilly Lace"]);

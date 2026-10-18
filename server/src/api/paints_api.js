@@ -81,7 +81,8 @@ export function router(ctx = getState()) {
           ? await loadFeed(brand, { fetch: ctx.fetch, signal })
           : await loadPaletteFiles(brand, { fetch: ctx.fetch, signal, onFile: (done, total) => progress(0.05 + (0.75 * done) / total, "downloading") });
         progress(0.8, "saving");
-        const saved = replaceBrandPaints(ctx.db, brand, rows, { source: "feed" });
+        // "feed": a public list; "file": the palette files the brand's page links (the page says which)
+        const saved = replaceBrandPaints(ctx.db, brand, rows, { source: BRAND_FEEDS.some((f) => f.brand === brand) ? "feed" : "file" });
         return { brand, paintCount: saved.paintCount };
       } catch (e) {
         if (!signal.aborted) recordBrandError(ctx.db, brand, e?.message || e, "feed");

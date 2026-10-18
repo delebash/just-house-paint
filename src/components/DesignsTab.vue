@@ -3,17 +3,22 @@
 // The house page's Designs tab (PRD F7): the colors on screen saved as a named design, the saved
 // designs to open, rename or delete, and the house's AI photos. The colors on screen are a draft
 // until saved; opening a design while the draft has changes asks first. A name is the §15 form
-// (NameDialog over DesignIn's rules); a delete asks first, naming what is lost.
-import { confirmDialog, Icon, relativeTime, reportError, schemaRules, UiButton, UiServerImage, UiTag } from "@delebash/ui";
+// (NameDialog over DesignIn's rules); a delete asks first, naming what is lost. A design saved before
+// the house had some trim-group parts leaves them unpainted: opening it offers, in a banner, to paint
+// them the design's trim color — one click, never unasked (the store's unpaintedTrim).
+import { confirmDialog, EmptyState, Icon, relativeTime, reportError, schemaRules, UiBanner, UiButton, UiServerImage, UiTag } from "@delebash/ui";
 import { DesignIn } from "just-house-paint-server/schemas/houses.js";
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
+import { partName } from "../services/partNames.js";
 import { useHouseStore } from "../stores/house.js";
+import { useSettingsStore } from "../stores/settings.js";
 import NameDialog from "./NameDialog.vue";
 
 const emit = defineEmits(["show-render", "color-card"]);
-const { t } = useI18n();
+const { t, te, locale } = useI18n();
 const house = useHouseStore();
+const settings = useSettingsStore();
 
 const nameRule = schemaRules(DesignIn).name;
 // the name dialog: closed (null), a new design ({}), or the design to rename
@@ -32,8 +37,16 @@ async function open(design) {
     const yes = await confirmDialog({ title: t("designs.discard.title"), message: t("designs.discard.message"), confirmLabel: t("designs.discard.confirm") });
     if (!yes) return;
   }
-  house.openDesign(design.id);
+  house.openDesign(design.id, settings.values["schemes.roleParts"]);
 }
+
+// the trim offer's words: its parts' names as one list ("A and B", "A, B and C" — the locale's)
+const offerCount = computed(() => house.trimOfferParts.length);
+const offerMessage = computed(() => {
+  const names = house.trimOfferParts.map((key) => partName(key, { t, te }));
+  const parts = new Intl.ListFormat(locale.value, { type: "conjunction" }).format(names);
+  return t("designs.trimOffer.message", { parts }, names.length);
+});
 
 async function remove(design) {
   const yes = await confirmDialog({
@@ -73,7 +86,7 @@ const designName = (id) => house.designs.find((d) => d.id === id)?.name;
       <UiButton :intent="house.designId ? 'secondary' : 'primary'" :disabled="!Object.keys(house.colors).length" :label="t('designs.saveAs')" @click="naming = {}" />
       <UiButton intent="ghost" :disabled="!Object.keys(house.colors).length" :label="t('designs.colorCard')" :title="t('designs.colorCardHint')" @click="emit('color-card')" />
     </div>
-    <p v-if="!house.designs.length" class="muted">{{ t("designs.none") }}</p>
+    <EmptyState v-if="!house.designs.length" icon="Palette" compact :message="t('designs.none')" />
     <q-list v-else class="designs__list" dense>
       <q-item
         v-for="d in house.designs" :key="d.id" clickable class="designs__row" :active="d.id === house.designId"
@@ -94,9 +107,17 @@ const designName = (id) => house.designs.find((d) => d.id === id)?.name;
         </q-item-section>
       </q-item>
     </q-list>
+    <!-- the actions under the words (QBanner's own layout): the side panel is too narrow for them inline -->
+    <UiBanner v-if="offerCount" intent="info" :inline-actions="false" class="designs__offer">
+      {{ offerMessage }}
+      <template #action>
+        <UiButton intent="ghost" size="small" :label="t('kit.common.dismiss')" @click="house.dismissTrimOffer()" />
+        <UiButton intent="primary" size="small" :label="t('designs.trimOffer.paint', offerCount)" @click="house.applyTrimOffer()" />
+      </template>
+    </UiBanner>
 
     <h3 class="designs__h">{{ t("designs.renders.title") }}</h3>
-    <p v-if="!house.renders.length" class="muted">{{ t("designs.renders.none") }}</p>
+    <EmptyState v-if="!house.renders.length" icon="Image" compact :message="t('designs.renders.none')" />
     <q-list v-else class="designs__renders" dense>
       <q-item v-for="r in house.renders" :key="r.id" clickable class="designs__render" :aria-label="t('designs.renders.open')" @click="emit('show-render', r)">
         <q-item-section avatar class="designs__thumb">
@@ -144,6 +165,9 @@ const designName = (id) => house.designs.find((d) => d.id === id)?.name;
   flex-direction: row;
   align-items: center;
   gap: 2px;
+}
+.designs__offer {
+  margin-top: var(--sp-2);
 }
 .designs__h {
   font-size: var(--fs-small);

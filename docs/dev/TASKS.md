@@ -247,6 +247,19 @@ ASKED:  the user, verbatim: "whats next on this app". MY RECS (shown 2026-10-18,
         user's to send). Not started: the AI photo / schemes timing, the template's copied sections into the kit, the phone.
 GO:     the user, verbatim: "your rec go" (2026-10-18) — 1–5. The attack on 3 changed it from painting the new parts
         silently to a one-click offer: an old design can't tell a part that didn't exist from one left unpainted on purpose.
+1:      the template audit (just-core docs/plans/2026-10-18-template-audit.md; the kit's TASKS tracks the kit side). Here:
+        the AI status button, title bar and fonts take the kit's (the picker's fonts now bundled); the Schemes and
+        Colors tabs' dead ends are the kit's EmptyState with Add paint colors; numbers in the app's language; a
+        NOTICE.md (samexporter's port, the kit's notices, the fonts' OFL); a connection page test. Left as allowed:
+        the two raw q-btn swatches (no kit shape for a color chip).
+3:      DONE (2026-10-18) — opening a design that leaves trim-group parts unpainted offers "Paint them the trim's
+        color" (Designs tab, the kit's UiBanner, info look); nothing painted unasked; one Undo; the offer goes when
+        it would no longer be true (another design, Reset, a new trim). Choices the approved text didn't cover, for
+        the user to confirm: a part painted by hand drops out of the offer; the offer stays across tab switches;
+        it sits under the designs list. The Designs tab's empty states are the kit's EmptyState.
+4:      DONE (2026-10-18) — src/pages/ColorsPage.test.js (6 tests). It found and we fixed: a failed load's reason
+        now shows on its row at once; Benjamin Moore and PPG say "palette file"; a brand loading from start-up
+        disables its row and shows in the page's strips (the kit's AiTaskStrips).
 2:      DONE (2026-10-18) — no word kept: RESEARCH §11 "More trim words — none kept" (a gain on house1, a wrong
         move of the user's coral bands on theirs).
 STATE:  BUILDING.

@@ -8,7 +8,9 @@
 // proves: the part finder's install offer and its job; the parts list; a color from the Colors tab
 // painting the selected part, with its ΔE; finding the parts again asks first; a design saved under
 // the route's own rules; the AI photo offering its install first; Undo / Redo and Reset; the
-// eyedropper and a part's color as photographed; Compare; the outlines' choice.
+// eyedropper and a part's color as photographed; Compare; the outlines' choice; an old design's
+// trim-group parts offered the trim's color (painted only on the click); the Designs tab's empty
+// states.
 import { _resolveDialog, dialogState, installLlmUi, LlmUiHosts, readPref, UiSelect } from "@delebash/ui";
 import { QUASAR_TEST_OPTIONS } from "@delebash/ui/quasar/install.js";
 import { flushPromises, mount } from "@vue/test-utils";
@@ -52,6 +54,7 @@ const PARTS = [
   { key: "trim", paintable: true, area: 24, score: 0.8, source: "auto", position: 1 },
 ];
 const PAINT = { id: "behr:S1", brand: "behr", code: "S1", name: "Sea Blue", displayName: "Behr Sea Blue S1", hex: "#3366aa", exterior: true };
+const WHITE = { id: "behr:W1", brand: "behr", code: "W1", name: "Chalk White", displayName: "Behr Chalk White W1", hex: "#f4f2ea", exterior: true };
 
 function fakeFetch(input, init = {}) {
   const url = new URL(String(input));
@@ -73,7 +76,7 @@ function fakeFetch(input, init = {}) {
   if (mask && method === "PUT") return Promise.resolve(json(server.parts.find((x) => x.key === mask[1])));
   if (mask) return Promise.resolve(new Response(new Blob([mask[1]])));
   if (p === "/v1/brands") return Promise.resolve(json([{ key: "behr", label: "Behr", feed: true, enabled: true, paintCount: 1, source: "feed", loadedAt: null, lastError: null }]));
-  if (p === "/v1/settings") return Promise.resolve(json({ "finder.parts": [], "schemes.roleParts": { body: ["body"], trim: ["trim"], accent: [] } }));
+  if (p === "/v1/settings") return Promise.resolve(json({ "finder.parts": [], "schemes.roleParts": { body: ["body"], trim: ["trim", "soffit", "windowTrim"], accent: [] } }));
   if (p === "/v1/segment/status") return Promise.resolve(json({ installed: server.finderInstalled, downloadBytes: 3_364_167_120 }));
   if (p === "/v1/aiphoto/status") return Promise.resolve(json({ engineInstalled: false, modelsInstalled: false, backend: "cuda12", slow: false, downloadBytes: 9e9 }));
   if (p === "/v1/segment/install") return Promise.resolve(json({ id: "j-install", state: "running", progress: 0 }, 202));
@@ -88,6 +91,7 @@ function fakeFetch(input, init = {}) {
     return Promise.resolve(json({ id: "j-find", state: "done", progress: 1, result: { parts: 2 } }));
   }
   if (decodeURIComponent(p) === `/v1/paints/${PAINT.id}`) return Promise.resolve(json(PAINT));
+  if (decodeURIComponent(p) === `/v1/paints/${WHITE.id}`) return Promise.resolve(json(WHITE));
   if (p === "/v1/paints/nearest") return Promise.resolve(json([{ paint: PAINT, deltaE: 3.2 }]));
   if (p === "/v1/paints") return Promise.resolve(json({ total: 1, rows: [PAINT] }));
   return Promise.resolve(json({}));
@@ -319,3 +323,89 @@ test("finding the parts shows its progress on the page — not twice in the glob
   expect(document.querySelector(".q-page .sts")).toBeNull();
   expect(byText("button", "Find the parts again").disabled).toBe(false);
 }, 20000);
+
+// ── a design saved before the house had some trim-group parts ───────────────
+// "AI scheme 1" colors the body and the trim; the house has since gained soffits and window trim
+const TRIM_PARTS = [
+  ...PARTS,
+  { key: "soffit", paintable: true, area: 6, score: 0.7, source: "auto", position: 2 },
+  { key: "windowTrim", paintable: true, area: 6, score: 0.7, source: "auto", position: 3 },
+];
+const OLD_DESIGN = { id: "d2", houseId: "h1", name: "AI scheme 1", colors: { body: PAINT.id, trim: WHITE.id }, createdAt: HOUSE.createdAt, updatedAt: HOUSE.updatedAt };
+const openOld = async (design = OLD_DESIGN, others = []) => {
+  server.parts = TRIM_PARTS;
+  server.designs = [design, ...others];
+  await mountPage();
+  await click(byText(".q-tab", "Designs"));
+  await click(byText(".designs__row", design.name));
+};
+const offer = () => document.body.querySelector(".designs__offer");
+/** The Parts tab's parts painted the trim's white, by name. */
+const whiteParts = async () => {
+  await click(byText(".q-tab", "Parts"));
+  const rows = [...document.body.querySelectorAll(".parts__row")].filter((r) => r.textContent.includes(WHITE.displayName));
+  const names = rows.map((r) => r.querySelector(".parts__name").textContent.trim()).sort();
+  await click(byText(".q-tab", "Designs"));
+  return names;
+};
+
+test("an old design's trim-group parts with no color are offered the trim's color, and painted only on the click", async () => {
+  await openOld();
+  expect(offer().textContent).toContain("Soffits and fascia and Window trim have no color in this design.");
+  // the actions sit under the words (the side panel is too narrow for them inline)
+  expect(offer().querySelector(".q-banner__actions").classList.contains("col-all")).toBe(true);
+  // nothing painted unasked — and the offer outlasts a visit to another tab
+  expect(await whiteParts()).toEqual(["Trim"]);
+  await click(byText(".designs__offer button", "Paint them the trim's color"));
+  expect(offer()).toBeNull();
+  expect(await whiteParts()).toEqual(["Soffits and fascia", "Trim", "Window trim"]);
+  expect(byText(".designs__row", "AI scheme 1").textContent).toContain("changed");
+  // one step for Undo
+  await click(byText("button", "Undo"));
+  expect(await whiteParts()).toEqual(["Trim"]);
+});
+
+test("the offer goes when it would no longer be true: all colors removed, or the design deleted", async () => {
+  await openOld();
+  expect(offer()).not.toBeNull();
+  // Reset → Remove all colors: the trim is no longer the color the offer would paint
+  await click(byText("button", "Reset"));
+  await click(byText('[role="menuitem"]', "Remove all colors"));
+  expect(offer()).toBeNull();
+  // Undo brings the design's colors back — and with them the offer
+  await click(byText("button", "Undo"));
+  expect(offer()).not.toBeNull();
+});
+
+test("dismissing the offer hides it and paints nothing; opening another design takes it away", async () => {
+  await openOld(OLD_DESIGN, [DESIGN]);
+  await click(byText(".designs__offer button", "Dismiss"));
+  expect(offer()).toBeNull();
+  expect(await whiteParts()).toEqual(["Trim"]);
+  // opened again: offered again; another design opened: gone
+  await click(byText(".designs__row", "AI scheme 1"));
+  expect(offer()).not.toBeNull();
+  await click(byText(".designs__row", "Blue body"));
+  expect(offer()).toBeNull();
+});
+
+test("only the trim-group parts the design leaves without a color are offered — none when it colors them all", async () => {
+  await openOld({ ...OLD_DESIGN, colors: { ...OLD_DESIGN.colors, soffit: PAINT.id } });
+  expect(offer().textContent).toContain("Window trim has no color in this design.");
+  await click(byText(".designs__offer button", "Paint it the trim's color"));
+  // the soffits keep the design's own color
+  expect(await whiteParts()).toEqual(["Trim", "Window trim"]);
+  wrapper.unmount();
+  wrapper = null;
+  document.body.innerHTML = "";
+  await openOld({ ...OLD_DESIGN, colors: { ...OLD_DESIGN.colors, soffit: PAINT.id, windowTrim: WHITE.id } });
+  expect(offer()).toBeNull();
+});
+
+test("the Designs tab without designs or AI photos shows the kit's empty states", async () => {
+  server.parts = PARTS;
+  await mountPage();
+  await click(byText(".q-tab", "Designs"));
+  const empties = [...document.body.querySelectorAll(".designs .ui-empty")].map((e) => e.textContent.trim());
+  expect(empties).toEqual(["No designs saved yet.", "No AI photos yet — the AI photo button makes one from the colors on screen."]);
+});

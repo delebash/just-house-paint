@@ -36,11 +36,14 @@ export const usePaintsStore = defineStore("paints", {
       this.brands = await get("/v1/brands");
       this.brandsLoaded = true;
     },
-    /** Load a brand's public list (a server job on the task strip). */
+    /** Load a brand's colors (a server job on the task strip). The brands are read again whether it
+     *  worked or not — a failed load's reason is on its row (the server's lastError). */
     async loadFeed(brand, label) {
-      const result = await runServerJob({ start: () => post(`/v1/brands/${encodeURIComponent(brand)}/load`), feature: "paints.load", label, meta: { brand } });
-      await this.loadBrands();
-      return result;
+      try {
+        return await runServerJob({ start: () => post(`/v1/brands/${encodeURIComponent(brand)}/load`), feature: "paints.load", label, meta: { brand } });
+      } finally {
+        await this.loadBrands().catch(() => {});
+      }
     },
     /**
      * Every brand's colors out of the box (the user's decision, 2026-10-18): each brand the app can
