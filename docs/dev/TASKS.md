@@ -275,7 +275,12 @@ v0.1.1 (2026-10-19): the kit and template items done (the kit's TASKS, the templ
         Settings → About, Server and Storage are the kit's panels (this app's copies gone), a browser on another
         computer signs in with the server's token, and a failed warm start offers the troubleshooting page.
         Checked before the tag: lint, 345 server and 92 renderer tests, i18n, the guard, the smoke 13/13 on the kit's
-        eb5d966. LEFT: the release run, then the installed v0.1.0 updating itself to v0.1.1.
+        eb5d966. RELEASED (run 39313711632, the feed checked). The installed v0.1.0 updated itself: the start-up check
+        found 0.1.1, Download took 6 s — and Restart now opened the setup WIZARD (the kit's quitAndInstall without /S);
+        the same installer with /S upgraded in place in 15.8 s, the data folder untouched (RESEARCH §12).
+v0.1.2 (2026-10-19): Restart now installs silently and restarts (the kit's 8a9b3fb, a test pins it). An install of
+        0.1.0 or 0.1.1 still shows the wizard this once (their shell is the old one); What's new says so. LEFT: the
+        release run; the installed 0.1.1 → 0.1.2 through the wizard (what those users see).
 
 ## The review before the release [2026-10-18]
 FOUND (a read-only review of the renderer, each traced through the code; to fix before the release):

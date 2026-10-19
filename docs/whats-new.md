@@ -1,5 +1,11 @@
 # What's new
 
+## v0.1.2
+
+- **Updating is one click.** **Restart now** in **App Settings → Updates** installs the new version
+  and starts the app again by itself — before, it opened the setup wizard. (Updating from v0.1.0 or
+  v0.1.1 still shows the wizard this once: press **Next**, then **Install**, then **Finish**.)
+
 ## v0.1.1
 
 - **A browser on another computer can sign in.** With access tokens on (**App Settings → Server**),
