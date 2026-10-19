@@ -168,6 +168,10 @@ CONFIRM: - Reset's labels, built as proposed: "Remove all colors" and "Back to �
            designs and an AI photo.";
          - leaving the house with colors no design holds asks first — "Leaving the house drops them." / Leave;
          - the release's version: v0.1.0 (the first public one; the family's first releases were 0.1.0).
+ASK:     - the installers aren't signed (no certificates): Windows shows SmartScreen's warning, macOS Gatekeeper's —
+           signing needs a code-signing certificate (Windows) and an Apple Developer ID ($99/year), the user's call;
+         - macOS: built for Apple silicon only (the runner's arch; an Intel or universal build needs both archs'
+           native modules) and never opened on a real Mac — the help says how to open an unsigned app;
 ASK:     - wide color 1, 2 (5a), 4 — not built after the measurement (above): still wanted?
          - a Linux .deb: it needs a maintainer address published in the package ("name <email>") — which one, or
            the AppImage alone;
@@ -309,7 +313,8 @@ FOUND (a second pass — today's own changes reviewed for regressions):
         one; retired harmony keys pass, only ranges must be pairs, the old untouched harmony default upgrades
         (b11d8afd…, checked against 27f4140^); the schemes wait only on the local model (the kit's resolveRoute);
         one part's saves queue; only sharp's reading is "not a photo"; a lost load stops quietly.
-STATE:  FIXING.
+        The release's dry run (2026-10-18, run 39191195670, `publish: false`): Windows, macOS and Linux all built.
+STATE:  FIXED — the e2e smoke and the installed app wait on port 17499 (a leftover server; the user stops it).
 
 ## How the app is started [2026-10-17]
 STATE:  the Claude Code setup items 1–8 became the `/new-just-app` skill's 8 decisions ("your rec on
