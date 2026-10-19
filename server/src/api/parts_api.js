@@ -8,7 +8,7 @@ import { conflict, notFound, RequestValidationError } from "@delebash/core/platf
 import { getHouse, getPart, listParts, replaceParts, updatePartMask } from "../database/houses.js";
 import { maskPath } from "../files.js";
 import { maskToPng, pngToMask } from "../images.js";
-import { BoxIn, IdParams, PartNew, PartParams } from "../schemas/houses.js";
+import { BoxIn, FindPartsIn, IdParams, PartNew, PartParams } from "../schemas/houses.js";
 import { area, assignRegion, subtractRegion } from "../shared/masks.js";
 import { getState } from "../app_state.js";
 import { assertGpuFree } from "../jobs.js";
@@ -39,23 +39,40 @@ export function router(ctx = getState()) {
     return c.json(listParts(ctx.db, house.id));
   });
 
-  app.post("/v1/houses/:id/find-parts", input({ params: IdParams }), (c) => {
+  app.post("/v1/houses/:id/find-parts", input({ params: IdParams, body: FindPartsIn }), (c) => {
     const house = mustHouse(c.req.valid("param").id);
+    const keepEdited = c.req.valid("json")?.keepEdited === true;
     assertGpuFree(ctx.jobs, "find-parts", house.id);
     const job = ctx.jobs.start({ kind: "find-parts", key: house.id, label: house.name }, async ({ signal, progress }) => {
       const found = await ctx.finder.find(house, { signal, progress });
       signal.throwIfAborted();
-      const before = listParts(ctx.db, house.id).map((p) => p.key);
-      for (const p of found) await writeMask(house, p.key, p.mask);
-      const parts = replaceParts(
-        ctx.db,
-        house.id,
-        found.map((p) => ({ key: p.key, paintable: p.paintable, area: area(p.mask), score: p.score, source: "auto" })),
-      );
+      // the parts changed by hand, read as the run ends (a stroke made while it ran counts too)
+      const before = listParts(ctx.db, house.id);
+      const kept = keepEdited ? before.filter((p) => p.source === "edited" || p.source === "added") : [];
+      const keptKeys = new Set(kept.map((p) => p.key));
+      if (kept.length) {
+        // a hand-made outline keeps its pixels: the parts found now are cut around it
+        const theirs = new Uint8Array(house.displayWidth * house.displayHeight);
+        for (const p of kept) {
+          const m = await readMask(house, p.key);
+          for (let i = 0; i < m.length; i++) if (m[i] >= 128) theirs[i] = 255;
+        }
+        for (const p of found) if (!keptKeys.has(p.key)) subtractRegion(p.mask, theirs);
+      }
+      for (const p of found) if (!keptKeys.has(p.key)) await writeMask(house, p.key, p.mask);
+      const asIs = (p) => ({ key: p.key, paintable: p.paintable, area: p.area, score: p.score, source: p.source });
+      const rows = [
+        // the finder's order, a kept part in its place; kept parts it didn't find after them
+        ...found.map((p) =>
+          keptKeys.has(p.key) ? asIs(kept.find((k) => k.key === p.key)) : { key: p.key, paintable: p.paintable, area: area(p.mask), score: p.score, source: "auto" },
+        ),
+        ...kept.filter((k) => !found.some((p) => p.key === k.key)).map(asIs),
+      ];
+      const parts = replaceParts(ctx.db, house.id, rows);
       // the outlines of parts not found this time go with their rows (a smaller folder and backup)
-      const kept = new Set(found.map((p) => p.key));
-      for (const key of before) if (!kept.has(key)) rmSync(maskPath(ctx.dataDir, house.id, key), { force: true });
-      return { parts: parts.length };
+      const stays = new Set(rows.map((r) => r.key));
+      for (const p of before) if (!stays.has(p.key)) rmSync(maskPath(ctx.dataDir, house.id, p.key), { force: true });
+      return { parts: parts.length, kept: kept.length };
     });
     return c.json(job, 202);
   });

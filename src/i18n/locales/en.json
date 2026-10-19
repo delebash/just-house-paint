@@ -214,7 +214,8 @@
       "button": "Find the parts",
       "again": "Find the parts again",
       "againTitle": "Find the parts again?",
-      "againMessage": "The parts found now replace the ones this house has, with the changes you made to them.",
+      "againMessage": "The parts found now replace the ones this house has.",
+      "keep": "Keep the parts you changed by hand: {parts}",
       "task": "Finding the parts of {name}",
       "loading": "Loading the part finder · {n}%",
       "progress": "{part} · {n}%",
@@ -314,6 +315,7 @@
     "toPaint": "To paint",
     "staying": "Staying as they are",
     "unpainted": "No color",
+    "notLoaded": "{brand} {code} — not in the loaded colors",
     "share": "{n}%",
     "deltaE": "ΔE {n}",
     "deltaEHint": "How far the paint on the screen is from the paint chip (ΔE2000). Under 2 is hard to tell apart.",
@@ -491,8 +493,15 @@
       "action": "Remove",
       "title": "Remove the {brand} colors?",
       "message": "The {n} {brand} colors will be removed from this computer. Designs that use them show no color until they are added again.",
+      "messageUsed": "The {n} {brand} colors will be removed from this computer. {designs} use them — those parts show no color until the colors are added again.",
       "confirm": "Remove colors"
     },
+    "lost": {
+      "title": "Designs lost a color",
+      "message": "{designs} use colors that {brand} no longer has. Those parts show no color until you pick new ones."
+    },
+    "designName": "“{design}” ({house})",
+    "more": "{n} more",
     "note": "Colors on a screen are close to the paint, never the same: check a real paint chip before you buy. Brand names belong to their owners; this app isn't connected to any of them.",
     "autoAria": "Load the {brand} colors automatically",
     "fileOnly": "From its palette file"

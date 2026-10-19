@@ -21,6 +21,8 @@ export const usePaintsStore = defineStore("paints", {
     brandsLoaded: false,
     // paints already seen, by id — a design's colors are looked up here first
     byId: {},
+    // ids the server has no paint for (its brand's new list dropped it, or the brand was removed)
+    missing: {},
   }),
   getters: {
     /** Brands that have colors on this computer. */
@@ -31,6 +33,17 @@ export const usePaintsStore = defineStore("paints", {
       const next = { ...this.byId };
       for (const p of rows) next[p.id] = p;
       this.byId = next;
+      if (rows.some((p) => this.missing[p.id])) this.missing = Object.fromEntries(Object.entries(this.missing).filter(([id]) => !next[id]));
+    },
+    /** A paint id's brand (its label) and code — for a color that isn't loaded ("brand:code"). */
+    idParts(id) {
+      const at = id.indexOf(":");
+      const key = at < 0 ? id : id.slice(0, at);
+      return { brand: this.brands.find((b) => b.key === key)?.label || key, code: at < 0 ? "" : id.slice(at + 1) };
+    },
+    /** The designs that use a brand's colors: [{ house, design, parts, … }] (Remove names them). */
+    designsUsing(brand) {
+      return get(`/v1/brands/${encodeURIComponent(brand)}/designs`);
     },
     async loadBrands() {
       this.brands = await get("/v1/brands");
@@ -88,9 +101,15 @@ export const usePaintsStore = defineStore("paints", {
     },
     async paint(id) {
       if (this.byId[id]) return this.byId[id];
-      const p = await get(`/v1/paints/${encodeURIComponent(id)}`);
-      this.remember([p]);
-      return p;
+      try {
+        const p = await get(`/v1/paints/${encodeURIComponent(id)}`);
+        this.remember([p]);
+        return p;
+      } catch (e) {
+        // a color the server no longer has: the part says so, instead of looking unpainted
+        if (e?.status === 404) this.missing = { ...this.missing, [id]: true };
+        throw e;
+      }
     },
     /** The paints a list of ids names (unknown ones fetched). */
     async paints(ids) {

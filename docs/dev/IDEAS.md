@@ -10,4 +10,14 @@ when an idea is picked up it moves to a plan and gets a link here (or is struck 
 
 ---
 
-*(empty — nothing parked yet)*
+- **Signed installers** (2026-10-19). v0.1.0 ships unsigned: Windows shows SmartScreen's "unknown
+  publisher", macOS Gatekeeper's warning (the help says how to open it). Signing needs a certificate in
+  the user's name: the SignPath Foundation signs open-source projects' Windows builds for free (an
+  application by the project's owner); Azure Trusted Signing is a paid monthly service; macOS needs an
+  Apple Developer ID ($99/year) plus notarization. electron-builder takes either through the release
+  workflow's secrets.
+- **Wide-color photos** (2026-10-18, TASKS "Wide-color photos"). A Display P3 pipeline (the display copy
+  in P3, canvases in display-p3, the painter in linear P3, exports tagged P3) and a native P3 canvas
+  under Konva. Measured not worth it today (RESEARCH §11, "The gamut diagnosis above was wrong"): the
+  brands' paints are sRGB colors, so a painted part looks the same; only ~0.2% of the user's photo lies
+  outside sRGB, and only a wide-gamut screen would show the difference.

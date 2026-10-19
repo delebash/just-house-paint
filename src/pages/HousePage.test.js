@@ -92,7 +92,10 @@ function fakeFetch(input, init = {}) {
   if (p === "/v1/segment/status") return Promise.resolve(json({ installed: server.finderInstalled, downloadBytes: 3_364_167_120 }));
   if (p === "/v1/aiphoto/status") return Promise.resolve(json({ engineInstalled: false, modelsInstalled: false, backend: "cuda12", slow: false, downloadBytes: 9e9 }));
   if (p === "/v1/segment/install") return Promise.resolve(json({ id: "j-install", state: "running", progress: 0 }, 202));
-  if (p === "/v1/houses/h1/find-parts") return Promise.resolve(json({ id: "j-find", state: "running", progress: 0 }, 202));
+  if (p === "/v1/houses/h1/find-parts") {
+    server.findBody = init.body ? JSON.parse(init.body) : null;
+    return Promise.resolve(json({ id: "j-find", state: "running", progress: 0 }, 202));
+  }
   if (p === "/v1/jobs/j-install") {
     server.finderInstalled = true;
     return Promise.resolve(json({ id: "j-install", state: "done", progress: 1, result: { installed: true } }));
@@ -103,6 +106,10 @@ function fakeFetch(input, init = {}) {
     return Promise.resolve(json({ id: "j-find", state: "done", progress: 1, result: { parts: 2 } }));
   }
   if (decodeURIComponent(p) === `/v1/paints/${PAINT.id}`) return Promise.resolve(json(PAINT));
+  // a color its brand's new list dropped: the server has no paint for the id
+  if (decodeURIComponent(p) === "/v1/paints/behr:GONE-1") {
+    return Promise.resolve(new Response(JSON.stringify({ title: "Not Found", status: 404, detail: "no paint behr:GONE-1" }), { status: 404, headers: { "content-type": "application/problem+json" } }));
+  }
   if (decodeURIComponent(p) === `/v1/paints/${WHITE.id}`) return Promise.resolve(json(WHITE));
   if (p === "/v1/paints/nearest") return Promise.resolve(json([{ paint: PAINT, deltaE: 3.2 }]));
   if (p === "/v1/paints") {
@@ -203,6 +210,20 @@ test("finding the parts again asks first", async () => {
   await flushPromises();
   expect(server.calls).not.toContain("POST /v1/houses/h1/find-parts");
 });
+
+test("finding the parts again offers to keep the parts changed by hand — on, unless unticked", async () => {
+  server.parts = PARTS.map((p) => (p.key === "trim" ? { ...p, source: "edited" } : p));
+  await mountPage();
+  await click(byText("button", "Find the parts again"));
+  expect(dialogState.options.fields).toEqual([{ key: "keep", type: "checkbox", label: "Keep the parts you changed by hand: Trim", defaultValue: true }]);
+  _resolveDialog({ keep: true });
+  await settle();
+  expect(server.findBody).toEqual({ keepEdited: true });
+  await click(byText("button", "Find the parts again"));
+  _resolveDialog({ keep: false });
+  await settle();
+  expect(server.findBody).toEqual({ keepEdited: false });
+}, 20000);
 
 test("the colors on screen are saved as a named design", async () => {
   server.parts = PARTS;
@@ -418,6 +439,13 @@ const whiteParts = async () => {
   await click(byText(".q-tab", "Designs"));
   return names;
 };
+
+test("a part whose color its brand no longer has says so, instead of looking unpainted", async () => {
+  await openOld({ ...OLD_DESIGN, colors: { body: PAINT.id, trim: "behr:GONE-1" } });
+  await click(byText(".q-tab", "Parts"));
+  expect(byText(".parts__row", "Trim").querySelector(".parts__paint").textContent.trim()).toBe("Behr GONE-1 — not in the loaded colors");
+  expect(byText(".parts__row", "Soffits").querySelector(".parts__paint").textContent.trim()).toBe("No color");
+});
 
 test("an old design's trim-group parts with no color are offered the trim's color, and painted only on the click", async () => {
   await openOld();

@@ -11,8 +11,12 @@
 // the app's root.
 
 import { strict as assert } from "node:assert";
+import { readFileSync } from "node:fs";
 import { after, before, test } from "node:test";
 import { Driver, waitFor } from "../lib/driver.js";
+
+// The version About shows: the app's own, where `npm run bump` writes it (a literal broke on the first bump).
+const VERSION = JSON.parse(readFileSync(new URL("../../package.json", import.meta.url), "utf8")).version;
 
 // A 48×36 PNG — sky, a beige wall, grass — enough for the server to make its copies.
 const PHOTO = Buffer.from(
@@ -84,7 +88,7 @@ test("Settings shows General and Advanced, then the family's seven sections in c
   assert.deepEqual(tabs, ["General", "Advanced", "Appearance", "Backups", "Storage", "Server", "Logs", "Updates", "About"]);
   await page.locator(".card h2", { hasText: "Photos" }).waitFor(); // the app's own settings, from the server
   await d.navigate("#/settings/about");
-  await page.locator(".ui-formgrid td.mono", { hasText: "0.0.1" }).waitFor(); // the version, from the server
+  await page.locator(".ui-formgrid td.mono", { hasText: VERSION }).waitFor(); // the version, from the server
 });
 
 test("Paint colors lists the launch brands, none loaded in a fresh folder", async () => {

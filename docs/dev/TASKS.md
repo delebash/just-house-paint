@@ -156,11 +156,25 @@ RETHOUGHT (2026-10-18, on the user's "rethink on anything you need to"): 1, 2 (5
         outside sRGB at all, and this screen gets sRGB from every app (Windows SDR, no display profile; Chromium's
         color-gamut is srgb). A P3 pipeline and a non-standard canvas would change ~0.2% of pixels, only on a
         wide-gamut-aware screen. Shown to the user in the report, for their word if they still want it.
-STATE:  3 built and checked on the user's house (On it now: tones in the part's light, ΔE 0.5, Clear restores it);
-        1, 2, 4 waiting on the user after the rethink.
+STATE:  3 built and checked on the user's house (On it now: tones in the part's light, ΔE 0.5, Clear restores it).
+DECIDED 2026-10-19 (mine, under the user's "decide and finish" below): 1, 2 (5a) and 4 are NOT built. Attacked:
+        the app is for anyone and the macOS build runs on wide-gamut Mac screens, where Chromium does show P3 —
+        but every brand paint is an sRGB color (the brands publish hex/RGB), so a painted part is the same on any
+        screen; only the unpainted 0.2% (strong reds and oranges outside sRGB) would gain, at the cost of a
+        NOT STANDARD canvas under Konva. Parked in IDEAS.md ("Wide-color photos") with the measurements.
 
-## For the user's word — choices made while building [2026-10-18]
-CONFIRM: - Reset's labels, built as proposed: "Remove all colors" and "Back to “{design}”";
+## Choices made while building — decided [2026-10-18, 2026-10-19]
+DECIDED 2026-10-19 (mine, under the user's "decide and finish" below — each attacked first): every CONFIRM
+        stays as built; Linux ships the AppImage only (it runs on every distribution and electron-updater
+        updates it; a .deb would publish a maintainer address, and no one is named); the installers ship
+        unsigned for v0.1.0 (signing needs a certificate bought in the user's name — the one thing here that
+        waits on the user: IDEAS.md, "Signed installers", with the free SignPath Foundation route for open
+        source); macOS stays Apple silicon only (Apple sold its last Intel Mac in 2023, and two arch builds
+        would each write the update feed's latest-mac.yml); the two review suggestions BUILT 2026-10-19 —
+        a brand's new list names the designs it left a color short (and Remove names the designs first; the
+        Parts tab says "not in the loaded colors"), and Find the parts again keeps the parts changed by hand
+        (a checkbox, on; the kit's dialog got the checkbox field).
+WAS:    - Reset's labels, built as proposed: "Remove all colors" and "Back to “{design}”";
          - the old design's trim offer: a part painted by hand drops out of it; it stays across tab switches; it
            sits under the designs list;
          - Settings → About's line, written for this app: "See your house in real paint colors before you buy
@@ -168,11 +182,11 @@ CONFIRM: - Reset's labels, built as proposed: "Remove all colors" and "Back to �
            designs and an AI photo.";
          - leaving the house with colors no design holds asks first — "Leaving the house drops them." / Leave;
          - the release's version: v0.1.0 (the first public one; the family's first releases were 0.1.0).
-ASK:     - the installers aren't signed (no certificates): Windows shows SmartScreen's warning, macOS Gatekeeper's —
+WAS ASK: - the installers aren't signed (no certificates): Windows shows SmartScreen's warning, macOS Gatekeeper's —
            signing needs a code-signing certificate (Windows) and an Apple Developer ID ($99/year), the user's call;
          - macOS: built for Apple silicon only (the runner's arch; an Intel or universal build needs both archs'
            native modules) and never opened on a real Mac — the help says how to open an unsigned app;
-ASK:     - wide color 1, 2 (5a), 4 — not built after the measurement (above): still wanted?
+WAS ASK: - wide color 1, 2 (5a), 4 — not built after the measurement (above): still wanted?
          - a Linux .deb: it needs a maintainer address published in the package ("name <email>") — which one, or
            the AppImage alone;
          - two review suggestions not built (each needs screens and words): name the designs whose paints a brand
@@ -245,8 +259,16 @@ GO:     the user, verbatim: "your rec on all go, if you dont find anymore proble
 PLAN:   the e2e smoke and On it now on the user's house; Order by color + Color family; wide color 1, 2 (5a), 4; every
         open item above; a review pass, its findings fixed; then the release (the family's way: JustWrite's manual
         release workflow, the template first).
-STATE:  BUILT, reviewed and fixed (below); wide color rethought (above). Left: the e2e smoke and the installed app
-        (they wait on port 17499), then the tag v0.1.0 and the release workflow.
+GO:     the user, verbatim (2026-10-19): "you can find and stop any process yourself do it, i aksed you to finish
+        everything think adverserial on your rec keep going, i dont want you to say things like for your word i want
+        you to decide and finish all things, think adversiarly take your recs complete everythig go!"
+ORDER (mine, attacked against "everything, then one release"): v0.1.0 once this app's own items are done; then
+        the kit and template items (the Settings sections into the kit, the warm-start help, the upload example,
+        the phone, the browser's token); what of those reaches this app ships as v0.1.1 — which also proves the
+        installed v0.1.0 updates itself, the one path nothing else tests.
+STATE:  BUILT, reviewed and fixed (below); every choice decided (above). The leftover server on 17499 stopped
+        (2026-10-19); the smoke 13/13 once its version literal read package.json. Left: the installed app, the
+        tag v0.1.0, the release workflow.
 
 ## The review before the release [2026-10-18]
 FOUND (a read-only review of the renderer, each traced through the code; to fix before the release):
@@ -286,9 +308,9 @@ FOUND (a read-only review of the server):
         FIXED (server, all ten — the graphics card one job at a time, 409 "gpu-busy"; Advanced's values checked;
         the pinned engine; intake errors 415; codeless paints left out with a warning; Cancel after the commit
         is done; names need a non-space; deleting a house stops its work) and three suggestions: upload limits
-        (the kit's new `uploadLimit`), leftover outlines removed, the model check cancellable. Not built, for
-        the user: naming designs that lost a paint, and keeping hand-made parts on a re-find (both need
-        screens and words).
+        (the kit's new `uploadLimit`), leftover outlines removed, the model check cancellable. The other two
+        BUILT 2026-10-19 (decided, above): naming designs that lost a paint, and keeping hand-made parts on a
+        re-find.
 FOUND (docs and this tracker against the code): the releases page empty until the first release; whats-new
         says two brands are imported (all seven load); Settings → About's blurb is the template's; paint-colors
         says codes are shown as the brands write them (BM / Valspar / Dutch Boy prefixes); the troubleshooting

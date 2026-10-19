@@ -15,6 +15,7 @@ import {
   errorMessage,
   PaneHeader,
   pageFill,
+  promptDialog,
   pushToast,
   reportError,
   requestBlob,
@@ -53,7 +54,7 @@ import { usePaintsStore } from "../stores/paints.js";
 import { useSettingsStore } from "../stores/settings.js";
 import { useUiStore } from "../stores/ui.js";
 
-const { t, te } = useI18n();
+const { t, te, locale } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const house = useHouseStore();
@@ -478,14 +479,22 @@ async function findParts() {
     tab.value = "parts";
     return;
   }
-  if (house.parts.length) {
-    const yes = await confirmDialog({ title: t("house.find.againTitle"), message: t("house.find.againMessage"), confirmLabel: t("house.find.again") });
-    if (!yes) return;
+  // the parts changed by hand can stay as they are (on unless the user unticks it)
+  let keepEdited = false;
+  const byHand = house.parts.filter((p) => p.source === "edited" || p.source === "added");
+  const ask = { title: t("house.find.againTitle"), message: t("house.find.againMessage"), confirmLabel: t("house.find.again") };
+  if (byHand.length) {
+    const parts = new Intl.ListFormat(locale.value, { type: "conjunction" }).format(byHand.map((p) => partName(p.key, { t, te })));
+    const answer = await promptDialog({ ...ask, fields: [{ key: "keep", type: "checkbox", label: t("house.find.keep", { parts }), defaultValue: true }] });
+    if (!answer) return;
+    keepEdited = answer.keep;
+  } else if (house.parts.length) {
+    if (!(await confirmDialog(ask))) return;
   }
   busy.value.find = true;
   try {
     // the new parts' outlines load when the house's partsFoundAt changes (reloadParts)
-    await house.findParts(t("house.find.task", { name: house.house.name }), findProgress);
+    await house.findParts(t("house.find.task", { name: house.house.name }), findProgress, { keepEdited });
   } catch (e) {
     if (e?.name !== "AbortError") reportError(e);
   } finally {

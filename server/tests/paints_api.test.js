@@ -3,7 +3,7 @@
 import { afterEach, describe, expect, test } from "vitest";
 import { setSetting } from "../src/database/settings.js";
 import { COLOR_ORDER_DEFAULTS, familyKeys, familyOf, lch } from "../src/paints/index.js";
-import { makeServer } from "./domain_helpers.js";
+import { jpeg, makeServer } from "./domain_helpers.js";
 import { behrSheet, prismDutchBoy, prismLowes, prismSherwin } from "./paints/fixtures/feeds.js";
 import { syntheticPalette } from "./paints/fixtures/palette.js";
 import { writeAse } from "./paints/fixtures/swatch-writers.js";
@@ -136,6 +136,31 @@ describe("brands", () => {
     expect((await s.app.request("/v1/paints/import", { method: "POST", body: bad })).status).toBe(422);
     expect((await s.app.request("/v1/brands/benjamin-moore", { method: "DELETE" })).status).toBe(204);
     expect((await (await s.app.request("/v1/paints")).json()).total).toBe(0);
+  });
+
+  test("a brand's designs are named before it is removed, and a new list names the designs it left without a color", async () => {
+    s = makeServer();
+    const rgb01 = (r, g, b) => [r / 255, g / 255, b / 255];
+    const importBm = async (swatches) => {
+      const form = new FormData();
+      form.append("file", new Blob([writeAse([{ group: "Classics", swatches }])]), "bm.ase");
+      form.append("brand", "benjamin-moore");
+      return (await s.app.request("/v1/paints/import", { method: "POST", body: form })).json();
+    };
+    const dove = { name: "OC-17 White Dove", model: "RGB", values: rgb01(240, 238, 228) };
+    const navy = { name: "HC-154 Hale Navy", model: "RGB", values: rgb01(67, 75, 86) };
+    expect((await importBm([dove, navy])).lost).toEqual([]);
+    const ids = Object.fromEntries((await (await s.app.request("/v1/paints?brand=benjamin-moore")).json()).rows.map((p) => [p.name, p.id]));
+    const house = await (await s.upload(await jpeg(400, 300))).json();
+    const design = await (await s.json("POST", `/v1/houses/${house.id}/designs`, { name: "Navy trim", colors: { body: ids["White Dove"], trim: ids["Hale Navy"] } })).json();
+    const named = { houseId: house.id, house: house.name, designId: design.id, design: "Navy trim" };
+    expect(await (await s.app.request("/v1/brands/benjamin-moore/designs")).json()).toEqual([{ ...named, parts: ["body", "trim"] }]);
+    expect(await (await s.app.request("/v1/brands/behr/designs")).json()).toEqual([]);
+    // the brand's new file has no Hale Navy: the design is named, its trim keeps the id (the color comes back with it)
+    expect((await importBm([dove])).lost).toEqual([{ ...named, parts: ["trim"] }]);
+    expect((await (await s.app.request(`/v1/houses/${house.id}/designs`)).json())[0].colors.trim).toBe(ids["Hale Navy"]);
+    expect((await importBm([dove, navy])).lost).toEqual([]);
+    expect((await s.app.request("/v1/brands/nobody/designs")).status).toBe(404);
   });
 });
 

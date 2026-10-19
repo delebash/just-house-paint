@@ -29,8 +29,13 @@ file…** and choose the file. The app reads Adobe swatch files
 app keeps each paint by its number: colors in a file without one are left out, and the import says
 how many.
 
-**Remove** takes a brand's colors off this computer; it asks first. Designs that use them show no
-color until the brand is added again.
+**Remove** takes a brand's colors off this computer; it asks first, and names the designs that use
+them. Those parts show no color until the brand is added again — the design keeps which color it
+was, so it comes back with the brand.
+
+When **Load again** or an imported file brings a list without some colors a design uses (a brand
+retires colors), the app names those designs. On the house's **Parts** tab such a part says
+"not in the loaded colors" with the color's number; pick it a new color.
 
 ## How colors are named
 

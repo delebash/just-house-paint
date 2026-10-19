@@ -7,8 +7,9 @@
 // brands with their color counts and where the colors came from; "Load automatically" per brand
 // (on unless the setting turns it off, saved on a change, and a brand turned on with no colors
 // loads them); a brand's load showing its progress above the table, not again in the global stack,
-// with its row's buttons waiting; and a brand's last failed load (the server's lastError) on its row.
-import { installLlmUi, LlmUiHosts } from "@delebash/ui";
+// with its row's buttons waiting; a brand's last failed load (the server's lastError) on its row; and
+// the designs a brand's colors are in — named before Remove, and when a new list left them a color short.
+import { _resolveDialog, dialogState, installLlmUi, LlmUiHosts } from "@delebash/ui";
 import { QUASAR_TEST_OPTIONS } from "@delebash/ui/quasar/install.js";
 import { flushPromises, mount } from "@vue/test-utils";
 import { createPinia } from "pinia";
@@ -18,6 +19,9 @@ import { h } from "vue";
 import { createMemoryHistory, createRouter } from "vue-router";
 import { i18n } from "../i18n/index.js";
 import ColorsPage from "./ColorsPage.vue";
+
+const toasts = [];
+vi.mock("@delebash/ui", async (importOriginal) => ({ ...(await importOriginal()), pushToast: (t) => toasts.push(t) }));
 
 const QUASAR_COMPONENTS = Object.fromEntries(Object.entries(quasar).filter(([k, v]) => /^Q[A-Z]/.test(k) && v?.name));
 
@@ -61,6 +65,9 @@ function fakeFetch(input, init = {}) {
   const p = url.pathname;
   server.calls.push(`${method} ${p}`);
   if (p === "/v1/brands") return Promise.resolve(json(server.brands));
+  // GET /v1/brands/:key/designs (designsWithBrand): the designs its colors are in
+  if (/^\/v1\/brands\/[^/]+\/designs$/.test(p)) return Promise.resolve(json(server.uses));
+  if (/^\/v1\/brands\/[^/]+$/.test(p) && method === "DELETE") return Promise.resolve(new Response(null, { status: 204 }));
   if (p === "/v1/settings" && method === "GET") return Promise.resolve(json(server.settings));
   if (p === "/v1/settings" && method === "PATCH") {
     const body = JSON.parse(init.body);
@@ -82,7 +89,7 @@ function fakeFetch(input, init = {}) {
     }
     // replaceBrandPaints: the colors in, the error cleared
     Object.assign(row, loaded(1212), { lastError: null });
-    return Promise.resolve(json(job(key, { state: "done", progress: 1, result: { brand: key, paintCount: 1212 }, finishedAt: LOADED_AT })));
+    return Promise.resolve(json(job(key, { state: "done", progress: 1, result: { brand: key, paintCount: 1212, lost: server.lost }, finishedAt: LOADED_AT })));
   }
   return Promise.resolve(json({}));
 }
@@ -127,7 +134,8 @@ const settle = async () => {
 };
 
 beforeEach(() => {
-  server = { calls: [], patches: [], brands: brands(), settings: { "paints.autoLoad": {} }, hold: false };
+  server = { calls: [], patches: [], brands: brands(), settings: { "paints.autoLoad": {} }, hold: false, uses: [], lost: [] };
+  toasts.length = 0;
   vi.stubGlobal("fetch", vi.fn(fakeFetch));
   vi.stubGlobal("ResizeObserver", class { observe() {} unobserve() {} disconnect() {} });
   vi.stubGlobal("matchMedia", vi.fn(() => ({ matches: false, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {} })));
@@ -226,3 +234,39 @@ test("a load that fails here shows the server's reason on its row at once", asyn
   expect(rowOf("Behr").textContent).toContain("The last try failed: the brand's site answered 503");
   expect(buttonIn("Behr", "Load the colors").disabled).toBe(false);
 }, 20000);
+
+// the server's designsWithBrand rows
+const design = (design, house, parts = ["trim"]) => ({ houseId: house, house, designId: design, design, parts });
+
+test("a new list without colors some designs use names those designs", async () => {
+  server.lost = [design("Navy trim", "Main street")];
+  await mountPage();
+  await click(buttonIn("Valspar", "Load again"));
+  await settle();
+  expect(toasts).toEqual([
+    expect.objectContaining({ kind: "warning", title: "Designs lost a color", description: "“Navy trim” (Main street) use colors that Valspar no longer has. Those parts show no color until you pick new ones." }),
+  ]);
+  server.lost = [];
+  await click(buttonIn("Valspar", "Load again"));
+  await settle();
+  expect(toasts).toHaveLength(1); // nothing lost, nothing said
+}, 20000);
+
+test("Remove names the designs that use the brand's colors — the first three, then how many more", async () => {
+  server.uses = [design("A", "Main street"), design("B", "Main street"), design("C", "Oak lane"), design("D", "Oak lane")];
+  await mountPage();
+  await click(buttonIn("Valspar", "Remove"));
+  expect(server.calls).toContain("GET /v1/brands/valspar/designs");
+  expect(dialogState.options.message).toBe(
+    "The 1,596 Valspar colors will be removed from this computer. “A” (Main street), “B” (Main street), “C” (Oak lane), and 1 more use them — those parts show no color until the colors are added again.",
+  );
+  _resolveDialog(false);
+  await flushPromises();
+  expect(server.calls).not.toContain("DELETE /v1/brands/valspar");
+  server.uses = [];
+  await click(buttonIn("Valspar", "Remove"));
+  expect(dialogState.options.message).toBe("The 1,596 Valspar colors will be removed from this computer. Designs that use them show no color until they are added again.");
+  _resolveDialog(true);
+  await flushPromises();
+  expect(server.calls).toContain("DELETE /v1/brands/valspar");
+});

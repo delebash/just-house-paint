@@ -62,6 +62,12 @@ export const BoxIn = strictObject({
   mode: opt(literal("add", "remove"), "add"),
 });
 
+/**
+ * POST /v1/houses/:id/find-parts — `keepEdited`: the parts changed by hand (edited or added) stay as
+ * they are, and the parts found now are cut around them. No body finds every part again.
+ */
+export const FindPartsIn = T.Union([T.Null(), strictObject({ keepEdited: opt(T.Boolean(), false) })]);
+
 /** A part made by hand (the brush on a part the finder didn't name). */
 export const PartNew = strictObject({
   key: T.String({ pattern: PART_KEY }),

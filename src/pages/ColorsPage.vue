@@ -11,6 +11,7 @@ import {
   errorMessage,
   PaneHeader,
   pageFlow,
+  pushToast,
   relativeTime,
   reportError,
   UiBanner,
@@ -25,7 +26,7 @@ import { useI18n } from "vue-i18n";
 import { usePaintsStore } from "../stores/paints.js";
 import { useSettingsStore } from "../stores/settings.js";
 
-const { t, n } = useI18n();
+const { t, n, locale } = useI18n();
 const paints = usePaintsStore();
 const settings = useSettingsStore();
 
@@ -81,10 +82,23 @@ async function setAutoLoad(brand, on) {
   if (on && !brand.paintCount && !waits(brand.key)) await loadFeed(brand);
 }
 
+// "“Navy trim” (Main street)", the first three, then "2 more"
+function designList(designs) {
+  const names = designs.map((d) => t("paintColors.designName", { design: d.design, house: d.house }));
+  const shown = names.length > 3 ? [...names.slice(0, 3), t("paintColors.more", { n: names.length - 3 })] : names;
+  return new Intl.ListFormat(locale.value, { type: "conjunction" }).format(shown);
+}
+
+// a brand's new colors without some a design uses: say which designs (their parts show no color now)
+function tellLost(brand, lost) {
+  if (!lost?.length) return;
+  pushToast({ kind: "warning", title: t("paintColors.lost.title"), description: t("paintColors.lost.message", { designs: designList(lost), brand: brand.label }) });
+}
+
 async function loadFeed(brand) {
   mark(brand.key, true);
   try {
-    await paints.loadFeed(brand.key, t("paintColors.loadTask", { brand: brand.label }));
+    tellLost(brand, (await paints.loadFeed(brand.key, t("paintColors.loadTask", { brand: brand.label })))?.lost);
   } catch (e) {
     if (e?.name !== "AbortError") reportError(e);
   } finally {
@@ -102,7 +116,7 @@ async function onFile(file) {
   if (!file || !brand) return;
   mark(brand.key, true);
   try {
-    await paints.importFile(brand.key, file);
+    tellLost(brand, (await paints.importFile(brand.key, file))?.lost);
   } catch (e) {
     reportError(e);
   } finally {
@@ -112,9 +126,13 @@ async function onFile(file) {
 }
 
 async function clear(brand) {
+  // the designs that use its colors are named first (a failed look-up still lets it go ahead)
+  const uses = await paints.designsUsing(brand.key).catch(() => []);
   const yes = await confirmDialog({
     title: t("paintColors.remove.title", { brand: brand.label }),
-    message: t("paintColors.remove.message", { brand: brand.label, n: brand.paintCount }),
+    message: uses.length
+      ? t("paintColors.remove.messageUsed", { brand: brand.label, n: n(brand.paintCount), designs: designList(uses) })
+      : t("paintColors.remove.message", { brand: brand.label, n: n(brand.paintCount) }),
     confirmLabel: t("paintColors.remove.confirm"),
     danger: true,
   });

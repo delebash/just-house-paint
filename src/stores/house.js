@@ -105,10 +105,11 @@ export const useHouseStore = defineStore("house", {
       this.maskVersions = next;
     },
     /** Find the parts (a server job on the task strip); `label` names it there. */
-    /** `describe(job, percent)` words its progress (the part being found) — see services/jobs.js. */
-    async findParts(label, describe) {
+    /** `describe(job, percent)` words its progress (the part being found) — see services/jobs.js;
+     *  `keepEdited` keeps the parts changed by hand as they are (the found ones are cut around them). */
+    async findParts(label, describe, { keepEdited = false } = {}) {
       const id = this.house.id;
-      await runServerJob({ start: () => post(hp(id, "/find-parts")), feature: "parts.find", label, meta: { houseId: id }, describe });
+      await runServerJob({ start: () => post(hp(id, "/find-parts"), { keepEdited }), feature: "parts.find", label, meta: { houseId: id }, describe });
       // another house opened meanwhile: this one's parts are on the server, read when it opens again
       if (this.house?.id !== id) return;
       const [house, parts] = await Promise.all([get(hp(id)), get(hp(id, "/parts"))]);

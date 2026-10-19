@@ -137,6 +137,30 @@ function writeColors(h, designId, colors) {
   }
 }
 
+/**
+ * The designs whose colors name a paint of `brand` — with `missing`, only paints no longer stored (the
+ * brand loaded again without them, or removed; the id stays, so the color comes back with the paint).
+ * [{ houseId, house, designId, design, parts: [part keys] }], by house and design name.
+ */
+export function designsWithBrand(h, brand, { missing = false } = {}) {
+  const rows = h.all(
+    `SELECT d.id AS design_id, d.name AS design_name, hs.id AS house_id, hs.name AS house_name, dc.part_key
+       FROM design_colors dc
+       JOIN designs d ON d.id = dc.design_id
+       JOIN houses hs ON hs.id = d.house_id
+       LEFT JOIN paints p ON p.id = dc.paint_id
+      WHERE substr(dc.paint_id, 1, ?) = ?${missing ? " AND p.id IS NULL" : ""}
+      ORDER BY hs.name, d.name, dc.part_key`,
+    [brand.length + 1, `${brand}:`],
+  );
+  const byDesign = new Map();
+  for (const r of rows) {
+    if (!byDesign.has(r.design_id)) byDesign.set(r.design_id, { houseId: r.house_id, house: r.house_name, designId: r.design_id, design: r.design_name, parts: [] });
+    byDesign.get(r.design_id).parts.push(r.part_key);
+  }
+  return [...byDesign.values()];
+}
+
 export const listDesigns = (h, houseId) => h.all("SELECT * FROM designs WHERE house_id = ? ORDER BY created_at", [houseId]).map((r) => design(h, r));
 
 export const getDesign = (h, id) => design(h, h.one("SELECT * FROM designs WHERE id = ?", [id]));

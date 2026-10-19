@@ -150,6 +150,36 @@ describe("parts", () => {
     expect((await s.app.request(`/v1/houses/${house.id}/parts/shutters/mask`, { method: "PUT", headers: { "content-type": "text/plain" }, body: "x" })).status).toBe(422);
   });
 
+  test("finding again keeps the parts changed by hand when asked, the found ones cut around them", async () => {
+    s = makeServer();
+    const house = await (await s.upload(await jpeg(400, 300))).json();
+    await s.settle((await (await s.json("POST", `/v1/houses/${house.id}/find-parts`)).json()).id);
+    // the brush gives the trim the photo's top ten rows (the finder put them in the body)
+    const px = Buffer.alloc(256 * 192);
+    px.fill(255, 0, 256 * 10);
+    const png = await sharp(px, { raw: { width: 256, height: 192, channels: 1 } }).png().toBuffer();
+    await s.app.request(`/v1/houses/${house.id}/parts/trim/mask`, { method: "PUT", headers: { "content-type": "image/png" }, body: png });
+    await s.json("POST", `/v1/houses/${house.id}/parts`, { key: "shutters" });
+    const kept = await s.settle((await (await s.json("POST", `/v1/houses/${house.id}/find-parts`, { keepEdited: true })).json()).id);
+    expect(kept.result).toEqual({ parts: 4, kept: 2 });
+    const list = async () => (await (await s.app.request(`/v1/houses/${house.id}/parts`)).json()).map((p) => [p.key, p.source, p.area]);
+    expect(await list()).toEqual([
+      ["body", "auto", 256 * 86],
+      ["trim", "edited", 256 * 10],
+      ["roof", "auto", 0],
+      ["shutters", "added", 0],
+    ]);
+    // without it, every part is found again and the one made by hand goes
+    await s.settle((await (await s.json("POST", `/v1/houses/${house.id}/find-parts`)).json()).id);
+    expect(await list()).toEqual([
+      ["body", "auto", 256 * 96],
+      ["trim", "auto", 128 * 96],
+      ["roof", "auto", 0],
+    ]);
+    expect((await s.app.request(`/v1/houses/${house.id}/parts/shutters/mask`)).status).toBe(404);
+    expect((await s.json("POST", `/v1/houses/${house.id}/find-parts`, { keepEdited: [] })).status).toBe(422);
+  });
+
   test("a failing finder ends the job in error, and cancel stops it", async () => {
     s = makeServer();
     const house = await (await s.upload(await jpeg(100, 80))).json();

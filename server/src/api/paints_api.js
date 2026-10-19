@@ -7,6 +7,7 @@
 import { Hono, input, uploadLimit } from "@delebash/core/platform";
 import { ApiError, notFound, RequestValidationError } from "@delebash/core/platform/errors";
 import { getState } from "../app_state.js";
+import { designsWithBrand } from "../database/houses.js";
 import {
   clearBrand,
   getPaint,
@@ -95,7 +96,8 @@ export function router(ctx = getState()) {
         progress(0.8, "saving");
         // "feed": a public list; "file": the palette files the brand's page links (the page says which)
         const saved = replaceBrandPaints(ctx.db, brand, rows, { source: BRAND_FEEDS.some((f) => f.brand === brand) ? "feed" : "file" });
-        return { brand, paintCount: saved.paintCount };
+        // the designs with a color this list no longer has (the screen names them)
+        return { brand, paintCount: saved.paintCount, lost: designsWithBrand(ctx.db, brand, { missing: true }) };
       } catch (e) {
         if (!signal.aborted) recordBrandError(ctx.db, brand, e?.message || e, "feed");
         throw e;
@@ -103,6 +105,9 @@ export function router(ctx = getState()) {
     });
     return c.json(job, 202);
   });
+
+  // The designs that use the brand's colors — Remove's confirm names them.
+  app.get("/v1/brands/:key/designs", input({ params: BrandParams }), (c) => c.json(designsWithBrand(ctx.db, mustBrand(c.req.valid("param").key))));
 
   app.delete("/v1/brands/:key", input({ params: BrandParams }), (c) => {
     clearBrand(ctx.db, mustBrand(c.req.valid("param").key));
@@ -131,7 +136,8 @@ export function router(ctx = getState()) {
     }
     if (!result.rows.length) throw new ApiError(422, "empty-palette", "No colors in the file", result.warnings.join("; ") || "the file holds no colors this app can read");
     const saved = replaceBrandPaints(ctx.db, brand, result.rows, { source: "file" });
-    return c.json({ brand, format: result.format, paintCount: saved.paintCount, warnings: result.warnings }, 201);
+    const lost = designsWithBrand(ctx.db, brand, { missing: true });
+    return c.json({ brand, format: result.format, paintCount: saved.paintCount, warnings: result.warnings, lost }, 201);
   });
 
   app.get("/v1/paints", input({ querystring: PaintSearch }), (c) => {

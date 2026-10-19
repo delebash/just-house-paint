@@ -27,6 +27,13 @@ const paints = usePaintsStore();
 const settings = useSettingsStore();
 
 const total = computed(() => house.parts.reduce((n, p) => n + (p.area || 0), 0) || 1);
+// a part's paint by name — and a color its brand no longer has (a new list, or the brand removed) says so
+function paintLabel(key) {
+  const id = house.colors[key];
+  if (paints.byId[id]) return paints.byId[id].displayName;
+  if (id && paints.missing[id]) return t("partsTab.notLoaded", paints.idParts(id));
+  return t("partsTab.unpainted");
+}
 const share = (p) => Math.max(1, Math.round((100 * (p.area || 0)) / total.value));
 const toPaint = computed(() => house.parts.filter((p) => p.paintable));
 const staying = computed(() => house.parts.filter((p) => !p.paintable));
@@ -63,7 +70,7 @@ async function addPart() {
         </q-item-section>
         <q-item-section>
           <q-item-label class="parts__name">{{ nameOf(p.key) }}</q-item-label>
-          <q-item-label caption class="parts__paint">{{ paints.byId[house.colors[p.key]]?.displayName || t("partsTab.unpainted") }}</q-item-label>
+          <q-item-label caption class="parts__paint">{{ paintLabel(p.key) }}</q-item-label>
         </q-item-section>
         <q-item-section side class="parts__side">
           <q-btn

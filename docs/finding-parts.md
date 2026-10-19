@@ -43,7 +43,9 @@ garage door before the door, the gutters before the trim) — the order is in **
 Advanced**.
 
 Your fixes are kept, and **Undo** takes back the last ones. **Find the parts again** starts over
-from what the finder sees — your fixes and the parts you added by hand go; it asks first.
+from what the finder sees. It asks first, and if you changed parts by hand — with the brush, the
+eraser or a box — or added any, it offers to **keep** them as they are: the parts found now are then
+cut around them. Untick it to have every part found again.
 
 ## Settings
 
