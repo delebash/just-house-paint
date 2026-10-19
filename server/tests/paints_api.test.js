@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 // /v1/brands, /v1/paints, /v1/schemes — on SYNTHETIC lists only (the app ships no brand data).
 import { afterEach, describe, expect, test } from "vitest";
+import { setSetting } from "../src/database/settings.js";
+import { COLOR_ORDER_DEFAULTS, familyKeys, familyOf, lch } from "../src/paints/index.js";
 import { makeServer } from "./domain_helpers.js";
 import { behrSheet, prismDutchBoy, prismLowes, prismSherwin } from "./paints/fixtures/feeds.js";
 import { syntheticPalette } from "./paints/fixtures/palette.js";
@@ -142,6 +144,53 @@ describe("search, nearest, schemes", () => {
     expect((await (await s.app.request(`/v1/paints?q=${rows[0].code}`)).json()).rows[0].code).toBe(rows[0].code);
     expect((await s.app.request("/v1/paints?limit=0")).status).toBe(422);
     expect((await (await s.app.request("/v1/paints?q=%25")).json()).total).toBe(0); // a % is a character, not a wildcard
+  });
+
+  test("by color: the near-grays light to dark, then each hue band light to dark — paged, nothing lost", async () => {
+    const rows = await withPalette();
+    const lab = Object.fromEntries(rows.map((r) => [r.code, r.lab]));
+    const page = async (offset) => (await s.app.request(`/v1/paints?order=color&limit=500&offset=${offset}`)).json();
+    const first = await page(0);
+    const got = [...first.rows, ...(await page(500)).rows];
+    expect(first.total).toBe(rows.length);
+    expect(new Set(got.map((p) => p.code)).size).toBe(rows.length);
+    // the wall's order: [near-gray first, the hue band from the reds' start, lighter first]
+    const { grayChroma, bandDegrees, families } = COLOR_ORDER_DEFAULTS;
+    const place = (p) => {
+      const { chroma, hue } = lch(lab[p.code]);
+      const gray = chroma < grayChroma;
+      return [gray ? 0 : 1, gray ? 0 : Math.floor(((hue - families[0].from + 360) % 360) / bandDegrees), -lab[p.code][0]];
+    };
+    const after = (a, b) => a[0] > b[0] || (a[0] === b[0] && (a[1] > b[1] || (a[1] === b[1] && a[2] >= b[2] - 1e-9)));
+    for (let i = 1; i < got.length; i++) expect(after(place(got[i]), place(got[i - 1]))).toBe(true);
+    expect(place(got[0])[0]).toBe(0); // a white first
+    expect(lab[got[0].code][0]).toBeGreaterThan(95);
+    // by name stays the default
+    const byName = (await (await s.app.request("/v1/paints?limit=3")).json()).rows.map((p) => p.name);
+    expect(byName).toEqual([...byName].sort((a, b) => a.localeCompare(b)));
+    expect((await s.app.request("/v1/paints?order=hue")).status).toBe(422);
+  });
+
+  test("a Color family: the near-grays or one hue range; every color in exactly one; the setting moves the cuts", async () => {
+    const rows = await withPalette();
+    const lab = Object.fromEntries(rows.map((r) => [r.code, r.lab]));
+    let sum = 0;
+    for (const key of familyKeys(COLOR_ORDER_DEFAULTS)) {
+      const found = await (await s.app.request(`/v1/paints?colorFamily=${key}&limit=500`)).json();
+      expect(found.total).toBeGreaterThan(0);
+      expect(found.rows.every((p) => familyOf(lab[p.code]) === key)).toBe(true);
+      sum += found.total;
+    }
+    expect(sum).toBe(rows.length);
+    expect((await s.app.request("/v1/paints?colorFamily=browns")).status).toBe(422);
+    // the family cuts and the near-gray chroma are a setting, read on every search
+    const edited = { ...COLOR_ORDER_DEFAULTS, grayChroma: 0, families: [{ key: "warm", from: 0 }, { key: "cool", from: 180 }] };
+    setSetting(s.db, "paints.colorOrder", edited);
+    expect((await (await s.app.request("/v1/paints?colorFamily=neutrals")).json()).total).toBe(0);
+    const warm = (await (await s.app.request("/v1/paints?colorFamily=warm")).json()).total;
+    const cool = (await (await s.app.request("/v1/paints?colorFamily=cool")).json()).total;
+    expect(warm + cool).toBe(rows.length);
+    expect((await s.app.request("/v1/paints?colorFamily=reds")).status).toBe(422);
   });
 
   test("the nearest real paints to a color, closest first", async () => {

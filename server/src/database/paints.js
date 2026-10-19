@@ -3,7 +3,7 @@
 // whole on every load or import (the brand's list is the source of truth); a paint's id is
 // `<brand>:<code>`, so a design that names one survives a reload.
 
-import { BRANDS, displayName } from "../paints/index.js";
+import { BRANDS, COLOR_ORDER_DEFAULTS, displayName, familySpan, NEUTRALS } from "../paints/index.js";
 
 /** The current UTC time as stored (ISO-8601). */
 const nowIso = () => new Date().toISOString();
@@ -120,12 +120,23 @@ const brandRow = (r) => r && { key: r.key, label: r.label, source: r.source, ena
 export const getBrand = (h, key) => brandRow(h.one("SELECT * FROM brands WHERE key = ?", [key]));
 export const listBrandRows = (h) => h.all("SELECT * FROM brands").map(brandRow);
 
+// CIE LCh from the stored CIELAB (SQLite's math functions; paints/order.js is the same math in JS)
+const CHROMA = "sqrt(lab_a * lab_a + lab_b * lab_b)";
+const HUE = "mod(degrees(atan2(lab_b, lab_a)) + 360, 360)";
+// the hue measured from a start angle (a bound parameter), 0–360
+const HUE_FROM = `mod(${HUE} - ? + 360, 360)`;
+
 /**
- * Search: `q` matches the name or the code (case-insensitive), `family`, `exterior` (true → paints
- * the brand marks for exterior use or doesn't say), archived colors only when asked.
- * Returns { total, rows } (wire shape), name order.
+ * Search: `q` matches the name or the code (case-insensitive), `family` (the brand's own),
+ * `colorFamily` (paints/order.js: "neutrals" or a hue family of `colorOrder`), `exterior` (true →
+ * paints the brand marks for exterior use or doesn't say), archived colors only when asked.
+ * `order`: "name", or "color" — the near-grays light to dark, then each hue band light to dark.
+ * Returns { total, rows } (wire shape).
  */
-export function searchPaints(h, { brand, q, family, exterior = false, includeArchived = false, limit = 200, offset = 0 } = {}) {
+export function searchPaints(
+  h,
+  { brand, q, family, colorFamily, exterior = false, includeArchived = false, order = "name", colorOrder = COLOR_ORDER_DEFAULTS, limit = 200, offset = 0 } = {},
+) {
   const where = [];
   const p = [];
   if (brand) {
@@ -141,11 +152,28 @@ export function searchPaints(h, { brand, q, family, exterior = false, includeArc
     where.push("family = ?");
     p.push(family);
   }
+  if (colorFamily === NEUTRALS) {
+    where.push(`${CHROMA} < ?`);
+    p.push(colorOrder.grayChroma);
+  } else if (colorFamily) {
+    // an unknown family matches nothing (the route refuses it first)
+    const { from, span } = familySpan(colorOrder, colorFamily) || { from: 0, span: 0 };
+    where.push(`${CHROMA} >= ? AND ${HUE_FROM} < ?`);
+    p.push(colorOrder.grayChroma, from, span);
+  }
   if (exterior) where.push("(exterior IS NULL OR exterior = 1)");
   if (!includeArchived) where.push("(archived IS NULL OR archived = 0)");
   const w = where.length ? `WHERE ${where.join(" AND ")}` : "";
   const total = h.value(`SELECT count(*) FROM paints ${w}`, p);
-  const rows = h.all(`SELECT * FROM paints ${w} ORDER BY name COLLATE NOCASE, code LIMIT ? OFFSET ?`, [...p, limit, offset]).map(wirePaint);
+  const byName = "name COLLATE NOCASE, code";
+  const [orderBy, op] =
+    order === "color"
+      ? [
+          `${CHROMA} >= ?, CASE WHEN ${CHROMA} < ? THEN 0 ELSE floor(${HUE_FROM} / ?) END, lab_l DESC, ${byName}`,
+          [colorOrder.grayChroma, colorOrder.grayChroma, colorOrder.families[0]?.from ?? 0, colorOrder.bandDegrees],
+        ]
+      : [byName, []];
+  const rows = h.all(`SELECT * FROM paints ${w} ORDER BY ${orderBy} LIMIT ? OFFSET ?`, [...p, ...op, limit, offset]).map(wirePaint);
   return { total, rows };
 }
 

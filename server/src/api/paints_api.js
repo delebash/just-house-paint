@@ -18,7 +18,19 @@ import {
   replaceBrandPaints,
   searchPaints,
 } from "../database/paints.js";
-import { BRAND_FEEDS, BRAND_FILE_PAGES, BRANDS, displayName, importFile, loadFeed, loadPaletteFiles, nearestPaints, schemesFromCoordinating, suggestSchemes } from "../paints/index.js";
+import {
+  BRAND_FEEDS,
+  BRAND_FILE_PAGES,
+  BRANDS,
+  displayName,
+  familyKeys,
+  importFile,
+  loadFeed,
+  loadPaletteFiles,
+  nearestPaints,
+  schemesFromCoordinating,
+  suggestSchemes,
+} from "../paints/index.js";
 import { BrandParams, HarmonyIn, NearestQuery, PaintParams, PaintSearch } from "../schemas/paints.js";
 
 /** A role of a scheme on the wire: the target color and the real paint it snapped to. */
@@ -37,7 +49,7 @@ const wireScheme = (s) => ({
 
 /**
  * `ctx`: { db, jobs, fetch, harmony() → HARMONY_DEFAULTS overrides (settings rows),
- *          maxImportBytes() }.
+ *          maxImportBytes(), colorOrder() → the setting paints.colorOrder }.
  */
 /** The app can fetch this brand's colors: a public list, or palette files linked from its page. */
 const fetchable = (brand) => BRAND_FEEDS.some((f) => f.brand === brand) || BRAND_FILE_PAGES.some((p) => p.brand === brand);
@@ -123,7 +135,26 @@ export function router(ctx = getState()) {
 
   app.get("/v1/paints", input({ querystring: PaintSearch }), (c) => {
     const q = c.req.valid("query");
-    return c.json(searchPaints(ctx.db, { brand: q.brand, q: q.q, family: q.family, exterior: q.exterior, includeArchived: q.archived, limit: q.limit, offset: q.offset }));
+    const colorOrder = ctx.colorOrder();
+    if (q.colorFamily && !familyKeys(colorOrder).includes(q.colorFamily)) {
+      throw new RequestValidationError([
+        { loc: ["query", "colorFamily"], msg: `Input should be one of ${familyKeys(colorOrder).join(", ")}`, type: "literal_error" },
+      ]);
+    }
+    return c.json(
+      searchPaints(ctx.db, {
+        brand: q.brand,
+        q: q.q,
+        family: q.family,
+        colorFamily: q.colorFamily,
+        exterior: q.exterior,
+        includeArchived: q.archived,
+        order: q.order,
+        colorOrder,
+        limit: q.limit,
+        offset: q.offset,
+      }),
+    );
   });
 
   app.get("/v1/paints/nearest", input({ querystring: NearestQuery }), (c) => {

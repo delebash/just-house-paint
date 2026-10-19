@@ -160,6 +160,9 @@
         "aiphoto": {
           "templates": "The AI photo's prompts",
           "compose": "How the AI photo is put back on the photo"
+        },
+        "paints": {
+          "colorOrder": "How colors are ordered by color"
         }
       },
       "hints": {
@@ -174,6 +177,9 @@
         "aiphoto": {
           "templates": "The words the AI photo model reads.",
           "compose": "The blend and the color lock after the AI draws."
+        },
+        "paints": {
+          "colorOrder": "grayChroma: below this CIE chroma a color is a near-gray (listed first, light to dark); bandDegrees: the hue bands the rest are listed in; families: the Color family filter, each from its hue (degrees) to the next one’s."
         }
       }
     }
@@ -325,6 +331,21 @@
     "clear": "No color",
     "noMatch": "No color matches.",
     "more": "Show more ({n} left)",
+    "order": {
+      "label": "Order",
+      "color": "Color",
+      "name": "Name"
+    },
+    "families": {
+      "label": "Color family",
+      "neutrals": "Neutrals",
+      "reds": "Reds",
+      "oranges": "Oranges",
+      "yellows": "Yellows",
+      "greens": "Greens",
+      "blues": "Blues",
+      "purples": "Purples"
+    },
     "exact": {
       "title": "An exact color",
       "hint": "A color you saw somewhere else: the brand's closest paints, closest first.",

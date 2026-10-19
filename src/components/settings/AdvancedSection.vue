@@ -14,7 +14,7 @@ import { useSettingsStore } from "../../stores/settings.js";
 const { t } = useI18n();
 const settings = useSettingsStore();
 
-const KEYS = ["finder.parts", "finder.priority", "schemes.roleParts", "schemes.harmony", "aiphoto.templates", "aiphoto.compose"];
+const KEYS = ["finder.parts", "finder.priority", "schemes.roleParts", "schemes.harmony", "paints.colorOrder", "aiphoto.templates", "aiphoto.compose"];
 const idOf = (key) => `advanced-${key.replace(".", "-")}`;
 const asText = (v) => JSON.stringify(v ?? null, null, 2);
 

@@ -25,6 +25,8 @@ export const useUiStore = defineStore("ui", {
     light: Number(readPref("light", 1)),
     // the house page's outlines: the selected part's only, every part's, or none
     outlines: ["selected", "all", "off"].includes(readPref("outlines", "selected")) ? readPref("outlines", "selected") : "selected",
+    // the Colors tab's order: by color (a paint store's color wall) or by name
+    paintOrder: ["color", "name"].includes(readPref("paintOrder", "color")) ? readPref("paintOrder", "color") : "color",
   }),
   actions: {
     boot() {
@@ -56,6 +58,11 @@ export const useUiStore = defineStore("ui", {
       if (!["selected", "all", "off"].includes(v)) return;
       this.outlines = v;
       writePref("outlines", v);
+    },
+    setPaintOrder(v) {
+      if (!["color", "name"].includes(v)) return;
+      this.paintOrder = v;
+      writePref("paintOrder", v);
     },
     setLight(v) {
       this.light = Math.min(2, Math.max(0.5, Number(v) || 1));

@@ -1,7 +1,8 @@
 <script setup>
 // SPDX-License-Identifier: MIT
 // The house page's Colors tab (PRD F4, F5): a brand's real paints for the selected part — search by
-// name or number, a click paints the part — and an exact color (a hex, or the color picker) matched
+// name or number, ordered by color (a paint store's color wall) or by name, a Color family filter, a
+// click paints the part — and an exact color (a hex, or the color picker) matched
 // to the brand's nearest paints, each with its ΔE2000, so a color seen elsewhere becomes a paint you
 // can buy. Only brands with colors on this computer are offered; adding one is the Paint colors
 // page's (the app ships no brand data).
@@ -13,6 +14,8 @@ import { useRouter } from "vue-router";
 import { partName } from "../services/partNames.js";
 import { useHouseStore } from "../stores/house.js";
 import { usePaintsStore } from "../stores/paints.js";
+import { useSettingsStore } from "../stores/settings.js";
+import { useUiStore } from "../stores/ui.js";
 
 const PAGE = 120;
 
@@ -24,6 +27,8 @@ defineProps({
 });
 const house = useHouseStore();
 const paints = usePaintsStore();
+const settings = useSettingsStore();
+const ui = useUiStore();
 
 const brand = ref(null);
 const q = ref("");
@@ -36,6 +41,20 @@ const searching = ref(false);
 const hex = ref("");
 const nearest = ref([]);
 const hexRule = schemaRules(NearestQuery).hex;
+// by color (the near-grays, then each hue band, light to dark) or by name — the choice is kept
+const order = computed({ get: () => ui.paintOrder, set: (v) => ui.setPaintOrder(v) });
+const orders = computed(() => [
+  { value: "color", label: t("colors.order.color") },
+  { value: "name", label: t("colors.order.name") },
+]);
+// the Color family filter: the near-grays, then the hue families of the setting paints.colorOrder
+const colorFamily = ref(null);
+const familyOptions = computed(() =>
+  ["neutrals", ...(settings.values["paints.colorOrder"]?.families || []).map((f) => f.key)].map((key) => ({
+    value: key,
+    label: te(`colors.families.${key}`) ? t(`colors.families.${key}`) : key,
+  })),
+);
 // the exact color came off the photo (the eyedropper, a part as photographed) — its light is in it
 const picked = ref(false);
 
@@ -54,7 +73,16 @@ async function search(more = false) {
   if (!brand.value) return;
   searching.value = true;
   try {
-    const page = await paints.search({ brand: brand.value, q: q.value.trim(), exterior: exterior.value, archived: archived.value, limit: PAGE, offset: more ? rows.value.length : 0 });
+    const page = await paints.search({
+      brand: brand.value,
+      q: q.value.trim(),
+      colorFamily: colorFamily.value,
+      order: order.value,
+      exterior: exterior.value,
+      archived: archived.value,
+      limit: PAGE,
+      offset: more ? rows.value.length : 0,
+    });
     rows.value = more ? [...rows.value, ...page.rows] : page.rows;
     total.value = page.total;
   } catch (e) {
@@ -63,7 +91,11 @@ async function search(more = false) {
     searching.value = false;
   }
 }
-watch([brand, exterior, archived], () => search(), { immediate: true });
+watch([brand, exterior, archived, order, colorFamily], () => search(), { immediate: true });
+// a family taken out of the setting is no longer a filter
+watch(familyOptions, (opts) => {
+  if (colorFamily.value && !opts.some((o) => o.value === colorFamily.value)) colorFamily.value = null;
+});
 watch(q, () => {
   clearTimeout(timer);
   timer = setTimeout(() => search(), 250);
@@ -168,6 +200,14 @@ async function match() {
           @click="router.push('/colors')"
         />
         <UiInput v-model="q" type="search" width="name" :placeholder="t('colors.search')" :aria-label="t('colors.search')" />
+        <UiSelect
+          v-model="colorFamily" :options="familyOptions" width="name" show-clear :placeholder="t('colors.families.label')"
+          :aria-label="t('colors.families.label')"
+        />
+        <span class="colors__order">
+          <span>{{ t("colors.order.label") }}</span>
+          <UiSegmented v-model="order" :options="orders" :aria-label="t('colors.order.label')" />
+        </span>
         <label class="colors__toggle">
           <UiToggle v-model="exterior" :aria-label="t('colors.exterior')" />
           <span>{{ t("colors.exterior") }}</span>
@@ -224,6 +264,11 @@ async function match() {
   align-items: center;
   gap: var(--sp-3);
   margin: 0 0 var(--sp-3);
+}
+.colors__order {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
 }
 .colors__tone {
   display: inline-flex;

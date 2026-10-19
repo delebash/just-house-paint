@@ -38,7 +38,12 @@ affiliated with or endorsed by any paint brand; the brands' names and color name
 ## Finding a color
 
 On a house's **Colors** tab: choose the brand, search by name or number, and click a color to paint
-the selected part. **Exterior colors only** hides the colors a brand marks for inside use (colors
+the selected part. **Order** lists the colors by **Color**, as a paint store's color wall — whites,
+grays and blacks first, then pinks and reds, oranges, yellows, greens, blues and purples, each from
+light to dark — or by **Name**; the app keeps your choice. **Color family** shows only the
+**Neutrals** (whites, grays, blacks and the grayest beiges) or one of the hue families. The families
+and where each begins are in **Settings → Advanced** ("How colors are ordered by color").
+**Exterior colors only** hides the colors a brand marks for inside use (colors
 it doesn't mark either way stay). **An exact color** — a hex color, or one from the picker — finds
 the brand's nearest paints, closest first, each with its ΔE.
 

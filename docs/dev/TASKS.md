@@ -298,6 +298,10 @@ ORDER:  the user, verbatim: "are you doing thsese ? - Show lit and shaded sample
         lightGain, the cap `aiphoto.compose` gainLimits, an unedited compose upgraded). Verified: 330 server and 69
         renderer tests, lint, i18n. OPEN: restarting the dev app was refused by Claude Code's permission check — the
         user restarts it; then the real-app check on the user's house and the e2e smoke (port 17499).
+GO:     5a — told "5a is non-standard, though, so per your rules it still needs your word by name", the user replied,
+        verbatim (2026-10-18): "it covers finihs everything rethink on anythink you need to but i want all tasks done
+        all suggestions done"; told "I'm taking it as your word on 5a … say stop if you didn't mean that", the user:
+        "go". So 1, 2 (5a) and 4 are built now.
 STATE:  BUILDING.
 
 ## Order the colors by color, not only by name [2026-10-18]
@@ -310,18 +314,17 @@ MY REC (shown 2026-10-18, waiting for the go): on the Colors tab, **Order: Color
         own go: a **Color family** filter (Neutrals, Reds, … Purples) from the same bands. Attack: the brands' own
         families were dropped (Benjamin Moore and PPG have none; the rest disagree — "White & Pastel", "Pink", "Teal",
         "Brown"), and neutrals moved first (most exterior paints are). RESEARCH §10, "Ordering by color".
-
-## The server's port clashes with JustWrite's eval [2026-10-18]
-FOUND:  by the JustWrite session (2026-10-18): this app's server port 17497 is JustWrite's eval port
-        (`npm run eval`, scripts/eval.js `JW_EVAL_PORT || 17497`), and 17498 its flow tests
-        (tests/flows/global-setup.js `JW_FLOWS_PORT || 17498`). The kit's generator reserved only 17496
-        (new-app.js RESERVED), so `/new-just-app` handed out 17497. With this app's server up, JustWrite's
-        eval can't bind (it runs on JW_EVAL_PORT=17499 meanwhile).
-MY REC: reserve 17497 and 17498 in the kit (new-app.js RESERVED, the guard, app-structure §1's note) and move
-        this app to 17499 — its server default (version.js), the desktop shell's `port`, the boot file's
-        fallback, the e2e driver, the guard's APP_PORTS, AGENTS.md, README and the help's troubleshooting
-        page.
-GO:     the user, verbatim: "your rec on all just think on it again go" (2026-10-18).
+GO:     the user, verbatim (2026-10-18): "your rec on all go, if you dont find anymore problems or suggestiosn then doa
+        full release, if you have more problems or suggestions fix them on your rec keep going until you have no more
+        porblems and do a release"; then "it covers finihs everything rethink on anythink you need to but i want all
+        tasks done all suggestions done" — the Color family filter included.
+BUILT:  2026-10-18 — the Colors tab's **Order: Color · Name** (default Color, kept as the outlines' choice) and a
+        **Color family** select (Neutrals, Reds, Oranges, Yellows, Greens, Blues, Purples; empty = every color), the
+        server's ORDER BY and WHERE over the stored CIELAB; the setting `paints.colorOrder` (grayChroma 8, bands of 30°
+        from the reds' start, the six families' hue cuts as measured on the user's colors — RESEARCH §10), edited in
+        Settings → Advanced. Verified: 333 server tests (the order and families on the synthetic grid, paged, every
+        color in one family, the setting moving the cuts, 422s), 70 renderer tests (the mounted switch, the kept
+        choice, the family's request), lint, i18n, the guard; the real SW order read off the user's database.
 
 ## The obstruction test set — agreed, for later [2026-10-18]
 ASKED:  the user, verbatim: "one way to test would be to go grab a bunch of pictures of houses with cars
@@ -380,6 +383,16 @@ NOT STANDARD — DECIDED 2026-10-18, the user, verbatim: "your rec even non stan
              let a sibling app's Clear delete these 12 GB, which come back only by Install. What it
              found instead: Settings → Storage didn't count them — now it does (the kit's
              `makeDiskRouter` extra buckets: houses, the part finder, the AI photo).
+
+## Finish everything, then a full release — the go [2026-10-18]
+GO:     the user, verbatim: "your rec on all go, if you dont find anymore problems or suggestiosn then doa full release,
+        if you have more problems or suggestions fix them on your rec keep going until you have no more porblems and do
+        a release"; then "it covers finihs everything rethink on anythink you need to but i want all tasks done all
+        suggestions done"; then "go".
+PLAN:   the e2e smoke and On it now on the user's house; Order by color + Color family; wide color 1, 2 (5a), 4; every
+        open item above; a review pass, its findings fixed; then the release (the family's way: JustWrite's manual
+        release workflow, the template first).
+STATE:  BUILDING.
 
 ## How the app is started [2026-10-17]
 STATE:  the Claude Code setup items 1–8 became the `/new-just-app` skill's 8 decisions ("your rec on

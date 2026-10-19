@@ -80,7 +80,15 @@ function fakeFetch(input, init = {}) {
   if (mask && method === "PUT") return Promise.resolve(json(server.parts.find((x) => x.key === mask[1])));
   if (mask) return Promise.resolve(new Response(new Blob([mask[1]])));
   if (p === "/v1/brands") return Promise.resolve(json([{ key: "behr", label: "Behr", feed: true, enabled: true, paintCount: 1, source: "feed", loadedAt: null, lastError: null }]));
-  if (p === "/v1/settings") return Promise.resolve(json({ "finder.parts": [], "schemes.roleParts": { body: ["body"], trim: ["trim", "soffit", "windowTrim"], accent: [] } }));
+  if (p === "/v1/settings") {
+    return Promise.resolve(
+      json({
+        "finder.parts": [],
+        "schemes.roleParts": { body: ["body"], trim: ["trim", "soffit", "windowTrim"], accent: [] },
+        "paints.colorOrder": { grayChroma: 8, bandDegrees: 30, families: [{ key: "reds", from: 333 }, { key: "blues", from: 181 }] },
+      }),
+    );
+  }
   if (p === "/v1/segment/status") return Promise.resolve(json({ installed: server.finderInstalled, downloadBytes: 3_364_167_120 }));
   if (p === "/v1/aiphoto/status") return Promise.resolve(json({ engineInstalled: false, modelsInstalled: false, backend: "cuda12", slow: false, downloadBytes: 9e9 }));
   if (p === "/v1/segment/install") return Promise.resolve(json({ id: "j-install", state: "running", progress: 0 }, 202));
@@ -97,7 +105,10 @@ function fakeFetch(input, init = {}) {
   if (decodeURIComponent(p) === `/v1/paints/${PAINT.id}`) return Promise.resolve(json(PAINT));
   if (decodeURIComponent(p) === `/v1/paints/${WHITE.id}`) return Promise.resolve(json(WHITE));
   if (p === "/v1/paints/nearest") return Promise.resolve(json([{ paint: PAINT, deltaE: 3.2 }]));
-  if (p === "/v1/paints") return Promise.resolve(json({ total: 2, rows: [PAINT, WHITE] }));
+  if (p === "/v1/paints") {
+    server.searches.push(Object.fromEntries(url.searchParams));
+    return Promise.resolve(json({ total: 2, rows: [PAINT, WHITE] }));
+  }
   return Promise.resolve(json({}));
 }
 
@@ -138,7 +149,7 @@ const settle = async () => {
 };
 
 beforeEach(() => {
-  server = { calls: [], parts: [], designs: [], finderInstalled: true, currentPaints: {} };
+  server = { calls: [], parts: [], designs: [], finderInstalled: true, currentPaints: {}, searches: [] };
   vi.stubGlobal("fetch", vi.fn(fakeFetch));
   vi.stubGlobal("ResizeObserver", class { observe() {} unobserve() {} disconnect() {} });
   vi.stubGlobal("matchMedia", vi.fn(() => ({ matches: false, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {} })));
@@ -317,6 +328,29 @@ test("the outlines: the selected part's by default, every part's, or none — an
   expect(readPref("outlines")).toBe("all");
   // back to the default, for the tests after this one (the kit's prefs are one document per app)
   await click(byText(".ui-seg button", "Selected part"));
+});
+
+test("the colors in color order by default, or by name — the choice kept; a Color family filters them", async () => {
+  server.parts = PARTS;
+  await mountPage();
+  await click(byText(".q-tab", "Colors"));
+  expect(server.searches.at(-1)).toMatchObject({ order: "color" });
+  expect(server.searches.at(-1).colorFamily).toBeUndefined();
+  await click(byText(".ui-seg button", "Name"));
+  expect(server.searches.at(-1)).toMatchObject({ order: "name" });
+  expect(readPref("paintOrder")).toBe("name");
+  // the families: the near-grays, then the setting's, in its order
+  const family = wrapper.findAllComponents(UiSelect).find((c) => c.props("options").some((o) => o.value === "neutrals"));
+  expect(family.props("options").map((o) => o.label)).toEqual(["Neutrals", "Reds", "Blues"]);
+  family.vm.$emit("update:modelValue", "blues");
+  await flushPromises();
+  expect(server.searches.at(-1)).toMatchObject({ order: "name", colorFamily: "blues" });
+  family.vm.$emit("update:modelValue", null);
+  await flushPromises();
+  expect(server.searches.at(-1).colorFamily).toBeUndefined();
+  // back to the default, for the tests after this one (the kit's prefs are one document per app)
+  await click(byText(".ui-seg button", "Color"));
+  expect(readPref("paintOrder")).toBe("color");
 });
 
 test("finding the parts shows its progress on the page — not twice in the global stack — and its button waits", async () => {

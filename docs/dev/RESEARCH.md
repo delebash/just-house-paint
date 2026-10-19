@@ -595,6 +595,17 @@ re-run by this session; code in the app's `server/src/aiphoto/`; outputs in sess
   has SQLite's math functions (`atan2`, `degrees`, `sqrt` — checked), so the order can be an ORDER BY over
   `lab_a`/`lab_b`/`lab_l` with no new column. The npm package color-sorter sorts an in-memory array by HSL —
   no paging, and HSL's hue is less even than LCh's.
+  - **The family cuts** (2026-10-18, the same colors, chroma ≥ 8; the brands' Pink with Red, Teal with Blue): the
+    LCh hue that misfiles the fewest brand-labelled colors between neighbours — red|orange **45°** (188 of 2,107
+    misfiled), orange|yellow **72°** (227 / 2,177), yellow|green **98°** (189 / 2,587), green|blue **181°**
+    (125 / 2,588), blue|purple **271°** (140 / 1,834), purple|red **333°** (68 / 1,763). Per family, p5–p95 of
+    hue: red 354–44 (wrapping), orange 40–78, yellow 70–98, green 95–184, blue 183–270, purple 249–341. These
+    are the seeded `paints.colorOrder` families; the hue bands of the order start at the reds' 333°, so the pinks
+    near 350° open the reds instead of closing the purples. On SW (1,575 exterior colors): Neutrals 463, Reds 169,
+    Oranges 212, Yellows 356, Greens 143, Blues 178, Purples 54 — the darkest navies (Indigo, Blueblood) land in
+    Purples at the 271° cut, the price of the cut that misfiles least.
+  - **SQLite's `mod` and `floor`** are there too (the server's tests run the order and the families on the
+    synthetic OKLCH grid, every color in exactly one family).
 
 ## 11 · The app, run for real (2026-10-18)
 

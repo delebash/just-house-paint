@@ -80,9 +80,9 @@ export const usePaintsStore = defineStore("paints", {
       await del(`/v1/brands/${encodeURIComponent(brand)}`);
       await this.loadBrands();
     },
-    /** One page of the search: { total, rows }. */
-    async search({ brand, q, family, exterior = true, archived = false, limit = 120, offset = 0 } = {}) {
-      const page = await get(`/v1/paints?${query({ brand, q, family, exterior, archived, limit, offset })}`);
+    /** One page of the search: { total, rows } — `order` "color" or "name", `colorFamily` a family key. */
+    async search({ brand, q, family, colorFamily, order, exterior = true, archived = false, limit = 120, offset = 0 } = {}) {
+      const page = await get(`/v1/paints?${query({ brand, q, family, colorFamily, order, exterior, archived, limit, offset })}`);
       this.remember(page.rows);
       return page;
     },

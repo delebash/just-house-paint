@@ -90,6 +90,7 @@ export function createServices({ db, dataDir }, overrides = {}) {
     maxDesignsPerHouse: () => setting("designs.maxPerHouse"),
     maxImportBytes: () => setting("paints.maxImportMegabytes") * MB,
     harmony: () => setting("schemes.harmony"),
+    colorOrder: () => setting("paints.colorOrder"),
     // the English the AI's prompt reads ("garageDoor" → "garage door")
     partLabel: surfaceWords,
   };

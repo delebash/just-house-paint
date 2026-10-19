@@ -16,11 +16,17 @@ export const BrandParams = T.Object({ key: T.String({ minLength: 1, maxLength: 4
 /** The paint a path names (`<brand>:<code>`). */
 export const PaintParams = T.Object({ id: T.String({ minLength: 1, maxLength: 120 }) });
 
+/** How a brand's colors are listed: by color (a paint store's color wall), or by name. */
+export const PAINT_ORDERS = Object.freeze(["color", "name"]);
+
 /** GET /v1/paints — a brand's colors, filtered and paged. */
 export const PaintSearch = T.Object({
   brand: opt(T.String({ maxLength: 40 })),
   q: opt(T.String({ maxLength: 80 })),
   family: opt(T.String({ maxLength: 40 })),
+  // "neutrals" or a hue family of the setting paints.colorOrder
+  colorFamily: opt(T.String({ maxLength: 40 })),
+  order: opt(literal(...PAINT_ORDERS), "name"),
   exterior: opt(T.Boolean(), false),
   archived: opt(T.Boolean(), false),
   limit: opt(T.Integer({ minimum: 1, maximum: 500 }), 120),

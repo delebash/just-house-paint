@@ -16,6 +16,8 @@
 - **On it now**: tell the app the paint a part has today, and new colors show in the photo's real
   light and tint.
 - **Pick a color** off the photo, and each part's color as photographed, to find the nearest paints.
+- **Order by color**: the Colors tab lists a brand's colors as a paint store's color wall, light to
+  dark in each hue, or by name; **Color family** shows only the neutrals or one hue family.
 - **A color card**: the painted photo and its paints in one picture.
 - **Soffits**: the finder looks for the soffits and fascia under the roof's edge.
 - **Window trim**: the frame, casing and sill around each window, its own part to paint; Windows is the glass.

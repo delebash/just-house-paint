@@ -15,6 +15,8 @@ import { router as paintsRouter } from "../src/api/paints_api.js";
 import { router as partsRouter } from "../src/api/parts_api.js";
 import { router as schemesAiRouter } from "../src/api/schemes_ai_api.js";
 import { MIGRATIONS } from "../src/database/schema.js";
+import { SETTING_DEFAULTS } from "../src/database/seed.js";
+import { getSetting } from "../src/database/settings.js";
 import { JobRegistry } from "../src/jobs.js";
 
 export const LIMITS = { displayMax: 256, thumbMax: 64, jpegQuality: 85, maxPhotoBytes: 2_000_000 };
@@ -81,6 +83,8 @@ export function makeServer({ fetch = async () => new Response("offline", { statu
   migrate(db, MIGRATIONS);
   const jobs = new JobRegistry();
   const ctx = { db, dataDir, jobs, fetch, finder: fakeFinder, limits: () => LIMITS, maxDesignsPerHouse: () => 3, harmony: () => ({}), maxImportBytes: () => 5_000_000,
+    // read as services.js reads it: the row, else the seed's value
+    colorOrder: () => getSetting(db, "paints.colorOrder") ?? SETTING_DEFAULTS["paints.colorOrder"],
     partLabel: (k) => k.replace(/_/g, " "),
     run: async (body) => {
       aiAnswer.calls.push(body);

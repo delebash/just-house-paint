@@ -24,3 +24,4 @@ export {
   rgbToHex,
 } from "./color.js";
 export { HARMONY_DEFAULTS, SCHEME_KINDS, schemeTargets, schemesFromCoordinating, suggestSchemes } from "./harmony.js";
+export { COLOR_ORDER_DEFAULTS, NEUTRALS, familyKeys, familyOf, familySpan, lch } from "./order.js";
