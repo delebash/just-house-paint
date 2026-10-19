@@ -7,7 +7,8 @@ installer that isn't signed yet), and updates from **App Settings → Updates** 
 
 - **Your houses**: add photos of your house, rename and delete them.
 - **The part finder** (Meta's SAM 3, on your computer): finds the body, trim, doors, shutters and
-  the rest; fix its outlines with the brush, the eraser or a box.
+  the rest; fix its outlines with the brush, the eraser or a box. **Find the parts again** can keep
+  the parts you changed by hand.
 - **Painting**: real brand paints on your photo with its own light and shadow, each part's ΔE to
   the chip, texture, and the painted photo saved at full size.
 - **Undo and Redo** (Ctrl+Z, Ctrl+Y) for colors and outline fixes; **Reset** removes every color
@@ -29,7 +30,8 @@ installer that isn't signed yet), and updates from **App Settings → Updates** 
   bottom right if you leave that screen while they run.
 - **Paint colors**: seven brands' colors load by themselves — Sherwin-Williams, Behr, Benjamin
   Moore, Valspar, PPG / Glidden, HGTV Home and Dutch Boy (each can be turned off) — or import a
-  brand's palette file.
+  brand's palette file. When a brand's new list drops colors your designs use, the app names those
+  designs.
 - **Color schemes**: harmony schemes around a paint, the brand's coordinating colors, and schemes
   from the AI that suit what stays on your house.
 - **Designs**: save the colors on a house, open them again.
