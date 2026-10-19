@@ -103,9 +103,9 @@ OPEN:   - the user's house: the gable medallions in the body are left for the Er
           family app's resident AI model); the card free, 20.2–20.4 s, also right after the part finder; troubleshooting
           says so; a hint naming what holds the card is parked in IDEAS.md. The AI schemes' 16–99 s are the model
           loading again after server restarts (§11) and the same sharing;
-        - a browser on a server that requires access tokens can't use the app at all: no family app gives
-          the kit's transport a token (the kit's TASKS) — the pictures now go through that transport
-          (the kit's `UiServerImage`, 2026-10-18), so they follow when it does;
+        - a browser on a server that requires access tokens — DONE in v0.1.1 (the kit's token sign-in, 3c8c3d2):
+          the connection page asks for the token, or the address Server copies carries it; every request (the
+          pictures too, through the kit's transport) sends it;
         - the phone build: the server bundle can't carry sharp, onnxruntime-node or sd-cli; Capacitor stays
           for later (PRD: out of scope for v1).
 
