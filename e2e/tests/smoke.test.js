@@ -88,7 +88,7 @@ test("Settings shows General and Advanced, then the family's seven sections in c
   assert.deepEqual(tabs, ["General", "Advanced", "Appearance", "Backups", "Storage", "Server", "Logs", "Updates", "About"]);
   await page.locator(".card h2", { hasText: "Photos" }).waitFor(); // the app's own settings, from the server
   await d.navigate("#/settings/about");
-  await page.locator(".ui-formgrid td.mono", { hasText: VERSION }).waitFor(); // the version, from the server
+  await page.locator(".ui-formgrid td", { hasText: VERSION }).waitFor(); // the version, from the server (the kit's AboutPanel)
 });
 
 test("Paint colors lists the launch brands, none loaded in a fresh folder", async () => {

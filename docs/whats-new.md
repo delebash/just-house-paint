@@ -1,5 +1,14 @@
 # What's new
 
+## v0.1.1
+
+- **A browser on another computer can sign in.** With access tokens on (**App Settings → Server**),
+  a browser that has no token is now asked for one — it used to say the server couldn't be reached
+  — and **Copy the address with this token** gives an address that signs a browser in by itself.
+- **When the AI model doesn't load at start**, **What can I do?** under its bar opens the
+  troubleshooting help.
+- Installed copies of v0.1.0 update themselves to this one (**App Settings → Updates**).
+
 ## v0.1.0
 
 The first release: installers for Windows, macOS and Linux (see Getting started for opening an

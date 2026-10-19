@@ -6,6 +6,11 @@ the tray's **Restart server** starts it again and **Open log file** shows why it
 Headless, start it with `just-house-paint-server serve` (`npm run server` from a source checkout).
 The app won't open without its server: there is no offline mode to lose work in.
 
+**"Just House Paint needs an access token".** The server has access tokens on (**App Settings →
+Server** on the computer it runs on) and this browser has none, or a wrong one. Paste one of those
+tokens and press **Connect** — or open the address **Copy the address with this token** gives. The
+browser keeps it; the desktop app on the server's own computer never asks.
+
 **Another copy is already running.** One server per data folder: a second one says that another
 Just House Paint server is using this data folder. Quit the other copy (the tray's **Quit**), or
 give the second one its own `--data-dir`.
