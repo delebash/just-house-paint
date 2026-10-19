@@ -177,7 +177,11 @@ export default defineConfig(() => {
         mac: { category: 'public.app-category.productivity', files: [ '!**/node_modules/onnxruntime-node/bin/napi-v6/{linux,win32}/**' ] },
         // the AppImage; a .deb also needs `linux.maintainer` ("name <email>", published in the package)
         // — add it, and 'deb' to the targets, with the address the app's owner wants public
-        linux: { target: [ 'AppImage' ], category: 'Office', files: [ '!**/node_modules/onnxruntime-node/bin/napi-v6/{darwin,win32,linux/arm64}/**' ] }
+        linux: { target: [ 'AppImage' ], category: 'Office', files: [ '!**/node_modules/onnxruntime-node/bin/napi-v6/{darwin,win32,linux/arm64}/**' ] },
+        // the AppImage on the AppImage project's static runtime (type2-runtime 20251108): it needs no FUSE 2
+        // library, which Ubuntu 24.04 doesn't install — the legacy toolset's AppImage stopped there with
+        // "AppImages require FUSE to run" (just-house-paint RESEARCH §13; the release's linux-user check)
+        toolsets: { appimage: '1.0.3' }
       }
     }
   }

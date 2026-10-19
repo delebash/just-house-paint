@@ -928,3 +928,9 @@ at the app's display size, through the app's own code; scripts and overlays in s
 - **The AI photo's note on other programs** (2026-10-19): the kit's `otherGpuHolders` on this machine named Windows'
   `dwm.exe` (317 MB) and would have named the app's own window — both left out by the kit since 2c7c98d. The note
   shows when the others hold more than `aiphoto.sharedGpuNoteMb` (1024 MB): an idle 6.9 GB model cost 8 s (§12).
+- **The AppImage opened as a user does** (2026-10-19, dry run 39341716579, the new linux-user job on GitHub's
+  ubuntu-24.04: the `.AppImage` itself, no flags): user namespaces restricted (1), no `libfuse.so.2` — it stopped
+  at once, "AppImages require FUSE to run": the published AppImage wouldn't have opened on a fresh Ubuntu 24.04
+  even with sharp fixed. Now built on the static runtime (`toolsets.appimage: "1.0.3"`) and the kit's shell runs
+  without Chromium's sandbox when an AppImage can't have it (the kit's RESEARCH §2). The build runners' own start
+  check: Windows 1.6 s, macOS 6.6 s, Linux 3.1 s, the part finder's runtime loading on all three.

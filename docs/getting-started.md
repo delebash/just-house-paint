@@ -16,7 +16,9 @@ The installers aren't signed with a publisher's certificate yet, so the first ti
 - **macOS** says the app can't be opened: Control-click it in Applications and choose **Open**, or
   press **Open Anyway** in System Settings → Privacy & Security. If it says the app "is damaged",
   run `xattr -cr "/Applications/Just House Paint.app"` in Terminal once, then open it.
-- **Linux**: make the `.AppImage` executable (`chmod +x`) and run it.
+- **Linux**: make the `.AppImage` executable (`chmod +x`) and run it — nothing else to install. Where the
+  system keeps an AppImage out of Chromium's sandbox (Ubuntu 24.04 and later), the app's window runs without
+  it; the window shows only the app's own pages.
 
 **Updates:** the app looks for a new version each time it starts. **App Settings → Updates** shows
 it: **Download** fetches it, and it installs when you quit the app (or press **Restart now**). On a
