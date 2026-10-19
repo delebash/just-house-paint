@@ -832,3 +832,14 @@ Playwright against that server. Screenshots: session e638ccef's scratchpad `real
   setup job only) and that actions/checkout@v4 and setup-node@v4 run forced onto Node 24.
 - **`execSync` with stdout inherited returns null** (Node's child_process docs): release.js trimmed it
   and reported the started run as failed.
+- **The installed app updating itself** (v0.1.0 → v0.1.1, 2026-10-19, the app's GitHub release; driven
+  through Windows UI Automation — App Settings → Updates, Download, Restart now): the start-up check
+  said "Version 0.1.1 is out."; Download took 6 s (electron-updater's differential download from the
+  block maps); **Restart now** then quit the app and ran the installer as `--updated --force-run` —
+  without `/S` the assisted NSIS installer opened its wizard ("Who should this application be installed
+  for?", with "There is already a per-user installation … Will reinstall/upgrade.") and waited. The same
+  downloaded installer with `--updated /S --force-run` upgraded in place and the app answered again
+  15.8 s later as 0.1.1 (the uninstall entry 0.1.1, the exe 0.1.1.0); the data folder beside the exe
+  (`data/`, its database and brands) came through untouched. Fixed in the kit (8a9b3fb,
+  `quitAndInstall(true, true)`), shipped in v0.1.2; copies of 0.1.0 and 0.1.1 run the old shell, so
+  their one update to 0.1.2 still shows the wizard.
