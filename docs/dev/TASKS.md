@@ -271,7 +271,11 @@ STATE:  RELEASED v0.1.0 2026-10-19 — https://github.com/delebash/just-house-pa
         sharp), the window's close stopping every process. Found and fixed on the way: the smoke's version literal;
         a release now builds the kit's tested commit (`core_ref`, the guard's check 19); release.js said a started
         run had failed (execSync's null).
-NEXT:   v0.1.1 — the kit and template items (ORDER above), then the installed v0.1.0 updating itself to it.
+v0.1.1 (2026-10-19): the kit and template items done (the kit's TASKS, the template audit) — what reaches this app:
+        Settings → About, Server and Storage are the kit's panels (this app's copies gone), a browser on another
+        computer signs in with the server's token, and a failed warm start offers the troubleshooting page.
+        Checked before the tag: lint, 345 server and 92 renderer tests, i18n, the guard, the smoke 13/13 on the kit's
+        eb5d966. LEFT: the release run, then the installed v0.1.0 updating itself to v0.1.1.
 
 ## The review before the release [2026-10-18]
 FOUND (a read-only review of the renderer, each traced through the code; to fix before the release):

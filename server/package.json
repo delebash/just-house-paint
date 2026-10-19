@@ -1,6 +1,6 @@
 {
   "name": "just-house-paint-server",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "type": "module",
   "description": "Just House Paint's Node server — Hono on the kit's platform, run by the desktop app in a utilityProcess, headless as `just-house-paint-server serve`, or `npm run server` in a checkout. It owns the houses, the paint lists, the part finder (SAM 3 on ONNX Runtime) and the AI photo (stable-diffusion.cpp). Its own package because the packaged app installs only what src-electron/package.json names (app-structure §Q.3).",
