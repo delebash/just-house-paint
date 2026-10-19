@@ -261,7 +261,8 @@
     "windows": "Windows",
     "stone": "Stone",
     "brick": "Brick",
-    "lamps": "Lamps"
+    "lamps": "Lamps",
+    "decor": "Decorations"
   },
   "partsTab": {
     "hint": "Select a part to paint it, or to fix its outline with the brush, the eraser or a box.",

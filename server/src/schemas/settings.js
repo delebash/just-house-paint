@@ -21,6 +21,8 @@ export const PartRule = strictObject({
   method: opt(T.Union([T.Literal("text"), T.Literal("subtract")])),
   // parts taken out of this one (window trim = the window's outline minus its glass)
   minus: opt(T.Array(PartKey, { maxItems: 10 })),
+  // how much of each piece must lie on the house itself (a fence's end board, a garden statue don't)
+  onHouse: opt(T.Number({ minimum: 0, maximum: 1 })),
 });
 
 export const SETTINGS = {

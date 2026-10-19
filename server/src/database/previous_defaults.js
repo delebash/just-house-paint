@@ -24,14 +24,17 @@ export const PREVIOUS_DEFAULTS = Object.freeze({
     "629c7d3be81f9187", // v1 (2026-10-18), before the soffit
     "c99b1a52cae7875b", // + the soffit (3922292)
     "57213ba5a0daf740", // + window trim from "window trim" alone, windows = the whole window (8972a89)
+    "b77e3afbbe282820", // windows = the glass, window trim = the outline minus it (v0.1.0–v0.1.2)
   ]),
   "finder.priority": Object.freeze([
     "02777bb7d857eca9", // v1
     "5046ab385e0e91a1", // + the soffit (3922292)
+    "69c2dcc097840fab", // + window trim (v0.1.0–v0.1.2)
   ]),
   "schemes.roleParts": Object.freeze([
     "17bb9a6fbb12c2e6", // v1
     "b8c404bde753f94f", // + the soffit (3922292)
+    "ab90c1fb04750be9", // + window trim (v0.1.0–v0.1.2)
   ]),
   "aiphoto.compose": Object.freeze([
     "c7df3921fb6c1e9f", // before gainLimits (the paint on a part now)

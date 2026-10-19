@@ -1,9 +1,23 @@
 // SPDX-License-Identifier: MIT
 // The ratio tint (src/services/tint.js): a normally lit wall shows the paint chip exactly,
 // shadows keep their depth, the mask's soft edge blends, nothing outside changes, and the
-// texture setting calms an old finish's grain.
+// texture setting calms an old finish's grain; a dark finish painted light loses its blotches and
+// keeps its boards' lines.
 import { expect, test } from "vitest";
-import { chipDeltaE, luminance, maskedBlur, paintLinear, percentile, preparePart, tintPhoto, toLinear8 } from "./tint.js";
+import {
+  calmFinish,
+  calmStrength,
+  chipDeltaE,
+  luminance,
+  maskedBlur,
+  paintLinear,
+  partLight,
+  percentile,
+  preparePart,
+  tintPhoto,
+  toLinear8,
+  toSrgb,
+} from "./tint.js";
 
 /** A w×h RGBA photo filled by fn(x, y) → [r, g, b]. */
 function photoOf(w, h, fn) {
@@ -104,6 +118,86 @@ test("lowering the texture calms a grainy finish", () => {
     return percentile(ys, 90) - percentile(ys, 10);
   };
   expect(spread(0.2)).toBeLessThan(spread(1) * 0.5);
+});
+
+/** Weatherboard: boards `board` px tall whose last two rows are the lap's shadow (a third of the
+ *  light), blotched along each board (±35% in ln Y, a different pattern per board, blotches about
+ *  as long as the calming reaches — a 25th of the short side), at linear level `level`. Returns
+ *  { photo, isLap(y) }. */
+function weatherboard(w, h, level, board = 10) {
+  const isLap = (y) => y % board >= board - 2;
+  const photo = photoOf(w, h, (x, y) => {
+    const k = Math.floor(y / board);
+    const blotch = Math.exp(0.35 * Math.sin(x / 4 + k * 1.7) * Math.cos(x / 9 + k));
+    const v = Math.round(255 * toSrgb(level * blotch * (isLap(y) ? 1 / 3 : 1)));
+    return [v, v, v];
+  });
+  return { photo, isLap };
+}
+const lstarOf = (y) => (y > 216 / 24389 ? 116 * Math.cbrt(y) - 16 : (24389 / 27) * y);
+/** The L* a paint of luminance `paintY` shows at each lighting ratio, split into the boards' faces
+ *  and their lap rows: { faceSpread (p90 − p10 on the faces), lapDepth (faces' median − laps' median) }. */
+function boardsLook(ratioAt, w, h, isLap, paintY) {
+  const faces = [];
+  const laps = [];
+  for (let y = 4; y < h - 4; y++)
+    for (let x = 20; x < w - 20; x++) (isLap(y) ? laps : faces).push(lstarOf(Math.min(1, paintY * ratioAt(y * w + x))));
+  return { faceSpread: percentile(faces, 90) - percentile(faces, 10), lapDepth: percentile(faces, 50) - percentile(laps, 50) };
+}
+
+test("a dark board wall painted light loses its blotches and keeps the lines between its boards", () => {
+  const w = 600;
+  const h = 400;
+  const { photo, isLap } = weatherboard(w, h, 0.035); // dark stain, L* ~22
+  const Y = luminance(photo);
+  const part = preparePart({ Y, mask: maskOf(w, h, () => 255), width: w, height: h });
+  const WHITE = "#f2f0ea";
+  expect(calmStrength(part, WHITE)).toBe(1);
+  const paintY = luminance(photoOf(1, 1, () => [0xf2, 0xf0, 0xea]))[0];
+  const before = boardsLook((i) => Y[i] / part.base, w, h, isLap, paintY);
+  const after = boardsLook(partLight(part, WHITE), w, h, isLap, paintY);
+  // measured: the faces' spread 16.9 → 7.2 L*, the laps' depth 33.7 → 31.6
+  expect(after.faceSpread).toBeLessThan(before.faceSpread * 0.5);
+  expect(after.lapDepth).toBeGreaterThan(before.lapDepth * 0.85);
+  // the chip still shows on the normally lit pixels
+  const out = tintPhoto({ photo, assignments: [{ part, hex: WHITE }] });
+  expect(chipDeltaE({ tinted: out, part, hex: WHITE })).toBeLessThan(1);
+});
+
+test("a light finish, or a paint not much lighter than the finish, is painted as photographed", () => {
+  const w = 120;
+  const h = 80;
+  const light = weatherboard(w, h, 0.45); // a light painted wall, L* ~73
+  const lightPart = preparePart({ Y: luminance(light.photo), mask: maskOf(w, h, () => 255), width: w, height: h });
+  expect(calmStrength(lightPart, "#ffffff")).toBe(0);
+  const dark = weatherboard(w, h, 0.035);
+  const Y = luminance(dark.photo);
+  const darkPart = preparePart({ Y, mask: maskOf(w, h, () => 255), width: w, height: h });
+  expect(calmStrength(darkPart, "#1f2a44")).toBe(0); // navy on dark stain
+  const plain = partLight(darkPart, "#1f2a44");
+  for (const i of [0, 333, 4321, w * h - 1]) expect(plain(i)).toBeCloseTo(Y[i] / darkPart.base, 6);
+});
+
+test("a dark finish with no direction (stucco, brick) keeps its detail", () => {
+  const w = 120;
+  const h = 80;
+  let seed = 11;
+  const rnd = () => {
+    seed = (seed * 16807) % 2147483647;
+    return seed / 2147483647;
+  };
+  const photo = photoOf(w, h, () => {
+    const v = 35 + Math.round(rnd() * 40);
+    return [v, v, v];
+  });
+  const Y = luminance(photo);
+  const mask = maskOf(w, h, () => 255);
+  const calm = calmFinish({ Y, mask, width: w, height: h });
+  const spread = (a) => {
+    const ln = Array.from(a, (v) => Math.log(v));
+    return percentile(ln, 90) - percentile(ln, 10);
+  };
+  expect(spread(calm)).toBeGreaterThan(spread(Y) * 0.8);
 });
 
 test("the masked blur never reads outside the mask", () => {

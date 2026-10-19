@@ -32,13 +32,18 @@ describe("the parts config", () => {
     expect(Object.isFrozen(DEFAULT_PARTS)).toBe(true);
     expect(Object.isFrozen(DEFAULT_PARTS[0])).toBe(true);
     const keys = DEFAULT_PARTS.map((p) => p.key);
-    for (const k of ["body", "trim", "frontDoor", "garageDoor", "shutters", "columns", "railings", "gutters", "soffit", "windowTrim", "chimney"]) {
+    for (const k of ["body", "trim", "frontDoor", "garageDoor", "shutters", "columns", "railings", "gutters", "soffit", "windowTrim", "chimney", "decor"]) {
       expect(DEFAULT_PARTS.find((p) => p.key === k).paintable).toBe(true);
     }
     for (const k of ["roof", "windows", "stone", "brick", "lamps"]) expect(DEFAULT_PARTS.find((p) => p.key === k).paintable).toBe(false);
-    expect(keys.length).toBe(16);
-    // the window casings are their own part, not the trim's
-    expect(DEFAULT_PARTS.find((p) => p.key === "trim").prompts).not.toContain("window trim");
+    expect(keys.length).toBe(17);
+    // the window casings are their own part, not the trim's; the doors' casings are the trim's
+    const trim = DEFAULT_PARTS.find((p) => p.key === "trim");
+    expect(trim.prompts).not.toContain("window trim");
+    expect(trim.prompts).toEqual(expect.arrayContaining(["garage door frame", "door frame"]));
+    // the words that also find things beside the house are held to it (RESEARCH §13)
+    expect(trim.onHouse).toBe(0.15);
+    expect(DEFAULT_PARTS.find((p) => p.key === "decor").onHouse).toBe(0.5);
     expect(DEFAULT_PARTS.filter((p) => p.method === "subtract").map((p) => p.key)).toEqual(["body"]);
   });
 
@@ -196,6 +201,14 @@ describe("a part with others taken out (minus)", () => {
     expect(() => validatePartsConfig([{ ...good, method: "subtract", minus: ["b"] }, { ...good, key: "b" }])).toThrow(/only a "text" part/);
     expect(validatePartsConfig([{ ...good }])[0].minus).toEqual([]);
   });
+
+  it("onHouse is a share from 0 to 1, on a text part; 0 when absent", () => {
+    const good = { key: "a", labelKey: "x.a", prompts: ["door"], paintable: true, group: "doors" };
+    expect(validatePartsConfig([{ ...good }])[0].onHouse).toBe(0);
+    expect(validatePartsConfig([{ ...good, onHouse: 0.5 }])[0].onHouse).toBe(0.5);
+    for (const bad of [-0.1, 1.5, "0.5"]) expect(() => validatePartsConfig([{ ...good, onHouse: bad }])).toThrow(/onHouse/);
+    expect(() => validatePartsConfig([{ ...good, method: "subtract", onHouse: 0.5 }])).toThrow(/only a "text" part is held to onHouse/);
+  });
 });
 
 describe("parts stay on the house", () => {
@@ -232,5 +245,28 @@ describe("parts stay on the house", () => {
     const door = r.parts.find((p) => p.key === "frontDoor");
     expect(door.area).toBe(5 * 20); // only the house's own door
     expect(door.instances).toHaveLength(1);
+  });
+
+  it("a part held to onHouse keeps only pieces that much on the house itself, whatever the margin keeps", async () => {
+    // the house: x 0–20. A medallion on the wall; a statue just in front of it (x 21–23, inside the
+    // margin); a corner board half off the house's outline (x 18–22: 2 of its 4 columns on the house)
+    const seg = fakeSegmenter({
+      house: [inst(0.9, [0, 0, 20, 30])],
+      decoration: [inst(0.6, [8, 2, 12, 6]), inst(0.6, [21, 20, 23, 30])],
+      trim: [inst(0.8, [18, 0, 22, 30])],
+    });
+    const config = [
+      { key: "body", labelKey: "b", prompts: ["house"], paintable: true, group: "walls", method: "subtract" },
+      { key: "decor", labelKey: "d", prompts: ["decoration"], paintable: true, group: "trim", onHouse: 0.5 },
+      { key: "trim", labelKey: "t", prompts: ["trim"], paintable: true, group: "trim", onHouse: 0.15 },
+    ];
+    const r = await findParts(seg, handle, config, { houseMargin: 0.1, houseMinShare: 0.5 }); // 4 px of 40
+    const decor = r.parts.find((p) => p.key === "decor");
+    expect(decor.instances).toHaveLength(1); // the medallion; the statue is off the house itself
+    expect(decor.area).toBe(16);
+    expect(r.parts.find((p) => p.key === "trim").area).toBe(4 * 30); // half on the house: kept whole
+    // the same statue with no onHouse: the margin alone keeps it
+    const loose = await findParts(seg, handle, config.map((p) => ({ ...p, onHouse: 0 })), { houseMargin: 0.1, houseMinShare: 0.5 });
+    expect(loose.parts.find((p) => p.key === "decor").instances).toHaveLength(2);
   });
 });

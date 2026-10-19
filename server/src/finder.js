@@ -37,6 +37,8 @@ export const DEFAULT_PART_PRIORITY = Object.freeze([
   "brick",
   "roof",
   "trim",
+  // last but the body: an ornament takes only the wall it sits on, never a part found around it
+  "decor",
   "body",
 ]);
 

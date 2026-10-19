@@ -2,8 +2,12 @@
 
 The app finds your house's parts with a vision model (Meta's SAM 3) that runs on your own
 computer. It looks for the body (the siding or walls), the trim, the front door, the garage door,
-shutters, columns, railings, gutters, the soffits, the window trim and the chimney — and for what
-usually isn't painted: the roof, the windows, stone, brick and lamps.
+shutters, columns, railings, gutters, the soffits, the window trim, the chimney and decorations —
+and for what usually isn't painted: the roof, the windows, stone, brick and lamps.
+
+**Trim** includes the casings around the front door and the garage door. A board the finder takes
+for trim has to lie at least partly on the house itself, so a fence's end board beside the house
+isn't painted.
 
 **Soffits and fascia** are the boards under the roof's edge. The finder looks for the roof's
 overhang, so it finds them as the street sees them — the underside and the face board together.
@@ -14,6 +18,10 @@ them the trim's color.
 and takes its glass out. The glass is **Windows**, which stays as it is. A
 scheme paints it the trim's color; give it its own on the **Colors** tab — black window trim on a
 white house, say.
+
+**Decorations** are the medallions, vents and other ornaments on the walls — a round medallion in a
+gable, say. Only what lies on the house counts: a garden statue or a wreath in front of it doesn't.
+A scheme paints them the trim's color; give them their own on the **Colors** tab.
 
 ## The first time: installing the part finder
 
@@ -27,8 +35,10 @@ house's name while it works — the part it is looking for and how far along it 
 ## When a part is wrong
 
 The finder is good at doors, garage doors, windows and shutters, and less sure of thin parts —
-fascia boards, soffits and some trim. A white fascia it missed stays in the body and takes the
-body's color. Fix it with the tools above the photo, on the part selected on the **Parts** tab:
+fascia boards, soffits and some trim. On a house painted one color all over it can't tell the corner
+boards, the band under the eaves or a scalloped skirt board from the siding: they stay in the body
+and take the body's color until you give them to **Trim** with a **Box** around each one. Fix a part
+with the tools above the photo, on the part selected on the **Parts** tab:
 
 - **Outlines** draws the selected part's edge on the photo — or every part's, or none.
 - **Brush** adds to the selected part: drag over what belongs to it. **Eraser** takes it away.

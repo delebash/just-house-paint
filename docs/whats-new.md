@@ -1,5 +1,17 @@
 # What's new
 
+## v0.1.3
+
+- **A dark wall painted light looks freshly painted.** Stained wood or a dark paint painted much
+  lighter no longer shows the old finish's blotches and grain; the lines between the boards and the
+  shadows stay.
+- **Decorations**: the finder finds the medallions, vents and other ornaments on the walls as their
+  own part — a garden statue in front isn't one. A scheme paints them the trim's color.
+- **Trim** now takes the casings around the front door and the garage door, and no longer a fence's
+  end board beside the house.
+- A house whose parts were found before keeps them: **Find the parts again** (with **Keep the parts
+  you changed by hand** ticked) gives it the new ones.
+
 ## v0.1.2
 
 - **Updating is one click.** **Restart now** in **App Settings → Updates** installs the new version

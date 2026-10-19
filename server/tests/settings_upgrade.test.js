@@ -16,9 +16,9 @@ afterEach(() => {
 // Today's defaults. A change here means a default changed: add the OLD fingerprint to
 // PREVIOUS_DEFAULTS (so installs still holding it get the new one), then update this line.
 const TODAY = {
-  "finder.parts": "b77e3afbbe282820",
-  "finder.priority": "69c2dcc097840fab",
-  "schemes.roleParts": "ab90c1fb04750be9",
+  "finder.parts": "f8ba077756a487ab",
+  "finder.priority": "97688972545dc716",
+  "schemes.roleParts": "9815d5ff99ae7e7a",
   "aiphoto.compose": "2349559042b9098d",
   "schemes.harmony": "82fac382590bdac2",
 };
@@ -34,14 +34,15 @@ test("a setting still at an earlier default takes today's; an edited one, and to
   const db = openAppDatabase(tmpDir());
   open.push(db);
   seedSettings(db);
-  // an earlier default, as an install made before it holds it: the parts list of commit 8972a89
-  const earlier = structuredClone(SETTING_DEFAULTS["finder.parts"]).map((p) =>
-    p.key === "windows"
-      ? { ...p, prompts: ["window"], threshold: 0.5 }
-      : p.key === "windowTrim"
-        ? { key: "windowTrim", labelKey: "parts.windowTrim", prompts: ["window trim"], threshold: 0.5, paintable: true, group: "trim" }
-        : p,
-  );
+  // an earlier default, as an install made before it holds it: the parts list of v0.1.0–v0.1.2, before
+  // the doors' casings, the on-the-house share and the decorations
+  const earlier = structuredClone(SETTING_DEFAULTS["finder.parts"])
+    .filter((p) => p.key !== "decor")
+    .map((p) => {
+      if (p.key !== "trim") return p;
+      const { onHouse: _, ...rest } = p;
+      return { ...rest, prompts: ["trim", "fascia"] };
+    });
   expect(PREVIOUS_DEFAULTS["finder.parts"]).toContain(fingerprint(earlier));
   setSetting(db, "finder.parts", earlier);
   // the owner's own priority: one change from today's

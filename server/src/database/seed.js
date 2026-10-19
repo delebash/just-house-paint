@@ -47,7 +47,7 @@ export const SETTING_DEFAULTS = {
   "schemes.roleParts": {
     // the chimney is often brick or stone: a scheme never paints it — the Colors tab still can
     body: ["body", "garageDoor"],
-    trim: ["trim", "columns", "railings", "gutters", "soffit", "windowTrim"],
+    trim: ["trim", "columns", "railings", "gutters", "soffit", "windowTrim", "decor"],
     accent: ["frontDoor", "shutters"],
   },
   "schemes.harmony": plain(HARMONY_DEFAULTS),

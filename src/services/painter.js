@@ -82,9 +82,9 @@ export function createPainter({ rgba, width, height }) {
         const part = hex ? prepared(key) : null;
         if (part?.pixels) assignments.push({ key, part, hex, gain: gainOf(key, current[key]) });
       }
-      const out = tintPhoto({ photo: rgba, Y, assignments });
+      const out = tintPhoto({ photo: rgba, assignments });
       const deltaE = {};
-      for (const a of assignments) deltaE[a.key] = chipDeltaE({ tinted: out, Y, part: a.part, hex: litHex(a.hex, a.gain) });
+      for (const a of assignments) deltaE[a.key] = chipDeltaE({ tinted: out, part: a.part, hex: litHex(a.hex, a.gain) });
       applyLight(out, light);
       return { rgba: out, deltaE };
     },
@@ -93,7 +93,7 @@ export function createPainter({ rgba, width, height }) {
     tones(key, hex, light = 1, currentHex = null) {
       const part = prepared(key);
       if (!part?.pixels || !hex) return null;
-      return partTones({ Y, part, hex, k: light, gain: gainOf(key, currentHex) });
+      return partTones({ part, hex, k: light, gain: gainOf(key, currentHex) });
     },
     /** The light on part `key` worked out from the paint it has now (lightGain), per channel. */
     gain: (key, currentHex) => gainOf(key, currentHex),

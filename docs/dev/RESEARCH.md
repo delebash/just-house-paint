@@ -23,7 +23,10 @@ Subjects: [1 · The machine](#1--the-machine) ·
 [7 · Generative edits in the cloud](#7--generative-edits-in-the-cloud) ·
 [8 · Open source to build on](#8--open-source-to-build-on) ·
 [9 · Measured on this machine — probe round 1](#9--measured-on-this-machine--probe-round-1) ·
-[10 · Paint color data](#10--paint-color-data)
+[10 · Paint color data](#10--paint-color-data) ·
+[11 · The app, run for real](#11--the-app-run-for-real-2026-10-18) ·
+[12 · The installed app and the first release](#12--the-installed-app-and-the-first-release-2026-10-19) ·
+[13 · The weak spots: trim, ornaments, a dark finish](#13--the-weak-spots-trim-ornaments-a-dark-finish-2026-10-19)
 
 ---
 
@@ -850,3 +853,54 @@ Playwright against that server. Screenshots: session e638ccef's scratchpad `real
   the 22–61 s of 10/18 is other programs on the same card — the app's GPU gate keeps only its own jobs apart
   — and a program *working* on the card at the same time costs more than an idle one. Explained in
   troubleshooting; a hint naming what holds the card is in IDEAS.md.
+
+## 13 · The weak spots: trim, ornaments, a dark finish (2026-10-19)
+
+*Measured by this session on this machine, the four photos of §11 (house1, house2, house3, the user's house)
+at the app's display size, through the app's own code; scripts and overlays in session e638ccef's scratchpad
+`weak/`.*
+
+- **More words for the trim SAM 3 misses — 40 tried** (each added to Trim's prompts at 0.4, through `findParts`
+  with the house rule and `resolveOverlaps`; what it adds to Trim and from which part):
+  - **found nothing on any photo:** "corner trim", "corner boards", "pilaster", "white board", "trim board",
+    "frieze", "frieze board", "cornice", "crown molding", "rake board", "barge board", "skirt board",
+    "water table", "scalloped trim", "belt course", "horizontal band", "baseboard", "door casing", "gable vent",
+    "vent", "medallion", "ornament", "round vent", "louver", "emblem", "decorative vent" — SAM 3 doesn't know them,
+    or what they find is already another part ("eave", "eave trim", "white trim", "wood trim", "doorway",
+    "garage door trim", "entryway" add under 0.1%);
+  - **"garage door frame"** — house1 **+0.21%** (the garage door's whole casing, from the body), house2 +0.09%,
+    the user's +0.04%, no false hit; **"door frame"** — house2 +0.14% (the front door's casing), the user's
+    +0.03%, house3 +0.01%; both **kept** in Trim;
+  - **"vertical trim"** — house2's corner board (+0.29%), but on house3 the fence posts beside it; **not kept**;
+  - **"decorative trim"** — house3 +1.38%: the brick plinth; **not kept**;
+  - **"decoration"** — the user's two coral gable medallions (0.62, 0.58), and every garden statue in front;
+    house1 a porch piece and a 0.06-on-the-house one.
+- **How much of each piece lies on the house itself** (the "house" instances, no margin — the app's house rule
+  grows them by 2% of the photo's side, which lets things beside the house through): the medallions 1.00 and
+  0.78 (the left one half behind a tree), the statues **0.00**; the "vertical trim" corner boards 0.99–1.00, the
+  fence posts 0.00–0.38; today's Trim pieces 0.82–1.00 except **house3's fence end board at 0.01** (painted as
+  trim until now) and two at 0.20 and 0.35 (house3's right corner, half off the house's outline). Hence a part's
+  **`onHouse`**: Trim 0.15 (drops the fence board, keeps the corner), the new **Decorations** part
+  (`["decoration"]` at 0.4, group trim, last but the body in the priority) 0.5 (the medallions, no statue).
+  Through the pipeline: house1 Trim 0.43 → 0.64%, house2 1.21 → 1.29%, house3 2.35 → 1.69% (the fence board
+  gone), the user's 3.92 → 3.96% and Decorations 0.42% (both medallions).
+- **SAM 3's "find all like this" (an exemplar box, mode "all") on white-on-white trim** (house1, "visual",
+  threshold 0.3 / 0.5): a box on a corner board found 30 / 6 pieces — whole walls (21.9% / 9.9% of the
+  photo); on the scalloped skirt 13 / 1 — part of the skirt and patches of wall; on the frieze 37 / 3; on a
+  shutter 21 / **18 — every shutter**. It finds distinct objects, not a board the same white as the wall: not
+  a fix for the corner boards, frieze and skirt of a one-color house, which stay a Box-tool fix (the docs say so).
+- **The old finish's grain, dark → light** (house3 body painted Alabaster #EDEAE0): the fine detail
+  d = ln(Y ÷ the part's masked blur at the painter's radius) has a MAD of 0.27 on house3's stain against
+  0.05 (house1), 0.17 (house2) and 0.03 (the user's stucco) on painted walls. The blotches live at the
+  *middle* scale — a few to tens of board-heights long — so the Texture slider's blur (radius 10), a soft
+  threshold on d, and a 1-D blur at that radius all left them. What worked: the light from a blur a 25th of
+  the photo's short side wide, times d averaged **along the boards** (±that reach, the direction from the
+  structure tensor of ln Y — any slant), 15% of the rest kept, and detail darker than e^−0.5 of its line kept
+  past that (shadows, knots) — painted-weatherboard look, lap lines kept. The same smoothing on the light
+  houses smeared house2's branch shadows and house1's scallops and board-and-batten, so it runs only on a
+  **dark** finish (L* of its normally lit level under 45, fully under 30 — house3 22.6; house1 73.7, house2
+  79.4, the user's 52.4) painted **lighter** by 15–40 L* and more; where the part has no direction
+  (coherence under 0.2–0.5: stucco, brick) its detail is kept. On a synthetic dark board wall the faces'
+  L* spread fell 16.9 → 7.2 and the lap lines kept 31.6 of 33.7 L*. The app's painter on house3: the first
+  light paint 0.58 s at 2048×1536 (the structure and the light worked out on a grid 4× coarser; 1.6 s at full
+  resolution), then 0.08 s; 2.5 s once for Save image at 4032×3024; ΔE to the chip 0.21.

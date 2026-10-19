@@ -6,17 +6,29 @@
 // main instance is used.
 //
 // The parts list is DATA (the app seeds it into its database): `[{ key, labelKey, prompts, threshold,
-// paintable, group, method, minus }]`, method "text" (default — the union of what the prompts find) or
-// "subtract" (at most one part: the main instance its prompts find, minus every other part). A "text"
-// part's `minus` lists parts taken out of it: window trim is the window's outline minus its glass.
+// paintable, group, method, minus, onHouse }]`, method "text" (default — the union of what the prompts
+// find) or "subtract" (at most one part: the main instance its prompts find, minus every other part). A
+// "text" part's `minus` lists parts taken out of it: window trim is the window's outline minus its glass.
+// `onHouse` (0–1): each piece must also lie at least that share on the house itself (no margin) — for
+// words that also find things beside it: a fence's end board, a garden statue (RESEARCH §13).
 import { dedupeInstances, dilateMask, intersectMask, maskArea, subtractMask, unionMasks } from "./masks.js";
 
 export const DEFAULT_PARTS = Object.freeze(
   [
     { key: "body", labelKey: "parts.body", prompts: ["house"], threshold: 0.5, paintable: true, group: "walls", method: "subtract" },
     // "fascia" catches the rake boards plain "trim" misses (RESEARCH §11); 0.35 alone took a road's painted
-    // line. The window casings are their own part (windowTrim) since 2026-10-18
-    { key: "trim", labelKey: "parts.trim", prompts: ["trim", "fascia"], threshold: 0.4, paintable: true, group: "trim" },
+    // line. The window casings are their own part (windowTrim) since 2026-10-18. "garage door frame" and
+    // "door frame" find the doors' casings; onHouse 0.15 drops a fence's end board (1% on the house) and
+    // keeps a corner board half off the house's outline (20–35%) — RESEARCH §13
+    {
+      key: "trim",
+      labelKey: "parts.trim",
+      prompts: ["trim", "fascia", "garage door frame", "door frame"],
+      threshold: 0.4,
+      paintable: true,
+      group: "trim",
+      onHouse: 0.15,
+    },
     { key: "frontDoor", labelKey: "parts.frontDoor", prompts: ["door"], threshold: 0.5, paintable: true, group: "doors" },
     { key: "garageDoor", labelKey: "parts.garageDoor", prompts: ["garage door"], threshold: 0.5, paintable: true, group: "doors" },
     { key: "shutters", labelKey: "parts.shutters", prompts: ["shutter"], threshold: 0.5, paintable: true, group: "accents" },
@@ -44,6 +56,9 @@ export const DEFAULT_PARTS = Object.freeze(
     { key: "stone", labelKey: "parts.stone", prompts: ["stone wall"], threshold: 0.5, paintable: false, group: "masonry" },
     { key: "brick", labelKey: "parts.brick", prompts: ["brick wall"], threshold: 0.5, paintable: false, group: "masonry" },
     { key: "lamps", labelKey: "parts.lamps", prompts: ["lamp"], threshold: 0.5, paintable: false, group: "fixtures" },
+    // gable medallions, vents and other ornaments on the walls; "decoration" also finds garden statues and
+    // wreaths in front of the house — none of those lies on the house itself (RESEARCH §13)
+    { key: "decor", labelKey: "parts.decor", prompts: ["decoration"], threshold: 0.4, paintable: true, group: "trim", onHouse: 0.5 },
   ].map((p) => Object.freeze({ ...p, prompts: Object.freeze([...p.prompts]) })),
 );
 export default DEFAULT_PARTS;
@@ -77,7 +92,10 @@ export function validatePartsConfig(config) {
     if (!Array.isArray(minus) || minus.some((k) => typeof k !== "string" || !k)) throw bad("minus must be a list of part keys");
     if (minus.length && method !== "text") throw bad('only a "text" part takes others out with minus');
     if (minus.includes(p.key)) throw bad("a part can't take itself out");
-    return { ...p, prompts: [...p.prompts], threshold, method, minus: [...minus] };
+    const onHouse = p.onHouse ?? 0;
+    if (typeof onHouse !== "number" || !(onHouse >= 0 && onHouse <= 1)) throw bad("onHouse must be a number from 0 to 1");
+    if (onHouse && method !== "text") throw bad('only a "text" part is held to onHouse');
+    return { ...p, prompts: [...p.prompts], threshold, method, minus: [...minus], onHouse };
   }).map((p, _i, all) => {
     const unknown = p.minus.find((k) => !all.some((q) => q.key === k));
     if (unknown) throw new TypeError(`parts (${p.key}): minus names "${unknown}", which isn't in the list`);
@@ -134,7 +152,8 @@ export function pickMainInstance(instances, width, height) {
  * (a fraction of the photo's longer side; 0 = off) so the trim and gutters on its outline count.
  * Each instance a part's prompts find is kept only when at least `houseMinShare` of it lies on the
  * house — a car in front of the garage sits inside the house's outline, so clipping pixels alone
- * kept part of its door — and what is kept is clipped to the house.
+ * kept part of its door — and what is kept is clipped to the house. A part's own `onHouse` also asks
+ * that share of each piece on the house itself, not grown.
  */
 export async function findParts(
   segmenter,
@@ -175,18 +194,21 @@ export async function findParts(
     houseMargin > 0 && houseInstances.length
       ? dilateMask(unionMasks(houseInstances.map((i) => i.mask), n), width, height, Math.round(houseMargin * Math.max(width, height)))
       : null;
+  const houseItself = houseInstances.length ? unionMasks(houseInstances.map((i) => i.mask), n) : null;
   const onHouse = (mask) => (houseArea ? intersectMask(mask, houseArea) : mask);
-  const mostlyOnHouse = (inst) => {
-    if (!houseArea) return true;
+  const shareOn = (inst, area) => {
     let all = 0;
     let on = 0;
     for (let i = 0; i < inst.mask.length; i++) {
       if (!inst.mask[i]) continue;
       all++;
-      if (houseArea[i]) on++;
+      if (area[i]) on++;
     }
-    return all > 0 && on / all >= houseMinShare;
+    return all ? on / all : 0;
   };
+  const mostlyOnHouse = (inst, part) =>
+    (!houseArea || shareOn(inst, houseArea) >= houseMinShare) &&
+    (!part.onHouse || !houseItself || shareOn(inst, houseItself) >= part.onHouse);
 
   const parts = config.map((part) => {
     const instances = found.get(part.key);
@@ -196,7 +218,7 @@ export async function findParts(
       const mask = subtractMask(main.mask, textUnion);
       return { key: part.key, mask, area: maskArea(mask), score: main.score, instances: [main] };
     }
-    const kept = instances.filter(mostlyOnHouse);
+    const kept = instances.filter((inst) => mostlyOnHouse(inst, part));
     if (!kept.length) return { key: part.key, mask: null, area: 0, score: 0, instances: [] };
     const mask = onHouse(unionMasks(kept.map((i) => i.mask), n));
     return { key: part.key, mask, area: maskArea(mask), score: Math.max(...kept.map((i) => i.score)), instances: kept };
