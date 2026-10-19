@@ -245,7 +245,8 @@ GO:     the user, verbatim: "your rec on all go, if you dont find anymore proble
 PLAN:   the e2e smoke and On it now on the user's house; Order by color + Color family; wide color 1, 2 (5a), 4; every
         open item above; a review pass, its findings fixed; then the release (the family's way: JustWrite's manual
         release workflow, the template first).
-STATE:  BUILDING.
+STATE:  BUILT, reviewed and fixed (below); wide color rethought (above). Left: the e2e smoke and the installed app
+        (they wait on port 17499), then the tag v0.1.0 and the release workflow.
 
 ## The review before the release [2026-10-18]
 FOUND (a read-only review of the renderer, each traced through the code; to fix before the release):
@@ -296,7 +297,7 @@ FOUND (docs and this tracker against the code): the releases page empty until th
         AI photo reopen/delete and its ΔE line, No color, Show more, the Parts tab's share / edited / staying
         group, Ctrl+Shift+Z, the theme button, the Server / Backups / Appearance / Storage sections); README
         (iOS, migration v3, services list, the kit's husky note); stale TASKS status lines.
-STATE:  FIXING.
+STATE:  FIXED — renderer 88bb457, server 3482b28, docs 77f950a.
 
 FOUND (a second pass — today's own changes reviewed for regressions):
         1. the release workflow's `npm ci` fails in the kit's ui (no lockfile — it is gitignored) on every runner;
