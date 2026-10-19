@@ -673,6 +673,11 @@ const canRevert = computed(() => !!house.design && house.dirty);
   align-items: center;
   gap: var(--sp-2);
 }
+/* a control's label stays on one line ("Compare with" wrapped under the row's squeeze) */
+.house__tool > span:first-child {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
 .house__panel {
   flex: 0 0 380px;
   display: flex;

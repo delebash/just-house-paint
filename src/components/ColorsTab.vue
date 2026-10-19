@@ -269,6 +269,7 @@ async function match() {
   display: inline-flex;
   align-items: center;
   gap: var(--sp-2);
+  white-space: nowrap;
 }
 .colors__tone {
   display: inline-flex;

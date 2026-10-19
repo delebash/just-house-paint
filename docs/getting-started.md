@@ -8,8 +8,8 @@ light and shadow, and each part says how close the painted wall comes to the pai
 ## Installing it
 
 Download the installer for your computer from the app's
-[releases](https://github.com/delebash/just-house-paint/releases): **Windows** the
-`Just House Paint Setup … .exe`, **macOS** the `.dmg`, **Linux** the `.AppImage` or the `.deb`.
+[releases](https://github.com/delebash/just-house-paint/releases): **Windows** the `…-win-x64.exe`,
+**macOS** the `.dmg`, **Linux** the `.AppImage` or the `.deb`.
 The installers aren't signed with a publisher's certificate yet, so the first time:
 
 - **Windows** says "Windows protected your PC": press **More info**, then **Run anyway**.
