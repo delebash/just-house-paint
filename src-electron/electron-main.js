@@ -36,5 +36,7 @@ runDesktopApp({
   trayIcon: resolveElectronAssetsPath("icons/tray.png"),
   // the server's live log, relative to the data root (the tray's "Open log file")
   logFile: path.join("logs", "just-house-paint.log"),
-  // `updates` is left out until the app has releases: no feed, no update checks.
+  // the app's releases: an installed copy checks them once the server is up (electron-updater; the
+  // feed is the builder's `publish`, quasar.config.js, attached by .github/workflows/release.yml)
+  updates: { releasesUrl: "https://github.com/delebash/just-house-paint/releases" },
 });

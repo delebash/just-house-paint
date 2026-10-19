@@ -101,8 +101,8 @@ export function onShellEvent(event, fn) {
 // ─── Updates (the shell's electron-updater) ──────────────────────────
 
 /** The desktop app's updater for the kit's UpdatesPanel — its status, check, download, "Restart
- *  now", and the shell's `update:status` push. Null outside the desktop app, and off in the shell
- *  until the app has releases (electron-main.js passes no `updates`). */
+ *  now", and the shell's `update:status` push. Null outside the desktop app; off in the shell in a
+ *  development run without a local feed (electron-main.js `updates`). */
 export function desktopUpdater() {
   if (!hasShell()) return null;
   return {

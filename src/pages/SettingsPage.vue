@@ -64,7 +64,7 @@ onMounted(async () => {
 });
 
 // Updates — release notes from docs/whats-new.md, loaded when the section first opens; the
-// desktop shell's updater (null in a browser; off in the shell until the app has releases).
+// desktop shell's updater (null in a browser; the app's GitHub releases, electron-main.js `updates`).
 const updater = desktopUpdater();
 const changelogHtml = ref("");
 watch(
