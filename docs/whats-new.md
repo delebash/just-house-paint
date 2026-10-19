@@ -1,6 +1,9 @@
 # What's new
 
-## v0.0.1
+## v0.1.0
+
+The first release: installers for Windows, macOS and Linux (see Getting started for opening an
+installer that isn't signed yet), and updates from **App Settings → Updates** from now on.
 
 - **Your houses**: add photos of your house, rename and delete them.
 - **The part finder** (Meta's SAM 3, on your computer): finds the body, trim, doors, shutters and
