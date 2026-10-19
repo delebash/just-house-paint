@@ -137,7 +137,7 @@
       "removeToken": "Remove token"
     },
     "about": {
-      "blurb": "The family's reference app: the shell, the server, the AI stack, settings, help and tests every family app starts with.",
+      "blurb": "See your house in real paint colors before you buy paint: its parts found on your computer, real brand paints in the photo's own light, color schemes, designs and an AI photo.",
       "version": "Version",
       "runtime": "Desktop runtime",
       "electron": "Electron {version}",

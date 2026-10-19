@@ -1,6 +1,6 @@
 # Troubleshooting
 
-**"Can't reach the server".** The app's server isn't running, or its port (17499) is taken by
+**"Can't reach the Just House Paint server".** The app's server isn't running, or its port (17499) is taken by
 another program — the screen says which when it knows. The desktop app starts the server itself:
 the tray's **Restart server** starts it again and **Open log file** shows why it stopped.
 Headless, start it with `just-house-paint-server serve` (`npm run server` from a source checkout).
@@ -14,6 +14,10 @@ give the second one its own `--data-dir`.
 an online provider and make it the default. The **AI tasks** panel keeps the failed request with
 its reason and **Retry**. "Find the parts first" means the house has no parts yet: the AI reads
 the house's colors from them.
+
+**"The graphics card is busy".** An AI photo is being drawn, or a house's parts are being found:
+the card does one at a time (an 8 GB card holds one of their models). Wait for it, or press
+**Cancel** on its progress.
 
 **A part is wrong, or a white board took the body's color.** The part finder missed it — thin
 trim and fascia boards are its weak spot. Select the part it belongs to and draw a **Box** around
@@ -33,12 +37,12 @@ shows the last try's reason on the brand's row; try **Load again** later, or imp
 palette file instead.
 
 **A model won't load.** Its bar on AI Settings shows why. Usually the model needs more memory than
-the computer has free — pick a smaller one, or unload another model first. **Settings → Logs**
+the computer has free — pick a smaller one, or unload another model first. **App Settings → Logs**
 has the engine's own words.
 
-**A message showed a reference.** The reference finds the matching line in **Settings → Logs**:
+**A message showed a reference.** The reference finds the matching line in **App Settings → Logs**:
 the server writes every failure there under the same reference, and this window's own errors land
 there too.
 
-**Where are the logs?** **Settings → Logs** shows them live; the files are in the data folder's
+**Where are the logs?** **App Settings → Logs** shows them live; the files are in the data folder's
 `logs` folder, one per day.

@@ -43,8 +43,11 @@ Mac, Updates offers **Open the release page**, to download it from there.
 - **Paint colors** — the brands' colors on this computer.
 - **AI Settings** — the AI model the color-scheme suggestions use. See [Set up the AI](ai-providers.md).
 - **App Settings** — **General** (photos, designs, the part finder, the AI photo), **Advanced**
-  (the same settings' structured parts), then appearance, backups, storage, server, logs, updates
-  and about.
+  (the same settings' structured parts), then **Appearance** (theme, font, size, language),
+  **Backups**, **Storage** (the space each part takes, and **Change folder…** to move the data),
+  **Server** (its address for a browser on another device, keeping it running in the tray when the
+  window closes, access tokens), **Logs**, **Updates** and **About**.
+- The button at the top right of the title bar switches the theme: light, dark, or the system's.
 
 ## Everything stays on your computer
 

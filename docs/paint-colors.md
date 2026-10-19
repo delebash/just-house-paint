@@ -25,14 +25,18 @@ download the brand's palette file from its website yourself — Benjamin Moore's
 "Download Benjamin Moore color palettes" page, PPG's "Voice of Colour Palette … RGB and LRV Values"
 Excel file, or Sherwin-Williams' and Behr's palette downloads. On the brand's row press **Import a
 file…** and choose the file. The app reads Adobe swatch files
-(.ase, .aco), Excel (.xlsx) and CSV. How big a file may be is in **App Settings → General**.
+(.ase, .aco), Excel (.xlsx) and CSV. How big a file may be is in **App Settings → General**. The
+app keeps each paint by its number: colors in a file without one are left out, and the import says
+how many.
 
 **Remove** takes a brand's colors off this computer; it asks first. Designs that use them show no
 color until the brand is added again.
 
 ## How colors are named
 
-Each color is shown the way its brand writes it — "SW 7008 Alabaster". Just House Paint is not
+Each color shows its brand's number before its name — "SW 7008 Alabaster". Benjamin Moore, Valspar
+and Dutch Boy numbers get the brand's initials or name in front ("BM", "Valspar", "Dutch Boy"), so
+one brand's number is never taken for another's. Just House Paint is not
 affiliated with or endorsed by any paint brand; the brands' names and color names belong to them.
 
 ## Finding a color
@@ -42,7 +46,7 @@ the selected part. **Order** lists the colors by **Color**, as a paint store's c
 grays and blacks first, then pinks and reds, oranges, yellows, greens, blues and purples, each from
 light to dark — or by **Name**; the app keeps your choice. **Color family** shows only the
 **Neutrals** (whites, grays, blacks and the grayest beiges) or one of the hue families. The families
-and where each begins are in **Settings → Advanced** ("How colors are ordered by color").
+and where each begins are in **App Settings → Advanced** ("How colors are ordered by color").
 **Exterior colors only** hides the colors a brand marks for inside use (colors
 it doesn't mark either way stay). **An exact color** — a hex color, or one from the picker — finds
 the brand's nearest paints, closest first, each with its ΔE.

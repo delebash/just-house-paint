@@ -24,11 +24,12 @@
 - **Progress you can see**: finding the parts, the AI photo, the AI's schemes, an install and a brand's
   colors loading each show their progress where you started them, with Cancel — and in a stack at the
   bottom right if you leave that screen while they run.
-- **Paint colors**: load Behr, Sherwin-Williams, Valspar, HGTV Home and Dutch Boy colors from
-  their public lists, or import Benjamin Moore and PPG / Glidden palette files.
+- **Paint colors**: seven brands' colors load by themselves — Sherwin-Williams, Behr, Benjamin
+  Moore, Valspar, PPG / Glidden, HGTV Home and Dutch Boy (each can be turned off) — or import a
+  brand's palette file.
 - **Color schemes**: harmony schemes around a paint, the brand's coordinating colors, and schemes
   from the AI that suit what stays on your house.
 - **Designs**: save the colors on a house, open them again.
 - **The AI photo**: a new picture of your house in your colors, drawn on your computer.
-- **Settings → Storage**: how much space your houses' photos, the part finder and the AI photo take;
+- **App Settings → Storage**: how much space your houses' photos, the part finder and the AI photo take;
   **Remove** frees an engine, and Install brings it back.

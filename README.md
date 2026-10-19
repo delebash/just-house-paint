@@ -22,7 +22,7 @@ install`, and `cd ../just-core/packages/ui && npm install` for the fonts the kit
 | `src/` | the renderer: Vue 3, Quasar's components under the kit's (`@delebash/ui`), Pinia, the hash router, vue-i18n | Quasar's CLI builds it for every mode |
 | `server/` | the app's Node server, its own package (`just-house-paint-server`): Hono from the kit, the family guards, the family routers, the AI stack (`installLlm`), the database (`database/`), the houses, parts, designs, paints and schemes routes, the part finder (`segment/`, `finder.js`), the paint lists (`paints/`), the AI photo (`aiphoto/`, `aiphoto_service.js`) | the desktop app runs it in a utilityProcess; `npm run server` headless |
 | `src-electron/` | the desktop app: `electron-main.js` is the kit's `runDesktopApp` with this app's names; the preload is the kit's | `quasar dev -m electron` · `quasar build -m electron` (electron-builder, NSIS) |
-| `src-capacitor/` | the phone app (Android, iOS), as Quasar generates it | `quasar build -m capacitor -T android` |
+| `src-capacitor/` | the phone app (Android), as Quasar generates it — not working yet: a phone build has no server (the PRD puts the phone after v1) | `quasar build -m capacitor -T android` |
 | `build/launcher/` | the headless launcher `just-house-paint-server.cmd`: the installed exe (`justhousepaint.exe`) run as Node on its server package — never the exe's name (§Q.3) | copied beside the exe by the installer |
 | `e2e/` | the smoke suite and the screenshot capture over the real desktop app (Playwright's `_electron`), hermetic | `npm test` · `npm run screenshots` |
 | `docs/` | the Help pages (`toc.json`, the five the family requires + your houses, finding the parts, painting, paint colors, color schemes, the AI photo) and `docs/dev/` (README, PRD, TASKS, IDEAS, RESEARCH) | the kit's Help drawer; `whats-new.md` feeds Settings → Updates |
@@ -32,13 +32,13 @@ install`, and `cd ../just-core/packages/ui && npm install` for the fonts the kit
 | Part | Files |
 |---|---|
 | Server wiring (§Q.3, §8, §11, §14) | `server/src/app.js` (the order), `serve.js`, `version.js`, `paths.js`, `app_state.js` (with `services.js` — the jobs, the engines, the settings readers), `auth.js`, `data_admin.js` (the backup takes `houses/`), `api/{health,server_auth,prefs,settings}_api.js` |
-| Data (§16) | `server/src/database/` — `schema.js` (migrations; v1 settings, v2 houses · parts · designs · paints · renders), `index.js` (open + migrate), `seed.js`, the stores `houses.js`, `paints.js` and `settings.js`; each house's files under `data/houses/<id>/` (`files.js`) |
+| Data (§16) | `server/src/database/` — `schema.js` (migrations; v1 settings, v2 houses · parts · designs · paints · renders, v3 the paint on each part now), `index.js` (open + migrate), `seed.js`, the stores `houses.js`, `paints.js` and `settings.js`; each house's files under `data/houses/<id>/` (`files.js`) |
 | Validation and errors (§15) | `server/src/schemas/` (shared with the forms), the kit's `input()`, `notFound`, problem+json with request ids |
 | The AI half (§8) | `server/src/feature_catalog.js` (`schemes.suggest`), `seed_feature_prompts.js` (its prompt row, from `schemes_ai.js`), `seed_presets.js` (presets, JustWrite's three general Gemma rows and their class tunes) |
 | The chrome (§11) | `src/layouts/MainLayout.vue`, `src/components/TitleBar.vue`, `src/pages/{AiPage,SettingsPage,ConnectionErrorPage}.vue`, `src/components/settings/` (General and Advanced are this app's), `index.html`'s `#app-boot` plate |
 | The screens | `src/pages/{HomePage,HousePage,ColorsPage}.vue` (Your houses, the house, Paint colors); the house's tabs `src/components/{PartsTab,ColorsTab,SchemesTab,DesignsTab}.vue`; the canvas `HouseCanvas.vue` (Konva); `NameDialog`, `EngineInstallCard`, `AiPhotoDialog` |
 | Start-up (§Q.4) | `src/boot/i18n.js`, `src/boot/justhousepaint.js` |
-| Services and stores | `src/services/{native,helpDocs,appearance,settingsSections}.js`; the painter `src/services/{tint,painter,maskImage,partNames,jobs}.js`; `src/stores/{ui,settings,houses,house,paints,engines}.js` |
+| Services and stores | `src/services/{native,helpDocs,appearance,settingsSections}.js`; the painter `src/services/{tint,painter,maskImage,partNames,jobs,houseHistory,colorCard}.js`; `src/stores/{ui,settings,houses,house,paints,engines}.js` |
 | Tests (§18) | `server/tests/`, `src/**/*.test.js`, `src/boot.smoke.test.js`, `e2e/` |
 
 ## Commands
@@ -127,5 +127,3 @@ probe's photo — `data/probe/`, gitignored), `HP_REAL_SD=1` (the AI photo), `HP
 - **The agent's shell sets `NoDefaultCurrentDirectoryInExePath=1`**, so cmd won't run `gradlew.bat`
   from the current folder; build Android there with `env -u NoDefaultCurrentDirectoryInExePath …`.
 - Quasar's dev watcher must not watch `data/` (Chromium keeps its files locked) — `extendViteConf`.
-- Inside the kit's repo `npm install` prints husky's ".git can't be found" — harmless; the hook
-  installs once a generated app has its own `.git`.

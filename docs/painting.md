@@ -1,7 +1,12 @@
 # Painting your house
 
 Select a part on the **Parts** tab (or click it on the photo with **Select**), then pick a color on
-the **Colors** tab. The paint shows at once.
+the **Colors** tab. The paint shows at once. **No color** beside the chosen paint takes it off the
+part; **Show more** under the colors loads the brand's next ones.
+
+The **Parts** tab lists the parts to paint, each with its share of the house and its paint (**edited**
+once you changed its outline by hand); the roof, windows, stone, brick and lamps are listed under
+**Staying as they are**.
 
 ## How the color is shown
 
@@ -12,8 +17,9 @@ painted part the **Parts** tab says how close the painted wall comes to the pain
 can't see, under 2 is a close match.
 
 **On this wall** — under the chosen paint on the **Colors** tab, the same paint as it shows on the
-selected part: **in shade**, on **most of it** and **in light**. The light one is the chip; a wall in the shade of a
-roof or a tree shows mostly the darker ones, as real paint would.
+selected part: **in shade**, on **most of it** and **in light**. The light one is the chip — in the
+part's own light when **On it now** is set, and through **Light**; a wall in the shade of a roof or a
+tree shows mostly the darker ones, as real paint would.
 
 **On it now** — if you know the paint a part has today, tell the app: on the **Colors** tab switch
 **The new color** to **On it now** and click that paint (search for it, or type its color under the
@@ -45,9 +51,10 @@ the photo's top right; drag with **Select** to move the photo.
 
 ## Undo and Reset
 
-**Undo** and **Redo** (Ctrl+Z and Ctrl+Y) take back a color, or a change to a part's outline made
+**Undo** and **Redo** (Ctrl+Z, and Ctrl+Y or Ctrl+Shift+Z) take back a color, or a change to a part's outline made
 with the brush, the eraser or a box, and put it back again. They remember the last 50 steps while
-the house is open; **Find the parts again** starts them over.
+the house is open; **Find the parts again** starts them over. Undo also puts back which design was
+open.
 
 **Reset** offers **Remove all colors** — the photo as taken — and, when you changed the colors of
 an open design, **Back to** that design's saved colors. Undo brings back what a Reset took away.
@@ -56,8 +63,9 @@ an open design, **Back to** that design's saved colors. Undo brings back what a 
 
 Save the colors on the house as a **design** on the **Designs** tab: **Save as a new design**. A
 house keeps several; click one to put its colors back on. Once you change a color, the open design
-shows **changed** and **Save** keeps the change. Opening another design while there are unsaved
-changes asks first.
+shows **changed** and **Save** keeps the change. Opening another design, or leaving the house, while
+there are unsaved changes asks first. Each design's buttons rename it and delete it (its AI photos
+stay). A house keeps up to 30 designs (**App Settings → General → Designs and paint files**).
 
 A design saved before the house had some of its trim parts (soffits and fascia, window trim) leaves
 them unpainted. Opening it says which parts have no color, and **Paint them the trim's color** paints

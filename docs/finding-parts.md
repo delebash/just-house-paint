@@ -35,19 +35,20 @@ body's color. Fix it with the tools above the photo, on the part selected on the
   **Brush size** sits beside them.
 - **Box** — drag a box around something (a shutter, the fascia); the finder outlines what is inside
   it and gives it to the selected part, taking it from any other part.
-- **Add the part** (under the list) — a part the finder knows but didn't find on this house: choose
-  it, then draw it with the brush or a box.
+- **Add the part** (under the list) — a part to paint that the finder knows but didn't find on this
+  house: choose it, then draw it with the brush or a box.
 
 A pixel belongs to one part only. Where two parts overlap, the more specific one keeps it (the
 garage door before the door, the gutters before the trim) — the order is in **App Settings →
 Advanced**.
 
 Your fixes are kept, and **Undo** takes back the last ones. **Find the parts again** starts over
-from what the finder sees; it asks first.
+from what the finder sees — your fixes and the parts you added by hand go; it asks first.
 
 ## Settings
 
-**App Settings → General → Part finder**: whether the graphics card helps, and after how many idle
-minutes the finder lets go of its memory. What the finder looks for — each part's words and
+**App Settings → General → Part finder**: whether the graphics card helps, after how many idle
+minutes the finder lets go of its memory, how far past the house a part may reach, and how much of
+a piece must be on the house to count — so a car parked in front isn't taken for a door. What the finder looks for — each part's words and
 threshold — is in **App Settings → Advanced**. **App Settings → Storage** shows how much space it
 takes; **Remove** there frees it (the parts already found stay) and Install brings it back.
