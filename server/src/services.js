@@ -6,7 +6,7 @@
 // a restart. Tests pass their own `finder`, `aiphoto`, `fetch`, `download` or `run`.
 
 import path from "node:path";
-import { buildLlmConfig, runAction, stores } from "@delebash/core/llm";
+import { buildLlmConfig, resolveRoute, runAction, stores } from "@delebash/core/llm";
 import { streamDownload } from "@delebash/core/runner/download";
 import * as hardware from "@delebash/core/runner/hardware";
 import * as lifecycle from "@delebash/core/runner/lifecycle";
@@ -90,6 +90,14 @@ export function createServices({ db, dataDir }, overrides = {}) {
     maxDesignsPerHouse: () => setting("designs.maxPerHouse"),
     maxImportBytes: () => setting("paints.maxImportMegabytes") * MB,
     harmony: () => setting("schemes.harmony"),
+    // an AI feature runs on the bundled local model (it would load on the graphics card) — not a cloud one
+    usesLocalAi: (feature) => {
+      try {
+        return resolveRoute(buildLlmConfig(), feature, { action: feature })[0]?.provider_type === "local-llamacpp";
+      } catch {
+        return false; // not set up: the run fails on its own, with its own message
+      }
+    },
     colorOrder: () => setting("paints.colorOrder"),
     // the English the AI's prompt reads ("garageDoor" → "garage door")
     partLabel: surfaceWords,

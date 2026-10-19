@@ -607,6 +607,16 @@ re-run by this session; code in the app's `server/src/aiphoto/`; outputs in sess
   - **SQLite's `mod` and `floor`** are there too (the server's tests run the order and the families on the
     synthetic OKLCH grid, every color in exactly one family).
 
+- **The graphics card, one job at a time** (2026-10-18, the review before the release): the part finder (SAM 3,
+  ~5.7 GB), the AI photo (sd-cli, ~6.4 GB) and a local AI model don't fit an 8 GB card together, so the server
+  refuses (409 "gpu-busy", `jobs.js assertGpuFree`) an AI photo, a part search, a box or the local AI's schemes
+  beside a running GPU job. The local check asks the kit's `resolveRoute(buildLlmConfig(), feature)` whether
+  the feature's provider is `local-llamacpp` (a preset's override isn't seen — the kit's own
+  `setLocalBusyGuard` sees it, but the kit installs that hook for its arbiter and keeps no way to chain a
+  second). The kit's runner arbiter (`packages/core/src/runner/arbiter.js`: kinds, busy, admission and
+  eviction) is the family's GPU-sharing piece for its own runner's models; putting SAM 3 and sd-cli under it
+  is the standard route if one-at-a-time ever has to become sharing.
+
 ## 11 · The app, run for real (2026-10-18)
 
 *Measured by this session on this machine (RTX 2070-class, 8 GB), through the app's own server on the

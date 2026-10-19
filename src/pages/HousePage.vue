@@ -87,6 +87,8 @@ const photographed = ref({});
 let painter = null;
 // load() running: what it loads isn't a change to react to
 let loading = false;
+// the latest load() — an earlier one that finishes later stops
+let loadSeq = 0;
 
 const texture = computed({
   get: () => ui.texture,
@@ -114,6 +116,7 @@ const photoTask = useSurfaceTask("aiphoto.render", houseMeta);
 const imagePath = (size) => `/v1/houses/${encodeURIComponent(house.house.id)}/image?size=${size}`;
 
 async function load() {
+  const seq = ++loadSeq;
   loading = true;
   loadFailed.value = null;
   painter = null;
@@ -123,6 +126,8 @@ async function load() {
   history.reset();
   try {
     await Promise.all([house.open(route.params.id), paints.loadBrands(), engines.loadStatus(), settings.load()]);
+    // another house was asked for meanwhile: its own load() shows it
+    if (seq !== loadSeq || house.house?.id !== route.params.id) return;
     // the paints the house names: its colors, its paints now and its designs' (Compare draws them at once)
     const designPaints = house.designs.flatMap((d) => Object.values(d.colors));
     await paints.paints([...Object.values(house.colors), ...Object.values(house.house.currentPaints || {}), ...designPaints]);
@@ -133,9 +138,9 @@ async function load() {
     refreshPhotographed();
     repaint();
   } catch (e) {
-    loadFailed.value = e;
+    if (seq === loadSeq) loadFailed.value = e;
   } finally {
-    loading = false;
+    if (seq === loadSeq) loading = false;
   }
 }
 onMounted(load);
@@ -210,6 +215,12 @@ const order = computed(() => house.parts.map((p) => p.key));
 
 // the paint each part has now, as hex (its light is worked out from it — services/tint.js lightGain)
 const currentHex = () => hexOf(house.house?.currentPaints || {});
+/** The same paints on the same parts (an unset part and no part are the same). */
+const sameColorsAs = (a, b) => {
+  const ka = Object.keys(a).filter((k) => a[k]);
+  const kb = Object.keys(b).filter((k) => b[k]);
+  return ka.length === kb.length && ka.every((k) => a[k] === b[k]);
+};
 const hexOf = (colors) => Object.fromEntries(Object.entries(colors).map(([part, id]) => [part, paints.byId[id]?.hex || null]));
 
 function repaint() {
@@ -229,6 +240,13 @@ watch(
     history.record({ colors, designId: house.designId });
     await paints.paints(Object.values(colors));
     repaint();
+  },
+);
+// a design saved as a new one, or the open one deleted: the same colors, another (or no) design
+watch(
+  () => house.designId,
+  (id) => {
+    if (sameColorsAs(house.colors, history.current().colors)) history.amendDesign(id);
   },
 );
 watch(texture, (v) => {
@@ -354,6 +372,16 @@ function findColor(hex) {
   tab.value = "colors";
 }
 
+// one part's saves go to the server one after another — two quick Undos never land out of order
+const saving = new Map(); // key → the last save's promise
+function queueSave(key, blob, houseId) {
+  const next = (saving.get(key) || Promise.resolve()).catch(() => {}).then(() => house.saveMask(key, blob, houseId));
+  saving.set(key, next);
+  next.catch(reportError).finally(() => {
+    if (saving.get(key) === next) saving.delete(key);
+  });
+}
+
 // an outline's change is saved a moment after the last stroke on it — one timer per part, to the
 // house it was drawn on
 const saveTimers = new Map(); // key → { timer, run }
@@ -362,7 +390,7 @@ function scheduleSave(key, blob) {
   const houseId = house.house.id;
   const run = () => {
     saveTimers.delete(key);
-    house.saveMask(key, blob, houseId).catch(reportError);
+    queueSave(key, blob, houseId);
   };
   saveTimers.set(key, { timer: setTimeout(run, 600), run });
 }
@@ -408,7 +436,8 @@ async function onBox(box) {
  *  saved to the server (it owns them). An outline the record doesn't have (a part added by hand
  *  after it) goes back to empty. */
 async function applyRecord(rec, prev) {
-  house.setColors(rec.colors, rec.designId ?? null);
+  // a design deleted since this record: the colors come back as a draft
+  house.setColors(rec.colors, house.designs.some((d) => d.id === rec.designId) ? rec.designId : null);
   const keys = [...new Set([...Object.keys(rec.masks), ...Object.keys(prev.masks)])];
   const changed = keys.filter((k) => rec.masks[k] !== prev.masks[k]);
   if (!changed.length || !painter) return;
@@ -423,7 +452,7 @@ async function applyRecord(rec, prev) {
   repaint();
   // saved without holding the history: a stroke made while they save is recorded as usual
   const houseId = house.house.id;
-  for (const key of changed) house.saveMask(key, blobs[key], houseId).catch(reportError);
+  for (const key of changed) queueSave(key, blobs[key], houseId);
 }
 
 // Ctrl+Z / Ctrl+Y (and Ctrl+Shift+Z) — never while typing in a field

@@ -19,16 +19,18 @@ import { validatePartsConfig } from "../segment/parts.js";
 
 const log = getLogger("just_house_paint.settings");
 
-/** Each value of `value` has its default's type (an array its element type and, for numbers, its
- *  length); a key the defaults don't have is refused. Throws a TypeError naming the first wrong one. */
+/** Each value of `value` that its defaults know has its default's type (a list its element type; a
+ *  pair of numbers — a range — stays a pair). A key the defaults don't know is left alone: an older
+ *  install may still carry a retired one, and nothing reads it. Throws a TypeError naming the first
+ *  wrong one. */
 function likeDefaults(value, defaults) {
   for (const [k, v] of Object.entries(value)) {
-    if (!(k in defaults)) throw new TypeError(`"${k}" isn't one of its values (${Object.keys(defaults).join(", ")})`);
+    if (!(k in defaults)) continue;
     const d = defaults[k];
     if (Array.isArray(d)) {
       const want = typeof d[0];
       if (!Array.isArray(v) || v.some((x) => typeof x !== want)) throw new TypeError(`"${k}" must be a list of ${want}s`);
-      if (want === "number" && v.length !== d.length) throw new TypeError(`"${k}" must be ${d.length} numbers`);
+      if (want === "number" && d.length === 2 && v.length !== 2) throw new TypeError(`"${k}" must be two numbers (a range)`);
     } else if (typeof v !== typeof d) throw new TypeError(`"${k}" must be a ${typeof d}`);
   }
 }

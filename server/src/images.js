@@ -41,22 +41,28 @@ export async function ingestPhoto(buffer, dataDir, houseId, limits) {
   const { ext, width, height } = await inspectPhoto(buffer);
   ensureHouseDirs(dataDir, houseId);
   const originalFile = `original.${ext}`;
+  const d = fitInside(width, height, limits.displayMax);
+  const t = fitInside(width, height, limits.thumbMax);
+  let upright;
+  let display;
+  let thumb;
   try {
     // The original upright, so every later step reads the same orientation. Only a photo its
     // camera stored sideways is re-encoded (a JPEG or WebP at high quality; a PNG losslessly — a
     // `quality` would turn on its 256-color palette); every other one is kept byte for byte.
     const { orientation } = await sharp(buffer).metadata();
-    const upright = orientation > 1 ? await sharp(buffer).rotate().toFormat(ext === "jpg" ? "jpeg" : ext, ext === "png" ? {} : { quality: 95 }).toBuffer() : buffer;
-    writeFileSync(originalPath(dataDir, houseId, originalFile), upright);
-    const d = fitInside(width, height, limits.displayMax);
-    await sharp(upright).resize(d.width, d.height).jpeg({ quality: limits.jpegQuality }).toFile(displayPath(dataDir, houseId));
-    const t = fitInside(width, height, limits.thumbMax);
-    await sharp(upright).resize(t.width, t.height).jpeg({ quality: limits.jpegQuality }).toFile(thumbPath(dataDir, houseId));
-    return { originalFile, width, height, displayWidth: d.width, displayHeight: d.height };
+    upright = orientation > 1 ? await sharp(buffer).rotate().toFormat(ext === "jpg" ? "jpeg" : ext, ext === "png" ? {} : { quality: 95 }).toBuffer() : buffer;
+    display = await sharp(upright).resize(d.width, d.height).jpeg({ quality: limits.jpegQuality }).toBuffer();
+    thumb = await sharp(upright).resize(t.width, t.height).jpeg({ quality: limits.jpegQuality }).toBuffer();
   } catch (e) {
     // its header read, its pixels didn't: a file cut off part-way, or one past sharp's pixel limit
     throw new NotAnImage(`this photo can't be read (${String(e?.message || e).split("\n")[0]})`);
   }
+  // the three copies written only once all three were made (a disk error is the disk's, not "not a photo")
+  writeFileSync(originalPath(dataDir, houseId, originalFile), upright);
+  writeFileSync(displayPath(dataDir, houseId), display);
+  writeFileSync(thumbPath(dataDir, houseId), thumb);
+  return { originalFile, width, height, displayWidth: d.width, displayHeight: d.height };
 }
 
 /** An 8-bit mask (0–255, w×h) as a grayscale PNG. */

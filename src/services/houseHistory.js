@@ -61,6 +61,14 @@ export function useHouseHistory({ apply, capacity = 50 }) {
       state.value = next;
       history.commit();
     },
+    /** The open design changed without the colors changing (saved as a new one, deleted): the current
+     *  record says so, as no new step — Undo then never reopens a design the colors don't belong to. */
+    amendDesign(designId) {
+      if (moving) return;
+      state.value = { ...state.value, designId };
+      const last = history.last.value;
+      if (last?.snapshot) last.snapshot.designId = designId;
+    },
     undo: () => step(history.undo, history.canUndo),
     redo: () => step(history.redo, history.canRedo),
     /** The current record (the page's outlines as Blobs). */

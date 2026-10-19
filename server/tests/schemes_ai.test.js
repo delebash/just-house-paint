@@ -84,6 +84,19 @@ describe("POST /v1/schemes/ai", () => {
     expect(call.variables.mood).toBe("The owner would like: coastal");
   });
 
+  test("beside a running AI photo, the schemes wait only when they would run on the local model", async () => {
+    const house = await houseWithParts();
+    aiAnswer.text = JSON.stringify({ schemes: [{ name: "Harbor", body: "#5b7a8c", trim: "#f2efe6", accent: "#a33a2f" }] });
+    s.ctx.jobs.start({ kind: "aiphoto", key: house.id, label: "Main street" }, () => new Promise(() => {}));
+    s.ctx.usesLocalAi = () => false; // a cloud model: nothing to load on the card
+    expect((await s.json("POST", "/v1/schemes/ai", { houseId: house.id, brand: "behr" })).status).toBe(200);
+    s.ctx.usesLocalAi = (feature) => feature === "schemes.suggest";
+    const busy = await s.json("POST", "/v1/schemes/ai", { houseId: house.id, brand: "behr" });
+    expect(busy.status).toBe(409);
+    expect((await busy.json()).type).toMatch(/gpu-busy$/);
+    s.ctx.jobs.cancelAll();
+  });
+
   test("it needs the brand's colors and the house's parts", async () => {
     const house = await houseWithParts(false);
     expect((await s.json("POST", "/v1/schemes/ai", { houseId: house.id, brand: "behr" })).status).toBe(409);

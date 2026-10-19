@@ -20,6 +20,7 @@ const TODAY = {
   "finder.priority": "69c2dcc097840fab",
   "schemes.roleParts": "ab90c1fb04750be9",
   "aiphoto.compose": "2349559042b9098d",
+  "schemes.harmony": "82fac382590bdac2",
 };
 
 test("today's defaults are the ones this test knows, and none of them is listed as earlier", () => {

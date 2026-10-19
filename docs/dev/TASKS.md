@@ -169,6 +169,8 @@ CONFIRM: - Reset's labels, built as proposed: "Remove all colors" and "Back to �
          - leaving the house with colors no design holds asks first — "Leaving the house drops them." / Leave;
          - the release's version: v0.1.0 (the first public one; the family's first releases were 0.1.0).
 ASK:     - wide color 1, 2 (5a), 4 — not built after the measurement (above): still wanted?
+         - a Linux .deb: it needs a maintainer address published in the package ("name <email>") — which one, or
+           the AppImage alone;
          - two review suggestions not built (each needs screens and words): name the designs whose paints a brand
            reload dropped; keep the parts fixed by hand when the parts are found again.
 
@@ -290,6 +292,23 @@ FOUND (docs and this tracker against the code): the releases page empty until th
         AI photo reopen/delete and its ΔE line, No color, Show more, the Parts tab's share / edited / staying
         group, Ctrl+Shift+Z, the theme button, the Server / Backups / Appearance / Storage sections); README
         (iOS, migration v3, services list, the kit's husky note); stale TASKS status lines.
+STATE:  FIXING.
+
+FOUND (a second pass — today's own changes reviewed for regressions):
+        1. the release workflow's `npm ci` fails in the kit's ui (no lockfile — it is gitignored) on every runner;
+        2. the Linux deb needs a maintainer email (electron-builder refuses);
+        3. Undo after "Save as a new design" or a delete reopens the wrong or a deleted design;
+        4. Advanced refuses every harmony save on the user's database (an old untouched default with a retired
+           key; and classicAccentHues isn't a pair);
+        5. AI schemes refused while the card is busy even with an online AI;
+        6. two quick Undos of one outline can save out of order; 7. a disk error on upload reads "Not a photo";
+        8. updates switched on before the first release (fine once it is out); a lost open() race could show a
+           load error (no path reaches it today).
+        FIXED (all, with tests): the workflow installs ui with `npm install`; Linux ships the AppImage (a .deb waits
+        on a maintainer address — below); Save-as / delete amend the current record's design, Undo drops a deleted
+        one; retired harmony keys pass, only ranges must be pairs, the old untouched harmony default upgrades
+        (b11d8afd…, checked against 27f4140^); the schemes wait only on the local model (the kit's resolveRoute);
+        one part's saves queue; only sharp's reading is "not a photo"; a lost load stops quietly.
 STATE:  FIXING.
 
 ## How the app is started [2026-10-17]

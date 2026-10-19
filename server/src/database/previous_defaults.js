@@ -36,4 +36,7 @@ export const PREVIOUS_DEFAULTS = Object.freeze({
   "aiphoto.compose": Object.freeze([
     "c7df3921fb6c1e9f", // before gainLimits (the paint on a part now)
   ]),
+  "schemes.harmony": Object.freeze([
+    "b11d8afd9127c603", // v1, before the classic door's traditional colors (27f4140)
+  ]),
 });

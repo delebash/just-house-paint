@@ -59,8 +59,11 @@ test("a value whose mistake would only show later is refused: the parts, the har
   expect(typed.statusCode).toBe(422);
   const gain = await client.patch("/v1/settings", { json: { "aiphoto.compose": { ...SETTING_DEFAULTS["aiphoto.compose"], gainLimits: 5 } } });
   expect(gain.json().errors[0]).toMatchObject({ loc: ["body", "aiphoto.compose"], msg: expect.stringMatching(/gainLimits/) });
-  const unknown = await client.patch("/v1/settings", { json: { "aiphoto.compose": { blend: 1 } } });
-  expect(unknown.statusCode).toBe(422);
+  const pair = await client.patch("/v1/settings", { json: { "aiphoto.compose": { litBand: [0.9, 1, 1.1] } } });
+  expect(pair.json().errors[0].msg).toMatch(/litBand" must be two numbers/);
+  // a retired key an older install still carries is left alone; a list that isn't a pair takes any length
+  const retired = { ...SETTING_DEFAULTS["schemes.harmony"], classicAccentHueShift: 30, classicAccentHues: [0, 120] };
+  expect((await client.patch("/v1/settings", { json: { "schemes.harmony": retired } })).statusCode).toBe(200);
   const order = SETTING_DEFAULTS["paints.colorOrder"];
   const twice = await client.patch("/v1/settings", { json: { "paints.colorOrder": { ...order, families: [...order.families, { key: "reds", from: 10 }] } } });
   expect(twice.json().errors[0].msg).toMatch(/"reds" is listed twice/);

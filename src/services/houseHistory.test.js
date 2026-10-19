@@ -67,6 +67,21 @@ describe("useHouseHistory", () => {
     expect(h.current().designId).toBe("dY");
   });
 
+  test("a design saved as a new one (same colors) is written into the current record — Undo and Redo keep it", async () => {
+    const { h, applied } = harness();
+    h.reset({ colors: { body: "p:1" } });
+    h.record({ colors: { body: "p:2" } });
+    h.amendDesign("dNew"); // Save as a new design: no new step
+    expect(h.canUndo.value).toBe(true);
+    h.record({ colors: { body: "p:3" }, designId: "dNew" });
+    await h.undo();
+    expect(applied.at(-1)).toMatchObject({ colors: { body: "p:2" }, designId: "dNew" });
+    await h.undo();
+    expect(applied.at(-1)).toMatchObject({ colors: { body: "p:1" }, designId: null });
+    await h.redo();
+    expect(applied.at(-1)).toMatchObject({ colors: { body: "p:2" }, designId: "dNew" });
+  });
+
   test("reset starts over", () => {
     const { h } = harness();
     h.reset({});

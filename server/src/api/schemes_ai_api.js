@@ -13,7 +13,7 @@ import { displayPath, maskPath } from "../files.js";
 import { pngToMask } from "../images.js";
 import { BRANDS } from "../paints/index.js";
 import { AiSchemesIn } from "../schemas/paints.js";
-import { houseFacts, suggestWithAi } from "../schemes_ai.js";
+import { houseFacts, SCHEMES_FEATURE, suggestWithAi } from "../schemes_ai.js";
 import { getState } from "../app_state.js";
 import { assertGpuFree } from "../jobs.js";
 
@@ -39,8 +39,8 @@ export function router(ctx = getState()) {
 
   app.post("/v1/schemes/ai", input({ body: AiSchemesIn }), async (c) => {
     const { houseId, brand, mood, count } = c.req.valid("json");
-    // a local AI model would load on the graphics card beside the running one
-    if (ctx.jobs) assertGpuFree(ctx.jobs, "local-ai");
+    // a local AI model would load on the graphics card beside the running one (a cloud one doesn't wait)
+    if (ctx.jobs && ctx.usesLocalAi?.(SCHEMES_FEATURE)) assertGpuFree(ctx.jobs, "local-ai");
     const house = getHouse(ctx.db, houseId);
     if (!house) throw notFound(`no house ${houseId}`);
     if (!BRANDS[brand]) throw notFound(`no brand ${brand}`);
