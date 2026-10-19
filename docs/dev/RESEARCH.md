@@ -9,8 +9,6 @@ stack's facts (the kit, llama.cpp, the memory arbiter) stay in the kit's registe
 
 Plans: [`../plans/2026-10-18-v1.md`](../plans/2026-10-18-v1.md) — the v1 build (what each piece is, and the
 standard it follows).
-and [`../plans/2026-10-18-brand-permission-request.md`](../plans/2026-10-18-brand-permission-request.md)
-— the request to the paint brands (option D), drafted for the user to send.
 
 Labels: **measured** — run on this machine · **web** — checked against the upstream page by the
 session that recorded it · **agent** — found on the web by a research agent and not re-checked by

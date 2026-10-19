@@ -46,8 +46,8 @@ user's own computer as a family app: the desktop app, or its server with the UI 
   host also serves Valspar, HGTV Home and Dutch Boy; Behr's query index), or imported from the brands'
   official palette files. Each brand's terms limit automated access and reuse (RESEARCH §10); the app
   says so beside the switch, names colors as the brand does ("SW 7008 Alabaster") with a
-  not-affiliated notice, and shows an on-screen color disclaimer. A request to the brands for
-  permission is drafted for the user to send (option D).
+  not-affiliated notice, and shows an on-screen color disclaimer. No request to the brands is sent
+  (option D, dropped 2026-10-19 — TASKS).
 - **Model downloads** (Hugging Face): SAM 3 in ONNX form (samexporter's export; Meta's SAM License),
   FLUX.2 [klein] 4B, Qwen3-4B and the klein VAE (Apache-2.0). **Engine download** (GitHub releases):
   stable-diffusion.cpp (MIT).

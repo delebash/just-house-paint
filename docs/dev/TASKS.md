@@ -64,7 +64,8 @@ STATE:  DECIDED 2026-10-17. The user: "your rec go", on these recs as shown:
         - **Test round 2** — "your photos, first; a dark house painted white; subtraction with the
           material check; "tap one, find all"; tint v2; the sam3.cpp Vulkan build against CUDA;
           the standard ONNX Runtime route; masked inpainting, only if the AI photo stays."
-NOT:    D sends nothing by itself — a request to the brands is drafted for the user to send.
+DROPPED 2026-10-19 — D: the user, verbatim: "no letter we wont do this remove it". The draft request to the
+        brands (`docs/plans/2026-10-18-brand-permission-request.md`) is deleted; B and C stay as built.
 DECIDED 2026-10-18 (the user: "yes create repo your rec on all go"): the Vulkan SDK is skipped —
         ONNX Runtime's GPU paths (DirectML, WebGPU) need no SDK and are the standard cross-platform route.
         (Was: PRD vs SPEC, the pre-commit hook, the `AGENTS.md` design, the skill and
@@ -77,8 +78,7 @@ STATE:  ROUNDS 1 AND 2 DONE 2026-10-17 — the user's go: "so yes go do your tes
         round-2 entries (finding parts, ONNX Runtime on the CPU, tint v2, a dark house, masked AI).
         Throwaway: inputs and outputs in `data/probe/` (gitignored).
 OPEN:   dark-to-light tint shows the old wood grain (the Texture slider softens it); a cloud render (needs a
-        Gemini key). The brand request for D is drafted
-        (`docs/plans/2026-10-18-brand-permission-request.md`, 2026-10-18) — for the user to send, edit or drop.
+        Gemini key).
 
 ## Build it all — the go [2026-10-18]
 GO:     the user, verbatim: "keep going finihs it all i want all this done and a complete working app
