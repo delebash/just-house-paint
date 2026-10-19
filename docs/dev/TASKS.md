@@ -302,7 +302,14 @@ GO:     5a — told "5a is non-standard, though, so per your rules it still need
         verbatim (2026-10-18): "it covers finihs everything rethink on anythink you need to but i want all tasks done
         all suggestions done"; told "I'm taking it as your word on 5a … say stop if you didn't mean that", the user:
         "go". So 1, 2 (5a) and 4 are built now.
-STATE:  BUILDING.
+RETHOUGHT (2026-10-18, on the user's "rethink on anything you need to"): 1, 2 (5a) and 4 NOT built — measured first
+        (RESEARCH §11, "The gamut diagnosis above was wrong"): the app's copy of the user's photo equals Chromium's own
+        rendering of the original (coral 149/83/71 vs 150/83/70), the coral is inside sRGB, 0.22% of the photo lies
+        outside sRGB at all, and this screen gets sRGB from every app (Windows SDR, no display profile; Chromium's
+        color-gamut is srgb). A P3 pipeline and a non-standard canvas would change ~0.2% of pixels, only on a
+        wide-gamut-aware screen. Shown to the user in the report, for their word if they still want it.
+STATE:  3 built and checked on the user's house (On it now: tones in the part's light, ΔE 0.5, Clear restores it);
+        1, 2, 4 waiting on the user after the rethink.
 
 ## Order the colors by color, not only by name [2026-10-18]
 ASKED:  the user, verbatim: "we need option to sour by color types shade graients instead of just alphbetaclly".

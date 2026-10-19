@@ -772,6 +772,31 @@ Playwright against that server. Screenshots: session e638ccef's scratchpad `real
   - **What it takes:** a display copy kept in Display P3 and canvases opened with `colorSpace: "display-p3"`
     (Chromium since 94; WebKit — webkit.org/blog/12058). Konva 10.9 opens its contexts with only
     `{ willReadFrequently }` (lib/Context.js:668,798) — no color-space option, and no upstream support found.
+  - **What this screen gets from Chromium** (2026-10-18, measured in the app's Electron 44.7 / Chrome 152 on this
+    machine): CSS `(color-gamut: p3)` is **false** (`srgb` true, no HDR); a `display-p3` canvas keeps P3 numbers
+    (`color(display-p3 1 0 0)` reads back 255/0/0 in P3, 255/0/0 clipped to sRGB) — the canvas side works. But
+    Windows sends the display plain SDR: DisplayConfig's advanced-color info 2 for the one display ("SHARP HDMI",
+    SHP1079) is flags 0x45 (advanced color supported, **wide color supported but not enabled**, no HDR),
+    `activeColorMode` 0 (SDR), and no ICC profile is associated with it (only Windows' generic sRGB profile is
+    installed). So Chromium converts everything — a P3 canvas, a P3 `<img>` — to sRGB for this screen, and the
+    panel shows those numbers on its own native gamut. A P3 pipeline changes what this screen shows only once
+    Windows manages color for it (Settings → Display → "Automatically manage color for apps", which the flags say it
+    supports, or HDR, or the monitor's ICC profile); on a Mac's P3 screen, or with any of those, it does. With
+    Windows' auto color management on, Chrome is reported to clamp wide-gamut images to sRGB (issues.chromium.org
+    328856550 — status not readable without signing in); a display ICC profile with it off renders them.
+  - **The "gamut" diagnosis above was wrong** (2026-10-18, measured in the app's Electron on the user's photo, the
+    parts' masks at 2048×700, script `real-ui/convert-compare.mjs` in session e638ccef's scratchpad):
+    - the server's display copy (sharp's conversion at intake) **equals Chromium's own conversion** of the original
+      P3 JPEG — the coral trim's median 149/83/71 vs 150/83/70, p95 192/180/173 vs 191/182/176; the body
+      112/109/82 both; the front door 104/48/41 both;
+    - the coral is **inside sRGB**: its P3 numbers (median 140/86/73) convert to sRGB with no channel clipped;
+    - **0.22%** of the whole photo lies outside sRGB at all (a channel past 0–1 by more than 0.002), **0.01%** by
+      more than 2%.
+    So keeping the photo in P3 end to end would change ~0.2% of its pixels, by little, and only on a screen the
+    system reports as wide-gamut — not this one. The red 173 vs 157 on the user's side-by-side screenshot is not
+    the gamut; the likeliest cause (not verified — the screenshot isn't on disk) is how each viewer scales a thin
+    band down: the coral trim is a few pixels wide at that zoom and mixes with the white and green beside it
+    differently, while the large walls and the door matched.
   - **Intake without clipping:** `sharp(original).resize().keepIccProfile()` keeps the P3 numbers and the profile
     (a coral pixel: 139/131/108 in the original, 139/131/108 in the copy, 536-byte profile kept); sharp reading that
     copy (`.raw()`, what the finder and the AI schemes do) still gets sRGB (141/131/105) — so the server's readers
