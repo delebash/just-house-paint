@@ -401,6 +401,51 @@ PLAN:   the e2e smoke and On it now on the user's house; Order by color + Color 
         release workflow, the template first).
 STATE:  BUILDING.
 
+## The review before the release [2026-10-18]
+FOUND (a read-only review of the renderer, each traced through the code; to fix before the release):
+        1. Find again finishing after the house page was re-opened leaves the old outlines (the new page
+           loads only missing keys) — a later stroke or Undo PUTs an old-based mask over the new one;
+        2. the store's aiPhoto / box / open write into whichever house is open when they finish (A's AI photo
+           lands in B's list);
+        3. leaving the page within 600 ms of a stroke drops its save;
+        4. Undo / Redo don't restore the open design (Save then overwrites it with the draft);
+        5. a drag released outside the canvas leaves the brush / box / pan on;
+        6. a failed mask load becomes an empty outline (a stroke then wipes the real one);
+        7. Compare's design side goes stale after Save, and a late load overwrites a newer choice;
+        8. the Schemes and Colors tabs' loads aren't ordered (a late response wins); the search timer outlives
+           the tab;
+        9. touch panning reads clientX off a TouchEvent (NaN view);
+        10. job polling adds an abort listener every 400 ms.
+        Suggestions: ask before leaving with unsaved colors; keep the zoom when the canvas resizes; clear the
+        "from the photo" hint when the picker sets the color; keep a stroke made while Undo saves; the
+        designs' paints loaded with the house.
+        FIXED (renderer, all ten and the five suggestions; also a pending save now goes to the house it was
+        drawn on, and finding the parts writes only into its own house) — with tests.
+FOUND (a read-only review of the server):
+        1. nothing keeps GPU jobs apart: an AI photo frees the finder mid-find (the find fails), a find or box
+           reloads SAM 3 beside sd-cli, two houses' AI photos run two sd-cli at once;
+        2. paints without a code collapse into one row (`brand:null`), the count says otherwise;
+        3. Settings → Advanced saves rules that break later (a `minus` naming a removed part, unknown scheme
+           kinds, a mistyped compose value) — 200, then every run fails;
+        4. a design deleted while its AI photo renders: the render's row fails its foreign key, the PNG stays;
+        5. the AI photo's status says installed when the pinned tag or the backend changed;
+        6. deleting a house doesn't cancel its jobs;
+        7. a truncated or huge photo → 500 instead of 415; a rotated PNG re-encoded to a 256-color palette;
+        8. Cancel during a commit reports "cancelled" though the work was saved;
+        9. names of only spaces are saved as "";
+        10. a second AI photo while one runs returns the first (new colors ignored).
+        Suggestions: a body limit before reading uploads; designs that lost a paint named; leftover masks
+        removed after a re-find; hand-made parts kept on a re-find (offered); the model check cancellable.
+FOUND (docs and this tracker against the code): the releases page empty until the first release; whats-new
+        says two brands are imported (all seven load); Settings → About's blurb is the template's; paint-colors
+        says codes are shown as the brands write them (BM / Valspar / Dutch Boy prefixes); the troubleshooting
+        quote; painting.md's "the light one is the chip"; Add the part offers only paintable parts; four Part
+        finder settings, not two; "Settings" vs "App Settings"; features no page explains (design rename/delete,
+        AI photo reopen/delete and its ΔE line, No color, Show more, the Parts tab's share / edited / staying
+        group, Ctrl+Shift+Z, the theme button, the Server / Backups / Appearance / Storage sections); README
+        (iOS, migration v3, services list, the kit's husky note); stale TASKS status lines.
+STATE:  FIXING.
+
 ## How the app is started [2026-10-17]
 STATE:  the Claude Code setup items 1–8 became the `/new-just-app` skill's 8 decisions ("your rec on
         all go", 2026-10-17 — the kit's TASKS, "A standard start for every new just app"); items 9–12

@@ -11,15 +11,16 @@ export const POLL_MS = 400;
 
 const wait = (ms, signal) =>
   new Promise((resolve, reject) => {
-    const t = setTimeout(resolve, ms);
-    signal?.addEventListener?.(
-      "abort",
-      () => {
-        clearTimeout(t);
-        reject(Object.assign(new Error("cancelled"), { name: "AbortError" }));
-      },
-      { once: true },
-    );
+    const onAbort = () => {
+      clearTimeout(t);
+      reject(Object.assign(new Error("cancelled"), { name: "AbortError" }));
+    };
+    // the listener goes with the wait: a long job polls thousands of times on one signal
+    const t = setTimeout(() => {
+      signal?.removeEventListener?.("abort", onAbort);
+      resolve();
+    }, ms);
+    signal?.addEventListener?.("abort", onAbort, { once: true });
   });
 
 /** The Error a failed job becomes — shaped like the kit transport's (§15), so reportError reads it. */

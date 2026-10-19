@@ -34,7 +34,7 @@ import { onKeyStroke } from "@vueuse/core";
 import { stroke as brushStroke } from "just-house-paint-server/shared/masks.js";
 import { computed, onBeforeUnmount, onMounted, ref, shallowRef, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import { useRoute, useRouter } from "vue-router";
+import { onBeforeRouteLeave, onBeforeRouteUpdate, useRoute, useRouter } from "vue-router";
 import AiPhotoDialog from "../components/AiPhotoDialog.vue";
 import ColorsTab from "../components/ColorsTab.vue";
 import DesignsTab from "../components/DesignsTab.vue";
@@ -85,6 +85,8 @@ const deltaE = ref({});
 // { part: #rrggbb } — each part's color as photographed
 const photographed = ref({});
 let painter = null;
+// load() running: what it loads isn't a change to react to
+let loading = false;
 
 const texture = computed({
   get: () => ui.texture,
@@ -112,6 +114,7 @@ const photoTask = useSurfaceTask("aiphoto.render", houseMeta);
 const imagePath = (size) => `/v1/houses/${encodeURIComponent(house.house.id)}/image?size=${size}`;
 
 async function load() {
+  loading = true;
   loadFailed.value = null;
   painter = null;
   photo.value = null;
@@ -120,18 +123,29 @@ async function load() {
   history.reset();
   try {
     await Promise.all([house.open(route.params.id), paints.loadBrands(), engines.loadStatus(), settings.load()]);
-    await paints.paints([...Object.values(house.colors), ...Object.values(house.house.currentPaints || {})]);
+    // the paints the house names: its colors, its paints now and its designs' (Compare draws them at once)
+    const designPaints = house.designs.flatMap((d) => Object.values(d.colors));
+    await paints.paints([...Object.values(house.colors), ...Object.values(house.house.currentPaints || {}), ...designPaints]);
     await loadPhoto();
     const masks = await loadMasks(house.parts.map((p) => p.key));
-    history.reset({ colors: house.colors, masks });
+    history.reset({ colors: house.colors, designId: house.designId, masks });
     photographed.value = {};
     refreshPhotographed();
     repaint();
   } catch (e) {
     loadFailed.value = e;
+  } finally {
+    loading = false;
   }
 }
 onMounted(load);
+// leaving with colors on screen that no design holds: asked first, as opening another design is
+async function confirmLeave() {
+  if (!house.house || !house.dirty || !Object.keys(house.colors).length) return true;
+  return confirmDialog({ title: t("designs.discard.title"), message: t("house.leave.message"), confirmLabel: t("house.leave.confirm") });
+}
+onBeforeRouteLeave(confirmLeave);
+onBeforeRouteUpdate((to, from) => (to.params.id !== from.params.id ? confirmLeave() : true));
 watch(
   () => route.params.id,
   (id, old) => id && id !== old && load(),
@@ -145,7 +159,9 @@ async function loadPhoto() {
 }
 
 /** Load the parts' outlines from the server into the painter; resolves { key: PNG Blob }. A part
- *  without its file yet (added by hand) gets an empty outline, so the brush can draw it. */
+ *  without its file yet (added by hand, the server's 404) gets an empty outline, so the brush can draw
+ *  it; any other failure is reported and leaves the part without one — a stroke on an outline that
+ *  didn't load would save over the real one. */
 async function loadMasks(keys) {
   const { displayWidth: w, displayHeight: h, id } = house.house;
   const blobs = {};
@@ -155,8 +171,9 @@ async function loadMasks(keys) {
         const blob = await requestBlob(`/v1/houses/${encodeURIComponent(id)}/parts/${encodeURIComponent(key)}/mask?v=${house.maskVersions[key] || 0}`);
         painter.setMask(key, await maskOf(blob, w, h), texture.value);
         blobs[key] = blob;
-      } catch {
-        painter.setMask(key, new Uint8Array(w * h), texture.value);
+      } catch (e) {
+        if (e?.status === 404) painter.setMask(key, new Uint8Array(w * h), texture.value);
+        else reportError(e);
       }
     }),
   );
@@ -169,6 +186,22 @@ watch(
     if (!painter) return;
     const fresh = house.parts.map((p) => p.key).filter((k) => !painter.mask(k));
     if (fresh.length) await loadMasks(fresh);
+  },
+);
+
+/** The parts found again — here, or by the page this one replaced while the job ran: every outline
+ *  anew (the store bumped their versions), and the history starts over from them. */
+async function reloadParts() {
+  const masks = await loadMasks(house.parts.map((p) => p.key));
+  history.reset({ colors: house.colors, designId: house.designId, masks });
+  photographed.value = {};
+  refreshPhotographed();
+  repaint();
+}
+watch(
+  () => [house.house?.id, house.house?.partsFoundAt],
+  ([id, at], [oldId, oldAt]) => {
+    if (painter && !loading && id && id === oldId && at !== oldAt) reloadParts().catch(reportError);
   },
 );
 
@@ -193,7 +226,7 @@ function repaint() {
 watch(
   () => house.colors,
   async (colors) => {
-    history.record({ colors });
+    history.record({ colors, designId: house.designId });
     await paints.paints(Object.values(colors));
     repaint();
   },
@@ -269,7 +302,10 @@ const compareOptions = computed(() => [
   { value: "photo", label: t("house.compare.photo") },
   ...house.designs.map((d) => ({ value: d.id, label: d.name })),
 ]);
+// the latest refreshCompare — an earlier one that finishes later is dropped
+let compareSeq = 0;
 async function refreshCompare() {
+  const seq = ++compareSeq;
   const d = house.designs.find((x) => x.id === compareWith.value);
   // the photo as taken, under the same Light as the paint (else the comparison isn't fair)
   if (painter && compareWith.value === "photo" && light.value !== 1) {
@@ -283,6 +319,7 @@ async function refreshCompare() {
     return;
   }
   await paints.paints(Object.values(d.colors));
+  if (seq !== compareSeq || !painter) return;
   const { rgba } = painter.paint(hexOf(d.colors), order.value, { light: light.value, current: currentHex() });
   before.value = drawPixels(rgba, painter.width, painter.height, before.value?.width === painter.width ? before.value : null);
   version.value++;
@@ -291,7 +328,10 @@ watch(compareWith, refreshCompare);
 watch(
   () => house.designs,
   () => {
-    if (compareWith.value !== "off" && compareWith.value !== "photo" && !house.designs.some((d) => d.id === compareWith.value)) compareWith.value = "off";
+    if (compareWith.value === "off" || compareWith.value === "photo") return;
+    // the compared design deleted: nothing to compare; saved again: its new colors
+    if (!house.designs.some((d) => d.id === compareWith.value)) compareWith.value = "off";
+    else refreshCompare();
   },
 );
 
@@ -314,28 +354,28 @@ function findColor(hex) {
   tab.value = "colors";
 }
 
-// an outline's change is saved a moment after the last stroke on it — one timer per part
-const saveTimers = new Map();
+// an outline's change is saved a moment after the last stroke on it — one timer per part, to the
+// house it was drawn on
+const saveTimers = new Map(); // key → { timer, run }
 function scheduleSave(key, blob) {
-  clearTimeout(saveTimers.get(key));
-  saveTimers.set(
-    key,
-    setTimeout(async () => {
-      saveTimers.delete(key);
-      try {
-        await house.saveMask(key, blob);
-      } catch (e) {
-        reportError(e);
-      }
-    }, 600),
-  );
+  cancelSave(key);
+  const houseId = house.house.id;
+  const run = () => {
+    saveTimers.delete(key);
+    house.saveMask(key, blob, houseId).catch(reportError);
+  };
+  saveTimers.set(key, { timer: setTimeout(run, 600), run });
 }
 function cancelSave(key) {
-  clearTimeout(saveTimers.get(key));
+  clearTimeout(saveTimers.get(key)?.timer);
   saveTimers.delete(key);
 }
+// leaving the page saves what is still waiting (a stroke made just before Back isn't lost)
 onBeforeUnmount(() => {
-  for (const [key] of saveTimers) cancelSave(key);
+  for (const { timer, run } of [...saveTimers.values()]) {
+    clearTimeout(timer);
+    run();
+  }
 });
 
 async function onStroke({ points, radius, mode }) {
@@ -368,7 +408,7 @@ async function onBox(box) {
  *  saved to the server (it owns them). An outline the record doesn't have (a part added by hand
  *  after it) goes back to empty. */
 async function applyRecord(rec, prev) {
-  house.setColors(rec.colors);
+  house.setColors(rec.colors, rec.designId ?? null);
   const keys = [...new Set([...Object.keys(rec.masks), ...Object.keys(prev.masks)])];
   const changed = keys.filter((k) => rec.masks[k] !== prev.masks[k]);
   if (!changed.length || !painter) return;
@@ -381,13 +421,9 @@ async function applyRecord(rec, prev) {
   }
   refreshPhotographed(changed);
   repaint();
-  for (const key of changed) {
-    try {
-      await house.saveMask(key, blobs[key]);
-    } catch (e) {
-      reportError(e);
-    }
-  }
+  // saved without holding the history: a stroke made while they save is recorded as usual
+  const houseId = house.house.id;
+  for (const key of changed) house.saveMask(key, blobs[key], houseId).catch(reportError);
 }
 
 // Ctrl+Z / Ctrl+Y (and Ctrl+Shift+Z) — never while typing in a field
@@ -419,13 +455,8 @@ async function findParts() {
   }
   busy.value.find = true;
   try {
+    // the new parts' outlines load when the house's partsFoundAt changes (reloadParts)
     await house.findParts(t("house.find.task", { name: house.house.name }), findProgress);
-    // new parts: their outlines, and the history starts over from them
-    const masks = await loadMasks(house.parts.map((p) => p.key));
-    history.reset({ colors: house.colors, masks });
-    photographed.value = {};
-    refreshPhotographed();
-    repaint();
   } catch (e) {
     if (e?.name !== "AbortError") reportError(e);
   } finally {

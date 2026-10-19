@@ -45,6 +45,32 @@ beforeEach(() => {
 const HOUSE = { id: "h1", name: "Home", updatedAt: "2026-10-18T10:00:00Z", displayWidth: 4, displayHeight: 2 };
 
 describe("runServerJob", () => {
+  test("its waits between polls leave no listener behind on the task's signal", async () => {
+    let n = 0;
+    answer("GET /v1/jobs/j1", () => (++n < 4 ? { id: "j1", state: "running", progress: n / 4 } : { id: "j1", state: "done", result: 1 }));
+    const added = [];
+    const removed = [];
+    const real = AbortSignal.prototype.addEventListener;
+    const realRemove = AbortSignal.prototype.removeEventListener;
+    AbortSignal.prototype.addEventListener = function (type, fn, o) {
+      if (type === "abort") added.push(fn);
+      return real.call(this, type, fn, o);
+    };
+    AbortSignal.prototype.removeEventListener = function (type, fn, o) {
+      if (type === "abort") removed.push(fn);
+      return realRemove.call(this, type, fn, o);
+    };
+    try {
+      await runServerJob({ start: async () => ({ id: "j1", state: "running", progress: 0 }), feature: "x", label: "x", pollMs: 1 });
+    } finally {
+      AbortSignal.prototype.addEventListener = real;
+      AbortSignal.prototype.removeEventListener = realRemove;
+    }
+    // one for the job's own cancel, one per wait — every wait's taken off again
+    expect(added.length - 1).toBe(4);
+    expect(removed.length).toBe(4);
+  });
+
   test("polls the job until it ends and resolves with its result", async () => {
     let n = 0;
     answer("GET /v1/jobs/j1", () => (++n < 2 ? { id: "j1", state: "running", progress: 0.5 } : { id: "j1", state: "done", result: { parts: 3 } }));
@@ -169,6 +195,48 @@ describe("the open house", () => {
     await s.saveMask("trim", new Blob(["png"]));
     expect(s.parts.find((p) => p.key === "trim").area).toBe(7);
     expect(s.maskVersions.trim).toBe(2);
+  });
+
+  test("each long action writes only into the house it started on", async () => {
+    const s = await opened();
+    // an AI photo of h1 that ends after h2 opened: kept on the server, not listed under h2
+    let finish;
+    answer("POST /v1/houses/h1/aiphoto", () => new Promise((r) => (finish = r)));
+    const photo = s.aiPhoto("AI photo");
+    answer("GET /v1/houses/h2/parts", [{ key: "trim", paintable: true, area: 3 }]);
+    answer("GET /v1/houses/h2/designs", []);
+    answer("GET /v1/houses/h2/renders", []);
+    answer("GET /v1/houses/h2", { ...HOUSE, id: "h2", name: "Cabin" });
+    await s.open("h2");
+    finish({ id: "j1", state: "done", result: { id: "r1", houseId: "h1" } });
+    await photo;
+    expect(s.house.id).toBe("h2");
+    expect(s.renders).toEqual([]);
+    // a stroke drawn on h1 and saved after leaving it goes to h1, and leaves h2's parts alone
+    answer("PUT /v1/houses/h1/parts/body/mask", { key: "body", paintable: true, area: 9 });
+    await s.saveMask("body", new Blob(["png"]), "h1");
+    expect(calls.at(-1).slice(0, 2)).toEqual(["PUT", "/v1/houses/h1/parts/body/mask"]);
+    expect(s.parts.map((p) => p.key)).toEqual(["trim"]);
+  });
+
+  test("opening another house shows nothing of the last one while it loads; a late answer loses", async () => {
+    const s = await opened();
+    let slow;
+    answer("GET /v1/houses/h3/parts", () => new Promise((r) => (slow = r)));
+    answer("GET /v1/houses/h3/designs", []);
+    answer("GET /v1/houses/h3/renders", []);
+    answer("GET /v1/houses/h3", { ...HOUSE, id: "h3" });
+    const first = s.open("h3");
+    expect(s.house).toBeNull();
+    expect(s.parts).toEqual([]);
+    answer("GET /v1/houses/h4/parts", []);
+    answer("GET /v1/houses/h4/designs", []);
+    answer("GET /v1/houses/h4/renders", []);
+    answer("GET /v1/houses/h4", { ...HOUSE, id: "h4" });
+    await s.open("h4");
+    slow([{ key: "body", paintable: true, area: 1 }]);
+    await first;
+    expect(s.house.id).toBe("h4");
   });
 
   test("the AI photo sends the colors on screen and keeps the render", async () => {

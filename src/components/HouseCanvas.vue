@@ -40,6 +40,8 @@ const view = ref({ scale: 1, x: 0, y: 0 });
 const drawing = ref(null); // { points: [x, y, …] } while a stroke runs
 const boxing = ref(null); // { x0, y0, x1, y1 } while a box is drawn
 const pointer = ref(null);
+// the view is the fitted one (no zoom or pan since): a resize fits it again; a zoomed view stays
+let fitted = true;
 
 const imgW = computed(() => props.photo?.naturalWidth || props.photo?.width || 1);
 const imgH = computed(() => props.photo?.naturalHeight || props.photo?.height || 1);
@@ -51,6 +53,7 @@ const contentW = computed(() => offsetX.value + imgW.value);
 function fitToStage() {
   const s = Math.min(size.value.width / contentW.value, size.value.height / imgH.value) || 1;
   view.value = { scale: s, x: (size.value.width - contentW.value * s) / 2, y: (size.value.height - imgH.value * s) / 2 };
+  fitted = true;
 }
 /** The zoom buttons: by a step around the middle of the view. */
 const zoomBy = (factor) => zoomAt(view.value.scale * factor, size.value.width / 2, size.value.height / 2);
@@ -61,7 +64,7 @@ onMounted(() => {
   observer = new ResizeObserver(([entry]) => {
     const r = entry.contentRect;
     size.value = { width: Math.max(1, Math.floor(r.width)), height: Math.max(1, Math.floor(r.height)) };
-    fitToStage();
+    if (fitted) fitToStage();
   });
   observer.observe(host.value);
 });
@@ -87,6 +90,7 @@ function zoomAt(newScale, px, py, absolute = false) {
   const ix = (px - old.x) / old.scale;
   const iy = (py - old.y) / old.scale;
   view.value = { scale: s, x: px - ix * s, y: py - iy * s };
+  fitted = false;
 }
 
 function onWheel(e) {
@@ -97,6 +101,8 @@ function onWheel(e) {
 }
 
 let panFrom = null;
+// a mouse event's position, or a touch's first finger
+const clientOf = (evt) => ({ x: evt.touches?.[0]?.clientX ?? evt.clientX, y: evt.touches?.[0]?.clientY ?? evt.clientY });
 function onDown(e) {
   const pt = photoPoint();
   if (props.tool === "brush" || props.tool === "eraser") {
@@ -104,7 +110,8 @@ function onDown(e) {
   } else if (props.tool === "box") {
     if (inside(pt)) boxing.value = { x0: pt.x, y0: pt.y, x1: pt.x, y1: pt.y };
   } else {
-    panFrom = { x: e.evt.clientX, y: e.evt.clientY, view: { ...view.value }, moved: false };
+    const c = clientOf(e.evt);
+    panFrom = { x: c.x, y: c.y, view: { ...view.value }, moved: false };
   }
 }
 function onMove(e) {
@@ -113,10 +120,12 @@ function onMove(e) {
   if (drawing.value && pt) drawing.value = { points: [...drawing.value.points, pt.x, pt.y] };
   else if (boxing.value && pt) boxing.value = { ...boxing.value, x1: Math.min(imgW.value, Math.max(0, pt.x)), y1: Math.min(imgH.value, Math.max(0, pt.y)) };
   else if (panFrom) {
-    const dx = e.evt.clientX - panFrom.x;
-    const dy = e.evt.clientY - panFrom.y;
+    const c = clientOf(e.evt);
+    const dx = c.x - panFrom.x;
+    const dy = c.y - panFrom.y;
     if (Math.abs(dx) + Math.abs(dy) > 3) panFrom.moved = true;
     view.value = { ...panFrom.view, x: panFrom.view.x + dx, y: panFrom.view.y + dy };
+    if (panFrom.moved) fitted = false;
   }
 }
 function onUp() {
@@ -137,6 +146,13 @@ function onUp() {
     const pt = photoPoint();
     if (clicked && inside(pt)) emit("pick", { x: Math.floor(pt.x), y: Math.floor(pt.y) });
   }
+}
+
+/** The pointer left the canvas: a stroke, a box or a pan ends there (its button may be let go outside,
+ *  where the canvas never hears it). */
+function onLeave() {
+  pointer.value = null;
+  if (drawing.value || boxing.value || panFrom) onUp();
 }
 
 const imageConfig = computed(() => ({ image: props.painted || props.photo, width: imgW.value, height: imgH.value }));
@@ -173,7 +189,7 @@ const splitLine = computed(() => (props.split === null || props.sideBySide ? nul
     <v-stage
       v-if="photo" ref="stage" :config="{ width: size.width, height: size.height }"
       @wheel="onWheel" @mousedown="onDown" @touchstart="onDown" @mousemove="onMove" @touchmove="onMove"
-      @mouseup="onUp" @touchend="onUp" @mouseleave="pointer = null"
+      @mouseup="onUp" @touchend="onUp" @mouseleave="onLeave"
     >
       <v-layer>
         <v-group :config="groupConfig">

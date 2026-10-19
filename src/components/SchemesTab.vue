@@ -56,19 +56,24 @@ const ai = ref([]);
 const mood = ref("");
 const busy = ref({ harmony: false, ai: false });
 
+// the latest load — an earlier one that answers later (another base or brand) is dropped
+let harmonySeq = 0;
 async function loadHarmony() {
+  const seq = ++harmonySeq;
   harmony.value = [];
   coordinating.value = [];
+  busy.value.harmony = false;
   if (!base.value || !brand.value) return;
   busy.value.harmony = true;
   try {
     const [h, c] = await Promise.all([paints.harmony(base.value.id, brand.value), paints.coordinating(base.value.id).catch(() => [])]);
+    if (seq !== harmonySeq) return;
     harmony.value = h;
     coordinating.value = c;
   } catch (e) {
-    reportError(e);
+    if (seq === harmonySeq) reportError(e);
   } finally {
-    busy.value.harmony = false;
+    if (seq === harmonySeq) busy.value.harmony = false;
   }
 }
 watch([() => base.value?.id, brand], loadHarmony, { immediate: true });

@@ -285,6 +285,10 @@
       "outHint": "Zoom out",
       "fit": "Fit",
       "fitHint": "Fit the photo to the view"
+    },
+    "leave": {
+      "message": "The colors on screen have changes that aren't saved in a design. Leaving the house drops them.",
+      "confirm": "Leave"
     }
   },
   "parts": {

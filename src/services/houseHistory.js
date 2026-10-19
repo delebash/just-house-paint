@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // The house page's Undo / Redo (Ctrl+Z, Ctrl+Y) — VueUse's useManualRefHistory (vueuse.org/core/
-// useManualRefHistory) over one record: the colors on screen and every part's outline as a PNG Blob.
+// useManualRefHistory) over one record: the colors on screen, the design they belong to, and every
+// part's outline as a PNG Blob.
 // A Blob is shared, never copied, so a record costs only what changed: a brush stroke adds one PNG,
 // a color change nothing but the colors. Undo and Redo hand the record back to `apply(record,
 // previous)` — the page repaints and saves the outlines that changed (the server owns them).
@@ -14,10 +15,10 @@ const sameColors = (a, b) => {
 };
 
 export function useHouseHistory({ apply, capacity = 50 }) {
-  const state = shallowRef({ colors: {}, masks: {} });
+  const state = shallowRef({ colors: {}, designId: null, masks: {} });
   const history = useManualRefHistory(state, {
     capacity,
-    clone: (v) => ({ colors: { ...v.colors }, masks: { ...v.masks } }),
+    clone: (v) => ({ colors: { ...v.colors }, designId: v.designId, masks: { ...v.masks } }),
   });
   let moving = false;
 
@@ -38,20 +39,25 @@ export function useHouseHistory({ apply, capacity = 50 }) {
     canUndo: history.canUndo,
     canRedo: history.canRedo,
     /** Start over from this record — a house opened, its parts found again. */
-    reset({ colors = {}, masks = {} } = {}) {
-      state.value = { colors: { ...colors }, masks: { ...masks } };
+    reset({ colors = {}, designId = null, masks = {} } = {}) {
+      state.value = { colors: { ...colors }, designId, masks: { ...masks } };
       // commit makes this the history's current record (VueUse keeps it apart from the stacks),
       // clear then drops what came before — without the commit, the first Undo went back to the
       // record from before the reset
       history.commit();
       history.clear();
     },
-    /** A change to record: new colors, or the outlines that changed ({ key: Blob }). A color change
-     *  equal to the current record (an Undo putting colors back) records nothing. */
-    record({ colors, masks } = {}) {
+    /** A change to record: new colors (with the design they belong to), or the outlines that changed
+     *  ({ key: Blob }). Colors and design equal to the current record (an Undo putting colors back)
+     *  record nothing. */
+    record({ colors, designId, masks } = {}) {
       if (moving) return;
-      const next = { colors: colors ?? state.value.colors, masks: masks ? { ...state.value.masks, ...masks } : state.value.masks };
-      if (!masks && sameColors(next.colors, state.value.colors)) return;
+      const next = {
+        colors: colors ?? state.value.colors,
+        designId: designId === undefined ? state.value.designId : designId,
+        masks: masks ? { ...state.value.masks, ...masks } : state.value.masks,
+      };
+      if (!masks && sameColors(next.colors, state.value.colors) && next.designId === state.value.designId) return;
       state.value = next;
       history.commit();
     },

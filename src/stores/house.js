@@ -8,6 +8,9 @@ import { runServerJob } from "../services/jobs.js";
 
 const hp = (id, rest = "") => `/v1/houses/${encodeURIComponent(id)}${rest}`;
 
+// the latest open() — an earlier one that answers later is dropped
+let openSeq = 0;
+
 /**
  * A scheme's colors as { part: paintId } for the parts this house has. `roleParts` says which parts
  * each of the scheme's roles paints — the `schemes.roleParts` setting (Settings → General).
@@ -83,9 +86,13 @@ export const useHouseStore = defineStore("house", {
   },
   actions: {
     async open(id) {
+      const seq = ++openSeq;
       this.loading = true;
+      // another house: nothing of the last one shows (or is acted on) while this one loads
+      if (this.house?.id !== id) Object.assign(this, { house: null, parts: [], designs: [], renders: [] });
       try {
         const [house, parts, designs, renders] = await Promise.all([get(hp(id)), get(hp(id, "/parts")), get(hp(id, "/designs")), get(hp(id, "/renders"))]);
+        if (seq !== openSeq) return;
         Object.assign(this, { house, parts, designs, renders, colors: {}, designId: null, maskVersions: {}, pickedColor: null, trimOffer: null });
         this.selectedPart = this.paintableParts[0]?.key ?? null;
       } finally {
@@ -100,8 +107,12 @@ export const useHouseStore = defineStore("house", {
     /** Find the parts (a server job on the task strip); `label` names it there. */
     /** `describe(job, percent)` words its progress (the part being found) — see services/jobs.js. */
     async findParts(label, describe) {
-      await runServerJob({ start: () => post(hp(this.house.id, "/find-parts")), feature: "parts.find", label, meta: { houseId: this.house.id }, describe });
-      const [house, parts] = await Promise.all([get(hp(this.house.id)), get(hp(this.house.id, "/parts"))]);
+      const id = this.house.id;
+      await runServerJob({ start: () => post(hp(id, "/find-parts")), feature: "parts.find", label, meta: { houseId: id }, describe });
+      // another house opened meanwhile: this one's parts are on the server, read when it opens again
+      if (this.house?.id !== id) return;
+      const [house, parts] = await Promise.all([get(hp(id)), get(hp(id, "/parts"))]);
+      if (this.house?.id !== id) return;
       this.house = house;
       this.parts = parts;
       this.bumpMasks(parts.map((p) => p.key));
@@ -109,15 +120,19 @@ export const useHouseStore = defineStore("house", {
     },
     /** What is inside a box (display pixels) joins the part (`add`) or leaves it (`remove`). */
     async box(key, box, mode = "add") {
-      const r = await post(hp(this.house.id, `/parts/${encodeURIComponent(key)}/box`), { ...box, mode });
+      const id = this.house.id;
+      const r = await post(hp(id, `/parts/${encodeURIComponent(key)}/box`), { ...box, mode });
+      if (this.house?.id !== id) return [];
       this.parts = r.parts;
       this.bumpMasks(r.changed);
       return r.changed;
     },
-    /** The brush's result for one part: a PNG Blob at the display size. */
-    async saveMask(key, pngBlob) {
+    /** The brush's result for one part: a PNG Blob at the display size, saved to `houseId` — the house
+     *  it was drawn on (a save can run after the page left it). */
+    async saveMask(key, pngBlob, houseId = this.house.id) {
       // raw PNG bytes (the kit's put() would send JSON)
-      const part = await request(hp(this.house.id, `/parts/${encodeURIComponent(key)}/mask`), { method: "PUT", headers: { "Content-Type": "image/png" }, body: pngBlob });
+      const part = await request(hp(houseId, `/parts/${encodeURIComponent(key)}/mask`), { method: "PUT", headers: { "Content-Type": "image/png" }, body: pngBlob });
+      if (this.house?.id !== houseId) return part;
       this.parts = this.parts.map((p) => (p.key === key ? part : p));
       this.bumpMasks([key]);
       return part;
@@ -131,11 +146,14 @@ export const useHouseStore = defineStore("house", {
     /** The paint part `key` has NOW (null clears it): the light on it is worked out from it. Kept on the
      *  server with the house (finding the parts again keeps it). */
     async setCurrentPaint(key, paintId) {
+      const id = this.house.id;
       const { [key]: _, ...rest } = this.house.currentPaints || {};
-      this.house = await put(hp(this.house.id, "/current-paints"), paintId ? { ...rest, [key]: paintId } : rest);
+      const house = await put(hp(id, "/current-paints"), paintId ? { ...rest, [key]: paintId } : rest);
+      if (this.house?.id === id) this.house = house;
     },
-    /** The colors on screen replaced whole (an Undo, a Redo). */
-    setColors(colors) {
+    /** The colors on screen replaced whole, and the design they belong to (an Undo, a Redo). */
+    setColors(colors, designId = this.designId) {
+      this.designId = designId;
       this.colors = { ...colors };
     },
     /** Reset (a): every paint taken off — the photo as taken. */
@@ -208,8 +226,10 @@ export const useHouseStore = defineStore("house", {
     },
     /** An AI photo of the colors on screen (a server job). Resolves with the kept render. */
     async aiPhoto(label) {
-      const render = await runServerJob({ start: () => post(hp(this.house.id, "/aiphoto"), { colors: this.colors }), feature: "aiphoto.render", label, meta: { houseId: this.house.id } });
-      this.renders = [render, ...this.renders];
+      const id = this.house.id;
+      const render = await runServerJob({ start: () => post(hp(id, "/aiphoto"), { colors: this.colors }), feature: "aiphoto.render", label, meta: { houseId: id } });
+      // kept with its house on the server; listed here only while that house is open
+      if (this.house?.id === id) this.renders = [render, ...this.renders];
       return render;
     },
     async deleteRender(id) {

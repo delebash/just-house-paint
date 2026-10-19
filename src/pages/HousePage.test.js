@@ -18,7 +18,7 @@ import { createPinia } from "pinia";
 import * as quasar from "quasar";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { h } from "vue";
-import { createMemoryHistory, createRouter } from "vue-router";
+import { createMemoryHistory, createRouter, RouterView } from "vue-router";
 import { i18n } from "../i18n/index.js";
 
 const W = 8;
@@ -117,7 +117,8 @@ async function mountPage() {
   const router = createRouter({ history: createMemoryHistory(), routes: [{ path: "/house/:id", component: HousePage }, { path: "/", component: { render: () => null } }] });
   router.push("/house/h1");
   await router.isReady();
-  const Host = { render: () => [h(quasar.QLayout, { view: "hhh lpr fff" }, () => h(quasar.QPageContainer, () => h(HousePage))), h(LlmUiHosts)] };
+  // the page under the router's view, as in the app (its route guards need the matched record)
+  const Host = { render: () => [h(quasar.QLayout, { view: "hhh lpr fff" }, () => h(quasar.QPageContainer, () => h(RouterView))), h(LlmUiHosts)] };
   wrapper = mount(Host, {
     attachTo: document.body,
     global: {
@@ -351,6 +352,24 @@ test("the colors in color order by default, or by name — the choice kept; a Co
   // back to the default, for the tests after this one (the kit's prefs are one document per app)
   await click(byText(".ui-seg button", "Color"));
   expect(readPref("paintOrder")).toBe("color");
+});
+
+test("leaving the house with colors no design holds asks first; No stays, Yes leaves", async () => {
+  server.parts = PARTS;
+  await mountPage();
+  const router = wrapper.vm.$router;
+  await paintBody();
+  router.push("/");
+  await flushPromises();
+  expect(text()).toContain("Leaving the house drops them");
+  _resolveDialog(false);
+  await flushPromises();
+  expect(router.currentRoute.value.path).toBe("/house/h1");
+  router.push("/");
+  await flushPromises();
+  _resolveDialog(true);
+  await flushPromises();
+  expect(router.currentRoute.value.path).toBe("/");
 });
 
 test("finding the parts shows its progress on the page — not twice in the global stack — and its button waits", async () => {

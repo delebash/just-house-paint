@@ -8,7 +8,7 @@
 // page's (the app ships no brand data).
 import { EmptyState, reportError, schemaRules, UiButton, UiColorPicker, UiField, UiInput, UiSegmented, UiSelect, UiTag, UiToggle } from "@delebash/ui";
 import { NearestQuery } from "just-house-paint-server/schemas/paints.js";
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import { partName } from "../services/partNames.js";
@@ -69,8 +69,11 @@ onMounted(() => {
 });
 
 let timer = null;
+// the latest search — an earlier one that answers later is dropped (a filter changed under it)
+let searchSeq = 0;
 async function search(more = false) {
   if (!brand.value) return;
+  const seq = ++searchSeq;
   searching.value = true;
   try {
     const page = await paints.search({
@@ -83,14 +86,16 @@ async function search(more = false) {
       limit: PAGE,
       offset: more ? rows.value.length : 0,
     });
+    if (seq !== searchSeq) return;
     rows.value = more ? [...rows.value, ...page.rows] : page.rows;
     total.value = page.total;
   } catch (e) {
-    reportError(e);
+    if (seq === searchSeq) reportError(e);
   } finally {
-    searching.value = false;
+    if (seq === searchSeq) searching.value = false;
   }
 }
+onBeforeUnmount(() => clearTimeout(timer));
 watch([brand, exterior, archived, order, colorFamily], () => search(), { immediate: true });
 // a family taken out of the setting is no longer a filter
 watch(familyOptions, (opts) => {
@@ -238,7 +243,7 @@ async function match() {
         <UiField :label="t('colors.exact.hex')" layout="block" for="exact-hex">
           <UiInput id="exact-hex" v-model="hex" width="token" @update:model-value="picked = false" :placeholder="t('colors.exact.placeholder')" lazy-rules :rules="hexRule" />
         </UiField>
-        <UiColorPicker v-model="hex" :aria-label="t('colors.exact.pick')" />
+        <UiColorPicker v-model="hex" :aria-label="t('colors.exact.pick')" @update:model-value="picked = false" />
         <UiButton type="submit" intent="secondary" :label="t('colors.exact.match')" />
       </q-form>
       <p v-if="picked" class="hint">{{ t("colors.exact.picked") }}</p>

@@ -8,7 +8,7 @@ function harness() {
   const applied = [];
   const h = useHouseHistory({
     apply: async (rec, prev) => {
-      applied.push({ colors: rec.colors, changedMasks: Object.keys(rec.masks).filter((k) => rec.masks[k] !== prev.masks[k]) });
+      applied.push({ colors: rec.colors, designId: rec.designId, changedMasks: Object.keys(rec.masks).filter((k) => rec.masks[k] !== prev.masks[k]) });
     },
   });
   return { h, applied };
@@ -51,6 +51,20 @@ describe("useHouseHistory", () => {
     h.reset({ colors: { body: "p:1" } });
     h.record({ colors: { body: "p:1" } });
     expect(h.canUndo.value).toBe(false);
+  });
+
+  test("the open design goes with the colors: Undo after opening a design puts the draft back without it", async () => {
+    const { h, applied } = harness();
+    h.reset({ colors: { body: "p:draft" } });
+    h.record({ colors: { body: "p:x" }, designId: "dX" });
+    await h.undo();
+    expect(applied.at(-1)).toMatchObject({ colors: { body: "p:draft" }, designId: null });
+    await h.redo();
+    expect(applied.at(-1)).toMatchObject({ colors: { body: "p:x" }, designId: "dX" });
+    // the same colors under another design are a change too
+    h.record({ colors: { body: "p:x" }, designId: "dY" });
+    expect(h.canUndo.value).toBe(true);
+    expect(h.current().designId).toBe("dY");
   });
 
   test("reset starts over", () => {
