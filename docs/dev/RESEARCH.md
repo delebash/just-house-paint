@@ -812,3 +812,23 @@ Playwright against that server. Screenshots: session e638ccef's scratchpad `real
     copy (`.raw()`, what the finder and the AI schemes do) still gets sRGB (141/131/105) — so the server's readers
     need no change. Today's copy (converted at intake): 140/130/103, no profile.
 
+## 12 · The installed app and the first release (2026-10-19)
+
+- **Playwright can't drive the installed app.** The packaged build sets Electron's fuses
+  (`quasar.config.js` `electronFuses`; electronjs.org/docs/latest/tutorial/fuses), which turn off the
+  `--inspect` / remote-debugging switches Playwright's `_electron.launch` needs: the launch timed out
+  at 90 s. The e2e smoke drives the unfused UnPackaged build on purpose. The installed app was checked
+  the way a user starts it: the exe started with `JUST_HOUSE_PAINT_DATA_DIR` (the data-folder ladder's
+  first rung) or none, its own server's `/v1/*` asked, its window captured with `PrintWindow`
+  (`PW_RENDERFULLCONTENT`; a screen copy took whatever covered the window), closed with its window's close.
+- **Measured on the installed v0.1.0** (Windows, per-user install `%LOCALAPPDATA%\Programs\justhousepaint`):
+  the server up 1.3–2.2 s after the exe starts; an older install's data folder (10/18) opens on 0.1.0
+  with its seven brands; a fresh folder loads the brands by themselves; the user's house photo
+  (2048×700 display copy) gets 10 parts in 63.7 s from a cold start (the model loaded first); closing
+  the window leaves no process and frees 17499.
+- **The first release run** (39301532253): ~6 minutes, all three runners; the feed files name exactly
+  the files attached. The AppImage's block map is inside it (`blockMapSize` in latest-linux.yml), so
+  Linux has no `.blockmap` file. GitHub says `ubuntu-latest` moves to Ubuntu 26 from 2026-10-19 (the
+  setup job only) and that actions/checkout@v4 and setup-node@v4 run forced onto Node 24.
+- **`execSync` with stdout inherited returns null** (Node's child_process docs): release.js trimmed it
+  and reported the started run as failed.

@@ -107,11 +107,6 @@ OPEN:   - the user's house: the gable medallions in the body are left for the Er
         - the phone build: the server bundle can't carry sharp, onnxruntime-node or sd-cli; Capacitor stays
           for later (PRD: out of scope for v1).
 
-## What's next — the go [2026-10-18]
-GO:     the user, verbatim: "your rec go" (2026-10-18), on 1–5 of "whats next on this app": 1–4 done (the template
-        audit's fixes here, trim words measured, the old design's trim offer, Paint colors' mounted test).
-OPEN:   5. the installer built, installed as a user would, run on the user's house — with the release (below).
-
 ## Wide-color photos — the most accurate colors [2026-10-18]
 ASKED:  the user, verbatim: "the orignal picture is different color from one uploaded in our current dev app, why";
         "example orig is on left one in our app is on right the colors do not match it should be same photo";
@@ -266,9 +261,17 @@ ORDER (mine, attacked against "everything, then one release"): v0.1.0 once this 
         the kit and template items (the Settings sections into the kit, the warm-start help, the upload example,
         the phone, the browser's token); what of those reaches this app ships as v0.1.1 — which also proves the
         installed v0.1.0 updates itself, the one path nothing else tests.
-STATE:  BUILT, reviewed and fixed (below); every choice decided (above). The leftover server on 17499 stopped
-        (2026-10-19); the smoke 13/13 once its version literal read package.json. Left: the installed app, the
-        tag v0.1.0, the release workflow.
+STATE:  RELEASED v0.1.0 2026-10-19 — https://github.com/delebash/just-house-paint/releases/tag/v0.1.0 (tag 96fec1d,
+        the kit at 6179b0b; run 39301532253, all three platforms): the Windows .exe, the macOS (Apple silicon) .dmg
+        and .zip, the Linux AppImage, their blockmaps and latest.yml / latest-mac.yml / latest-linux.yml, every file
+        the feeds name present. Before the tag: the smoke 13/13 on the kit's release commit; the installer built
+        and installed (per user, /S) and started as a user starts it (RESEARCH §12): an older install's data folder
+        upgraded (version 0.1.0, its seven brands), a fresh folder (brands loading by themselves), the user's house
+        photo with its parts found by the INSTALLED app (10 parts, 63.7 s — the packaged onnxruntime-node and
+        sharp), the window's close stopping every process. Found and fixed on the way: the smoke's version literal;
+        a release now builds the kit's tested commit (`core_ref`, the guard's check 19); release.js said a started
+        run had failed (execSync's null).
+NEXT:   v0.1.1 — the kit and template items (ORDER above), then the installed v0.1.0 updating itself to it.
 
 ## The review before the release [2026-10-18]
 FOUND (a read-only review of the renderer, each traced through the code; to fix before the release):
