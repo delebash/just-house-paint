@@ -6,6 +6,7 @@ import path from "node:path";
 import sharp from "sharp";
 import { afterEach, describe, expect, test } from "vitest";
 import { nameFromFile } from "../src/api/houses_api.js";
+import { maskPath } from "../src/files.js";
 import { fakeFinder, jpeg, makeServer } from "./domain_helpers.js";
 
 let s;
@@ -42,6 +43,10 @@ describe("houses", () => {
     expect((await missing.json()).errors[0].loc).toEqual(["body", "file"]);
     const big = await s.upload(Buffer.alloc(2_000_001, 1), "huge.jpg");
     expect(big.status).toBe(413);
+    // far over: refused while it streams in (uploadLimit), before the form is read whole
+    const huge = await s.upload(Buffer.alloc(3_000_000, 1), "huge.jpg");
+    expect(huge.status).toBe(413);
+    expect(await huge.json()).toMatchObject({ type: "https://just-house-paint.local/errors/photo-too-large", detail: "the upload is over 2 MB" });
     // nothing was left behind
     expect((await (await s.app.request("/v1/houses")).json()).length).toBe(0);
   });
@@ -201,4 +206,43 @@ describe("designs", () => {
     expect(s.db.value("SELECT count(*) FROM design_colors")).toBe(0);
     expect(s.db.value("SELECT count(*) FROM parts")).toBe(0);
   });
+});
+
+test("a name of only spaces is refused; a photo whose pixels can't be read is a 415, not a 500", async () => {
+  s = makeServer();
+  const house = await (await s.upload(await jpeg(64, 48))).json();
+  const blank = await s.json("PATCH", `/v1/houses/${house.id}`, { name: "   " });
+  expect(blank.status).toBe(422);
+  expect((await s.json("POST", `/v1/houses/${house.id}/designs`, { name: "  " })).status).toBe(422);
+  // a JPEG cut off part-way: its header reads, its pixels don't
+  const whole = await jpeg(640, 480);
+  const cut = await s.upload(whole.subarray(0, Math.floor(whole.length / 3)));
+  expect(cut.status).toBe(415);
+  expect((await (await s.app.request("/v1/houses")).json()).map((h) => h.id)).toEqual([house.id]);
+});
+
+test("finding the parts again removes the outlines of parts not found this time", async () => {
+  s = makeServer();
+  const house = await (await s.upload(await jpeg(64, 48))).json();
+  await s.settle((await (await s.json("POST", `/v1/houses/${house.id}/find-parts`)).json()).id);
+  expect((await s.json("POST", `/v1/houses/${house.id}/parts`, { key: "shed" })).status).toBe(201);
+  await s.app.request(`/v1/houses/${house.id}/parts/shed/mask`, { method: "PUT", headers: { "content-type": "image/png" }, body: await sharp({ create: { width: 4, height: 4, channels: 3, background: "#fff" } }).png().toBuffer() });
+  const file = maskPath(s.dataDir, house.id, "shed");
+  expect(existsSync(file)).toBe(true);
+  await s.settle((await (await s.json("POST", `/v1/houses/${house.id}/find-parts`)).json()).id);
+  expect(existsSync(file)).toBe(false);
+});
+
+test("deleting a house stops its running work", async () => {
+  s = makeServer();
+  const house = await (await s.upload(await jpeg(64, 48))).json();
+  const job = s.ctx.jobs.start({ kind: "find-parts", key: house.id }, ({ signal }) =>
+    new Promise((_, no) => {
+      const stop = () => no(Object.assign(new Error("x"), { name: "AbortError" }));
+      if (signal.aborted) stop();
+      else signal.addEventListener("abort", stop);
+    }),
+  );
+  expect((await s.app.request(`/v1/houses/${house.id}`, { method: "DELETE" })).status).toBe(204);
+  expect((await s.settle(job.id)).state).toBe("cancelled");
 });

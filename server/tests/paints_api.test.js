@@ -93,6 +93,23 @@ describe("brands", () => {
     expect(behr.paintCount).toBe(0);
   });
 
+  test("colors without a number are left out with a warning — never stored as one shared row", async () => {
+    s = makeServer();
+    const csv = ["name,hex", "Pale Ecru,#efe6d2", "Deep Sea,#123456", "Moss,#55663a"].join("\n");
+    const form = new FormData();
+    form.append("file", new Blob([csv]), "valspar-names.csv");
+    form.append("brand", "valspar");
+    const r = await s.app.request("/v1/paints/import", { method: "POST", body: form });
+    expect(r.status).toBe(422);
+    expect((await r.json()).detail).toMatch(/3 colors without a number left out/);
+    const mixed = new FormData();
+    mixed.append("file", new Blob([["code,name,hex", "1001,Pale Ecru,#efe6d2", ",Deep Sea,#123456"].join("\n")]), "valspar.csv");
+    mixed.append("brand", "valspar");
+    const ok = await (await s.app.request("/v1/paints/import", { method: "POST", body: mixed })).json();
+    expect(ok).toMatchObject({ paintCount: 1, warnings: ["1 colors without a number left out"] });
+    expect((await (await s.app.request("/v1/brands")).json()).find((b) => b.key === "valspar").paintCount).toBe(1);
+  });
+
   test("an official palette file is imported for its brand; clearing a brand removes its colors", async () => {
     s = makeServer();
     const rgb01 = (r, g, b) => [r / 255, g / 255, b / 255];

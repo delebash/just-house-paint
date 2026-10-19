@@ -7,7 +7,7 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, test } from "vitest";
 import { createAiPhoto, surfaceWords } from "../src/aiphoto_service.js";
-import { MODEL_FILES as SD_FILES } from "../src/aiphoto/engine.js";
+import { ENGINE_RELEASES, MODEL_FILES as SD_FILES, selectEngineAsset } from "../src/aiphoto/engine.js";
 import { createFinder, resolveOverlaps } from "../src/finder.js";
 import { MODEL_FILES as SAM_FILES } from "../src/segment/models.js";
 import { fakeFinder, jpeg, makeServer } from "./domain_helpers.js";
@@ -121,12 +121,15 @@ describe("createFinder", () => {
 });
 
 describe("the engine routes", () => {
-  function aiphotoFactory(calls) {
+  const GPU = { gpus: [{ vendor: "nvidia", vram_mb: 8192 }] };
+  // installed = the pinned release, for the backend this computer's card picks
+  const PINNED = selectEngineAsset(ENGINE_RELEASES.pinned, { platform: process.platform, arch: process.arch, gpu: GPU });
+  function aiphotoFactory(calls, { tag = PINNED.tag } = {}) {
     return (ctx) => {
       const engineDir = scratch();
       const modelDir = scratch();
-      mkdirSync(path.join(engineDir, "master-973", "cuda12"), { recursive: true });
-      writeFileSync(path.join(engineDir, "master-973", "cuda12", ".aiphoto-engine.json"), "{}");
+      mkdirSync(path.join(engineDir, tag, PINNED.backend), { recursive: true });
+      writeFileSync(path.join(engineDir, tag, PINNED.backend, ".aiphoto-engine.json"), "{}");
       for (const m of Object.values(SD_FILES)) writeFileSync(path.join(modelDir, m.file), "x");
       return createAiPhoto({
         dataDir: ctx.dataDir,
@@ -134,7 +137,7 @@ describe("the engine routes", () => {
         modelDir,
         finder: ctx.finder,
         stopLocalModel: async () => calls.push("stopLocalModel"),
-        detectGpu: async () => ({ gpus: [{ vendor: "nvidia", vram_mb: 8192 }] }),
+        detectGpu: async () => GPU,
         settings: { templates: () => undefined, compose: () => undefined, workingSize: () => ({ width: 320, height: 240 }) },
         ensureEngine: async () => "C:/engine/sd-cli.exe",
         ensureModels: async () => ({ diffusion: "d", llm: "l", vae: "v" }),
@@ -147,6 +150,44 @@ describe("the engine routes", () => {
       });
     };
   }
+
+  test("an engine of an older release isn't the installed one: Install offers the pinned one", async () => {
+    s = makeServer({ aiphoto: aiphotoFactory([], { tag: "master-1-old" }) });
+    const st = await (await s.app.request("/v1/aiphoto/status")).json();
+    expect(st.engineInstalled).toBe(false);
+    expect(st.downloadBytes).toBeGreaterThan(0);
+  });
+
+  test("a design deleted while its AI photo is drawn: the AI photo is kept, without the link; a second one waits", async () => {
+    let release;
+    const calls = [];
+    const factory = aiphotoFactory(calls);
+    s = makeServer({
+      aiphoto: (ctx) => {
+        const real = factory(ctx);
+        return { ...real, render: async (...a) => (await new Promise((r) => (release = r)), real.render(...a)) };
+      },
+    });
+    const house = await (await s.upload(await jpeg(200, 150))).json();
+    await s.settle((await (await s.json("POST", `/v1/houses/${house.id}/find-parts`)).json()).id);
+    const form = new FormData();
+    form.append("file", new Blob(["code,name,hex\nX-1,Brick Red,#a33a2f"]), "p.csv");
+    form.append("brand", "behr");
+    await s.app.request("/v1/paints/import", { method: "POST", body: form });
+    const design = await (await s.json("POST", `/v1/houses/${house.id}/designs`, { name: "Blue", colors: { body: "behr:X-1" } })).json();
+    const job = await (await s.json("POST", `/v1/houses/${house.id}/aiphoto`, { designId: design.id })).json();
+    // a second AI photo, of this house or another, waits for the graphics card
+    const again = await s.json("POST", `/v1/houses/${house.id}/aiphoto`, { designId: design.id });
+    expect(again.status).toBe(409);
+    expect((await again.json()).type).toMatch(/gpu-busy$/);
+    expect((await s.app.request(`/v1/designs/${design.id}`, { method: "DELETE" })).status).toBe(204);
+    while (!release) await new Promise((r) => setTimeout(r, 5));
+    release();
+    const done = await s.settle(job.id);
+    expect(done.state).toBe("done");
+    expect(done.result.designId).toBeNull();
+    expect((await (await s.app.request(`/v1/houses/${house.id}/renders`)).json()).map((r) => r.id)).toEqual([done.result.id]);
+  });
 
   test("status and install of both engines", async () => {
     s = makeServer({ aiphoto: aiphotoFactory([]) });

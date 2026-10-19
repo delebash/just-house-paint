@@ -23,8 +23,11 @@ export const ImageQuery = T.Object({
   v: opt(T.String({ maxLength: 80 })),
 });
 
+/** A name a person gives: something besides spaces (the routes trim it). */
+const Name = (maxLength) => T.String({ minLength: 1, maxLength, pattern: "\\S" });
+
 export const HousePatch = strictObject({
-  name: T.String({ minLength: 1, maxLength: 80 }),
+  name: Name(80),
 });
 
 /** PUT /v1/houses/:id/current-paints — the paint each part has now, { part: paintId }, the whole map. */
@@ -38,12 +41,12 @@ export const DesignColors = T.Record(T.String({ pattern: PART_KEY }), T.Union([T
 });
 
 export const DesignIn = strictObject({
-  name: T.String({ minLength: 1, maxLength: 60 }),
+  name: Name(60),
   colors: opt(DesignColors, {}),
 });
 
 export const DesignPatch = strictObject({
-  name: opt(T.String({ minLength: 1, maxLength: 60 })),
+  name: opt(Name(60)),
   colors: opt(DesignColors),
 });
 

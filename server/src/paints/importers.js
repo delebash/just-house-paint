@@ -201,7 +201,10 @@ export async function importFile(buffer, filename, { brand, mapping, patterns = 
   } else {
     throw new Error(`${filename}: not a format this app reads (.ase, .aco, .xlsx, .csv)`);
   }
-  const rows = dedupeByCode(out.rows);
-  if (rows.length < out.rows.length) out.warnings.push(`${out.rows.length - rows.length} repeated codes dropped`);
+  // a paint is kept by its number (its id is <brand>:<number>): a color without one can't be stored
+  const numbered = out.rows.filter((r) => r.code);
+  if (numbered.length < out.rows.length) out.warnings.push(`${out.rows.length - numbered.length} colors without a number left out`);
+  const rows = dedupeByCode(numbered);
+  if (rows.length < numbered.length) out.warnings.push(`${numbered.length - rows.length} repeated codes dropped`);
   return { format, rows, warnings: out.warnings };
 }

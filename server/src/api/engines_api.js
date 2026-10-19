@@ -4,6 +4,7 @@
 // (a job), and the AI photos kept.
 
 import { existsSync, readFileSync, rmSync } from "node:fs";
+import { assertGpuFree } from "../jobs.js";
 import { Hono, input } from "@delebash/core/platform";
 import { ApiError, notFound } from "@delebash/core/platform/errors";
 import { addRender, deleteRender, getDesign, getHouse, getRender, listParts, listRenders } from "../database/houses.js";
@@ -71,10 +72,18 @@ export function router(ctx = getState()) {
     const surfaces = Object.entries(chosen)
       .filter(([key, id]) => id && paintable.has(key) && paints[id])
       .map(([key, id]) => ({ key, hex: paints[id].hex, name: paints[id].name, currentHex: paints[now[key]]?.hex ?? null }));
+    assertGpuFree(ctx.jobs, "aiphoto", house.id);
     const job = ctx.jobs.start({ kind: "aiphoto", key: house.id, label: house.name }, async ({ signal, progress }) => {
       const renderId = crypto.randomUUID();
       const r = await ctx.aiphoto.render(house, surfaces, { renderId, signal, progress });
-      return addRender(ctx.db, { houseId: house.id, designId: designId || null, file: r.file, engine: r.engine, deltaE: r.deltaE, seconds: r.seconds });
+      // the design deleted while it rendered: the AI photo stays, without the link
+      const keepDesign = designId && getDesign(ctx.db, designId) ? designId : null;
+      try {
+        return addRender(ctx.db, { houseId: house.id, designId: keepDesign, file: r.file, engine: r.engine, deltaE: r.deltaE, seconds: r.seconds });
+      } catch (e) {
+        rmSync(renderPath(ctx.dataDir, house.id, r.file.replace(/\.png$/, "")), { force: true });
+        throw e;
+      }
     });
     return c.json(job, 202);
   });

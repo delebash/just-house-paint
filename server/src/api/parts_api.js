@@ -2,8 +2,8 @@
 // /v1/houses/:id/parts — the parts the finder found (or the user drew): their masks, finding them
 // (a job), a box whose contents move into a part, a mask fixed by the brush, a part added by hand.
 
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { Hono, input } from "@delebash/core/platform";
+import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { Hono, input, uploadLimit } from "@delebash/core/platform";
 import { conflict, notFound, RequestValidationError } from "@delebash/core/platform/errors";
 import { getHouse, getPart, listParts, replaceParts, updatePartMask } from "../database/houses.js";
 import { maskPath } from "../files.js";
@@ -11,6 +11,7 @@ import { maskToPng, pngToMask } from "../images.js";
 import { BoxIn, IdParams, PartNew, PartParams } from "../schemas/houses.js";
 import { area, assignRegion, subtractRegion } from "../shared/masks.js";
 import { getState } from "../app_state.js";
+import { assertGpuFree } from "../jobs.js";
 
 /**
  * `ctx`: { db, dataDir, jobs, finder } — `finder` is the part finder (segment/):
@@ -40,15 +41,20 @@ export function router(ctx = getState()) {
 
   app.post("/v1/houses/:id/find-parts", input({ params: IdParams }), (c) => {
     const house = mustHouse(c.req.valid("param").id);
+    assertGpuFree(ctx.jobs, "find-parts", house.id);
     const job = ctx.jobs.start({ kind: "find-parts", key: house.id, label: house.name }, async ({ signal, progress }) => {
       const found = await ctx.finder.find(house, { signal, progress });
       signal.throwIfAborted();
+      const before = listParts(ctx.db, house.id).map((p) => p.key);
       for (const p of found) await writeMask(house, p.key, p.mask);
       const parts = replaceParts(
         ctx.db,
         house.id,
         found.map((p) => ({ key: p.key, paintable: p.paintable, area: area(p.mask), score: p.score, source: "auto" })),
       );
+      // the outlines of parts not found this time go with their rows (a smaller folder and backup)
+      const kept = new Set(found.map((p) => p.key));
+      for (const key of before) if (!kept.has(key)) rmSync(maskPath(ctx.dataDir, house.id, key), { force: true });
       return { parts: parts.length };
     });
     return c.json(job, 202);
@@ -64,7 +70,9 @@ export function router(ctx = getState()) {
   });
 
   // The brush's result: a PNG the display photo's size (another size is scaled to it).
-  app.put("/v1/houses/:id/parts/:key/mask", input({ params: PartParams }), async (c) => {
+  // an outline PNG is never bigger than its raw pixels at the largest screen copy
+  const maskLimit = () => (ctx.limits?.().displayMax || 4096) ** 2 * 4;
+  app.put("/v1/houses/:id/parts/:key/mask", uploadLimit(maskLimit, { slug: "mask-too-large", title: "Outline too large" }), input({ params: PartParams }), async (c) => {
     const house = mustHouse(c.req.valid("param").id);
     const key = c.req.valid("param").key;
     if (!getPart(ctx.db, house.id, key)) throw notFound(`house ${house.id} has no part ${key}`);
@@ -95,6 +103,7 @@ export function router(ctx = getState()) {
     const house = mustHouse(c.req.valid("param").id);
     const key = c.req.valid("param").key;
     if (!getPart(ctx.db, house.id, key)) throw notFound(`house ${house.id} has no part ${key}`);
+    assertGpuFree(ctx.jobs, "box");
     const { x0, y0, x1, y1, mode } = c.req.valid("json");
     const outside = [["x0", x0, house.displayWidth], ["x1", x1, house.displayWidth], ["y0", y0, house.displayHeight], ["y1", y1, house.displayHeight]].find(([, v, max]) => v > max);
     if (outside) throw new RequestValidationError([{ loc: ["body", outside[0]], msg: "Outside the photo", type: "value_error" }]);

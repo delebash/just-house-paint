@@ -5,7 +5,7 @@
 // installing them (a job), and one render — which first frees the GPU (the part finder's image
 // session and the local AI model), because sd.cpp doesn't wait for memory (RESEARCH §10).
 
-import { existsSync, readdirSync, rmSync, statSync } from "node:fs";
+import { existsSync, rmSync, statSync } from "node:fs";
 import path from "node:path";
 import { ApiError } from "@delebash/core/platform/errors";
 import { getLogger } from "@delebash/core/platform/log";
@@ -29,22 +29,16 @@ export function createAiPhoto(ctx) {
   const ensureEngine = ctx.ensureEngine || realEnsureEngine;
   const ensureModels = ctx.ensureModels || realEnsureModels;
   const modelsHere = () => Object.values(MODEL_FILES).every((m) => existsSync(path.join(ctx.modelDir, m.file)));
-  const engineHere = () => {
-    if (!existsSync(ctx.engineDir)) return false;
-    for (const tag of readdirSync(ctx.engineDir)) {
-      const tagDir = path.join(ctx.engineDir, tag);
-      if (tag.startsWith(".") || !existsSync(tagDir)) continue;
-      for (const backend of readdirSync(tagDir)) if (existsSync(path.join(tagDir, backend, ".aiphoto-engine.json"))) return true;
-    }
-    return false;
-  };
+  // the engine the render uses is here: the pinned release, for the backend this computer's graphics
+  // card picks (an older release, or another backend's, doesn't count — the render would refuse it)
+  const engineRow = (gpu) => selectEngineAsset(ENGINE_RELEASES.pinned, { platform: process.platform, arch: process.arch, gpu });
+  const engineHere = (row) => !!row && existsSync(path.join(ctx.engineDir, row.tag, row.backend, ".aiphoto-engine.json"));
 
   return {
     async status() {
-      const gpu = await ctx.detectGpu();
-      const row = selectEngineAsset(ENGINE_RELEASES.pinned, { platform: process.platform, arch: process.arch, gpu });
+      const row = engineRow(await ctx.detectGpu());
       // what Install still downloads: the engine unless it is here, and the models not here at full size
-      const engineBytes = row && !engineHere() ? row.asset.size + (row.runtime?.size || 0) : 0;
+      const engineBytes = row && !engineHere(row) ? row.asset.size + (row.runtime?.size || 0) : 0;
       const modelBytes = Object.values(MODEL_FILES)
         .filter((m) => {
           try {
@@ -56,7 +50,7 @@ export function createAiPhoto(ctx) {
         .reduce((n, m) => n + m.size, 0);
       const downloadBytes = engineBytes + modelBytes;
       return {
-        engineInstalled: engineHere(),
+        engineInstalled: engineHere(row),
         modelsInstalled: modelsHere(),
         backend: row?.backend ?? null,
         // a CPU-only edit takes ~10 minutes (RESEARCH §9) — the screen says so before installing
@@ -86,15 +80,21 @@ export function createAiPhoto(ctx) {
      */
     async render(house, surfaces, { renderId, signal, progress }) {
       if (!surfaces.length) throw new ApiError(422, "nothing-to-paint", "Pick colors first", "give at least one part a paint color");
-      if (!engineHere() || !modelsHere()) {
+      const gpu = await ctx.detectGpu();
+      if (!engineHere(engineRow(gpu)) || !modelsHere()) {
         throw new ApiError(409, "aiphoto-not-installed", "The AI photo isn't installed", "install it first (the engine and about 9 GB of models)");
       }
       progress(0.02, "freeing the GPU");
       await ctx.finder.releaseGpu();
       await ctx.stopLocalModel();
-      const gpu = await ctx.detectGpu();
       const engine = await ensureEngine(ctx.engineDir, { gpu, download: () => Promise.reject(new Error("not installed")) });
-      const models = await ensureModels(ctx.modelDir, { download: () => Promise.reject(new Error("not installed")) });
+      // checking the models (hashing ~9 GB when they carry no manifest) shows and can be cancelled
+      const models = await ensureModels(ctx.modelDir, {
+        download: () => Promise.reject(new Error("not installed")),
+        cancelCheck: () => signal?.aborted,
+        onProgress: (e) => progress(0.02 + 0.03 * (e.fraction ?? 0), "checking the models"),
+      });
+      signal?.throwIfAborted();
       const t0 = Date.now();
       const out = renderPath(ctx.dataDir, house.id, renderId);
       const result = await aiRepaint({

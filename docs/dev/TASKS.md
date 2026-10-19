@@ -436,6 +436,12 @@ FOUND (a read-only review of the server):
         10. a second AI photo while one runs returns the first (new colors ignored).
         Suggestions: a body limit before reading uploads; designs that lost a paint named; leftover masks
         removed after a re-find; hand-made parts kept on a re-find (offered); the model check cancellable.
+        FIXED (server, all ten — the graphics card one job at a time, 409 "gpu-busy"; Advanced's values checked;
+        the pinned engine; intake errors 415; codeless paints left out with a warning; Cancel after the commit
+        is done; names need a non-space; deleting a house stops its work) and three suggestions: upload limits
+        (the kit's new `uploadLimit`), leftover outlines removed, the model check cancellable. Not built, for
+        the user: naming designs that lost a paint, and keeping hand-made parts on a re-find (both need
+        screens and words).
 FOUND (docs and this tracker against the code): the releases page empty until the first release; whats-new
         says two brands are imported (all seven load); Settings → About's blurb is the template's; paint-colors
         says codes are shown as the brands write them (BM / Valspar / Dutch Boy prefixes); the troubleshooting

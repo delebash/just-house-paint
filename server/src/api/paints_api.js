@@ -4,7 +4,7 @@
 // nearest paints to a color, and color schemes snapped to real paints. The app ships no brand
 // data (TASKS, "Design decisions after probe round 1").
 
-import { Hono, input } from "@delebash/core/platform";
+import { Hono, input, uploadLimit } from "@delebash/core/platform";
 import { ApiError, notFound, RequestValidationError } from "@delebash/core/platform/errors";
 import { getState } from "../app_state.js";
 import {
@@ -110,7 +110,8 @@ export function router(ctx = getState()) {
   });
 
   // Option C: a palette file the user downloaded from the brand (multipart: file, brand).
-  app.post("/v1/paints/import", async (c) => {
+  // the file's size, checked as it streams in (a form's own bytes on top)
+  app.post("/v1/paints/import", uploadLimit(() => ctx.maxImportBytes() + 64 * 1024, { slug: "file-too-large", title: "File too large" }), async (c) => {
     let body;
     try {
       body = await c.req.parseBody();

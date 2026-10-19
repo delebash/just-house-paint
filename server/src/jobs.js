@@ -8,6 +8,7 @@
 // App-local until a second app needs it (the kit's TASKS: server-side jobs are a standards gap).
 
 import { randomUUID } from "node:crypto";
+import { ApiError } from "@delebash/core/platform/errors";
 import { getLogger } from "@delebash/core/platform/log";
 
 const log = getLogger("just_house_paint.jobs");
@@ -68,7 +69,8 @@ export class JobRegistry {
     Promise.resolve()
       .then(() => fn({ signal: controller.signal, progress }))
       .then(
-        (result) => finish(controller.signal.aborted ? "cancelled" : "done", { result: result ?? null, progress: 1 }),
+        // the work returned: it is done (and saved), even when Cancel came while it was committing
+        (result) => finish("done", { result: result ?? null, progress: 1 }),
         (err) => {
           if (controller.signal.aborted || isAbort(err)) return finish("cancelled", {});
           log.error(`${kind} ${key}: ${err?.message || err}`, err);
@@ -101,6 +103,26 @@ export class JobRegistry {
   /** Stop everything (the server is closing). */
   cancelAll() {
     for (const j of this.jobs.values()) if (j.state === "running") j.controller.abort();
+  }
+}
+
+/** The jobs that hold the graphics card: the part finder (SAM 3) and the AI photo (sd-cli). */
+const GPU_KINDS = ["find-parts", "aiphoto"];
+
+/**
+ * The graphics card does one of these at a time — an 8 GB card holds SAM 3 or the AI photo's model,
+ * not both (RESEARCH §11), and the AI photo frees the finder when it starts. Throws a 409 when work
+ * for `kind` on `key` would run beside a running one: `"aiphoto"` (any running GPU job, another AI
+ * photo of the same house too — its colors would be ignored), `"find-parts"` (the AI photo, or the
+ * parts of another house; the same house's run is answered by start()), `"box"` and `"local-ai"`
+ * (any running GPU job).
+ */
+export function assertGpuFree(jobs, kind, key = "") {
+  for (const j of jobs.jobs.values()) {
+    if (j.state !== "running" || !GPU_KINDS.includes(j.kind)) continue;
+    if (kind === "find-parts" && j.kind === "find-parts" && j.key === key) continue;
+    const doing = j.kind === "aiphoto" ? `an AI photo of ${j.label || "a house"} is being drawn` : `the parts of ${j.label || "a house"} are being found`;
+    throw new ApiError(409, "gpu-busy", "The graphics card is busy", `${doing} — try again when it's done`);
   }
 }
 

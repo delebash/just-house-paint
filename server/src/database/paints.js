@@ -53,12 +53,14 @@ export function wirePaint(r) {
   };
 }
 
-/** Replace a brand's paints with `rows` (normalized by the paints module). */
+/** Replace a brand's paints with `rows` (normalized by the paints module). A row without a code is
+ *  skipped (its id would be `<brand>:null`); the brand's count is what was stored. */
 export function replaceBrandPaints(h, brand, rows, { source }) {
   const now = nowIso();
   h.tx(() => {
     h.run("DELETE FROM paints WHERE brand = ?", [brand]);
     for (const p of rows) {
+      if (p.code == null || p.code === "") continue;
       const id = paintId(brand, p.code);
       h.run(
         `INSERT OR REPLACE INTO paints (id, brand, code, name, hex, r, g, b, lab_l, lab_a, lab_b, lrv, exterior, interior, family,
@@ -94,7 +96,7 @@ export function replaceBrandPaints(h, brand, rows, { source }) {
       `INSERT INTO brands (key, label, source, enabled, paint_count, loaded_at, last_error) VALUES (?, ?, ?, 1, ?, ?, NULL)
        ON CONFLICT(key) DO UPDATE SET source = excluded.source, enabled = 1, paint_count = excluded.paint_count,
          loaded_at = excluded.loaded_at, last_error = NULL`,
-      [brand, label, source, rows.length, now],
+      [brand, label, source, h.value("SELECT count(*) FROM paints WHERE brand = ?", [brand]), now],
     );
   });
   return getBrand(h, brand);

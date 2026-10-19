@@ -46,3 +46,26 @@ test("a key that isn't a setting is refused, and the prefs and tokens are not re
   await client.patch("/v1/prefs", { json: { aiOfferShown: true } });
   expect(Object.keys((await client.get("/v1/settings")).json())).toEqual(SETTING_KEYS);
 });
+
+test("a value whose mistake would only show later is refused: the parts, the harmony rules, the compositing, the families", async () => {
+  const parts = SETTING_DEFAULTS["finder.parts"].filter((p) => p.key !== "windows");
+  const r = await client.patch("/v1/settings", { json: { "finder.parts": parts } });
+  expect(r.statusCode).toBe(422);
+  expect(r.json().errors[0]).toMatchObject({ loc: ["body", "finder.parts"], msg: expect.stringMatching(/minus names "windows"/) });
+  const kinds = await client.patch("/v1/settings", { json: { "schemes.harmony": { ...SETTING_DEFAULTS["schemes.harmony"], kinds: ["warm"] } } });
+  expect(kinds.statusCode).toBe(422);
+  expect(kinds.json().errors[0].msg).toMatch(/"warm" isn't a scheme kind/);
+  const typed = await client.patch("/v1/settings", { json: { "schemes.harmony": { kinds: "classic" } } });
+  expect(typed.statusCode).toBe(422);
+  const gain = await client.patch("/v1/settings", { json: { "aiphoto.compose": { ...SETTING_DEFAULTS["aiphoto.compose"], gainLimits: 5 } } });
+  expect(gain.json().errors[0]).toMatchObject({ loc: ["body", "aiphoto.compose"], msg: expect.stringMatching(/gainLimits/) });
+  const unknown = await client.patch("/v1/settings", { json: { "aiphoto.compose": { blend: 1 } } });
+  expect(unknown.statusCode).toBe(422);
+  const order = SETTING_DEFAULTS["paints.colorOrder"];
+  const twice = await client.patch("/v1/settings", { json: { "paints.colorOrder": { ...order, families: [...order.families, { key: "reds", from: 10 }] } } });
+  expect(twice.json().errors[0].msg).toMatch(/"reds" is listed twice/);
+  // nothing was saved; a right value still is
+  expect((await client.get("/v1/settings")).json()["finder.parts"]).toEqual(SETTING_DEFAULTS["finder.parts"]);
+  const ok = await client.patch("/v1/settings", { json: { "aiphoto.compose": { featherPx: 3 }, "schemes.harmony": { kinds: ["classic"] } } });
+  expect(ok.statusCode).toBe(200);
+});

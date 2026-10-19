@@ -5,7 +5,7 @@
 
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
-import { Hono, input } from "@delebash/core/platform";
+import { Hono, input, uploadLimit } from "@delebash/core/platform";
 import { ApiError, notFound, RequestValidationError } from "@delebash/core/platform/errors";
 import { createHouse, deleteHouse, getHouse, listHouses, renameHouse, setCurrentPaints } from "../database/houses.js";
 import { displayPath, originalPath, removeHouseDir, thumbPath } from "../files.js";
@@ -28,6 +28,8 @@ export function nameFromFile(filename) {
  */
 export function router(ctx = getState()) {
   const app = new Hono();
+  // a multipart form's own bytes beside its file (boundaries, headers, the name field)
+  const FORM_EXTRA = 64 * 1024;
   const must = (id) => {
     const h = getHouse(ctx.db, id);
     if (!h) throw notFound(`no house ${id}`);
@@ -36,7 +38,9 @@ export function router(ctx = getState()) {
 
   app.get("/v1/houses", (c) => c.json(listHouses(ctx.db)));
 
-  app.post("/v1/houses", async (c) => {
+  // the photo's size, checked as it streams in (the form's few other bytes on top); the exact
+  // message comes from the check after it is read
+  app.post("/v1/houses", uploadLimit(() => ctx.limits().maxPhotoBytes + FORM_EXTRA, { slug: "photo-too-large", title: "Photo too large" }), async (c) => {
     const limits = ctx.limits();
     let body;
     try {
@@ -80,6 +84,11 @@ export function router(ctx = getState()) {
   app.delete("/v1/houses/:id", input({ params: IdParams }), (c) => {
     const id = c.req.valid("param").id;
     must(id);
+    // its AI photo or part search stops (and frees the graphics card) instead of failing later
+    for (const kind of ["aiphoto", "find-parts"]) {
+      const job = ctx.jobs?.running(kind, id);
+      if (job) ctx.jobs.cancel(job.id);
+    }
     deleteHouse(ctx.db, id);
     removeHouseDir(ctx.dataDir, id);
     return c.body(null, 204);
