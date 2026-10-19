@@ -123,10 +123,11 @@ export function createAiPhoto(ctx) {
 }
 
 /** The other programs' graphics memory (the kit's otherGpuHolders rows: { label, memMb }, biggest
- *  first) worth naming under an AI photo: { mb, programs } when together they hold more than
- *  `floorMb`, else null (none, under it, unmeasurable, or the note turned off). */
+ *  first) worth naming under an AI photo: { mb, programs, more } — the biggest three named, `more`
+ *  the others counted in `mb` — when together they hold more than `floorMb`, else null (none, under
+ *  it, unmeasurable, or the note turned off). */
 export function sharedGpuNote(rows, floorMb) {
   if (!floorMb || !rows?.length) return null;
   const mb = rows.reduce((n, r) => n + r.memMb, 0);
-  return mb > floorMb ? { mb, programs: rows.slice(0, 3).map((r) => r.label) } : null;
+  return mb > floorMb ? { mb, programs: rows.slice(0, 3).map((r) => r.label), more: Math.max(0, rows.length - 3) } : null;
 }

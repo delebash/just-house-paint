@@ -90,6 +90,7 @@ function hasFile(file, size) {
 
 export function createFinder(ctx) {
   let seg = null;
+  let runtimeCheck = null;
   let loading = null;
   let idleTimer = null;
   const handles = new Map(); // houseId → encoded photo (the last two)
@@ -153,6 +154,16 @@ export function createFinder(ctx) {
 
   return {
     installed,
+    /** Whether the finder's runtime (onnxruntime-node's native library) loads on this computer, checked
+     *  once: { ok: true } or { ok: false, error } — said before a 3.4 GB download that couldn't run (a
+     *  Linux build once packed its library where it couldn't load, RESEARCH §13). */
+    runtime() {
+      runtimeCheck ??= (ctx.loadRuntime || (() => import("onnxruntime-node")))().then(
+        () => ({ ok: true }),
+        (e) => ({ ok: false, error: String(e?.message || e).split("\n")[0] }),
+      );
+      return runtimeCheck;
+    },
     /** What Install still downloads: the files not here at their full size (the install card's figure). */
     downloadBytes: () => MODEL_FILES.filter((f) => !hasFile(`${ctx.modelDir}/${f.name}`, f.size)).reduce((n, f) => n + f.size, 0),
     /** Remove the downloaded model (Settings → Storage): the GPU is let go first, then its folder. */

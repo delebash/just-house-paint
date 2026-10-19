@@ -143,13 +143,19 @@ export default defineConfig(() => {
           '!**/node_modules/better-sqlite3/{deps,src,build/Release/obj,build/Release/obj.target,build/deps}/**',
           '!**/node_modules/better-sqlite3/build/Release/*.{pdb,iobj,ipdb,lib,exp}'
         ],
-        // native modules can't load from inside the asar archive (the server itself runs from it)
-        asarUnpack: [ '**/*.node' ],
+        // native modules can't load from inside the asar archive (the server itself runs from it), nor can
+        // the libraries beside them: sharp's libvips and onnxruntime's library are `.so.<n>` on Linux, which
+        // electron-builder doesn't take for libraries — they stayed packed and the Linux server never started
+        // (RESEARCH §13). sharp's own Electron guidance (sharp.pixelplumbing.com/install#electron-builder),
+        // and onnxruntime-node's bin the same way
+        asarUnpack: [ '**/*.node', '**/node_modules/sharp/**/*', '**/node_modules/@img/**/*', '**/node_modules/onnxruntime-node/bin/**/*' ],
         // the headless launcher (just-house-paint-server.cmd) beside the exe — the app's own exe
         // run as Node on its server package (§Q.3)
         extraResources: [ { from: path.join(root, 'build', 'launcher'), to: '..' } ],
         // the exe never shares the headless launcher's name (§Q.3)
-        win: { target: 'nsis', executableName: 'justhousepaint' },
+        // each installer carries onnxruntime-node's binaries for its own platform only (the package ships all
+        // five: 289 MB) — electron-builder merges a platform's `files` with the ones above
+        win: { target: 'nsis', executableName: 'justhousepaint', files: [ '!**/node_modules/onnxruntime-node/bin/napi-v6/{darwin,linux,win32/arm64}/**' ] },
         nsis: {
           oneClick: false,
           perMachine: false,
@@ -168,10 +174,10 @@ export default defineConfig(() => {
           onlyLoadAppFromAsar: true,
           grantFileProtocolExtraPrivileges: false
         },
-        mac: { category: 'public.app-category.productivity' },
+        mac: { category: 'public.app-category.productivity', files: [ '!**/node_modules/onnxruntime-node/bin/napi-v6/{linux,win32}/**' ] },
         // the AppImage; a .deb also needs `linux.maintainer` ("name <email>", published in the package)
         // — add it, and 'deb' to the targets, with the address the app's owner wants public
-        linux: { target: [ 'AppImage' ], category: 'Office' }
+        linux: { target: [ 'AppImage' ], category: 'Office', files: [ '!**/node_modules/onnxruntime-node/bin/napi-v6/{darwin,win32,linux/arm64}/**' ] }
       }
     }
   }

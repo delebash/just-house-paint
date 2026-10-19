@@ -35,7 +35,7 @@ export function createPainter({ rgba, width, height }) {
   const prepared = (key) => {
     const p = parts.get(key);
     if (!p) return null;
-    p.prepared ??= preparePart({ Y, mask: p.mask, width, height, texture: p.texture });
+    p.prepared ??= preparePart({ Y, mask: p.mask, width, height, texture: p.texture, calmY: p.calmY });
     return p.prepared;
   };
   // a part's light from the paint it has now, kept until its mask or that paint changes
@@ -58,14 +58,16 @@ export function createPainter({ rgba, width, height }) {
     /** The texture setting (0–1) of every part; changing it re-prepares them. */
     setTexture(texture) {
       for (const p of parts.values()) {
-        if (p.texture !== texture) Object.assign(p, { texture, prepared: null });
+        // the calmed lighting of a dark finish doesn't depend on the texture: kept (a slider step
+        // would otherwise work it out again, ~0.6 s a part at 2048 px)
+        if (p.texture !== texture) Object.assign(p, { texture, calmY: p.prepared?.calmY ?? p.calmY ?? null, prepared: null });
       }
     },
     mask: (key) => parts.get(key)?.mask || null,
     /** A brush stroke changed a mask in place: prepare it again. */
     touched(key) {
       const p = parts.get(key);
-      if (p) p.prepared = null;
+      if (p) Object.assign(p, { prepared: null, calmY: null });
     },
     keys: () => [...parts.keys()],
     /**

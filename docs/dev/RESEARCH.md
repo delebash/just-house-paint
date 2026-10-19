@@ -904,3 +904,27 @@ at the app's display size, through the app's own code; scripts and overlays in s
   L* spread fell 16.9 → 7.2 and the lap lines kept 31.6 of 33.7 L*. The app's painter on house3: the first
   light paint 0.58 s at 2048×1536 (the structure and the light worked out on a grid 4× coarser; 1.6 s at full
   resolution), then 0.08 s; 2.5 s once for Save image at 4032×3024; ΔE to the chip 0.21.
+- **The obstruction test set** (2026-10-19, TASKS "The obstruction test set"): the house photos the 10/17 probes had
+  already fetched from Wikimedia Commons (500 px thumbnails; c01–c12, b01–b02, d01–d12, e01–e03, house3's own photo and
+  two non-houses left out — no new download), each through the app's intake and default recipe, with SAM 3's "car",
+  "tree", "person", "bush", "fence" and "pole" at 0.5 as a stand-in for what stands in front. First 7 (the run was
+  paused for another app's render): the trees, bushes and cars were left out of the parts on all 7 except c06, whose
+  body ran into the lower part of an evergreen beside the house (body ∩ "tree" 3.07% of the photo, part of it bare
+  branches the house shows through); trim ∩ tree 0.05% on c01. **The bigger fault: neighbors' parts** — on c02, c04 and
+  c07 the window trim, soffits, doors and railings of the houses beside were painted (and c01's neighbor's window trim),
+  because the house rule took every "house" instance, the neighbors' included. Now the house is the main instance
+  (pickMainInstance, as the body) and the instances touching it within the margin.
+- **The packaged app on every runner** (2026-10-19, the release workflow's new "Start the packaged app" step,
+  dry run 39339201987 — nothing published): Windows answered in 1.6 s, **macOS in 9.4 s (the first time the Mac build
+  ever ran)**, and **Linux never**: its server exited at its first import — `Could not load the "sharp" module using the
+  linux-x64 runtime — libvips-cpp.so.8.18.7: cannot open shared object file`. The build unpacked only `**/*.node` from
+  app.asar; sharp's libvips (and onnxruntime-node's `libonnxruntime.so.1`) are named `.so.<n>`, which electron-builder
+  doesn't take for libraries, so they stayed inside the archive, where the native module can't load them. (Windows'
+  DLLs sit beside the `.node`; macOS's `.dylib` is unpacked.) The AppImage of v0.1.0–v0.1.2 has this fault. sharp's own
+  guidance: unpack `**/node_modules/sharp/**/*` and `**/node_modules/@img/**/*` (sharp.pixelplumbing.com/install,
+  electron-builder) — done, with onnxruntime-node's `bin/`; the start check now also asks `/v1/segment/runtime` (the
+  part finder's runtime loads). onnxruntime-node ships every platform's binaries (darwin 86 MB, linux 69 MB, win32
+  134 MB): each installer now carries only its own.
+- **The AI photo's note on other programs** (2026-10-19): the kit's `otherGpuHolders` on this machine named Windows'
+  `dwm.exe` (317 MB) and would have named the app's own window — both left out by the kit since 2c7c98d. The note
+  shows when the others hold more than `aiphoto.sharedGpuNoteMb` (1024 MB): an idle 6.9 GB model cost 8 s (§12).

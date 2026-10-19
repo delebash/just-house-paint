@@ -200,11 +200,12 @@ export async function findParts(
   // windows and doors were painted too (the obstruction set, RESEARCH §13) — grown by the margin
   const grow = Math.round(houseMargin * Math.max(width, height));
   const houseInstances = config.filter((p) => p.method === "subtract").flatMap((p) => found.get(p.key));
-  const main = houseMargin > 0 ? pickMainInstance(houseInstances, width, height) : null;
-  const mainGrown = main ? dilateMask(main.mask, width, height, grow) : null;
+  const main = pickMainInstance(houseInstances, width, height);
+  const mainGrown = main ? (grow > 0 ? dilateMask(main.mask, width, height, grow) : main.mask) : null;
   const attached = main ? houseInstances.filter((i) => i === main || touches(i.mask, mainGrown)) : [];
   const houseItself = attached.length ? unionMasks(attached.map((i) => i.mask), n) : null;
-  const houseArea = houseItself ? dilateMask(houseItself, width, height, grow) : null;
+  // a margin of 0 turns the grown house's rule off (no limit); a part's own onHouse still holds
+  const houseArea = houseMargin > 0 && houseItself ? dilateMask(houseItself, width, height, grow) : null;
   const onHouse = (mask) => (houseArea ? intersectMask(mask, houseArea) : mask);
   const shareOn = (inst, area) => {
     let all = 0;

@@ -199,6 +199,42 @@ describe("the engine routes", () => {
     expect(st.downloadBytes).toBeGreaterThan(8e9);
   });
 
+  test("not installed, the finder's status says whether its runtime loads here; the start check asks it too", async () => {
+    s = makeServer({ aiphoto: aiphotoFactory([]) });
+    const installed = fakeFinder.installed;
+    fakeFinder.installed = () => false;
+    try {
+      expect(await (await s.app.request("/v1/segment/status")).json()).toEqual({ installed: false, downloadBytes: 3_364_167_120, runtime: { ok: true } });
+      expect((await s.app.request("/v1/segment/runtime")).status).toBe(200);
+      fakeFinder.runtimeAnswer = { ok: false, error: "libonnxruntime.so.1: cannot open shared object file" };
+      expect((await (await s.app.request("/v1/segment/status")).json()).runtime).toEqual(fakeFinder.runtimeAnswer);
+      const r = await s.app.request("/v1/segment/runtime");
+      expect(r.status).toBe(503);
+      expect(await r.json()).toMatchObject({ title: "The part finder can't run on this computer", detail: expect.stringMatching(/libonnxruntime/) });
+    } finally {
+      fakeFinder.installed = installed;
+      fakeFinder.runtimeAnswer = { ok: true };
+    }
+  });
+
+  test("the finder checks its runtime once, and a failure is its first line", async () => {
+    let loads = 0;
+    const finder = createFinder({
+      dataDir: scratch(),
+      modelDir: scratch(),
+      partsConfig: () => null,
+      priority: () => null,
+      idleMs: () => 60_000,
+      loadRuntime: async () => {
+        loads++;
+        throw new Error("libonnxruntime.so.1: cannot open shared object file\n    at dlopen");
+      },
+    });
+    expect(await finder.runtime()).toEqual({ ok: false, error: "libonnxruntime.so.1: cannot open shared object file" });
+    await finder.runtime();
+    expect(loads).toBe(1);
+  });
+
   test("removing an engine: its files go; never while it works", async () => {
     let dirs;
     s = makeServer({
@@ -282,7 +318,7 @@ describe("the engine routes", () => {
       { label: "game", memMb: 300 },
       { label: "browser", memMb: 250 },
     ];
-    expect(sharedGpuNote(rows, 1024)).toEqual({ mb: 7850, programs: ["llama-server", "python · tts/serve.py", "game"] });
+    expect(sharedGpuNote(rows, 1024)).toEqual({ mb: 7850, programs: ["llama-server", "python · tts/serve.py", "game"], more: 1 });
     expect(sharedGpuNote(rows.slice(1), 1024)).toBeNull(); // 950 MB: under it
     expect(sharedGpuNote(rows, 0)).toBeNull(); // the note turned off
     expect(sharedGpuNote(null, 1024)).toBeNull(); // not measurable here

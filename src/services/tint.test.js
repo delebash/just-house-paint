@@ -164,6 +164,32 @@ test("a dark board wall painted light loses its blotches and keeps the lines bet
   expect(chipDeltaE({ tinted: out, part, hex: WHITE })).toBeLessThan(1);
 });
 
+test("a texture change keeps the calmed lighting; the soft edge is calmed too", () => {
+  const w = 600;
+  const h = 400;
+  const { photo } = weatherboard(w, h, 0.035);
+  const Y = luminance(photo);
+  // the core, and a soft ring two pixels wide around it
+  const mask = maskOf(w, h, (x, y) => (x >= 22 && x < w - 22 && y >= 22 && y < h - 22 ? 255 : x >= 20 && x < w - 20 && y >= 20 && y < h - 20 ? 100 : 0));
+  const first = preparePart({ Y, mask, width: w, height: h });
+  partLight(first, "#f2f0ea");
+  expect(first.calmY).toBeInstanceOf(Float32Array);
+  const again = preparePart({ Y, mask, width: w, height: h, texture: 0.5, calmY: first.calmY });
+  partLight(again, "#f2f0ea");
+  expect(again.calm.Y).toBe(first.calmY); // not worked out again
+  // the ring's lighting is calmed too (measured: its p99 1.26 → 1.14; the core's 1.30 → 1.08)
+  const ratio = partLight(first, "#f2f0ea");
+  const ring = [];
+  const raw = [];
+  for (let y = 20; y < h - 20; y++)
+    for (let x = 20; x < w - 20; x++) {
+      if (mask[y * w + x] === 255) continue;
+      ring.push(ratio(y * w + x));
+      raw.push(Y[y * w + x] / first.base);
+    }
+  expect(percentile(ring, 99)).toBeLessThan(percentile(raw, 99) * 0.95);
+});
+
 test("a light finish, or a paint not much lighter than the finish, is painted as photographed", () => {
   const w = 120;
   const h = 80;

@@ -407,6 +407,7 @@
     "alt": "The AI photo of {name}",
     "deltaE": "ΔE {n} from the chips",
     "seconds": "made in {n} s",
+    "sharedGpuMore": "{n} more",
     "sharedGpu": "Other programs held {size} of the graphics card while it drew ({programs}), which makes the AI photo slower. Close them for the fastest one.",
     "save": "Save image",
     "suffix": "AI photo",
@@ -418,7 +419,8 @@
     "finder": {
       "title": "Install the part finder",
       "body": "The part finder outlines the body, the trim, the doors and the rest of the house on your photo. It runs on this computer: a one-time download of {size}.",
-      "task": "Installing the part finder"
+      "task": "Installing the part finder",
+      "cantRun": "The part finder can't run on this computer: its engine didn't load ({error}). Nothing was downloaded."
     },
     "aiphoto": {
       "title": "Install the AI photo",

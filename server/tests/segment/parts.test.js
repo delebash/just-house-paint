@@ -282,6 +282,9 @@ describe("parts stay on the house", () => {
     expect(decor.instances).toHaveLength(1); // the medallion; the statue is off the house itself
     expect(decor.area).toBe(16);
     expect(r.parts.find((p) => p.key === "trim").area).toBe(4 * 30); // half on the house: kept whole
+    // a margin of 0 (no limit) still holds a part to its onHouse
+    const noMargin = await findParts(seg, handle, config, { houseMargin: 0, houseMinShare: 0.5 });
+    expect(noMargin.parts.find((p) => p.key === "decor").instances).toHaveLength(1);
     // the same statue with no onHouse: the margin alone keeps it
     const loose = await findParts(seg, handle, config.map((p) => ({ ...p, onHouse: 0 })), { houseMargin: 0.1, houseMinShare: 0.5 });
     expect(loose.parts.find((p) => p.key === "decor").instances).toHaveLength(2);

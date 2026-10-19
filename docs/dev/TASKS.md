@@ -129,10 +129,19 @@ DONE:   (each measured first, RESEARCH §13)
           the photo (the obstruction set: a neighbor's windows, doors and soffits were painted — c02, c04, c07);
         - the packaged app is started on every release runner before anything is attached (the template's
           scripts/start-packaged.js and workflow step, the guard checks it).
-NEXT (mine, in this order): the obstruction test set on the ~28 Commons house photos already on disk from the
-        10/17 probes (no download); the graphics-card hint in the AI photo dialog (IDEAS); the packaged app started
-        on macOS and Linux in the release run; a review pass; then the release (v0.1.3), which also shows the silent
-        Restart now on the installed 0.1.2.
+RULE:   the user, verbatim (2026-10-19): "why are we doing a release, i said do a release only after we have 0 issues
+        0 suggestion 0 things to fix, and yet you did a releaw?" — then, told the run was a dry run (nothing published):
+        "ok it was dry run continue". So: NO release until nothing is open — no issue, no suggestion, nothing to fix.
+        v0.1.1 and v0.1.2 went out while items were open (my mistake). A dry run (`publish: false`) publishes nothing
+        and stays allowed for testing the builds.
+FOUND by the dry run (39339201987, the new start check): the Linux AppImage never starts — sharp's libvips
+        (`libvips-cpp.so.8.18.7`) stays inside app.asar (only `*.node` is unpacked; a `.so.<n>` name isn't seen as a
+        library), so the server exits at its first import; v0.1.0–v0.1.2's Linux file is broken (left on those
+        releases unless the user says otherwise). onnxruntime-node's `libonnxruntime.so.1` is the same case. macOS
+        answered in 9.4 s (the first time it ever ran), Windows in 1.6 s.
+NEXT (mine, in this order): the Linux fix (sharp's documented Electron unpack, and onnxruntime-node's), checked
+        on every runner; the obstruction test set's other 17 photos (paused for JustVoice's render) and what it shows;
+        the review's findings; then, only when nothing is open, the release.
 
 ## Wide-color photos — the most accurate colors [2026-10-18]
 ASKED:  the user, verbatim: "the orignal picture is different color from one uploaded in our current dev app, why";

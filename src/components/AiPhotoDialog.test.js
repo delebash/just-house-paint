@@ -56,6 +56,11 @@ test("the AI photo names the other programs that held the graphics card, and onl
   wrapper.unmount();
   document.body.innerHTML = "";
 
-  await mountDialog({ ...RENDER, sharedGpu: { mb: 7066, programs: ["llama-server", "python · tts/serve.py"] } });
+  await mountDialog({ ...RENDER, sharedGpu: { mb: 7066, programs: ["llama-server", "python · tts/serve.py"], more: 0 } });
   expect(text()).toContain("Other programs held 6.9 GB of the graphics card while it drew (llama-server, python · tts/serve.py)");
+  wrapper.unmount();
+  document.body.innerHTML = "";
+
+  await mountDialog({ ...RENDER, sharedGpu: { mb: 8000, programs: ["a", "b", "c"], more: 2 } });
+  expect(text()).toContain("(a, b, c, 2 more)");
 });

@@ -128,9 +128,9 @@ jobs:
         run: |
           if [ "${{ matrix.target }}" = linux ]; then
             command -v xvfb-run >/dev/null || (sudo apt-get update && sudo apt-get install -y xvfb)
-            xvfb-run -a node scripts/start-packaged.js
+            xvfb-run -a node scripts/start-packaged.js /v1/segment/runtime
           else
-            node scripts/start-packaged.js
+            node scripts/start-packaged.js /v1/segment/runtime
           fi
 
       - name: Keep the files on this run (a dry run)

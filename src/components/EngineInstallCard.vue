@@ -20,6 +20,8 @@ const engines = useEnginesStore();
 const status = computed(() => (props.kind === "finder" ? engines.finder : engines.aiphoto));
 const size = computed(() => fmtBytes(status.value?.downloadBytes || 0));
 const slow = computed(() => props.kind === "aiphoto" && status.value?.slow);
+// the finder's runtime doesn't load on this computer: say so, and download nothing that couldn't run
+const cantRun = computed(() => (props.kind === "finder" && status.value?.runtime?.ok === false ? status.value.runtime.error || "" : null));
 // this engine's download while it runs (the features are literal for the family guard's check 17)
 const finderInstall = useSurfaceTask("finder.install");
 const aiphotoInstall = useSurfaceTask("aiphoto.install");
@@ -40,8 +42,9 @@ async function install() {
     <h2>{{ t(`engines.${kind}.title`) }}</h2>
     <p class="hint">{{ t(`engines.${kind}.body`, { size }) }}</p>
     <UiBanner v-if="slow" intent="danger" class="engine__slow">{{ t("engines.aiphoto.slow") }}</UiBanner>
+    <UiBanner v-if="cantRun != null" intent="danger" class="engine__slow">{{ t("engines.finder.cantRun", { error: cantRun }) }}</UiBanner>
     <UiButton
-      intent="primary" :disabled="engines.installing[kind] || !!installTask || !status"
+      intent="primary" :disabled="engines.installing[kind] || !!installTask || !status || cantRun != null"
       :label="engines.installing[kind] ? t('engines.installing') : t('engines.install', { size })" @click="install"
     />
     <AiTaskStrip :task="installTask" />

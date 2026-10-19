@@ -98,14 +98,16 @@ export function maskedBlur(values, mask, w, h, radius) {
 /**
  * What one part needs, computed once per photo and part: its pixels, its normally lit level and
  * (when texture < 1) its blurred lighting. `mask` is a Uint8Array (0–255) the photo's size.
+ * `calmY`: the part's calmed lighting already worked out for this photo and mask (calmFinish doesn't
+ * depend on the texture, so a texture change keeps it).
  */
-export function preparePart({ Y, mask, width, height, texture = 1, blurRadius = 0 }) {
+export function preparePart({ Y, mask, width, height, texture = 1, blurRadius = 0, calmY = null }) {
   const inside = [];
   for (let i = 0; i < mask.length; i++) if (mask[i] >= 128) inside.push(Y[i]);
   const base = Math.max(1e-4, percentile(inside, 75));
   const radius = blurRadius || Math.max(2, Math.round(Math.min(width, height) / 150));
   const blurred = texture < 1 ? maskedBlur(Y, mask, width, height, radius) : null;
-  return { mask, base, texture, blurred, radius, pixels: inside.length, Y, width, height };
+  return { mask, base, texture, blurred, radius, pixels: inside.length, Y, width, height, calmY };
 }
 
 /** CIE L* (0–100) of a relative luminance. */
@@ -143,7 +145,7 @@ export function calmFinish({ Y, mask, width: w, height: h }) {
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       const i = y * w + x;
-      if (mask[i] < 128) continue;
+      if (!mask[i]) continue; // its soft edge too: the tint blends it in
       light[i] = Math.max(lightAt(x, y), 1e-5);
       lnY[i] = Math.log(Math.max(Y[i], 1e-5));
       d[i] = lnY[i] - Math.log(light[i]);
@@ -170,7 +172,7 @@ export function calmFinish({ Y, mask, width: w, height: h }) {
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       const i = y * w + x;
-      if (mask[i] < 128) continue;
+      if (!mask[i]) continue;
       const a = aAt(x, y);
       const b = bAt(x, y);
       const c = cAt(x, y);
@@ -256,7 +258,8 @@ export function calmStrength(part, hex, gain = [1, 1, 1]) {
 function calmed(part) {
   if (!part.calm) {
     const { Y, mask, width, height, texture, radius } = part;
-    const cY = calmFinish({ Y, mask, width, height });
+    const cY = part.calmY || calmFinish({ Y, mask, width, height });
+    part.calmY = cY;
     const inside = [];
     for (let i = 0; i < mask.length; i++) if (mask[i] >= 128) inside.push(cY[i]);
     part.calm = {

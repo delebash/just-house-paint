@@ -7,7 +7,7 @@
 // (RESEARCH §12) — and Save image. It is a picture the AI drew: the instant preview stays the
 // accurate one, and the dialog says so.
 import { AppModal, fmtBytes, reportError, requestBlob, saveBlob, UiButton, useServerImage } from "@delebash/ui";
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import EngineInstallCard from "./EngineInstallCard.vue";
 
@@ -20,6 +20,13 @@ const emit = defineEmits(["close", "installed"]);
 const { t } = useI18n();
 const modal = ref(null);
 const saving = ref(false);
+
+// the programs named under the AI photo: the biggest three, then how many more
+const sharedPrograms = computed(() => {
+  const s = props.render?.sharedGpu;
+  if (!s) return "";
+  return [...s.programs, ...(s.more ? [t("aiPhoto.sharedGpuMore", { n: s.more })] : [])].join(", ");
+});
 
 // through the kit's transport (the access token, the phone's in-app server), as an object URL
 const { src } = useServerImage(() => (props.render ? `/v1/renders/${encodeURIComponent(props.render.id)}/image` : ""));
@@ -48,7 +55,7 @@ async function save() {
         {{ t("aiPhoto.seconds", { n: Math.round(render.seconds || 0) }) }}
       </p>
       <p v-if="render.sharedGpu" class="muted aiphoto__shared">
-        {{ t("aiPhoto.sharedGpu", { size: fmtBytes(render.sharedGpu.mb * 1024 * 1024), programs: render.sharedGpu.programs.join(", ") }) }}
+        {{ t("aiPhoto.sharedGpu", { size: fmtBytes(render.sharedGpu.mb * 1024 * 1024), programs: sharedPrograms }) }}
       </p>
       <div class="form__actions">
         <UiButton intent="ghost" :label="t('kit.common.close')" @click="modal?.close()" />

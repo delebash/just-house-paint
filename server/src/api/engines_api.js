@@ -18,7 +18,18 @@ import { getState } from "../app_state.js";
 export function router(ctx = getState()) {
   const app = new Hono();
 
-  app.get("/v1/segment/status", (c) => c.json({ installed: ctx.finder.installed(), downloadBytes: ctx.finder.downloadBytes() }));
+  // not installed yet: whether its runtime loads here, so the install card can say so before the download
+  app.get("/v1/segment/status", async (c) => {
+    const installed = ctx.finder.installed();
+    return c.json({ installed, downloadBytes: ctx.finder.downloadBytes(), ...(installed ? {} : { runtime: await ctx.finder.runtime() }) });
+  });
+
+  // The finder's runtime loads on this computer (the release's start check asks it on every runner).
+  app.get("/v1/segment/runtime", async (c) => {
+    const r = await ctx.finder.runtime();
+    if (!r.ok) throw new ApiError(503, "runtime-missing", "The part finder can't run on this computer", r.error);
+    return c.json(r);
+  });
 
   app.post("/v1/segment/install", (c) => {
     const job = ctx.jobs.start({ kind: "install-finder", key: "" }, ({ signal, progress }) =>

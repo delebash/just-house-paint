@@ -21,6 +21,7 @@ export const fingerprint = (value) => createHash("sha256").update(canonicalJson(
 
 export const PREVIOUS_DEFAULTS = Object.freeze({
   "finder.parts": Object.freeze([
+    "b546f782bf3d4f2c", // the first build (42926bd), before v1's words
     "629c7d3be81f9187", // v1 (2026-10-18), before the soffit
     "c99b1a52cae7875b", // + the soffit (3922292)
     "57213ba5a0daf740", // + window trim from "window trim" alone, windows = the whole window (8972a89)
@@ -32,6 +33,7 @@ export const PREVIOUS_DEFAULTS = Object.freeze({
     "69c2dcc097840fab", // + window trim (v0.1.0–v0.1.2)
   ]),
   "schemes.roleParts": Object.freeze([
+    "bdf28dd165ea84cc", // the first build (42926bd)
     "17bb9a6fbb12c2e6", // v1
     "b8c404bde753f94f", // + the soffit (3922292)
     "ab90c1fb04750be9", // + window trim (v0.1.0–v0.1.2)

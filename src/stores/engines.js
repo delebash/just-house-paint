@@ -15,7 +15,7 @@ const INSTALLS = {
 
 export const useEnginesStore = defineStore("engines", {
   state: () => ({
-    // { installed, downloadBytes }
+    // { installed, downloadBytes, runtime?: { ok, error? } } — runtime only while not installed
     finder: null,
     // { engineInstalled, modelsInstalled, backend, slow, downloadBytes }
     aiphoto: null,
