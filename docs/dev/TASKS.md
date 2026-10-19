@@ -122,7 +122,13 @@ DONE:   (each measured first, RESEARCH §13)
         - trim: the doors' casings ("garage door frame", "door frame"); a piece must lie 15% on the house itself (a
           fence's end board was painted as trim on house3); existing installs at the old defaults get the new
           parts list, priority and scheme roles (previous_defaults.js); a house found before needs Find the parts
-          again (keeping hand changes) to gain them.
+          again (keeping hand changes) to gain them;
+        - the AI photo names the other programs that held the graphics card while it drew (over
+          `aiphoto.sharedGpuNoteMb`, 1024 by default, in General) — was in IDEAS;
+        - parts stay on THIS house: the house rule uses the main house and what touches it, not every house in
+          the photo (the obstruction set: a neighbor's windows, doors and soffits were painted — c02, c04, c07);
+        - the packaged app is started on every release runner before anything is attached (the template's
+          scripts/start-packaged.js and workflow step, the guard checks it).
 NEXT (mine, in this order): the obstruction test set on the ~28 Commons house photos already on disk from the
         10/17 probes (no download); the graphics-card hint in the AI photo dialog (IDEAS); the packaged app started
         on macOS and Linux in the release run; a review pass; then the release (v0.1.3), which also shows the silent

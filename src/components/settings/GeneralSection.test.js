@@ -33,6 +33,7 @@ const VALUES = {
   "finder.houseMargin": 0.02,
   "finder.houseMinShare": 0.5,
   "aiphoto.workingPixels": 786432,
+  "aiphoto.sharedGpuNoteMb": 1024,
   "finder.parts": [{ key: "body", labelKey: "parts.body", prompts: ["house"], paintable: true, group: "walls" }],
   "finder.priority": ["windows"],
   "schemes.roleParts": { body: ["body"], trim: [], accent: [] },

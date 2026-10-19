@@ -66,6 +66,8 @@ export const SETTINGS = {
   ),
   // The AI photo: the model's working size (pixels), its prompt templates, how it is put back.
   "aiphoto.workingPixels": T.Integer({ minimum: 256 * 256, maximum: 1600 * 1200 }),
+  // Other programs holding more graphics memory than this (MB) are named under the AI photo (0 = never).
+  "aiphoto.sharedGpuNoteMb": T.Integer({ minimum: 0, maximum: 1024 * 1024 }),
   "aiphoto.templates": T.Record(T.String({ maxLength: 40 }), T.String({ maxLength: 2000 })),
   "aiphoto.compose": T.Record(T.String({ maxLength: 40 }), T.Union([T.Number(), T.Boolean(), T.Array(T.Number())])),
 };

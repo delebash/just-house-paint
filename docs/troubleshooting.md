@@ -41,7 +41,9 @@ if it still fails.
 with nothing else on it. Another program holding the card's memory — another app's AI model, even an
 idle one — makes it slower (Windows first moves that program's memory off the card), and one that is
 working on the card at the same time slows it more. Close the other AI app, or wait for its model to
-unload, for the fastest result.
+unload, for the fastest result. When other programs held more than 1 GB of the card while it drew, the
+AI photo names them under its time; **App Settings → General → AI photo** sets that amount (0 turns it
+off).
 
 **A brand's colors won't load.** The brand's website didn't answer, or changed. **Paint colors**
 shows the last try's reason on the brand's row; try **Load again** later, or import the brand's

@@ -50,7 +50,7 @@
       },
       "aiphoto": {
         "title": "AI photo",
-        "hint": "The size the AI draws at, in pixels: bigger is sharper and slower."
+        "hint": "The size the AI draws at, in pixels: bigger is sharper and slower. Other programs holding the graphics card make it slower too: above the amount below, the AI photo names them (0 never does)."
       },
       "fields": {
         "photos": {
@@ -72,7 +72,8 @@
           "houseMinShare": "A piece counts when this share of it is on the house"
         },
         "aiphoto": {
-          "workingPixels": "Working size (pixels)"
+          "workingPixels": "Working size (pixels)",
+          "sharedGpuNoteMb": "Name other programs holding more of the graphics card than (MB)"
         }
       }
     },
@@ -406,6 +407,7 @@
     "alt": "The AI photo of {name}",
     "deltaE": "ΔE {n} from the chips",
     "seconds": "made in {n} s",
+    "sharedGpu": "Other programs held {size} of the graphics card while it drew ({programs}), which makes the AI photo slower. Close them for the fastest one.",
     "save": "Save image",
     "suffix": "AI photo",
     "fallbackName": "House"

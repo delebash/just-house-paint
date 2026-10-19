@@ -11,7 +11,7 @@ import { streamDownload } from "@delebash/core/runner/download";
 import * as hardware from "@delebash/core/runner/hardware";
 import * as lifecycle from "@delebash/core/runner/lifecycle";
 import { hfDownloadHeaders } from "@delebash/core/runner/models";
-import { createAiPhoto, surfaceWords } from "./aiphoto_service.js";
+import { createAiPhoto, sharedGpuNote, surfaceWords } from "./aiphoto_service.js";
 import { SETTING_DEFAULTS } from "./database/seed.js";
 import { getSetting } from "./database/settings.js";
 import { createFinder, DEFAULT_PROVIDERS } from "./finder.js";
@@ -87,6 +87,15 @@ export function createServices({ db, dataDir }, overrides = {}) {
       jpegQuality: setting("photos.jpegQuality"),
       maxPhotoBytes: setting("photos.maxMegabytes") * MB,
     }),
+    /** Other programs holding the graphics card while the AI photo draws, when they hold more than the
+     *  setting: { mb, programs: [label] } (the biggest three), or null — none, under it, or not
+     *  measurable here (the kit's otherGpuHolders: nvidia-smi, else Windows' counters). */
+    sharedGpu:
+      overrides.sharedGpu ??
+      (async () => {
+        const floor = setting("aiphoto.sharedGpuNoteMb");
+        return floor ? sharedGpuNote(await hardware.otherGpuHolders().catch(() => null), floor) : null;
+      }),
     maxDesignsPerHouse: () => setting("designs.maxPerHouse"),
     maxImportBytes: () => setting("paints.maxImportMegabytes") * MB,
     harmony: () => setting("schemes.harmony"),

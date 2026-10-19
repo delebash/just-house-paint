@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: MIT
 // The AI photo (PRD F8, an option button beside the instant preview): either the engine to install
 // first (EngineInstallCard), or an AI photo — the image the server made and kept, how close its
-// paint is to the chips (ΔE2000 after the lock), how long it took, and Save image. It is a picture
-// the AI drew: the instant preview stays the accurate one, and the dialog says so.
-import { AppModal, reportError, requestBlob, saveBlob, UiButton, useServerImage } from "@delebash/ui";
+// paint is to the chips (ΔE2000 after the lock), how long it took — and, when other programs held
+// the graphics card while it drew (the server's `sharedGpu`), which ones: they make it slower
+// (RESEARCH §12) — and Save image. It is a picture the AI drew: the instant preview stays the
+// accurate one, and the dialog says so.
+import { AppModal, fmtBytes, reportError, requestBlob, saveBlob, UiButton, useServerImage } from "@delebash/ui";
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 import EngineInstallCard from "./EngineInstallCard.vue";
@@ -45,6 +47,9 @@ async function save() {
         <template v-if="render.deltaE != null">{{ t("aiPhoto.deltaE", { n: render.deltaE.toFixed(1) }) }} · </template>
         {{ t("aiPhoto.seconds", { n: Math.round(render.seconds || 0) }) }}
       </p>
+      <p v-if="render.sharedGpu" class="muted aiphoto__shared">
+        {{ t("aiPhoto.sharedGpu", { size: fmtBytes(render.sharedGpu.mb * 1024 * 1024), programs: render.sharedGpu.programs.join(", ") }) }}
+      </p>
       <div class="form__actions">
         <UiButton intent="ghost" :label="t('kit.common.close')" @click="modal?.close()" />
         <UiButton intent="primary" :disabled="saving" :label="t('aiPhoto.save')" @click="save" />
@@ -54,6 +59,9 @@ async function save() {
 </template>
 
 <style scoped>
+.aiphoto__shared {
+  max-width: 60ch;
+}
 .aiphoto__img {
   display: block;
   max-width: 100%;

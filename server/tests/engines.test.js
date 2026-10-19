@@ -6,7 +6,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, test } from "vitest";
-import { createAiPhoto, surfaceWords } from "../src/aiphoto_service.js";
+import { createAiPhoto, sharedGpuNote, surfaceWords } from "../src/aiphoto_service.js";
 import { ENGINE_RELEASES, MODEL_FILES as SD_FILES, selectEngineAsset } from "../src/aiphoto/engine.js";
 import { createFinder, resolveOverlaps } from "../src/finder.js";
 import { MODEL_FILES as SAM_FILES } from "../src/segment/models.js";
@@ -246,7 +246,7 @@ describe("the engine routes", () => {
     expect(r.status).toBe(202);
     const done = await s.settle((await r.json()).id);
     expect(done.state).toBe("done");
-    expect(done.result).toMatchObject({ houseId: house.id, deltaE: 0.3 });
+    expect(done.result).toMatchObject({ houseId: house.id, deltaE: 0.3, sharedGpu: null });
     // the roof isn't paintable, so only body and trim go to the model, in English words
     expect(calls.find((c) => c[0] === "aiRepaint")[1]).toEqual([
       ["body", "#a33a2f", "#f4f4f2"],
@@ -258,6 +258,35 @@ describe("the engine routes", () => {
     expect(renders).toHaveLength(1);
     expect((await s.app.request(`/v1/renders/${renders[0].id}/image`)).headers.get("content-type")).toBe("image/png");
     expect((await s.app.request(`/v1/renders/${renders[0].id}`, { method: "DELETE" })).status).toBe(204);
+  });
+
+  test("the AI photo says what else held the graphics card while it drew", async () => {
+    const held = { mb: 7066, programs: ["llama-server"] };
+    s = makeServer({ aiphoto: aiphotoFactory([]), sharedGpu: async () => held });
+    const house = await (await s.upload(await jpeg(200, 150))).json();
+    await s.settle((await (await s.json("POST", `/v1/houses/${house.id}/find-parts`)).json()).id);
+    const form = new FormData();
+    form.append("file", new Blob(["code,name,hex\nX-1,Brick Red,#a33a2f"]), "p.csv");
+    form.append("brand", "behr");
+    await s.app.request("/v1/paints/import", { method: "POST", body: form });
+    const r = await s.json("POST", `/v1/houses/${house.id}/aiphoto`, { colors: { body: "behr:X-1" } });
+    const done = await s.settle((await r.json()).id);
+    expect(done.state).toBe("done");
+    expect(done.result.sharedGpu).toEqual(held);
+  });
+
+  test("other programs are named only above the setting, the biggest three", () => {
+    const rows = [
+      { label: "llama-server", memMb: 6900 },
+      { label: "python · tts/serve.py", memMb: 400 },
+      { label: "game", memMb: 300 },
+      { label: "browser", memMb: 250 },
+    ];
+    expect(sharedGpuNote(rows, 1024)).toEqual({ mb: 7850, programs: ["llama-server", "python · tts/serve.py", "game"] });
+    expect(sharedGpuNote(rows.slice(1), 1024)).toBeNull(); // 950 MB: under it
+    expect(sharedGpuNote(rows, 0)).toBeNull(); // the note turned off
+    expect(sharedGpuNote(null, 1024)).toBeNull(); // not measurable here
+    expect(sharedGpuNote([], 1024)).toBeNull();
   });
 
   test("nothing to paint ends the job with a clear error; an unknown design is a 404", async () => {

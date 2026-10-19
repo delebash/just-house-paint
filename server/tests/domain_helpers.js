@@ -77,7 +77,7 @@ export const fakeFinder = {
 /** `fetch`: the brands' public lists (a fake in tests). */
 /** `run`: the AI run path (a fake: answers with `aiAnswer.text`). */
 export const aiAnswer = { text: "{}", calls: [], error: null };
-export function makeServer({ fetch = async () => new Response("offline", { status: 503 }), aiphoto = null } = {}) {
+export function makeServer({ fetch = async () => new Response("offline", { status: 503 }), aiphoto = null, sharedGpu = null } = {}) {
   const dataDir = mkdtempSync(path.join(os.tmpdir(), "hp-test-"));
   const db = openDatabase(path.join(dataDir, "app.db"), { foreignKeys: true });
   migrate(db, MIGRATIONS);
@@ -92,6 +92,7 @@ export function makeServer({ fetch = async () => new Response("offline", { statu
       return { text: aiAnswer.text, model: "fake-model", prompt_tokens: 120, completion_tokens: 80 };
     } };
   ctx.aiphoto = aiphoto ? aiphoto(ctx) : null;
+  if (sharedGpu) ctx.sharedGpu = sharedGpu;
   ctx.download = async () => {
     throw new Error("no network in tests");
   };

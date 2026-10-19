@@ -52,6 +52,9 @@ export const SETTING_DEFAULTS = {
   },
   "schemes.harmony": plain(HARMONY_DEFAULTS),
   "aiphoto.workingPixels": DEFAULT_WORKING_SIZE.targetPixels,
+  // other programs holding this much of the graphics card make the AI photo slower (an idle 6.9 GB
+  // model: 20 s → 28 s, RESEARCH §12) — its dialog says so above this; 0 = never
+  "aiphoto.sharedGpuNoteMb": 1024,
   "aiphoto.templates": { ...DEFAULT_PROMPT_TEMPLATES },
   "aiphoto.compose": plain(DEFAULT_COMPOSE),
 };

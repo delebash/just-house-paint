@@ -20,7 +20,7 @@ const GROUPS = [
   ["photos", [["photos.displayMax", "number"], ["photos.thumbMax", "number"], ["photos.jpegQuality", "number"], ["photos.maxMegabytes", "number"]]],
   ["designs", [["designs.maxPerHouse", "number"], ["paints.maxImportMegabytes", "number"]]],
   ["finder", [["finder.useGpu", "toggle"], ["finder.idleMinutes", "number"], ["finder.houseMargin", "number", 0.01], ["finder.houseMinShare", "number", 0.05]]],
-  ["aiphoto", [["aiphoto.workingPixels", "number"]]],
+  ["aiphoto", [["aiphoto.workingPixels", "number"], ["aiphoto.sharedGpuNoteMb", "number"]]],
 ];
 const KEYS = GROUPS.flatMap(([, fields]) => fields.map(([key]) => key));
 const idOf = (key) => `setting-${key.replace(".", "-")}`;

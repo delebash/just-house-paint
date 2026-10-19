@@ -13,7 +13,8 @@ import { renderPath } from "../files.js";
 import { AiPhotoIn, IdParams } from "../schemas/houses.js";
 import { getState } from "../app_state.js";
 
-/** `ctx`: { db, dataDir, jobs, finder, aiphoto, download } — `download` is the kit's streamDownload. */
+/** `ctx`: { db, dataDir, jobs, finder, aiphoto, download, sharedGpu? } — `download` is the kit's
+ * streamDownload; `sharedGpu()` what else holds the graphics card (services.js). */
 export function router(ctx = getState()) {
   const app = new Hono();
 
@@ -75,11 +76,14 @@ export function router(ctx = getState()) {
     assertGpuFree(ctx.jobs, "aiphoto", house.id);
     const job = ctx.jobs.start({ kind: "aiphoto", key: house.id, label: house.name }, async ({ signal, progress }) => {
       const renderId = crypto.randomUUID();
+      // what else holds the graphics card, measured beside the render (about a second on Windows)
+      const shared = (ctx.sharedGpu?.() ?? Promise.resolve(null)).catch(() => null);
       const r = await ctx.aiphoto.render(house, surfaces, { renderId, signal, progress });
       // the design deleted while it rendered: the AI photo stays, without the link
       const keepDesign = designId && getDesign(ctx.db, designId) ? designId : null;
       try {
-        return addRender(ctx.db, { houseId: house.id, designId: keepDesign, file: r.file, engine: r.engine, deltaE: r.deltaE, seconds: r.seconds });
+        const render = addRender(ctx.db, { houseId: house.id, designId: keepDesign, file: r.file, engine: r.engine, deltaE: r.deltaE, seconds: r.seconds });
+        return { ...render, sharedGpu: await shared };
       } catch (e) {
         rmSync(renderPath(ctx.dataDir, house.id, r.file.replace(/\.png$/, "")), { force: true });
         throw e;
