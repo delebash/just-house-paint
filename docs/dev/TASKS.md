@@ -279,8 +279,10 @@ v0.1.1 (2026-10-19): the kit and template items done (the kit's TASKS, the templ
         found 0.1.1, Download took 6 s — and Restart now opened the setup WIZARD (the kit's quitAndInstall without /S);
         the same installer with /S upgraded in place in 15.8 s, the data folder untouched (RESEARCH §12).
 v0.1.2 (2026-10-19): Restart now installs silently and restarts (the kit's 8a9b3fb, a test pins it). An install of
-        0.1.0 or 0.1.1 still shows the wizard this once (their shell is the old one); What's new says so. LEFT: the
-        release run; the installed 0.1.1 → 0.1.2 through the wizard (what those users see).
+        0.1.0 or 0.1.1 still shows the wizard this once (their shell is the old one); What's new says so. RELEASED (run
+        39315855260, the feed checked). The installed 0.1.1 → 0.1.2 as those users will: found, downloaded in 2 s, Restart
+        now → the wizard, Next, it installs, Finish (Run Just House Paint ticked) → the app at 0.1.2 in 0.6 s, its data
+        untouched. LEFT: the first update FROM 0.1.2 is the one that shows the silent Restart now — check it then.
 
 ## The review before the release [2026-10-18]
 FOUND (a read-only review of the renderer, each traced through the code; to fix before the release):
