@@ -5,9 +5,9 @@ computer. It looks for the body (the siding or walls), the trim, the front door,
 shutters, columns, railings, gutters, the soffits, the window trim, the chimney and decorations —
 and for what usually isn't painted: the roof, the windows, stone, brick and lamps.
 
-It finds them on **your** house — the one the photo is framed on, and what is built against it. A
-neighbor's house standing apart from yours is left as it is, and so are a car parked in front and a
-garden statue.
+It finds them on **your** house — the one the photo is framed on, its wings and garage included. A
+neighbor's house in the photo is left as it is, even right beside yours, and so are a car parked in
+front and a garden statue.
 
 **Trim** includes the casings around the front door and the garage door. A board the finder takes
 for trim has to lie at least partly on the house itself, so a fence's end board beside the house

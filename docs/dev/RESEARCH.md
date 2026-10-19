@@ -912,8 +912,9 @@ at the app's display size, through the app's own code; scripts and overlays in s
   body ran into the lower part of an evergreen beside the house (body ∩ "tree" 3.07% of the photo, part of it bare
   branches the house shows through); trim ∩ tree 0.05% on c01. **The bigger fault: neighbors' parts** — on c02, c04 and
   c07 the window trim, soffits, doors and railings of the houses beside were painted (and c01's neighbor's window trim),
-  because the house rule took every "house" instance, the neighbors' included. Now the house is the main instance
-  (pickMainInstance, as the body) and the instances touching it within the margin.
+  because the house rule took every "house" instance, the neighbors' included. First fix: the main instance and the
+  instances touching it — which still took in the neighbors beside it (below, "What else SAM 3 calls house"); now the
+  main instance alone (pickMainInstance, as the body).
 - **The packaged app on every runner** (2026-10-19, the release workflow's new "Start the packaged app" step,
   dry run 39339201987 — nothing published): Windows answered in 1.6 s, **macOS in 9.4 s (the first time the Mac build
   ever ran)**, and **Linux never**: its server exited at its first import — `Could not load the "sharp" module using the
@@ -934,3 +935,9 @@ at the app's display size, through the app's own code; scripts and overlays in s
   even with sharp fixed. Now built on the static runtime (`toolsets.appimage: "1.0.3"`) and the kit's shell runs
   without Chromium's sandbox when an AppImage can't have it (the kit's RESEARCH §2). The build runners' own start
   check: Windows 1.6 s, macOS 6.6 s, Linux 3.1 s, the part finder's runtime loading on all three.
+- **What else SAM 3 calls "house"** (2026-10-19, "house" at 0.5 on the 27 set photos and the four app houses, each
+  instance drawn: the main one — pickMainInstance, as the body uses — the ones touching it within the 2% margin, the
+  rest): the main instance held the whole house every time, wings and garages included (house1's garage wing,
+  house2's garage, the user's garage); **every other instance was a neighbor's house**, the touching ones included
+  (2–11% of the photo on b02, c02, d01, d02, d03, d05, d09, d11, e01, e02, e03, house2). So "touching the main one"
+  can't tell a wing from a neighbor — it took the neighbors in — and the house rule is the main instance alone.

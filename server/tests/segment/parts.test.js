@@ -247,9 +247,9 @@ describe("parts stay on the house", () => {
     expect(door.instances).toHaveLength(1);
   });
 
-  it("a neighbor's house across the yard isn't the house; a wing touching it is", async () => {
-    // the main house x 8–24 (central, biggest); its garage wing x 24–30 touching it; a neighbor's house
-    // x 34–40, 4 px away (more than the 2 px margin) — each with a door
+  it("a neighbor's house isn't the house, apart from it or touching it", async () => {
+    // the main house x 8–24 (central, biggest); a neighbor's house touching it at x 24–30; another 4 px
+    // away (more than the 2 px margin) at x 34–40 — each with a door
     const seg = fakeSegmenter({
       house: [inst(0.9, [8, 0, 24, 30]), inst(0.8, [24, 10, 30, 30]), inst(0.8, [34, 5, 40, 30])],
       door: [inst(0.9, [12, 15, 16, 30]), inst(0.9, [25, 20, 29, 30]), inst(0.9, [35, 20, 38, 30])],
@@ -260,8 +260,8 @@ describe("parts stay on the house", () => {
     ];
     const r = await findParts(seg, handle, config, { houseMargin: 0.05, houseMinShare: 0.5 }); // 2 px of 40
     const door = r.parts.find((p) => p.key === "frontDoor");
-    expect(door.instances).toHaveLength(2); // the house's and the wing's, not the neighbor's
-    expect(door.area).toBe(4 * 15 + 4 * 10);
+    expect(door.instances).toHaveLength(1); // only the house's own
+    expect(door.area).toBe(4 * 15);
   });
 
   it("a part held to onHouse keeps only pieces that much on the house itself, whatever the margin keeps", async () => {

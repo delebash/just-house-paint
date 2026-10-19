@@ -138,12 +138,6 @@ export function pickMainInstance(instances, width, height) {
   return best;
 }
 
-/** Whether two masks share a pixel. */
-function touches(a, b) {
-  for (let i = 0; i < a.length; i++) if (a[i] && b[i]) return true;
-  return false;
-}
-
 /**
  * Find every part of `partsConfig` on an encoded photo. `segmenter` needs `findText(handle, phrase,
  * { threshold })`. Options: `onProgress({ part, phrase, index, total })` before each prompt, `signal`
@@ -154,9 +148,9 @@ function touches(a, b) {
  */
 /**
  * Parts stay on the house ("door" found a parked SUV's doors on a user's photo, 2026-10-18). The
- * house is the main instance the "subtract" part's prompts found ("house") and those touching it — a
- * neighbor's house across a yard isn't — grown by `houseMargin` (a fraction of the photo's longer
- * side; 0 = off) so the trim and gutters on its outline count.
+ * house is the main instance the "subtract" part's prompts found ("house") — a neighbor's house in the
+ * photo isn't, even touching it — grown by `houseMargin` (a fraction of the photo's longer side; 0 =
+ * off) so the trim and gutters on its outline count.
  * Each instance a part's prompts find is kept only when at least `houseMinShare` of it lies on the
  * house — a car in front of the garage sits inside the house's outline, so clipping pixels alone
  * kept part of its door — and what is kept is clipped to the house. A part's own `onHouse` also asks
@@ -195,15 +189,13 @@ export async function findParts(
     config.filter((p) => p.method === "text").flatMap((p) => found.get(p.key).map((i) => i.mask)),
     n,
   );
-  // the house: the main instance the "subtract" part's prompts found and every instance touching it
-  // within the margin (a wing, an attached garage) — not a neighbor's house across a yard, whose
-  // windows and doors were painted too (the obstruction set, RESEARCH §13) — grown by the margin
+  // the house: the main instance the "subtract" part's prompts found (as the body is) — never another
+  // instance: on all 31 photos of the obstruction set every other "house" instance, touching the main one
+  // or not, was a neighbor's house, whose windows, doors and soffits were painted, and the main instance
+  // held the house's own wings and garages (RESEARCH §13) — grown by the margin
   const grow = Math.round(houseMargin * Math.max(width, height));
   const houseInstances = config.filter((p) => p.method === "subtract").flatMap((p) => found.get(p.key));
-  const main = pickMainInstance(houseInstances, width, height);
-  const mainGrown = main ? (grow > 0 ? dilateMask(main.mask, width, height, grow) : main.mask) : null;
-  const attached = main ? houseInstances.filter((i) => i === main || touches(i.mask, mainGrown)) : [];
-  const houseItself = attached.length ? unionMasks(attached.map((i) => i.mask), n) : null;
+  const houseItself = pickMainInstance(houseInstances, width, height)?.mask ?? null;
   // a margin of 0 turns the grown house's rule off (no limit); a part's own onHouse still holds
   const houseArea = houseMargin > 0 && houseItself ? dilateMask(houseItself, width, height, grow) : null;
   const onHouse = (mask) => (houseArea ? intersectMask(mask, houseArea) : mask);

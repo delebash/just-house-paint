@@ -139,8 +139,14 @@ FOUND by the dry run (39339201987, the new start check): the Linux AppImage neve
         library), so the server exits at its first import; v0.1.0–v0.1.2's Linux file is broken (left on those
         releases unless the user says otherwise). onnxruntime-node's `libonnxruntime.so.1` is the same case. macOS
         answered in 9.4 s (the first time it ever ran), Windows in 1.6 s.
-NEXT (mine, in this order): the Linux fix (sharp's documented Electron unpack, and onnxruntime-node's), checked
-        on every runner; the obstruction test set's other 17 photos (paused for JustVoice's render) and what it shows;
+FIXED (2026-10-19): sharp and onnxruntime-node unpacked (sharp's documented Electron setting), each installer
+        with its own platform's runtime only; then the AppImage opened as a Linux user does on Ubuntu 24.04 (a new
+        release job) showed two more faults — no libfuse.so.2 ("AppImages require FUSE to run"), and Chromium's sandbox
+        blocked by AppArmor — fixed by the static AppImage runtime (toolsets.appimage 1.0.3) and the kit's shell running
+        without the sandbox only there (linuxSandbox.js). The release now publishes only after every runner's start check
+        and the Ubuntu 24.04 check pass. Dry run 39342556107: all five jobs pass (Windows 3.6 s, macOS 8.1 s, Linux 3.5 s,
+        the AppImage on 24.04 2.8 s; the part finder's runtime loads on all).
+NEXT (mine, in this order): the obstruction test set's other 17 photos (paused for JustVoice's render) and what it shows;
         the review's findings; then, only when nothing is open, the release.
 
 ## Wide-color photos — the most accurate colors [2026-10-18]

@@ -9,8 +9,8 @@
   own part — a garden statue in front isn't one. A scheme paints them the trim's color.
 - **Trim** now takes the casings around the front door and the garage door, and no longer a fence's
   end board beside the house.
-- **Only your house is painted**: the finder no longer finds windows, doors and trim on a neighbor's
-  house standing apart from yours in the photo.
+- **Only your house is painted**: the finder no longer finds windows, doors, soffits and trim on a
+  neighbor's house in the photo.
 - **The AI photo says when other programs slowed it**: under its time, the programs that held the
   graphics card while it drew, and how much.
 - A house whose parts were found before keeps them: **Find the parts again** (with **Keep the parts
