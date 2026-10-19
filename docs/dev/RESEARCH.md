@@ -843,3 +843,12 @@ Playwright against that server. Screenshots: session e638ccef's scratchpad `real
   (`data/`, its database and brands) came through untouched. Fixed in the kit (8a9b3fb,
   `quitAndInstall(true, true)`), shipped in v0.1.2; copies of 0.1.0 and 0.1.1 run the old shell, so
   their one update to 0.1.2 still shows the wizard.
+- **Why the AI photo's time varies** (2026-10-19; the probe house1, the same two colors, the dev server,
+  Windows' per-process GPU memory counters sampled each second): with the card free, **20.2 s**, and
+  **20.4 s** right after the part finder had run (the app's hand-off frees its 6.2 GB first — not the
+  60.9 s of 10/18). With another family app's idle Gemma 4 26B resident (JustVoice's server, 6.9 GB of the
+  8 GB card), **28.3 s**: Windows paged that model down to 1.5 GB to make room. sd-cli's own memory was the
+  same every run — 5,959 MB dedicated at its peak, ~7.4 GB shared (its host buffers; not the slowdown). So
+  the 22–61 s of 10/18 is other programs on the same card — the app's GPU gate keeps only its own jobs apart
+  — and a program *working* on the card at the same time costs more than an idle one. Explained in
+  troubleshooting; a hint naming what holds the card is in IDEAS.md.

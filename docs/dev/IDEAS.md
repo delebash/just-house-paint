@@ -10,6 +10,10 @@ when an idea is picked up it moves to a plan and gets a link here (or is struck 
 
 ---
 
+- **Say what else holds the graphics card** (2026-10-19). The AI photo takes ~20 s on a free 8 GB card and
+  longer when another program's model sits on it (RESEARCH §12). The kit already lists the processes
+  holding GPU memory (`_otherGpuHolders`, for the warm start's error); the AI photo dialog could say
+  "Another program is using the graphics card (llama-server, 6.9 GB) — this will take longer."
 - **Signed installers** (2026-10-19). v0.1.0 ships unsigned: Windows shows SmartScreen's "unknown
   publisher", macOS Gatekeeper's warning (the help says how to open it). Signing needs a certificate in
   the user's name: the SignPath Foundation signs open-source projects' Windows builds for free (an

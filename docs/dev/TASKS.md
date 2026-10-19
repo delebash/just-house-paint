@@ -99,8 +99,10 @@ OPEN:   - the user's house: the gable medallions in the body are left for the Er
           line went when window trim became its own part); the obstruction test set is for later (below);
         - trim recall: better with the new default recipe, but corner boards, friezes and skirts still land
           in the body (RESEARCH §11) — the Box tool is the fix today;
-        - the AI photo's time (22–61 s) and the AI schemes' (16–99 s) vary widely between runs on the same
-          inputs (RESEARCH §11) — not explained;
+        - the AI photo's time — EXPLAINED 2026-10-19 (RESEARCH §12): other programs on the same card (another
+          family app's resident AI model); the card free, 20.2–20.4 s, also right after the part finder; troubleshooting
+          says so; a hint naming what holds the card is parked in IDEAS.md. The AI schemes' 16–99 s are the model
+          loading again after server restarts (§11) and the same sharing;
         - a browser on a server that requires access tokens can't use the app at all: no family app gives
           the kit's transport a token (the kit's TASKS) — the pictures now go through that transport
           (the kit's `UiServerImage`, 2026-10-18), so they follow when it does;
