@@ -1103,6 +1103,64 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         showing isn't added again (Quasar's group); start-packaged makes its temp folders inside its try. Kept, argued:
         on macOS the temp HOME doesn't cover Cocoa's own preferences and saved state — the data folder is what matters
         and is covered (RESEARCH).
+        The eighteenth's fresh angle — every claim of the help and What's new against the code (an agent's; the
+        server live on temp folders, all seven brand lists loaded; scratch in the scratchpad's claims18; ~426 claims
+        TRUE). FALSE — the AI tasks panel's Run it again (no app task offers it); an import "says how many" colors it
+        left out (the server's warnings are never shown); "App Settings → Logs has the engine's own words" (they're in
+        AI Settings → AI engine console); the house page fits 960 × 700 with nothing to scroll (it fits half a 1920 px
+        screen); Smart App Control can't be turned back on (Windows now can — to check). PARTLY, with code behind it —
+        "requests through a proxy always need a token": a proxy is known only by Forwarded / X-Forwarded-For / X-Real-
+        IP, and nginx's default proxy_pass sends none and rewrites Host to 127.0.0.1 — measured: 200 with no token (a
+        security gap for a user who follows the help); a job that failed or was cancelled while the computer slept is
+        forgotten after 10 minutes and then said as "the app's server started again" (the wrong reason); a Box marks the
+        part it took from (Body) edited, so Keep the parts you changed by hand keeps Body and Find the parts again
+        changes nothing (measured); leaving the house "asks first" only inside the app — closing the window, a reload
+        or Quit drops unsaved colors silently; "when it last changed" moves only on some changes (strokes, a Box, a part
+        added, an AI photo, a design deleted don't). PARTLY, the words — macOS 15 has no Control-click → Open (Privacy
+        & Security → Open Anyway); "about 20 seconds" is Windows with CUDA (Vulkan 33.5 s); the sizes in the help are
+        decimal, the screen's binary (3.4 / 8.5–9.5 GB); updates also checked every 6 h and after a wake, and with
+        keep-running on an update waits for the tray's Quit; "turns a brand off" only stops loading; the Appearance
+        list lacks Accent hue; "the button at the top right"; "opening the desktop app stops it" only for the same user
+        on 17499; a restore keeps only the tokens and the engines' build and five runner rows; work stops whenever a
+        restore replaces, downloads too; Reset also wipes the AI providers and keys, models, presets, routing, prompts,
+        usage and the prefs (the AI offer comes back), keeps the tokens and the data folder's place; "12 GB of models"
+        (12.1 decimal, 11.3 on screen, plus a Quick Setup model); a sideways or transparent photo is re-encoded; only
+        your house — only when a house is found and the margin is above 0; "under a minute" (50–53 s on the user's
+        GPU, ≥ 64 s on a processor); "No parts found" vs doors and windows found with no Body; a pixel's one part and
+        the brush only adding; the margin's 0; "edited" also on an added part and the part a Box took from; the trim
+        offer's parts (gutters, columns, railings too) and its Dismiss; Line hidden with Side by side; every window
+        loads every empty brand with Load automatically on (a Removed brand comes back); an import replaces the whole
+        list (Benjamin Moore one collection); chips show name over number; HGTV Home's HGSW; "SW 7008" finds nothing;
+        Exterior colors only on by default, marks only Sherwin-Williams', narrows An exact color; discontinued paints
+        never in the matches; Classic swaps the body for a mid-tone of its hue; the door checked only against the body;
+        pairings from Valspar, HGTV Home and Dutch Boy too; another app's AI cache adopted at start; the AI photo checks
+        system memory, not the card's, and every build but Windows CUDA counts slow; the busy programs named only where
+        measurable, ≥ 200 MB, on first open; the token page after a 403 behind a proxy without ALLOWED_HOSTS; "one at a
+        time" not symmetric; "can't run" once installed; "Older than this engine needs" only when drawing; Use the
+        default folder from now on and Move back under the variable; a checksum failure deletes and fails; a hidden
+        window's AI Settings polls; "Quitting waits" (it refuses with a box); proxies for a server on its own
+        (HTTPS_PROXY, no SOCKS); the comma only in fields that take fractions; the AppImage before; About's path doesn't
+        wrap; a slider's box reads "1 500" as nothing; a browser's backup in memory; the photo-limit message.
+        Contradictions — 18 (update checks, the AI photo's time, the card's memory and RAM, the finder and the card on
+        macOS/Linux, sizes, "turns a brand off", Quit, the AI offer, Use the default from now on, the takeover, the
+        no-color swatch, 960 × 700, the AI files, the app's own folder holding the Windows default, Quit's name, the
+        backup's paints and tokens, "Settings →" against "App Settings"). Screen words no page explains — Settings'
+        defaults and JPEG quality, Advanced's keys, Storage's rows and its move dialog, Server's tokens, Logs, Updates,
+        About, most of AI Settings and Quick Setup, the AI tasks chip and panel, the splash, the tray's items (Stop
+        server leaves the window on Can't reach), and ~30 messages a user must act on; the command line and its
+        variables.
+        Their fixes — decided (mine, argued): the code — a proxy can't be told from a local browser when it sends no
+        proxy header and rewrites Host, so the help says it plainly (behind a reverse proxy turn on Require a token on
+        this computer too, or have it send X-Forwarded-For — nginx's line given) and Server's panel says it beside
+        Headless access; a job ended while asleep said as ended ("This work ended while the app wasn't looking — run it
+        again"), never "the server started again"; a Box marks only the part it gave to as changed by hand; closing the
+        window, a reload or Quit with unsaved colors asks first (the page's beforeunload, the shell's
+        will-prevent-unload box — Electron's documented pattern), a browser asks in its own way; the house's time moves
+        on every change of its parts, outlines, designs or AI photos (touchHouse); an import says how many colors it
+        left out; the words — every FALSE and PARTLY claim rewritten to what the code does (sizes as the screen shows
+        them, binary, quoted from it), the contradictions settled, and a help page for each Settings section and AI
+        Settings' controls, the tray's items, the command line, and the messages a user must act on (troubleshooting).
+        Smart App Control and macOS 15's Open Anyway checked on the vendors' pages before they are written.
 NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
         the installed 0.1.2 updating to it (the silent Restart now).
 
