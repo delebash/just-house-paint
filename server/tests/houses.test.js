@@ -6,6 +6,7 @@ import path from "node:path";
 import sharp from "sharp";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { nameFromFile } from "../src/api/houses_api.js";
+import { isHeic } from "../src/images.js";
 import { createHouse } from "../src/database/houses.js";
 import { addingHouseDir, maskPath, removeHouseDir, sweepHouseDirs } from "../src/files.js";
 import { fakeFinder, jpeg, makeServer } from "./domain_helpers.js";
@@ -85,6 +86,14 @@ describe("houses", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  test("a reset's old houses folder left beside the data (held) goes at the next start", async () => {
+    s = makeServer();
+    const aside = path.join(s.dataDir, "houses.removed-1760000000000");
+    mkdirSync(path.join(aside, "some-house"), { recursive: true });
+    await sweepHouseDirs(s.dataDir, []);
+    expect(existsSync(aside)).toBe(false);
   });
 
   test("a photo being added leaves no folder behind if its house never got written", async () => {
@@ -316,6 +325,17 @@ test("a name of only spaces is refused; a photo whose pixels can't be read is a 
   const refused = await s.upload(heic, "IMG_0001.HEIC");
   expect(refused.status).toBe(415);
   expect((await refused.json()).detail).toMatch(/HEIC photo can't be read here .* JPEG/);
+  // a generic HEIF brand is HEIC only when it lists an HEVC brand (an AVIF with mif1 isn't)
+  const brands = (major, ...compatible) => {
+    const body = Buffer.from(`ftyp${major}\0\0\0\0${compatible.join("")}`, "latin1");
+    const size = Buffer.alloc(4);
+    size.writeUInt32BE(body.length + 4);
+    return Buffer.concat([size, body]);
+  };
+  expect(isHeic(brands("mif1", "mif1", "heic"))).toBe(true);
+  expect(isHeic(brands("mif1", "mif1", "avif"))).toBe(false);
+  expect(isHeic(brands("avif", "mif1", "miaf"))).toBe(false);
+  expect(isHeic(brands("isom", "mp41"))).toBe(false); // a video
   // a JPEG cut off part-way: its header reads, its pixels don't
   const whole = await jpeg(640, 480);
   const cut = await s.upload(whole.subarray(0, Math.floor(whole.length / 3)));

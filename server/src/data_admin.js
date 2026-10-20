@@ -13,7 +13,6 @@
 // restore replaces the rows and the houses under the running app, so the same teardown runs after
 // it (the clean-slate rule, JustWrite 2026-07-11).
 
-import { rm } from "node:fs/promises";
 import { LLM_TABLES } from "@delebash/core/llm";
 import * as llmDb from "@delebash/core/llm/db";
 import { makeDataRouter } from "@delebash/core/platform";
@@ -25,7 +24,7 @@ import { dbPath, recreateAppTables } from "./database/index.js";
 import { APP_TABLES } from "./database/schema.js";
 import { seedWorkspace } from "./database/seed.js";
 import { getSetting, setSetting } from "./database/settings.js";
-import { housesRoot } from "./files.js";
+import { housesRoot, removeAllHouseDirs } from "./files.js";
 
 const log = getLogger("just_house_paint.data");
 
@@ -57,10 +56,11 @@ export async function resetWorkspace() {
   });
   llmDb.createAll(db);
   recreateAppTables(db, APP_TABLES);
-  // Windows holds a just-written file a moment: retried, as a house's delete is (files.js)
-  await rm(housesRoot(getState().dataDir), { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
+  // the tokens and the seed are back before anything can wait: nothing else runs until here, and the
+  // houses' files go last (removing them yields to other requests — never with the tokens gone)
   if (auth !== undefined) setSetting(db, "auth", auth);
   seedWorkspace(db);
+  await removeAllHouseDirs(getState().dataDir);
   log.info("workspace reset to its first-run state");
 }
 

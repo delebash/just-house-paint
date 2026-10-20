@@ -16,7 +16,14 @@ export class NotAnImage extends Error {}
  *  prebuilt libvips reads AVIF but not HEVC (patents), so these get their own words. */
 export function isHeic(buffer) {
   if (buffer.length < 12 || buffer.toString("latin1", 4, 8) !== "ftyp") return false;
-  return ["heic", "heix", "hevc", "hevx", "heim", "heis", "mif1", "msf1"].includes(buffer.toString("latin1", 8, 12));
+  const hevc = ["heic", "heix", "hevc", "hevx", "heim", "heis"];
+  const major = buffer.toString("latin1", 8, 12);
+  if (hevc.includes(major)) return true;
+  // the generic HEIF brands (an AVIF's or a camera's HEIF can carry them too): HEVC only when it says so
+  if (major !== "mif1" && major !== "msf1") return false;
+  const end = Math.min(buffer.length, buffer.readUInt32BE(0));
+  for (let at = 16; at + 4 <= end; at += 4) if (hevc.includes(buffer.toString("latin1", at, at + 4))) return true;
+  return false;
 }
 
 /** The photo's format and upright size, or a NotAnImage refusal. */

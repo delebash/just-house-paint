@@ -164,6 +164,13 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         <uuid>", a second Find could start, an empty part showed 1%, the schemes' "give the body a color" when it had
         another brand's, the AI photo's disabled button gave no reason, its install didn't make the photo, "Install ()"
         where no engine exists, an iPhone HEIC read as "not an image" — all fixed, with tests.
+        The fourth (the newest commits' reactivity, edges, wording): a Reset left the access tokens out while the
+        houses' files went (an async wait — the tokens and the seed now come back first, the folder is moved aside at
+        once); a photo's missing file read as "the house was deleted"; HTTP's own 5xx phrases became titles (the kit
+        keeps its words for those); the picker silently dropped other images; the `.adding` mark's two edges; generic
+        HEIF brands taken for HEIC; the install card's size words where nothing installs; the photo started after an
+        install while the card was busy; the tooltip naming the wrong reason; two screens missing from the help — all
+        fixed, with tests.
 NEXT (mine, in this order): the obstruction test set's other 17 photos (paused for JustVoice's render) and what it shows;
         the review's findings; then, only when nothing is open, the release.
 

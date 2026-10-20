@@ -37,6 +37,10 @@ minute (a little longer the first time, while the model loads); its progress sho
 house's name while it works — the part it is looking for and how far along it is ("Trim · 40%") — with
 **Cancel**.
 
+If the finder recognizes no house in the photo, the **Parts** tab says **No parts found on this
+photo**: a photo with the house in full view, from the front, works best — or press **Find the parts
+again**.
+
 ## When a part is wrong
 
 The finder is good at doors, garage doors, windows and shutters, and less sure of thin parts —

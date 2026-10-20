@@ -2,7 +2,7 @@
 // Settings → Backups' server half (data_admin.js over the kit's makeDataRouter): a backup is a ZIP
 // of the database and the houses' files, a restore puts both back, a reset returns the first-run
 // state — keeping the access tokens, so a reset never opens an exposed server.
-import { existsSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import { beforeEach, expect, test } from "vitest";
 import { createApp } from "../src/app.js";
 import { getDb, getState } from "../src/app_state.js";
@@ -62,6 +62,8 @@ test("reset returns the first-run state but keeps the access tokens", async () =
   expect((await client.post("/v1/data/reset", auth)).statusCode).toBe(200);
   expect((await client.get("/v1/houses", auth)).json()).toEqual([]);
   expect(existsSync(housesRoot(getState().dataDir))).toBe(false); // the houses' files went too
+  // moved aside first, then removed: nothing of it is left beside the data
+  expect(readdirSync(getState().dataDir).filter((n) => n.startsWith("houses."))).toEqual([]);
   expect((await client.get("/v1/settings", auth)).json()["designs.maxPerHouse"]).toBe(30); // reseeded
   expect((await client.get("/v1/prefs", auth)).json()).toEqual({});
   expect(getSetting(getDb(), "auth").tokens).toEqual(["still-here"]);

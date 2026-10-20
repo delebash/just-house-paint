@@ -186,6 +186,7 @@
       "button": "AI photo",
       "task": "AI photo of {name}",
       "needParts": "Find the parts first",
+      "needOutline": "No part to paint has an outline yet — draw one with the brush or a box",
       "needColors": "Give a part a color first"
     },
     "export": {
@@ -432,12 +433,14 @@
     "finder": {
       "title": "Install the part finder",
       "body": "The part finder outlines the body, the trim, the doors and the rest of the house on your photo. It runs on this computer: a one-time download of {size}.",
+      "bodyNoSize": "The part finder outlines the body, the trim, the doors and the rest of the house on your photo. It runs on this computer.",
       "task": "Installing the part finder",
       "cantRun": "The part finder can't run on this computer: its engine didn't load ({error}). Nothing was downloaded."
     },
     "aiphoto": {
       "title": "Install the AI photo",
       "body": "The AI photo redraws your photo with the colors you chose, with real light and shadow. It runs on this computer: a one-time download of {size}.",
+      "bodyNoSize": "The AI photo redraws your photo with the colors you chose, with real light and shadow. It runs on this computer.",
       "task": "Installing the AI photo",
       "slow": "This computer has no graphics card the AI photo can use: one AI photo would take about ten minutes.",
       "unavailable": "The AI photo's engine has no build for this computer's system and processor, so it can't be installed here."

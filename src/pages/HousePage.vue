@@ -64,6 +64,8 @@ const settings = useSettingsStore();
 const ui = useUiStore();
 
 const loadFailed = ref(null);
+// the house itself is gone (its own request answered 404) — not a file of it missing
+const houseGone = ref(false);
 const tab = ref("parts");
 const tool = ref("look");
 const brushSize = ref(24);
@@ -120,13 +122,18 @@ async function load() {
   const seq = ++loadSeq;
   loading = true;
   loadFailed.value = null;
+  houseGone.value = false;
   painter = null;
   photo.value = null;
   painted.value = null;
   compareWith.value = "off";
   history.reset();
   try {
-    await Promise.all([house.open(route.params.id), paints.loadBrands(), engines.loadStatus(), settings.load()]);
+    const opening = house.open(route.params.id).catch((e) => {
+      if (e?.status === 404 && seq === loadSeq) houseGone.value = true;
+      throw e;
+    });
+    await Promise.all([opening, paints.loadBrands(), engines.loadStatus(), settings.load()]);
     // another house was asked for meanwhile: its own load() shows it
     if (seq !== loadSeq || house.house?.id !== route.params.id) return;
     // the paints the house names: its colors, its paints now and its designs' (Compare draws them at once)
@@ -581,14 +588,17 @@ async function saveColorCard() {
 
 // why the AI photo can't run yet (its button's tooltip)
 const aiPhotoWhyNot = computed(() => {
-  if (!house.paintableParts.length) return t("house.ai.needParts");
+  if (!house.parts.length) return t("house.ai.needParts");
+  if (!house.paintableParts.length) return t("house.ai.needOutline");
   if (!hasColors.value) return t("house.ai.needColors");
   return "";
 });
 /** The AI photo installed from its dialog: the photo the user asked for is made at once. */
 function onAiPhotoInstalled() {
   aiDialog.value = null;
-  if (house.paintableParts.length && hasColors.value) aiPhoto();
+  // only when it can run now: the card isn't busy with this house's parts, the install really landed
+  const busyHere = busy.value.find || !!findTask.value || busy.value.ai || !!photoTask.value;
+  if (engines.aiphotoInstalled && !busyHere && house.paintableParts.length && hasColors.value) aiPhoto();
 }
 
 const failedReason = computed(() => {
@@ -638,7 +648,7 @@ const canRevert = computed(() => !!house.design && house.dirty);
     <AiTaskStrip :task="photoTask" />
 
     <EmptyState
-      v-if="loadFailed && loadFailed.status === 404" icon="Home" :title="t('house.gone.title')" :message="t('house.gone.message')"
+      v-if="loadFailed && houseGone" icon="Home" :title="t('house.gone.title')" :message="t('house.gone.message')"
       :action-label="t('house.back')" @action="router.push('/')"
     />
     <UiBanner v-else-if="loadFailed" class="page__banner">

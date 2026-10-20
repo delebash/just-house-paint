@@ -57,10 +57,10 @@ export function router(ctx = getState()) {
     }
     const name = typeof body.name === "string" && body.name.trim() ? body.name.trim().slice(0, 80) : nameFromFile(file.name);
     const id = crypto.randomUUID();
-    // the folder is marked until the house's row exists: a crash in between leaves nothing for good
-    addingHouseDir(ctx.dataDir, id);
     let made;
     try {
+      // the folder is marked until the house's row exists: a crash in between leaves nothing for good
+      addingHouseDir(ctx.dataDir, id);
       const facts = await ingestPhoto(Buffer.from(await file.arrayBuffer()), ctx.dataDir, id, limits);
       made = createHouse(ctx.db, { id, name, ...facts });
     } catch (e) {
@@ -68,7 +68,11 @@ export function router(ctx = getState()) {
       if (e instanceof NotAnImage) throw new ApiError(415, "not-a-photo", "Not a photo", e.message);
       throw e;
     }
-    houseAdded(ctx.dataDir, id);
+    try {
+      houseAdded(ctx.dataDir, id);
+    } catch {
+      // the house is added; a mark left on its folder is harmless (the sweep never takes a house's)
+    }
     return c.json(made, 201);
   });
 

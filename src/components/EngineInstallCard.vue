@@ -42,7 +42,7 @@ async function install() {
 <template>
   <section class="card engine">
     <h2>{{ t(`engines.${kind}.title`) }}</h2>
-    <p class="hint">{{ t(`engines.${kind}.body`, { size }) }}</p>
+    <p class="hint">{{ t(`engines.${kind}.${size && !unavailable ? "body" : "bodyNoSize"}`, { size }) }}</p>
     <UiBanner v-if="slow" intent="danger" class="engine__slow">{{ t("engines.aiphoto.slow") }}</UiBanner>
     <UiBanner v-if="cantRun != null" intent="danger" class="engine__slow">{{ t("engines.finder.cantRun", { error: cantRun }) }}</UiBanner>
     <UiBanner v-if="unavailable" intent="danger" class="engine__slow">{{ t("engines.aiphoto.unavailable") }}</UiBanner>

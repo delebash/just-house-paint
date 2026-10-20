@@ -107,7 +107,7 @@ const thumb = (house) => imagePath(house.id, "thumb", house.updatedAt);
       <UiButton intent="primary" :disabled="adding || !houses.loaded" :label="adding ? t('houses.adding') : t('houses.add')" @click="pick" />
     </PaneHeader>
     <q-file
-      ref="picker" class="houses__picker" :model-value="null" accept="image/jpeg,image/png,image/webp,.heic,.heif"
+      ref="picker" class="houses__picker" :model-value="null" accept="image/*,.heic,.heif"
       :aria-label="t('houses.add')" @update:model-value="onFile"
     />
 
