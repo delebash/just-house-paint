@@ -1259,6 +1259,49 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         their rules refused before anything is replaced, and the start's tidy skips (and logs) a house folder whose
         name isn't safe instead of failing. Kept, argued: unrouted paths answer FastAPI's 404 shape (the family's
         contract — its clients read it).
+        The nineteenth's attack on the eighteenth's code (an agent's; the scratchpad's adv19): loses data — the toast
+        dedupe merges two toasts that differ only in their action's handler, so the second Undo runs the first's
+        (JustWrite's version deletes — measured); Clear models through a linked shared HF cache removes every catalog
+        repo there, repos this app never fetched and other tools' files inside them, and counts them freed (measured —
+        "the catalog's" is not "this app downloaded"); a catalog row's hfRepo isn't checked for path parts, and
+        "x/..\..\victim" made Clear models remove a folder outside the cache (measured; needs a crafted row). Breaks —
+        old copies recorded by the fifteenth–seventeenth builds (no move id) are stranded after one move (dev machines
+        only — those builds never shipped). Wrong — the 60 s "didn't answer" memo keyed by the drive letter (a share
+        through a junction on C: made every copy on C: "Not found"; on POSIX /run/media/<user>/* and gvfs share one
+        key); "connected" for the variable's folder isn't the start's check (a 210-character path); an install or a
+        brand's load that finished unseen said as the error "ended: done"; the sweep freezes the main thread 21 s in
+        one case (realpathSync on a share in its own-marker branch); another window's restore pops "Leave without
+        saving?" and Stay leaves the page on replaced data, no longer following other windows; a page busy past ~1 s
+        is closed without its beforeunload (Chromium's own limit; the 10 s fallback's comment wrong); toasts in apps
+        without the ink tokens (docgen 2.83–4.19:1; JustVoice's info toast transparent — its --info-bg); start-packaged's
+        catch hides the real failure behind an EPERM; an import's warnings unbounded (a 64,692-character caption) or raw
+        JSON rows; the Colors tab's match has no sequence check (a filter change while it answers); "Restart now" skips
+        the page's check (latent here). Small — JustVoice's ticker test passes by timing (the announcer not mocked); an
+        off link-style button opens on a middle click; the sweep drops its record early for a target at a drive's root;
+        the 4 s start limit vs a disk waking (Try again works); touchHouse gives every stroke a new thumbnail address;
+        the one timer per region and a longer linger (no caller); "Not found" says "connect its drive" whatever the
+        cause. Right — Clear models' own-file and nested-junction cases, a chain of new moves, Forget, the Quit box (Stay,
+        Leave, a hidden window, a 12 s answer, the modal holding the loop), Atomics.wait in Electron's main, Box and
+        Keep, an error toast twice said twice, the job words, the warnings cap of three, beforeunload's scope, toast
+        contrast in the template / this app / JustWrite, POSIX keys for /media, UNC vs a letter, the sweep's busy state.
+        Their fixes — decided (mine, argued): a toast with an action is never merged (a toast without one is); Clear
+        models through a link removes only the files the app's records say it downloaded (each model row's own files),
+        never a whole repo folder and never another tool's — and counts only those; hfRepo must be <owner>/<name> of
+        word characters, dots and dashes, and the joined path must stay inside hf, at the catalog's PUT and at every
+        removal; records without a move id re-pointed when their moved-to.json names the old root; the "didn't answer"
+        memo per path (one look per drive at a time stays, so Node's pool never fills), and a copy that timed out offers
+        Try again before Forget, its words "it didn't answer just now"; "connected" for the variable's folder by the
+        start's own check (its source); finished-unseen installs and brand loads read as finished; the sweep's
+        own-marker comparisons async with the limit; a reload for data replaced in another window skips the box (its
+        epoch updated first, its words "the data was replaced in another window"); the fallback's comment as Chromium
+        does; the toast's colors from kit tokens with fixed pairs that pass in both themes, the template and this app
+        mapping them to their inks (docgen and JustVoice told); start-packaged keeps the first error, each folder's
+        removal tried alone; an import's warnings counted and worded (no raw rows; at most three reasons, "and N more");
+        the Colors tab's match sequenced; Restart now runs the window's check first and stops on Stay; JustVoice to
+        mock the announcer in its ticker test; an off link-style button: no href, no middle click; the sweep keeps its
+        record unless the target answers to the move's id; the thumbnail's address by the photo's own time, not the
+        house's; "Not found" worded for every cause. Kept, argued: the 4 s start limit (Try again; 8 s of nothing on
+        screen at every start from a waking disk would be worse); the per-region timer (no caller lingers longer).
 NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
         the installed 0.1.2 updating to it (the silent Restart now).
 
