@@ -1302,6 +1302,25 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         record unless the target answers to the move's id; the thumbnail's address by the photo's own time, not the
         house's; "Not found" worded for every cause. Kept, argued: the 4 s start limit (Try again; 8 s of nothing on
         screen at every start from a waking disk would be worse); the per-region timer (no caller lingers longer).
+        The nineteenth's screens (an agent's, the build of 3358588 / 90c513f, 440 shots, the tree on 23 surfaces, 1146
+        bold help words checked — all found; the scratchpad's screens6): no block. Hard to use — Find the closest
+        paints' result out of view (only a pick scrolls it in); Find the parts again does nothing visible with the
+        finder missing and parts listed (the install card below, out of view). Looks wrong — the left-out toast's raw
+        row JSON (fixed meanwhile — skippedRows); Storage's "can't be used now" banner says it twice; two Backups hints
+        that disagree. Small — the AI tasks panel's Clear icon touching its word; Forget drops the focus on <body>;
+        Settings' help always opens at General; "12 / GB" split; the e2e harness can't close by itself with unsaved
+        colors (the box holds it — no smoke paints today); the Server hint's --host 0.0.0.0 and tailscale serve not in
+        code font. Right — the pick's matches in view at every size, Find and the no-match line said, every toast kind
+        triggered for real on its tint in both themes (6.30–17.40:1), the dedupe, the Logs' lines, the AI tasks panel's
+        one scroller, every line within its measure, the AI photo card, General's Enter, Storage's Not found and Forget,
+        the unsaved-colors box for Ctrl+R / Reload / × / Quit (Stay the default), the help's App Settings page.
+        Their fixes — decided: Find brings its result into view as a pick does; Find the parts again off with its reason
+        while the finder is missing (focusable, its reason described and shown — Box's way); the left-out words as
+        grouped; Storage's banner one sentence; the app's Backups hint dropped (the kit's says what a backup holds and
+        leaves out); Clear through the icon slot; after Forget the focus on the next control, "Forgotten" said; Settings'
+        help opens at the section shown (settings#<section>); a no-break space between a number and its unit in the
+        memory words; the e2e harness closes its page first without beforeunload (Playwright's page.close), then the
+        app; the Server hint's command words in code font.
 NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
         the installed 0.1.2 updating to it (the silent Restart now).
 
