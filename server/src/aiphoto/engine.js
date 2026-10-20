@@ -16,9 +16,10 @@
 // checked against its published size and SHA-256 before it is used.
 
 import { createHash } from "node:crypto";
-import { createReadStream, existsSync } from "node:fs";
-import { chmod, mkdir, readFile, rename, rm, stat, writeFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import { createReadStream, existsSync, readFileSync } from "node:fs";
+import { chmod, mkdir, readdir, readFile, rm, stat, writeFile } from "node:fs/promises";
+import { dirname, join, relative, sep } from "node:path";
+import { renameHeld } from "@delebash/core/platform/rename_held";
 import { extractZip } from "@delebash/core/platform/zip";
 
 // ── stable-diffusion.cpp ────────────────────────────────────────────────────────────────────
@@ -34,6 +35,11 @@ export const ENGINE_RELEASES = Object.freeze({
    * cudart/cuBLAS DLLs ship as a separate zip). Checked against master-937 … master-973.
    * No Linux CUDA build is published (NVIDIA on Linux takes Vulkan); the macOS zip is one
    * universal (arm64 + x86_64) build with Metal compiled in (ggml_metal_* symbols present).
+   * `requires`: what the build needs from the system, said before the download (2026-10-20, the
+   * thirteenth review, on master-973's binaries) — on Windows the Visual C++ runtime's DLLs that
+   * sd-cli.exe and its ggml DLLs import (Microsoft's redistributable, never shipped); the macOS
+   * build's LC_BUILD_VERSION minos (26.0); the Linux builds' newest GLIBC_ symbol version (2.38 —
+   * built on Ubuntu 24.04; Ubuntu 22.04's 2.35 can't load them).
    */
   patterns: Object.freeze([
     {
@@ -43,64 +49,107 @@ export const ENGINE_RELEASES = Object.freeze({
       asset: "^sd-.+-bin-win-cuda12-x64\\.zip$",
       runtime: "^cudart-sd-bin-win-cu12-x64\\.zip$",
       exe: "sd-cli.exe",
+      requires: { dlls: ["MSVCP140.dll", "VCRUNTIME140.dll", "VCRUNTIME140_1.dll", "VCOMP140.DLL"] },
     },
-    { platform: "win32", arch: "x64", backend: "rocm", asset: "^sd-.+-bin-win-rocm-[\\d.]+-x64\\.zip$", exe: "sd-cli.exe" },
-    { platform: "win32", arch: "x64", backend: "vulkan", asset: "^sd-.+-bin-win-vulkan-x64\\.zip$", exe: "sd-cli.exe" },
-    { platform: "win32", arch: "x64", backend: "cpu", asset: "^sd-.+-bin-win-cpu-x64\\.zip$", exe: "sd-cli.exe" },
-    { platform: "darwin", arch: "arm64", backend: "metal", asset: "^sd-.+-bin-Darwin-macOS-[\\d.]+-arm64\\.zip$", exe: "sd-cli" },
+    {
+      platform: "win32",
+      arch: "x64",
+      backend: "rocm",
+      asset: "^sd-.+-bin-win-rocm-[\\d.]+-x64\\.zip$",
+      exe: "sd-cli.exe",
+      requires: { dlls: ["MSVCP140.dll", "VCRUNTIME140.dll", "VCRUNTIME140_1.dll", "VCOMP140.DLL"] },
+    },
+    {
+      platform: "win32",
+      arch: "x64",
+      backend: "vulkan",
+      asset: "^sd-.+-bin-win-vulkan-x64\\.zip$",
+      exe: "sd-cli.exe",
+      requires: { dlls: ["MSVCP140.dll", "VCRUNTIME140.dll", "VCRUNTIME140_1.dll", "VCOMP140.DLL"] },
+    },
+    {
+      platform: "win32",
+      arch: "x64",
+      backend: "cpu",
+      asset: "^sd-.+-bin-win-cpu-x64\\.zip$",
+      exe: "sd-cli.exe",
+      requires: { dlls: ["MSVCP140.dll", "VCRUNTIME140.dll", "VCRUNTIME140_1.dll", "VCOMP140.DLL"] },
+    },
+    { platform: "darwin", arch: "arm64", backend: "metal", asset: "^sd-.+-bin-Darwin-macOS-[\\d.]+-arm64\\.zip$", exe: "sd-cli", requires: { macos: "26.0" } },
     {
       platform: "linux",
       arch: "x64",
       backend: "rocm",
       asset: "^sd-.+-bin-Linux-Ubuntu-[\\d.]+-x86_64-rocm-[\\d.]+\\.zip$",
       exe: "sd-cli",
+      requires: { glibc: "2.38" },
     },
-    { platform: "linux", arch: "x64", backend: "vulkan", asset: "^sd-.+-bin-Linux-Ubuntu-[\\d.]+-x86_64-vulkan\\.zip$", exe: "sd-cli" },
-    { platform: "linux", arch: "x64", backend: "cpu", asset: "^sd-.+-bin-Linux-Ubuntu-[\\d.]+-x86_64\\.zip$", exe: "sd-cli" },
+    {
+      platform: "linux",
+      arch: "x64",
+      backend: "vulkan",
+      asset: "^sd-.+-bin-Linux-Ubuntu-[\\d.]+-x86_64-vulkan\\.zip$",
+      exe: "sd-cli",
+      requires: { glibc: "2.38" },
+    },
+    { platform: "linux", arch: "x64", backend: "cpu", asset: "^sd-.+-bin-Linux-Ubuntu-[\\d.]+-x86_64\\.zip$", exe: "sd-cli", requires: { glibc: "2.38" } },
   ]),
   /**
    * The pinned release, as GitHub's API returned it (GET …/releases/latest, 2026-10-17 —
    * name, size and the `digest` GitHub computes for every asset). The probe measured the
-   * CUDA 12 and Vulkan builds of this release (RESEARCH §9).
+   * CUDA 12 and Vulkan builds of this release (RESEARCH §9). `unpacked_size` is ours: the
+   * bytes each zip unpacks to, summed from its central directory (read by ranged requests,
+   * 2026-10-20) — the room an install needs beside the zip (the free-space check).
    */
   pinned: Object.freeze({
     tag_name: "master-973-f0aac52",
     published_at: "2026-10-17T08:37:54Z",
     assets: Object.freeze(
       [
-        ["cudart-sd-bin-win-cu12-x64.zip", 563452046, "fe20366827d357c00797eebb58244dddab7fd9a348d70090c3871004c320f38d"],
+        ["cudart-sd-bin-win-cu12-x64.zip", 563452046, "fe20366827d357c00797eebb58244dddab7fd9a348d70090c3871004c320f38d", 788957696],
         [
           "sd-master-f0aac52-bin-Darwin-macOS-26.6.2-arm64.zip",
           36476923,
           "e5abc3b8a0ff81bd848b32b46d10a07fe33767a54240848ab53c8bc394c5ef95",
+          98425860,
         ],
         [
           "sd-master-f0aac52-bin-Linux-Ubuntu-24.04-x86_64-rocm-10.1.0.zip",
           295412211,
           "4a222ada0c8cd6067527f5ea29879a790a0b50e215e5ad3cb8a5153c44da8edd",
+          1451060306,
         ],
         [
           "sd-master-f0aac52-bin-Linux-Ubuntu-24.04-x86_64-vulkan.zip",
           36611594,
           "6593b4427a027bd4ebe02f2d91c9a4388b777cd81485248d55bae136b5892d2b",
+          101099644,
         ],
         [
           "sd-master-f0aac52-bin-Linux-Ubuntu-24.04-x86_64.zip",
           26288236,
           "9666a2fe3c05fcb0dc0752e63dfb225871353cb1495e02d0ae2ed172a6e80888",
+          68145556,
         ],
-        ["sd-master-f0aac52-bin-win-cpu-x64.zip", 17698980, "8544332b2fe7adb07eab45b61ea76d86f92b0cbbdc9b03585b73453db5b7f52b"],
-        ["sd-master-f0aac52-bin-win-cuda12-x64.zip", 343638522, "68a7b08b87925a39dc1661d872a7625e633df90dc6e3c32165e7cb8815b7febf"],
+        ["sd-master-f0aac52-bin-win-cpu-x64.zip", 17698980, "8544332b2fe7adb07eab45b61ea76d86f92b0cbbdc9b03585b73453db5b7f52b", 47840901],
+        ["sd-master-f0aac52-bin-win-cuda12-x64.zip", 343638522, "68a7b08b87925a39dc1661d872a7625e633df90dc6e3c32165e7cb8815b7febf", 388407429],
         [
           "sd-master-f0aac52-bin-win-rocm-10.1.0-x64.zip",
           263998210,
           "d1ee3a9b6a90223531707599a7f630f3111d75b01cd431e85876e4b8d19e1161",
+          1219047424,
         ],
-        ["sd-master-f0aac52-bin-win-vulkan-x64.zip", 29363455, "64ae41edf331723871ff6925f6f9d8bb46f6407d49e51f2073ef11f646765cb2"],
-      ].map(([name, size, sha]) => Object.freeze({ name, size, digest: `sha256:${sha}`, browser_download_url: `${SD_REL}/${name}` })),
+        ["sd-master-f0aac52-bin-win-vulkan-x64.zip", 29363455, "64ae41edf331723871ff6925f6f9d8bb46f6407d49e51f2073ef11f646765cb2", 87874181],
+      ].map(([name, size, sha, unpacked]) =>
+        Object.freeze({ name, size, digest: `sha256:${sha}`, browser_download_url: `${SD_REL}/${name}`, unpacked_size: unpacked }),
+      ),
     ),
   }),
 });
+
+/** A newer release's zips don't say what they unpack to: room for this many times their size (the
+ *  pinned ones unpack to 1.1–4.9 times theirs — Linux ROCm the most). */
+export const UNPACK_ROOM = 5;
 
 /** Backend names a caller may force; "cuda" is an alias of the one CUDA build. */
 const BACKENDS = new Set(["metal", "cuda12", "rocm", "vulkan", "cpu"]);
@@ -126,13 +175,19 @@ export function backendOrder(gpu, platform = process.platform) {
 }
 
 const shaOf = (digest) => (typeof digest === "string" && digest.startsWith("sha256:") ? digest.slice(7) : null);
-const fileOf = (a) => ({ name: a.name, url: a.browser_download_url, size: a.size, sha256: shaOf(a.digest) });
+const fileOf = (a) => ({
+  name: a.name,
+  url: a.browser_download_url,
+  size: a.size,
+  sha256: shaOf(a.digest),
+  unpacked: a.unpacked_size ?? a.size * UNPACK_ROOM,
+});
 
 /**
  * A release's assets (GitHub API JSON: `{tag_name, assets: [{name, size, digest,
  * browser_download_url}]}`) resolved into install rows by the patterns:
- * `[{platform, arch, backend, exe, tag, asset: {name, url, size, sha256}, runtime | null}]`.
- * A pattern whose asset (or companion) is missing from the release yields no row.
+ * `[{platform, arch, backend, exe, tag, requires, asset: {name, url, size, sha256, unpacked},
+ * runtime | null}]`. A pattern whose asset (or companion) is missing from the release yields no row.
  */
 export function resolveReleaseAssets(release, patterns = ENGINE_RELEASES.patterns) {
   const rows = [];
@@ -146,6 +201,7 @@ export function resolveReleaseAssets(release, patterns = ENGINE_RELEASES.pattern
       arch: p.arch,
       backend: p.backend,
       exe: p.exe,
+      requires: p.requires ?? {},
       tag: release.tag_name,
       asset: fileOf(asset),
       runtime: runtime ? fileOf(runtime) : null,
@@ -271,6 +327,31 @@ function once(key, fn) {
 const ENGINE_MARKER = ".aiphoto-engine.json";
 
 /**
+ * Whether the engine unpacked in `home` is whole: its marker, its `exe` and every file the marker
+ * lists (what the release's zips held). An antivirus that quarantines sd-cli or one of its DLLs
+ * leaves the marker behind — "installed" used to be read from the marker alone, and the render then
+ * failed with Windows' exit 0xC0000135 (2026-10-20, the thirteenth review). `{ installed, missing }`:
+ * the names gone (an engine installed before the marker kept its list is checked by its exe).
+ */
+export function engineFiles(home, exe) {
+  let marker;
+  try {
+    marker = JSON.parse(readFileSync(join(home, ENGINE_MARKER), "utf8"));
+  } catch {
+    return { installed: false, missing: [] };
+  }
+  const names = new Set([exe, ...(Array.isArray(marker?.files) ? marker.files : [])]);
+  const missing = [...names].filter((f) => !existsSync(join(home, f)));
+  return { installed: !missing.length, missing };
+}
+
+/** Every file under `dir`, relative, with "/" (what an engine's marker lists). */
+async function filesUnder(dir) {
+  const entries = await readdir(dir, { recursive: true, withFileTypes: true });
+  return entries.filter((e) => e.isFile()).map((e) => relative(dir, join(e.parentPath, e.name)).split(sep).join("/"));
+}
+
+/**
  * Install the sd.cpp build for this machine under `dir` once; return the sd-cli path (which
  * backend and release it is: `<dir>/<tag>/<backend>/.aiphoto-engine.json`, or
  * `selectEngineAsset` with the same arguments). Layout: `<dir>/<tag>/<backend>/`,
@@ -296,7 +377,8 @@ export async function ensureEngine(
   if (!row) throw new Error(`no stable-diffusion.cpp build for ${platform}/${arch} in ${release.tag_name}`);
   const home = join(dir, row.tag, row.backend);
   const bin = join(home, row.exe);
-  if (existsSync(join(home, ENGINE_MARKER)) && existsSync(bin)) {
+  // whole: the marker and every file it lists (a file an antivirus took is fetched and unpacked again)
+  if (engineFiles(home, row.exe).installed) {
     onProgress?.({ fraction: 1, stage: "done", file: row.asset.name });
     return bin;
   }
@@ -328,10 +410,11 @@ export async function ensureEngine(
     if (platform !== "win32") {
       for (const exe of ["sd-cli", "sd-server"]) if (existsSync(join(partial, exe))) await chmod(join(partial, exe), 0o755);
     }
-    const marker = { tag: row.tag, backend: row.backend, asset: row.asset, runtime: row.runtime, installedAt: new Date().toISOString() };
+    const marker = { tag: row.tag, backend: row.backend, asset: row.asset, runtime: row.runtime, files: await filesUnder(partial), installedAt: new Date().toISOString() };
     await writeFile(join(partial, ENGINE_MARKER), JSON.stringify(marker, null, 2));
-    await rm(home, { recursive: true, force: true });
-    await rename(partial, home);
+    await rm(home, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 });
+    // the files just unpacked: an antivirus reading them holds the folder a moment (the kit's renameHeld)
+    await renameHeld(partial, home);
     for (const f of files) await rm(join(downloads, f.name), { force: true });
     report(1, "done", row.asset.name);
     return bin;

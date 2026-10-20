@@ -61,6 +61,27 @@ it, or use the **Brush**. See [Finding the parts](finding-parts.md).
 **Install** is off and nothing is downloaded. The words after it say why; **App Settings → Logs** has
 the same line. Restart the app after fixing what it names.
 
+**Windows blocks the app ("Smart App Control blocked …").** Smart App Control runs only signed programs, and
+the app isn't signed yet — see [Installing it](getting-started.md#installing-it).
+
+**The part finder or the AI photo says this computer doesn't have Microsoft's Visual C++ runtime.** Install it
+from the link it gives (Microsoft's Visual C++ Redistributable, 2015–2022), then open the house again — nothing
+was downloaded yet. "Older than this engine needs": install the latest from the same link and start the app
+again.
+
+**"A file … is missing" or "Files of the AI photo's engine are gone".** An antivirus may have quarantined one of
+the engine's files. Restore it from the antivirus (and allow the app's folder), or press **Install** again for
+the AI photo — install the app again for the part finder.
+
+**"Not enough room on the drive".** The part finder needs about 3.6 GB free on the drive of the app's data folder,
+the AI photo about 10 GB. Make room, or move the data folder to a bigger drive (**App Settings → Storage →
+Change folder…**).
+
+**"The data folder … can't be used".** The folder the app keeps its data in isn't there (a USB drive unplugged, a
+network folder offline) or can't be written. Plug it back in and press **Try again**, or **Use the default
+folder**. A folder whose path is over 180 characters, or whose name ends in a dot or a space, can't be used
+either.
+
 **"Not a photo" for an iPhone's HEIC photo.** The app reads JPEG, PNG and WebP. Send or
 save the photo as JPEG, or set the iPhone to take JPEGs (**Settings → Camera → Formats → Most
 Compatible**).

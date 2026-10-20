@@ -5,11 +5,12 @@
 // read (If-Match) and are refused (412) when another window changed them since; the writes run one at a
 // time per house, and each answers the new version (`outlines`, and the ETag header).
 
-import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { Hono, input, uploadLimit } from "@delebash/core/platform";
 import { ApiError, conflict, notFound, RequestValidationError } from "@delebash/core/platform/errors";
 import { getLogger } from "@delebash/core/platform/log";
+import { renameHeldSync } from "@delebash/core/platform/rename_held";
 import { houseNotFound } from "./refusals.js";
 import { getHouse, getPart, listParts, replaceParts, updatePartMask } from "../database/houses.js";
 import { maskPath, removeHouseFile } from "../files.js";
@@ -65,7 +66,9 @@ export function router(ctx = getState()) {
       for (const file of files) rmSync(`${file}.saving`, { force: true });
       throw e;
     }
-    for (const file of files) renameSync(`${file}.saving`, file);
+    // a file just written can be held a moment (an antivirus reading it): each rename waits for it — the kit's
+    // renameHeldSync, synchronous so the step stays one (a refused rename left half the outlines saved)
+    for (const file of files) renameHeldSync(`${file}.saving`, file);
     return rows();
   };
 

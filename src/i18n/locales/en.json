@@ -18,7 +18,10 @@
   "connectionError": {
     "need": "keep your houses, paint colors and designs",
     "devHint": "Development: `npm run dev` starts it, or run it yourself with `npm run server`, then retry.",
-    "portTaken": "Another program is using port {port}. Close it, then press {retry}."
+    "portTaken": "Another program is using port {port}. Close it, then press {retry}.",
+    "portOtherUser": "Another person signed in to this computer has the app open, on port {port}. One copy runs at a time: they can quit theirs (its tray icon), then press {retry}.",
+    "portReserved": "Windows has reserved port {port} for another use (Hyper-V, WSL or Docker), so the app can't use it.",
+    "serverError": "Its server stopped as it started: {error}"
   },
   "notFound": {
     "title": "There's no page here",
@@ -46,7 +49,7 @@
       },
       "finder": {
         "title": "Part finder",
-        "hint": "Whether the graphics card helps find the parts, when the finder lets go of its memory, and how far past the house a part may reach — so a car parked in front isn't taken for a door."
+        "hint": "Whether the graphics card helps find the parts (on Windows — on macOS and Linux the finder runs on the processor), when the finder lets go of its memory, and how far past the house a part may reach — so a car parked in front isn't taken for a door."
       },
       "windows": {
         "title": "Other windows",
@@ -71,7 +74,7 @@
           "maxImportMegabytes": "Largest palette file (MB)"
         },
         "finder": {
-          "useGpu": "Use the graphics card",
+          "useGpu": "Use the graphics card (Windows)",
           "idleMinutes": "Let go after (minutes idle)",
           "houseMargin": "Parts reach past the house by (share of the photo)",
           "houseMinShare": "A piece counts when this share of it is on the house"
@@ -469,7 +472,8 @@
       "body": "The part finder outlines the body, the trim, the doors and the rest of the house on your photo. It runs on this computer: a one-time download of {size}.",
       "bodyNoSize": "The part finder outlines the body, the trim, the doors and the rest of the house on your photo. It runs on this computer.",
       "task": "Installing the part finder",
-      "cantRun": "The part finder can't run on this computer: its engine didn't load ({error}). Nothing was downloaded."
+      "cantRun": "The part finder can't run on this computer: its engine didn't load ({error}). Nothing was downloaded.",
+      "filesMissing": "A file of the part finder's engine is missing from the app ({files}) — an antivirus may have quarantined it. Restore it from the antivirus, or install the app again. Nothing was downloaded."
     },
     "aiphoto": {
       "title": "Install the AI photo",
@@ -477,7 +481,20 @@
       "bodyNoSize": "The AI photo redraws your photo with the colors you chose, with real light and shadow. It runs on this computer.",
       "task": "Installing the AI photo",
       "slow": "This computer has no graphics card the AI photo can use: one AI photo would take about ten minutes.",
-      "unavailable": "The AI photo's engine has no build for this computer's system and processor, so it can't be installed here."
+      "slowGpu": "The AI photo is quickest on an NVIDIA graphics card (about 20 seconds); on this computer's graphics card one AI photo may take several minutes.",
+      "lowMemory": "This computer has {have} GB of memory, and one AI photo takes about {need} GB: here it may be very slow, or not finish.",
+      "filesGone": "Files of the AI photo's engine are gone ({files}) — an antivirus may have removed them. Install puts them back.",
+      "unavailable": "The AI photo's engine has no build for this computer's system and processor, so it can't be installed here.",
+      "needs": {
+        "macos": "The AI photo's engine needs macOS {need} or later, and this Mac has macOS {have}: update macOS to use it. Nothing was downloaded.",
+        "glibc": "The AI photo's engine needs a Linux with glibc {need} or later (Ubuntu 24.04 and newer), and this one has glibc {have}. Nothing was downloaded.",
+        "glibcNone": "The AI photo's engine needs a Linux with glibc {need} or later (Ubuntu 24.04 and newer), and this one has none. Nothing was downloaded."
+      }
+    },
+    "needs": {
+      "vcRuntime": "This computer doesn't have Microsoft's Visual C++ runtime (2015–2022), which this engine needs ({files} missing). Install it — {link} — then open the house again. Nothing was downloaded.",
+      "dllTooOld": "Microsoft's Visual C++ runtime on this computer is older than this engine needs. Install the latest — {link} — then start the app again. Nothing was downloaded.",
+      "vcRuntimeLink": "Microsoft's download"
     }
   },
   "paintColors": {

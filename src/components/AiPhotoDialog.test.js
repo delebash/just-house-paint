@@ -18,8 +18,8 @@ const QUASAR_COMPONENTS = Object.fromEntries(Object.entries(quasar).filter(([k, 
 const RENDER = { id: "r1", houseId: "h1", deltaE: 0.42, seconds: 28.3, sharedGpu: null };
 
 let wrapper;
-async function mountDialog(render) {
-  const Host = { render: () => [h(AiPhotoDialog, { render, houseName: "My house" }), h(LlmUiHosts)] };
+async function mountDialog(render, houseName = "My house") {
+  const Host = { render: () => [h(AiPhotoDialog, { render, houseName }), h(LlmUiHosts)] };
   wrapper = mount(Host, {
     attachTo: document.body,
     global: {
@@ -63,4 +63,22 @@ test("the AI photo names the other programs that held the graphics card, and onl
 
   await mountDialog({ ...RENDER, sharedGpu: { mb: 8000, programs: ["a", "b", "c"], more: 2 } });
   expect(text()).toContain("(a, b, c, 2 more)");
+});
+
+test("Save image names the file after the house, without what Windows can't hold", async () => {
+  const saved = [];
+  const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function () {
+    saved.push(this.download);
+  });
+  // "10/20" made a folder of the name, ":" "?" "*" a name Windows refuses; nothing left, the fallback
+  await mountDialog(RENDER, "10/20: Oak St?*");
+  [...document.querySelectorAll("button")].find((b) => b.textContent.includes("Save image")).click();
+  await flushPromises();
+  wrapper.unmount();
+  document.body.innerHTML = "";
+  await mountDialog(RENDER, "???");
+  [...document.querySelectorAll("button")].find((b) => b.textContent.includes("Save image")).click();
+  await flushPromises();
+  expect(saved).toEqual(["1020 Oak St — AI photo.png", "House — AI photo.png"]);
+  clickSpy.mockRestore();
 });

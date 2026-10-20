@@ -9,8 +9,9 @@
 // `streamDownload(url, dest, { onProgress(done, total), cancelCheck })`.
 import { createHash } from "node:crypto";
 import { createReadStream } from "node:fs";
-import { mkdir, readFile, rename, rm, stat, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { renameHeld } from "@delebash/core/platform/rename_held";
 
 export const SAM3_REPO = "nrl-ai/samexporter-onnx-models";
 export const SAM3_REVISION = "5050a79cd4b912dd745fff83047c4ef6fbd97be5"; // main on 2026-10-17
@@ -75,7 +76,8 @@ async function readStamps(dir) {
 async function writeStamps(dir, stamps) {
   const file = path.join(dir, STAMP_FILE);
   await writeFile(`${file}.tmp`, JSON.stringify(stamps, null, 2));
-  await rename(`${file}.tmp`, file);
+  // just written: an antivirus reading it holds it a moment (the kit's renameHeld)
+  await renameHeld(`${file}.tmp`, file);
 }
 
 /** Is `file` on disk with the right size and hash? Hashes once, then trusts the stamp while the

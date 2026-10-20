@@ -19,6 +19,24 @@ The installers aren't signed with a publisher's certificate yet, so the first ti
 - **Linux**: make the `.AppImage` executable (`chmod +x`) and run it — nothing else to install. Where the
   system keeps an AppImage out of Chromium's sandbox (Ubuntu 24.04 and later), the app's window runs without
   it; the window shows only the app's own pages.
+- **Windows with Smart App Control on** (some new Windows 11 computers) blocks the app with no **Run anyway**:
+  its files aren't signed yet. It runs there once Smart App Control is off (Windows Security → App & browser
+  control → Smart App Control) — Windows can't turn it back on without being reset, so choose knowingly.
+
+**What it needs:**
+
+- **Windows** 10 or 11, 64-bit. The part finder and the AI photo also need Microsoft's Visual C++
+  Redistributable (2015–2022), which most computers have; where it's missing, they say so before anything
+  downloads and name Microsoft's download (then open the house again). On Windows for ARM the app runs, and the AI photo works on the
+  processor only (slow).
+- **macOS** on Apple silicon (M1 and later). The AI photo needs macOS 26 or later.
+- **Linux**: Ubuntu 22.04 or newer (or a system as recent). The AI photo needs Ubuntu 24.04 or newer
+  (glibc 2.38).
+- For the AI photo: a graphics card with 8 GB of its own memory and 12 GB of memory in the computer (16 GB on a
+  Mac, or without such a card) — see [The AI photo](ai-photo.md). The app checks what it can before the 9 GB
+  download and says what's missing.
+- Room on the data folder's drive: about 3.6 GB free for the part finder, 10 GB for the AI photo (the app checks
+  before it downloads).
 
 **Updates:** the app looks for a new version each time it starts. **App Settings → Updates** shows
 it: **Download** fetches it, and it installs when you quit the app (or press **Restart now**). On a
@@ -107,6 +125,13 @@ restart the app, which puts it back as it starts.
 
 Your photos, designs and colors stay in the app's data folder (App Settings → Storage). Nothing is
 uploaded unless you choose an online AI provider in AI Settings.
+
+**Where to keep the data folder.** **Change folder…** moves it to an empty folder you pick. Best on a drive
+inside the computer: a folder synced by OneDrive, Dropbox or another sync service can hold the app's files
+while they are written, and OneDrive's "files on demand" leaves the 12 GB of models online-only, so the
+engines fail without the network; a network drive or a USB stick works only while it is there. A FAT32 USB
+stick can't hold the AI photo's model (over 4 GB). Keep the folder's path short (under 180 characters) — some
+parts of the engines can't open longer ones.
 
 > Colors on a screen are never exactly the paint. Check a real paint sample on your house before
 > you buy.

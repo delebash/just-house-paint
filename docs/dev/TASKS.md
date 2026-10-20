@@ -535,7 +535,20 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         Thumbs.db and desktop.ini don't make a folder non-empty; the path rule on every system. Left by it: the
         connection page's words for portOtherUser, portReserved and serverError; Electron's "Error invoking remote
         method" prefix on Change folder's refusals; two app tests comparing the health answer whole; the other
-        apps' launchers.
+        apps' launchers. (Done by me: the connection page's words in the app and the template, the preload strips
+        Electron's prefix for every app, both health tests; the other apps' launchers sent to their sessions.)
+        The app's engines — DONE by an agent (24 app tests fail on the old code; server 429, unit 161; kit core
+        1299): each engine build lists what it needs (Windows: the VC++ DLLs, looked for where Windows' loader looks;
+        macOS 26; glibc 2.38) and Install refuses before anything downloads (409 runtime-missing / cant-run-here,
+        Microsoft's download named); 0xC0000135 / 0xC0000139 / 0xC0000106 and a missing exe in words (503 "The AI
+        photo's engine couldn't start"); the engine's marker lists every unpacked file, a gone one unpacks again; the
+        finder refuses an onnxruntime.dll loaded from elsewhere (Windows' own); the kit's renameHeld (rename_held.js)
+        for every rename after a write or unpack; free space checked (507 disk-full, the unpacked sizes measured from
+        the zips' central directories, a 256 MB margin); the slow note for every non-CUDA build; a RAM note (12 GB
+        with a card's own memory, 16 GB otherwise — a warning); DirectML on the DXGI adapter with the most dedicated
+        memory; brand lists through the kit's fetch (proxy) with the failure's cause kept; "Use the graphics card
+        (Windows)". Kept, argued: the RAM need and the 5× unpack allowance stay constants — what the engines need, not
+        a choice a user makes (family rule 1 is for values a user might change).
 NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
         the installed 0.1.2 updating to it (the silent Restart now).
 

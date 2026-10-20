@@ -12,8 +12,9 @@ import {
   EmptyState,
   errorMessage,
   Icon,
-  PaneHeader,
+  isolate,
   pageFlow,
+  PaneHeader,
   relativeTime,
   reportError,
   schemaRules,
@@ -85,7 +86,7 @@ async function onFile(file) {
 async function remove(house) {
   const yes = await confirmDialog({
     title: t("houses.delete.title"),
-    message: t("houses.delete.message", { name: house.name }),
+    message: t("houses.delete.message", { name: isolate(house.name) }),
     confirmLabel: t("houses.delete.confirm"),
     danger: true,
   });
@@ -131,7 +132,7 @@ const thumb = (house) => imagePath(house.id, "thumb", house.updatedAt);
         <q-card v-for="house in houses.items" :key="house.id" flat bordered class="houses__card">
           <UiServerImage
             :path="thumb(house)" :ratio="4 / 3" fit="cover" :alt="house.name" class="houses__open" role="link" tabindex="0"
-            :aria-label="t('houses.open', { name: house.name })" @click="open(house)" @keydown.enter="open(house)"
+            :aria-label="t('houses.open', { name: isolate(house.name) })" @click="open(house)" @keydown.enter="open(house)"
           />
           <q-card-section class="houses__meta">
             <!-- a long name is cut with an ellipsis: the whole of it on hover -->
@@ -141,10 +142,10 @@ const thumb = (house) => imagePath(house.id, "thumb", house.updatedAt);
             </div>
           </q-card-section>
           <q-card-actions class="houses__actions">
-            <UiButton intent="ghost" size="icon" :disabled="deleting.has(house.id)" :title="t('houses.rename.action', { name: house.name })" :aria-label="t('houses.rename.action', { name: house.name })" @click="renaming = house">
+            <UiButton intent="ghost" size="icon" :disabled="deleting.has(house.id)" :title="t('houses.rename.action', { name: isolate(house.name) })" :aria-label="t('houses.rename.action', { name: isolate(house.name) })" @click="renaming = house">
               <template #icon><Icon name="Pencil" :size="14" /></template>
             </UiButton>
-            <UiButton intent="ghost" size="icon" :disabled="deleting.has(house.id)" :title="t('houses.delete.action', { name: house.name })" :aria-label="t('houses.delete.action', { name: house.name })" @click="remove(house)">
+            <UiButton intent="ghost" size="icon" :disabled="deleting.has(house.id)" :title="t('houses.delete.action', { name: isolate(house.name) })" :aria-label="t('houses.delete.action', { name: isolate(house.name) })" @click="remove(house)">
               <template #icon><Icon name="Trash" :size="14" /></template>
             </UiButton>
           </q-card-actions>

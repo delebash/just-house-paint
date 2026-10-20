@@ -4,8 +4,9 @@
 // The house page's canvas mounted for real, with Konva's shapes stood in for (jsdom has no canvas:
 // each vue-konva component renders nothing and keeps its `config`). It proves the keyboard way to
 // the photo — a Tab stop with a name and a hint, whose arrow keys move it once zoomed and never
-// when it is fitted — and that every light mark (the brush's ring, its stroke, the box, the split
-// line) has a contrasting edge drawn under it, so it shows on a white house.
+// when it is fitted — that every light mark (the brush's ring, its stroke, the box, the split
+// line) has a contrasting edge drawn under it, so it shows on a white house; that one pointer draws
+// at a time and a cancelled one drops its stroke; and that the canvas follows the screen's pixel ratio.
 import { QUASAR_TEST_OPTIONS } from "@delebash/ui/quasar/install.js";
 import { flushPromises, mount } from "@vue/test-utils";
 import * as quasar from "quasar";
@@ -18,12 +19,19 @@ const QUASAR_COMPONENTS = Object.fromEntries(Object.entries(quasar).filter(([k, 
 
 // where the stand-in stage says the pointer is (screen pixels)
 let pointerAt = { x: 50, y: 40 };
+// the stand-in stage's one layer (its canvas's pixel ratio, its redraws) and the pointers it captured
+let layer;
+let captured;
+const newLayer = () => {
+  const canvas = { ratio: 1, getPixelRatio: () => canvas.ratio, setPixelRatio: (r) => (canvas.ratio = r) };
+  return { canvas, draws: 0, getCanvas: () => canvas, batchDraw: () => layer.draws++ };
+};
 const shape = (name) => ({ name, props: ["config"], render() { return h("i", { "data-shape": name }, this.$slots.default?.()); } });
 const KONVA = {
   "v-stage": {
     name: "v-stage",
     props: ["config"],
-    methods: { getNode: () => ({ getPointerPosition: () => pointerAt, batchDraw() {} }) },
+    methods: { getNode: () => ({ getPointerPosition: () => pointerAt, batchDraw() {}, getLayers: () => [layer], setPointerCapture: (id) => captured.push(id) }) },
     render() { return h("div", { class: "stage-stub" }, this.$slots.default?.()); },
   },
   "v-layer": shape("v-layer"),
@@ -53,15 +61,27 @@ const view = () => configs("v-group")[0];
 const stage = () => wrapper.findComponent({ name: "v-stage" });
 const key = (el, k) => el.dispatchEvent(new KeyboardEvent("keydown", { key: k, bubbles: true, cancelable: true }));
 
+// the resolution queries asked (window.matchMedia), each with its change listeners
+let queries;
 beforeEach(() => {
   pointerAt = { x: 50, y: 40 };
+  layer = newLayer();
+  captured = [];
+  queries = [];
   vi.stubGlobal("ResizeObserver", class { observe() {} unobserve() {} disconnect() {} });
+  vi.stubGlobal("matchMedia", (media) => {
+    const q = { media, listeners: new Set(), addEventListener: (_, f) => q.listeners.add(f), removeEventListener: (_, f) => q.listeners.delete(f) };
+    queries.push(q);
+    return q;
+  });
 });
 afterEach(() => {
   wrapper?.unmount();
   document.body.innerHTML = "";
   vi.unstubAllGlobals();
 });
+// a Konva pointer event on the stage: pointer 1 (a mouse) unless told
+const fire = (type, evt = {}) => stage().vm.$emit(type, { evt: { pointerId: 1, pointerType: "mouse", clientX: 0, clientY: 0, ...evt } });
 
 test("the photo is a Tab stop with a name, and its hint says the keys and that drawing needs a pointer", () => {
   const host = mountCanvas().find(".house-canvas").element;
@@ -113,7 +133,7 @@ test("every light mark has a dark edge under it: the brush's ring, the box and t
   expect(splitEdge).toMatchObject({ stroke: "#000000", points: split.points });
   expect(splitEdge.strokeWidth).toBeGreaterThan(split.strokeWidth);
   // the brush's ring: solid black under the white dashes (the two-tone "marching ants")
-  stage().vm.$emit("mousemove", { evt: {} });
+  fire("pointermove");
   await flushPromises();
   const [ringEdge, ring] = configs("v-circle");
   expect(ring).toMatchObject({ stroke: "#ffffff", dash: expect.any(Array) });
@@ -121,9 +141,9 @@ test("every light mark has a dark edge under it: the brush's ring, the box and t
   expect(ringEdge.strokeWidth).toBeGreaterThan(ring.strokeWidth);
   // the box, while it is drawn
   await wrapper.setProps({ tool: "box" });
-  stage().vm.$emit("mousedown", { evt: {} });
+  fire("pointerdown");
   pointerAt = { x: 80, y: 60 };
-  stage().vm.$emit("mousemove", { evt: {} });
+  fire("pointermove");
   await flushPromises();
   const [boxEdge, box] = configs("v-rect");
   expect(box).toMatchObject({ stroke: "#ffffff", dash: expect.any(Array) });
@@ -132,21 +152,103 @@ test("every light mark has a dark edge under it: the brush's ring, the box and t
 
 test("the brush's stroke has an edge that contrasts with its paint: black under a light one, white under a dark one", async () => {
   mountCanvas({ tool: "brush", strokeColor: "#f4f2ea" });
-  stage().vm.$emit("mousedown", { evt: {} });
+  fire("pointerdown");
   pointerAt = { x: 60, y: 50 };
-  stage().vm.$emit("mousemove", { evt: {} });
+  fire("pointermove");
   await flushPromises();
   let [edge, line] = configs("v-line");
   expect(line.stroke).toBe("#f4f2ea");
   expect(edge.stroke).toBe("#000000");
   expect(edge.strokeWidth).toBeGreaterThan(line.strokeWidth);
-  stage().vm.$emit("mouseup", { evt: {} });
+  fire("pointerup");
   // the eraser's preview is black: its edge is white
   await wrapper.setProps({ tool: "eraser" });
-  stage().vm.$emit("mousedown", { evt: {} });
-  stage().vm.$emit("mousemove", { evt: {} });
+  fire("pointerdown");
+  fire("pointermove");
   await flushPromises();
   [edge, line] = configs("v-line");
   expect(line.stroke).toBe("#000000");
   expect(edge.stroke).toBe("#ffffff");
+});
+
+const strokes = () => wrapper.emitted("stroke") || [];
+
+test("one pointer draws at a time: a second finger never paints, and its lifting doesn't end the stroke", async () => {
+  mountCanvas({ tool: "brush" });
+  // the first finger down on the photo: its pointer is captured (its moves are heard off the canvas)
+  fire("pointerdown", { pointerId: 7, pointerType: "touch" });
+  expect(captured).toEqual([7]);
+  // a second finger down, moving and lifted meanwhile: none of it is the stroke's
+  pointerAt = { x: 90, y: 70 };
+  fire("pointerdown", { pointerId: 8, pointerType: "touch" });
+  fire("pointermove", { pointerId: 8, pointerType: "touch" });
+  fire("pointerup", { pointerId: 8, pointerType: "touch" });
+  expect(captured).toEqual([7]);
+  expect(strokes()).toHaveLength(0);
+  // the first finger moves and is lifted: one stroke, its points alone
+  pointerAt = { x: 60, y: 40 };
+  fire("pointermove", { pointerId: 7, pointerType: "touch" });
+  fire("pointerup", { pointerId: 7, pointerType: "touch" });
+  await flushPromises();
+  expect(strokes()).toHaveLength(1);
+  const [{ points }] = strokes()[0];
+  expect(points.map((p) => [Math.round(p.x), Math.round(p.y)])).toEqual(
+    [{ x: 50, y: 40 }, { x: 60, y: 40 }].map((s) => {
+      const v = view();
+      return [Math.round((s.x - v.x) / v.scaleX), Math.round((s.y - v.y) / v.scaleY)];
+    }),
+  );
+  // the stroke over, the next finger draws
+  fire("pointerdown", { pointerId: 8, pointerType: "touch" });
+  expect(captured).toEqual([7, 8]);
+});
+
+test("a pointer the system takes back (pointercancel — a palm, an edge swipe) drops its stroke: nothing is painted", async () => {
+  mountCanvas({ tool: "brush" });
+  fire("pointerdown", { pointerId: 3, pointerType: "pen" });
+  pointerAt = { x: 70, y: 50 };
+  fire("pointermove", { pointerId: 3, pointerType: "pen" });
+  await flushPromises();
+  expect(configs("v-line").length).toBeGreaterThan(0); // the stroke's preview
+  // another pointer's cancel isn't this one's
+  fire("pointercancel", { pointerId: 4, pointerType: "touch" });
+  await flushPromises();
+  expect(configs("v-line").length).toBeGreaterThan(0);
+  fire("pointercancel", { pointerId: 3, pointerType: "pen" });
+  // Konva tells a cancel's listeners pointerup too: it paints nothing
+  fire("pointerup", { pointerId: 3, pointerType: "pen" });
+  await flushPromises();
+  expect(configs("v-line")).toEqual([]);
+  expect(strokes()).toHaveLength(0);
+  // the brush is free again
+  fire("pointerdown", { pointerId: 5 });
+  fire("pointerup", { pointerId: 5 });
+  expect(strokes()).toHaveLength(1);
+});
+
+test("the canvas follows the screen's pixel ratio: a window moved to a sharper screen draws sharp", async () => {
+  const ratio = Object.getOwnPropertyDescriptor(window, "devicePixelRatio");
+  try {
+    mountCanvas();
+    await flushPromises();
+    // the query for the ratio now (MDN's pattern), listened to
+    expect(queries.map((q) => q.media)).toEqual(["(resolution: 1dppx)"]);
+    expect(queries[0].listeners.size).toBe(1);
+    // moved to a 2× screen: the query changes, the layer's canvas takes the new ratio and draws again,
+    // and the new ratio's query is listened to instead
+    Object.defineProperty(window, "devicePixelRatio", { value: 2, configurable: true });
+    for (const f of [...queries[0].listeners]) f();
+    expect(layer.canvas.ratio).toBe(2);
+    expect(layer.draws).toBe(1);
+    expect(queries.map((q) => q.media)).toEqual(["(resolution: 1dppx)", "(resolution: 2dppx)"]);
+    expect(queries[0].listeners.size).toBe(0);
+    expect(queries[1].listeners.size).toBe(1);
+    // the page left: nothing listens
+    wrapper.unmount();
+    wrapper = null;
+    expect(queries[1].listeners.size).toBe(0);
+  } finally {
+    if (ratio) Object.defineProperty(window, "devicePixelRatio", ratio);
+    else delete window.devicePixelRatio;
+  }
 });

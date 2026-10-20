@@ -272,7 +272,7 @@ test("a new list without colors some designs use names those designs", async () 
   await click(buttonIn("Valspar", "Load again"));
   await settle();
   expect(toasts).toEqual([
-    expect.objectContaining({ kind: "warning", title: "Designs lost a color", description: "“Navy trim” (Main street) use colors that Valspar no longer has. Those parts show no color until you pick new ones." }),
+    expect.objectContaining({ kind: "warning", title: "Designs lost a color", description: "“\u2068Navy trim\u2069” (\u2068Main street\u2069) use colors that Valspar no longer has. Those parts show no color until you pick new ones." }),
   ]);
   server.lost = [];
   await click(buttonIn("Valspar", "Load again"));
@@ -286,7 +286,7 @@ test("Remove names the designs that use the brand's colors — the first three, 
   await pickInMenu("Valspar", "Remove");
   expect(server.calls).toContain("GET /v1/brands/valspar/designs");
   expect(dialogState.options.message).toBe(
-    "The 1,596 Valspar colors will be removed from this computer. “A” (Main street), “B” (Main street), “C” (Oak lane), and 1 more use them — those parts show no color until the colors are added again.",
+    "The 1,596 Valspar colors will be removed from this computer. “\u2068A\u2069” (\u2068Main street\u2069), “\u2068B\u2069” (\u2068Main street\u2069), “\u2068C\u2069” (\u2068Oak lane\u2069), and 1 more use them — those parts show no color until the colors are added again.",
   );
   _resolveDialog(false);
   await flushPromises();

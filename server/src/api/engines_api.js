@@ -4,6 +4,8 @@
 // (a job), and the AI photos kept.
 
 import { existsSync, readFileSync } from "node:fs";
+import { statfs } from "node:fs/promises";
+import path from "node:path";
 import { assertGpuFree } from "../jobs.js";
 import { Hono, input } from "@delebash/core/platform";
 import { ApiError, notFound } from "@delebash/core/platform/errors";
@@ -14,14 +16,49 @@ import { removeHouseFile, renderPath } from "../files.js";
 import { AiPhotoIn, IdParams } from "../schemas/houses.js";
 import { getState } from "../app_state.js";
 
-/** `ctx`: { db, dataDir, jobs, finder, aiphoto, download, sharedGpu? } — `download` is the kit's
- * streamDownload; `sharedGpu()` what else holds the graphics card (services.js). */
+/** Room a drive keeps beyond what an install puts on it (the database, the logs) — as the kit's restore keeps. */
+const ROOM_MARGIN = 256 * 1024 * 1024;
+
+/** Free bytes for this user on the drive holding `dir` — fs.statfs's bavail × bsize
+ *  (nodejs.org/api/fs.html#fspromisesstatfspath-options), asking the nearest folder that exists (an
+ *  engine's own isn't made yet); Infinity when the drive doesn't answer (the install's own errors stand). */
+export async function freeBytes(dir) {
+  let d = path.resolve(dir);
+  for (;;) {
+    try {
+      const s = await statfs(d);
+      return s.bavail * s.bsize;
+    } catch (e) {
+      const up = path.dirname(d);
+      if (e?.code !== "ENOENT" || up === d) return Number.POSITIVE_INFINITY;
+      d = up;
+    }
+  }
+}
+
+const gb = (n) => `${(n / 1e9).toFixed(1)} GB`;
+
+/** `ctx`: { db, dataDir, jobs, finder, aiphoto, download, sharedGpu?, freeBytes? } — `download` is the
+ * kit's streamDownload; `sharedGpu()` what else holds the graphics card (services.js); `freeBytes(dir)`
+ * a test's drive. */
 export function router(ctx = getState()) {
   const app = new Hono();
   // the engines being removed (Settings → Storage): nothing installs into, or runs from, a folder going away
   const removing = (ctx.enginesRemoving ??= new Set());
   const notWhileRemoved = (engine, name) => {
     if (removing.has(engine)) throw new ApiError(409, "engine-busy", `${name} is being removed`, "try again when it's done");
+  };
+  /** An install that wouldn't fit the drive of the data folder is refused before anything downloads (a full
+   *  disk mid-download left a cut-off file and a raw ENOSPC — 3.3 GB / 9.6 GB, the thirteenth review). */
+  const mustFit = async (name, bytes) => {
+    if (!bytes) return;
+    const free = await (ctx.freeBytes || freeBytes)(ctx.dataDir);
+    if (bytes + ROOM_MARGIN > free) {
+      throw new ApiError(507, "disk-full", "Not enough room on the drive", `${name} needs ${gb(bytes + ROOM_MARGIN)} on the drive of the app's data folder; it has ${gb(free)} free — make room, or move the data folder to a bigger drive`, {
+        needBytes: bytes + ROOM_MARGIN,
+        freeBytes: free,
+      });
+    }
   };
 
   // not installed yet: whether its runtime loads here, so the install card can say so before the download
@@ -37,8 +74,12 @@ export function router(ctx = getState()) {
     return c.json(r);
   });
 
-  app.post("/v1/segment/install", (c) => {
+  app.post("/v1/segment/install", async (c) => {
     notWhileRemoved("finder", "The part finder");
+    // nothing downloads that couldn't run here, or wouldn't fit
+    const runtime = await ctx.finder.runtime();
+    if (!runtime.ok) throw new ApiError(409, "runtime-missing", "The part finder can't run on this computer", runtime.error, runtime.reason ? { reason: runtime.reason } : null);
+    await mustFit("The part finder", ctx.finder.downloadBytes());
     const job = ctx.jobs.start({ kind: "install-finder", key: "", failTitle: "The part finder didn't install" }, ({ signal, progress }) =>
       ctx.finder.install({
         download: ctx.download,
@@ -79,8 +120,14 @@ export function router(ctx = getState()) {
     return c.body(null, 204);
   });
 
-  app.post("/v1/aiphoto/install", (c) => {
+  app.post("/v1/aiphoto/install", async (c) => {
     notWhileRemoved("aiphoto", "The AI photo");
+    // nothing downloads that couldn't run here (the system it needs), or wouldn't fit
+    const st = await ctx.aiphoto.status();
+    if (st.available === false) {
+      throw new ApiError(409, "cant-run-here", "The AI photo can't run on this computer", st.need?.detail || "this computer can't run its engine", { reason: st.need?.reason ?? null });
+    }
+    await mustFit("The AI photo", st.diskBytes ?? st.downloadBytes);
     const job = ctx.jobs.start({ kind: "install-aiphoto", key: "", failTitle: "The AI photo didn't install" }, ({ signal, progress }) => ctx.aiphoto.install({ download: ctx.download, signal, progress }));
     return c.json(job, 202);
   });

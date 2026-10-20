@@ -15,9 +15,12 @@ const INSTALLS = {
 
 export const useEnginesStore = defineStore("engines", {
   state: () => ({
-    // { installed, downloadBytes, runtime?: { ok, error? } } — runtime only while not installed
+    // { installed, downloadBytes, runtime?: { ok, error?, reason? } } — runtime only while not installed (what
+    // the engine needs and this computer lacks — the VC++ runtime, its own ONNX Runtime — said before downloading)
     finder: null,
-    // { engineInstalled, modelsInstalled, backend, slow, downloadBytes }
+    // { engineInstalled, modelsInstalled, engineMissing?, backend, slow, available, need?, lowMemory?,
+    //   downloadBytes } — `need`: what this computer lacks (the VC++ runtime, macOS 26, glibc 2.38), said before
+    //   anything downloads; `lowMemory`: { needGb, haveGb }
     aiphoto: null,
     installing: { finder: false, aiphoto: false },
   }),

@@ -14,6 +14,7 @@
 // kill-on-close Job Object, virus-scanner retry; @delebash/core runner/process.js) — the
 // sd-cli child dies with the server. Cancel = AbortSignal → kill + close the job.
 
+import { existsSync } from "node:fs";
 import { dirname } from "node:path";
 import { StringDecoder } from "node:string_decoder";
 import * as procs from "@delebash/core/platform/procs";
@@ -159,16 +160,34 @@ export class SdProgress {
   }
 }
 
-/** sd-cli exited non-zero (or by a signal); `tail` is its last output. */
+/** sd-cli exited non-zero (or by a signal), or never started; `tail` is its last output, `reason` why it
+ *  couldn't start ("dll-missing", "dll-too-old", "path-too-long", "exe-missing") or null. */
 export class SdCliError extends Error {
-  constructor(message, { code = null, signal = null, tail = "" } = {}) {
+  constructor(message, { code = null, signal = null, tail = "", reason = null } = {}) {
     super(message);
     this.name = "SdCliError";
     this.code = code;
     this.signal = signal;
     this.tail = tail;
+    this.reason = reason;
   }
 }
+
+/**
+ * The exit codes of a Windows program the loader couldn't start — NTSTATUS values (MS-ERREF §2.3.1,
+ * learn.microsoft.com/openspecs/windows_protocols/ms-erref/596a1078-e883-4972-9bbc-49e60bebca55), which
+ * Node reports unsigned ("exit 3221225781"). A DLL not found: the Visual C++ runtime isn't installed, or
+ * an antivirus took one of the engine's own; an entry point not found: a DLL older than the engine needs
+ * (an old Visual C++ runtime); a name too long: a path past what the engine takes (it isn't longPathAware).
+ */
+export const START_FAILURES = Object.freeze({
+  [0xc0000135]: Object.freeze({ status: "STATUS_DLL_NOT_FOUND", reason: "dll-missing" }),
+  [0xc0000139]: Object.freeze({ status: "STATUS_ENTRYPOINT_NOT_FOUND", reason: "dll-too-old" }),
+  [0xc0000106]: Object.freeze({ status: "STATUS_NAME_TOO_LONG", reason: "path-too-long" }),
+});
+
+/** The start failure an exit code means ({ status, reason }), or null. */
+export const startFailure = (code) => (Number.isInteger(code) ? (START_FAILURES[code >>> 0] ?? null) : null);
 
 const TAIL_CHARS = 4000;
 
@@ -186,7 +205,15 @@ export async function runSdCli(
 ) {
   signal?.throwIfAborted();
   const popen = (argv, opts) => procs.popen(argv, { ...opts, cwd });
-  const [proc, job] = await spawn(popen, [bin, ...args], logPath);
+  let proc;
+  let job;
+  try {
+    [proc, job] = await spawn(popen, [bin, ...args], logPath);
+  } catch (e) {
+    // the exe gone (an antivirus took it): said as such, not as the spawn's own error
+    if (!existsSync(bin)) throw new SdCliError(`sd-cli is missing: ${bin}`, { reason: "exe-missing" });
+    throw e;
+  }
   const progress = new SdProgress(onProgress);
   let tail = "";
   const exited = new Promise((resolve) => {
@@ -215,6 +242,11 @@ export async function runSdCli(
     const { code, sig } = await exited;
     progress.end();
     signal?.throwIfAborted();
+    const failed = sig ? null : startFailure(code);
+    if (failed) {
+      const hex = `0x${(code >>> 0).toString(16).toUpperCase()}`;
+      throw new SdCliError(`sd-cli couldn't start: Windows' ${failed.status} (exit ${hex})`, { code, tail, reason: failed.reason });
+    }
     if (code !== 0) {
       throw new SdCliError(`sd-cli failed (${sig ? `signal ${sig}` : `exit ${code}`}): ${lastLines(tail, 6)}`, { code, signal: sig, tail });
     }

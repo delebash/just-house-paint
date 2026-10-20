@@ -13,14 +13,18 @@ import { addingHouseDir, displayPath, houseAdded, originalPath, removeHouseDir, 
 import { ingestPhoto, NotAnImage, TooManyPixels } from "../images.js";
 import { CurrentPaintsIn, CurrentPaintsPatch, HousePatch, IdParams, ImageQuery } from "../schemas/houses.js";
 import { getState } from "../app_state.js";
+import { cutToLength } from "../shared/text.js";
 
 const CONTENT_TYPES = { jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp" };
+
+/** A house's longest name — the rename's (HousePatch, schemas/houses.js). */
+const NAME_MAX = 80;
 
 /** A photo's name from its file name: "my-house_2024.jpg" → "my house 2024". */
 export function nameFromFile(filename) {
   const base = path.basename(String(filename || "")).replace(/\.[^.]+$/, "");
   const name = base.replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim();
-  return name.slice(0, 80) || "My house";
+  return cutToLength(name, NAME_MAX) || "My house";
 }
 
 /**
@@ -56,7 +60,7 @@ export function router(ctx = getState()) {
         limit: limits.maxPhotoBytes,
       });
     }
-    const name = typeof body.name === "string" && body.name.trim() ? body.name.trim().slice(0, 80) : nameFromFile(file.name);
+    const name = typeof body.name === "string" && body.name.trim() ? cutToLength(body.name.trim(), NAME_MAX) : nameFromFile(file.name);
     const id = crypto.randomUUID();
     let made;
     try {

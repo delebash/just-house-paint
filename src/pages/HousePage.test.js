@@ -510,6 +510,32 @@ test("Save image paints at most the setting's megapixels, in a worker, the butto
   clickSpy.mockRestore();
 });
 
+test("a saved file's name is the house's without what Windows can't hold: Save image and the color card", async () => {
+  // "10/20" made a folder of the name, ":" "?" "*" a name Windows refuses
+  server.house = { name: "10/20: Oak St?*" };
+  server.parts = PARTS;
+  const saved = [];
+  vi.stubGlobal("URL", Object.assign(URL, { createObjectURL: () => "blob:saved", revokeObjectURL() {} }));
+  const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function () {
+    saved.push(this.download);
+  });
+  // the color card draws on a canvas (jsdom has none): a context that draws nothing, and its PNG
+  const ctx = new Proxy({ measureText: () => ({ width: 1 }) }, { get: (o, k) => (k in o ? o[k] : () => {}), set: () => true });
+  const getContext = vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(ctx);
+  const toBlob = vi.spyOn(HTMLCanvasElement.prototype, "toBlob").mockImplementation((done) => done(new Blob(["png"], { type: "image/png" })));
+  await mountPage();
+  await paintBody();
+  await click(byText("button", "Save image"));
+  saving.finish();
+  await flushPromises();
+  await click(byText(".q-tab", "Designs"));
+  await click(byText("button", "Save a color card"));
+  expect(saved).toEqual(["1020 Oak St — painted.jpg", "1020 Oak St — color card.png"]);
+  clickSpy.mockRestore();
+  getContext.mockRestore();
+  toBlob.mockRestore();
+});
+
 test("an AI photo's row is named by what tells it apart: its design, when, and its ΔE", async () => {
   server.parts = PARTS;
   server.designs = [DESIGN];
@@ -520,7 +546,7 @@ test("an AI photo's row is named by what tells it apart: its design, when, and i
   await mountPage();
   await click(byText(".q-tab", "Designs"));
   const names = [...document.body.querySelectorAll(".designs__view")].map((r) => r.getAttribute("aria-label"));
-  expect(names[0]).toMatch(/^Open the AI photo: Blue body, .+, ΔE 1\.4$/);
+  expect(names[0]).toMatch(/^Open the AI photo: \u2068Blue body\u2069, .+, ΔE 1\.4$/);
   expect(names[1]).toMatch(/^Open the AI photo: Colors on screen, .+$/);
   expect(names[1]).not.toContain("ΔE");
   // no control inside another: a row's main action and its Delete are side by side
@@ -547,7 +573,7 @@ test("a row's buttons are never inside another button: the part's swatch, a desi
   expect(nestedControls()).toEqual([]);
   expect(byText(".designs__row", "Blue body").getAttribute("role")).toBe("listitem");
   // Rename opens its dialog and leaves the open design as it was
-  await click(byText(".designs__row", "Blue body").querySelector('[aria-label="Rename “Blue body”"]'));
+  await click(byText(".designs__row", "Blue body").querySelector('[aria-label="Rename “\u2068Blue body\u2069”"]'));
   expect(document.body.querySelector("#name-dialog-input")).not.toBeNull();
   expect(byText(".designs__open", "Blue body").hasAttribute("aria-current")).toBe(false);
 });
@@ -703,6 +729,26 @@ test("Reset takes every paint off, or goes back to the open design's colors", as
   expect(text()).toContain("Behr Sea Blue S1");
 });
 
+test("a design's name inside the words is isolated: a right-to-left one leaves the quotes in place", async () => {
+  server.parts = PARTS;
+  server.designs = [{ ...DESIGN, name: "כחול" }];
+  await mountPage();
+  await click(byText(".q-tab", "Designs"));
+  // its buttons' names (not HTML): between FIRST STRONG ISOLATE and POP DIRECTIONAL ISOLATE
+  const labels = [...document.body.querySelectorAll(".designs [aria-label]")].map((el) => el.getAttribute("aria-label"));
+  expect(labels).toEqual(expect.arrayContaining(["Rename “\u2068כחול\u2069”", "Delete “\u2068כחול\u2069”"]));
+  await click(byText(".designs__open", "כחול"));
+  await click(byText(".q-tab", "Colors"));
+  await click(byText(".chip", "Chalk White"));
+  await click(byText(".q-tab", "Designs"));
+  expect(byText("button", "Save “").textContent).toContain("Save “\u2068כחול\u2069”");
+  // the Reset menu's (the page's HTML): the name in a <bdi>
+  await click(byText("button", "Reset"));
+  const back = menuItem("Back to");
+  expect(back.querySelector("bdi").textContent).toBe("כחול");
+  expect(back.textContent.trim()).toBe("Back to “כחול”");
+});
+
 test("the eyedropper and a part's color as photographed find the nearest paints", async () => {
   server.parts = PARTS;
   await mountPage();
@@ -818,7 +864,7 @@ test("finding the parts shows its progress on the page — not twice in the glob
   await new Promise((r) => setTimeout(r, 450));
   await flushPromises();
   const strip = document.querySelector(".q-page .sts");
-  expect(strip?.textContent).toContain("Finding the parts of Main street");
+  expect(strip?.textContent).toContain("Finding the parts of \u2068Main street\u2069");
   // which part it is looking for now, as the percent goes up
   expect(strip?.textContent).toContain("Trim · 40%");
   expect(strip.querySelector(".sts-fill").style.width).toBe("40%");
@@ -852,7 +898,7 @@ test("a page opened while its parts are being found follows the run: its progres
   await new Promise((r) => setTimeout(r, 450));
   await flushPromises();
   const strip = document.querySelector(".q-page .sts");
-  expect(strip?.textContent).toContain("Finding the parts of Main street");
+  expect(strip?.textContent).toContain("Finding the parts of \u2068Main street\u2069");
   expect(strip?.textContent).toContain("Trim · 40%");
   expect(server.calls).not.toContain("POST /v1/houses/h1/find-parts");
   expect(byText("button", "Find the parts again").getAttribute("aria-disabled")).toBe("true");
@@ -920,7 +966,7 @@ test("a page opened while its AI photo is being made follows it, and shows the p
   await mountPage();
   await new Promise((r) => setTimeout(r, 450));
   await flushPromises();
-  expect(document.querySelector(".q-page .sts")?.textContent).toContain("AI photo of Main street");
+  expect(document.querySelector(".q-page .sts")?.textContent).toContain("AI photo of \u2068Main street\u2069");
   expect(server.calls).not.toContain("POST /v1/houses/h1/aiphoto");
   server.holdAi = false;
   await settle();

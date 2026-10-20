@@ -60,11 +60,37 @@ export const BRAND_FEEDS = Object.freeze([
 ]);
 
 export class FeedError extends Error {
-  constructor(message, { status = null, url = null } = {}) {
-    super(message);
+  constructor(message, { status = null, url = null, cause = undefined } = {}) {
+    super(message, cause === undefined ? undefined : { cause });
     this.name = "FeedError";
     this.status = status;
     this.url = url;
+  }
+}
+
+/** Why a request never got an answer, from the error fetch rejects with: undici says only "fetch failed"
+ *  and keeps the reason in `cause` (its code and message — ECONNREFUSED, ENOTFOUND, a proxy's refusal, a
+ *  certificate; an AggregateError's own errors when every address failed). "" when it says nothing more. */
+export function causeOf(e) {
+  const c = e?.cause;
+  if (!c) return "";
+  const text = c.message || (Array.isArray(c.errors) ? c.errors.map((x) => x?.message).filter(Boolean).join("; ") : "");
+  if (c.code && !String(text).includes(c.code)) return text ? `${c.code}: ${text}` : String(c.code);
+  return String(text || "");
+}
+
+/**
+ * `fetch(url, init)`, with a request that never got an answer refused in words that keep its cause:
+ * "fetch failed" alone was all a brand's failed load said (2026-10-20, the thirteenth review). A cancel
+ * stays the cancel it was.
+ */
+export async function fetchWithCause(fetch, url, init) {
+  try {
+    return await fetch(url, init);
+  } catch (e) {
+    if (e?.name === "AbortError" || init?.signal?.aborted) throw e;
+    const why = causeOf(e);
+    throw new FeedError(`couldn't reach ${new URL(url).host}: ${e?.message || e}${why ? ` (${why})` : ""}`, { url, cause: e });
   }
 }
 
@@ -136,7 +162,7 @@ function parseBehrSheet(json, feed) {
 export const FEED_PARSERS = Object.freeze({ prism: parsePrism, "aem-sheet-behr": parseBehrSheet });
 
 async function getJson(url, { fetch, signal, headers }) {
-  const res = await fetch(url, { headers: { accept: "application/json", ...headers }, signal });
+  const res = await fetchWithCause(fetch, url, { headers: { accept: "application/json", ...headers }, signal });
   if (!res.ok) throw new FeedError(`HTTP ${res.status} from ${url}`, { status: res.status, url });
   try {
     return await res.json();

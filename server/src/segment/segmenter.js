@@ -75,11 +75,16 @@ export function resolveProviders(executionProvider = "auto", platform = process.
 }
 
 /** Session options per provider. DirectML wants memory patterns off and sequential execution
- * (onnxruntime.ai/docs/execution-providers/DirectML-ExecutionProvider.html#configuration-options). */
-export function sessionOptions(ep, { threads = 0, cpuMemArena = false } = {}) {
+ * (onnxruntime.ai/docs/execution-providers/DirectML-ExecutionProvider.html#configuration-options);
+ * `dmlDeviceId` picks its adapter — onnxruntime-node's `{ name: "dml", deviceId }`, DirectX's adapter
+ * index (DirectML's default is adapter 0, the one driving the main display). */
+export function sessionOptions(ep, { threads = 0, cpuMemArena = false, dmlDeviceId = null } = {}) {
   const base = { graphOptimizationLevel: "all", enableCpuMemArena: cpuMemArena, logSeverityLevel: 3 };
   if (threads > 0) base.intraOpNumThreads = threads;
-  if (ep === "dml") return { ...base, executionProviders: ["dml"], enableMemPattern: false, executionMode: "sequential" };
+  if (ep === "dml") {
+    const dml = Number.isInteger(dmlDeviceId) ? { name: "dml", deviceId: dmlDeviceId } : "dml";
+    return { ...base, executionProviders: [dml], enableMemPattern: false, executionMode: "sequential" };
+  }
   if (ep === "webgpu") return { ...base, executionProviders: ["webgpu"] };
   return { ...base, executionProviders: ["cpu"] };
 }
@@ -136,7 +141,8 @@ function serial() {
 /**
  * Load the three SAM 3 models. `modelDir` holds the bundle (models.js MODEL_FILES); `tokenizerDir`
  * (default `modelDir`) holds CLIP's tokenizer.json + tokenizer_config.json. Options: `threads`
- * (ONNX Runtime intra-op threads, 0 = its default), `cpuMemArena` (default false), `log`.
+ * (ONNX Runtime intra-op threads, 0 = its default), `cpuMemArena` (default false), `dmlDeviceId`
+ * (the DirectML adapter; DirectML's own default when absent), `log`.
  */
 export async function createSegmenter({
   modelDir,
@@ -145,11 +151,12 @@ export async function createSegmenter({
   log = null,
   threads = 0,
   cpuMemArena = false,
+  dmlDeviceId = null,
   ortApi = ort, // tests inject a fake
 } = {}) {
   if (!modelDir) throw new TypeError("createSegmenter needs { modelDir }");
   const logger = normalizeLog(log);
-  const opts = { threads, cpuMemArena };
+  const opts = { threads, cpuMemArena, dmlDeviceId };
   const wanted = resolveProviders(executionProvider);
 
   const [tokJson, tokConfig] = await Promise.all(

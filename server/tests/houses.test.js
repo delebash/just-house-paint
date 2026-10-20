@@ -379,6 +379,23 @@ describe("houses", () => {
     expect(nameFromFile("C:/photos/my-house_2024.jpeg")).toBe("my house 2024");
     expect(nameFromFile(".jpg")).toBe("My house");
   });
+
+  test("a long name is cut at 80 between characters as a person sees them — never inside an emoji", async () => {
+    // 79 letters, then an emoji (two UTF-16 units): the cut at 80 kept its first half, a lone surrogate
+    const house = `${"a".repeat(79)}🏠 front`;
+    expect(nameFromFile(`${house}.jpg`)).toBe("a".repeat(79));
+    // a family emoji (one character of 8 units, joined by ZWJs) is kept whole or not at all
+    const family = "👨‍👩‍👧";
+    expect(nameFromFile(`${"b".repeat(74)}${family}.jpg`)).toBe("b".repeat(74));
+    expect(nameFromFile(`${"b".repeat(72)}${family}.jpg`)).toBe(`${"b".repeat(72)}${family}`);
+    // one character longer than 80 on its own (a run of combining marks): its code points, never half of one
+    expect(nameFromFile(`e${"\u0301".repeat(100)}.jpg`)).toBe(`e${"\u0301".repeat(79)}`);
+    // a name given with the photo: cut the same way
+    s = makeServer();
+    const made = await (await s.upload(await jpeg(80, 60), "x.jpg", `${"c".repeat(79)}🏡`)).json();
+    expect(made.name).toBe("c".repeat(79));
+    expect(made.name.isWellFormed()).toBe(true);
+  });
 });
 
 describe("parts", () => {

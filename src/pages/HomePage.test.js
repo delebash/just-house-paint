@@ -198,7 +198,7 @@ test("a rename checks the route's own rule, and a server 422 lands under the fie
   };
   server.houses = [houseRow("h1", "Main street")];
   await mountPage();
-  await click(document.body.querySelector('[aria-label="Rename “Main street”"]'));
+  await click(document.body.querySelector('[aria-label="Rename “\u2068Main street\u2069”"]'));
   const input = document.body.querySelector("#name-dialog-input");
   expect(input.value).toBe("Main street");
 
@@ -224,7 +224,7 @@ test("a rename checks the route's own rule, and a server 422 lands under the fie
 test("a delete asks first, naming the house", async () => {
   server.houses = [houseRow("h1", "Main street")];
   await mountPage();
-  await click(document.body.querySelector('[aria-label="Delete “Main street”"]'));
+  await click(document.body.querySelector('[aria-label="Delete “\u2068Main street\u2069”"]'));
   expect(dialogState.open).toBe(true);
   expect(dialogState.options.message).toContain("Main street");
   expect(server.calls).not.toContain("DELETE /v1/houses/h1");
@@ -232,4 +232,19 @@ test("a delete asks first, naming the house", async () => {
   await flushPromises();
   expect(server.calls).toContain("DELETE /v1/houses/h1");
   expect(text()).toContain("No houses yet");
+});
+
+test("a house's name inside the words is isolated (FSI … PDI): a right-to-left name leaves the quotes in place", async () => {
+  server.houses = [houseRow("h1", "בית הים")];
+  await mountPage();
+  // the card's buttons and photo: the name between FIRST STRONG ISOLATE and POP DIRECTIONAL ISOLATE
+  const labels = [...document.body.querySelectorAll(".houses__card [aria-label]")].map((el) => el.getAttribute("aria-label"));
+  expect(labels).toEqual(["Open \u2068בית הים\u2069", "Rename “\u2068בית הים\u2069”", "Delete “\u2068בית הים\u2069”"]);
+  // the delete's question too
+  await click(document.body.querySelector(".houses__card [aria-label^='Delete']"));
+  expect(dialogState.options.message).toContain("“\u2068בית הים\u2069”, its photo");
+  _resolveDialog(false);
+  await flushPromises();
+  // the name on its own (the card's title) is as written
+  expect(document.body.querySelector(".houses__name").textContent.trim()).toBe("בית הים");
 });

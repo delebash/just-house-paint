@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: MIT
 // What the house-paint routes share, on the app state (app_state.js): the job registry, the other
 // windows' changes (changes.js), the houses' outline versions (outlines.js), the part
-// finder (SAM 3), the AI photo (stable-diffusion.cpp), the brands' public lists (fetch), the
+// finder (SAM 3), the AI photo (stable-diffusion.cpp), the brands' public lists (the kit's fetch), the
 // downloads (the kit's streamDownload), the AI run path (the kit's runAction), and readers of the
 // settings they use — read on every call, so a change in Settings applies to the next run without
 // a restart. Tests pass their own `finder`, `aiphoto`, `fetch`, `download` or `run`.
 
 import path from "node:path";
 import { buildLlmConfig, resolveRoute, runAction, stores } from "@delebash/core/llm";
+import * as http from "@delebash/core/platform/http";
 import { streamDownload } from "@delebash/core/runner/download";
 import * as hardware from "@delebash/core/runner/hardware";
 import * as lifecycle from "@delebash/core/runner/lifecycle";
@@ -15,7 +16,7 @@ import { hfDownloadHeaders } from "@delebash/core/runner/models";
 import { createAiPhoto, sharedGpuNote, surfaceWords } from "./aiphoto_service.js";
 import { SETTING_DEFAULTS } from "./database/seed.js";
 import { getSetting } from "./database/settings.js";
-import { createFinder, DEFAULT_PROVIDERS } from "./finder.js";
+import { bestDmlAdapter, createFinder, DEFAULT_PROVIDERS } from "./finder.js";
 import { ChangeCounter } from "./changes.js";
 import { JobRegistry } from "./jobs.js";
 import { Outlines } from "./outlines.js";
@@ -53,6 +54,8 @@ export function createServices({ db, dataDir }, overrides = {}) {
       get providers() {
         return { ...DEFAULT_PROVIDERS, image: setting("finder.useGpu") ? "auto" : "cpu" };
       },
+      // DirectML on the adapter with the most memory of its own, not adapter 0 (often a laptop's integrated GPU)
+      dmlDeviceId: () => bestDmlAdapter(hardware.dxgiAdapters()),
       partsConfig: () => setting("finder.parts"),
       priority: () => setting("finder.priority"),
       idleMs: () => setting("finder.idleMinutes") * 60_000,
@@ -89,7 +92,9 @@ export function createServices({ db, dataDir }, overrides = {}) {
     checkSeconds: () => setting("windows.checkSeconds"),
     finder,
     aiphoto,
-    fetch: overrides.fetch ?? ((...a) => globalThis.fetch(...a)),
+    // the brands' lists through the kit's one HTTP client, as the downloads: it honours HTTPS_PROXY / NO_PROXY
+    // (Node's own fetch ignores them — the brand lists failed behind a proxy the model downloads went through)
+    fetch: overrides.fetch ?? ((...a) => http.fetch(...a)),
     download: overrides.download ?? kitDownload,
     run: overrides.run ?? ((body) => runAction(stores.getPromptStore(), buildLlmConfig(), body)),
     limits: () => ({

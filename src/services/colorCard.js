@@ -21,12 +21,14 @@ export function colorCardLayout({ width, height, rows }) {
   return { width, height: noteY + font + pad, photoHeight: height, font, pad, rowH, swatch, titleY, subtitleY, rowBoxes, noteY };
 }
 
-/** `text` cut to `max` pixels with an ellipsis (measureText). */
-function clipText(ctx, text, max) {
+/** `text` cut to `max` pixels with an ellipsis (measureText) — between characters as a person sees them
+ *  (grapheme clusters, Intl.Segmenter — developer.mozilla.org/docs/Web/JavaScript/Reference/
+ *  Global_Objects/Intl/Segmenter): a cut by UTF-16 unit left half an emoji before the ellipsis. */
+export function clipText(ctx, text, max) {
   if (ctx.measureText(text).width <= max) return text;
-  let s = text;
-  while (s.length > 1 && ctx.measureText(`${s}…`).width > max) s = s.slice(0, -1);
-  return `${s}…`;
+  const chars = Array.from(new Intl.Segmenter(undefined, { granularity: "grapheme" }).segment(text), (g) => g.segment);
+  while (chars.length > 1 && ctx.measureText(`${chars.join("")}…`).width > max) chars.pop();
+  return `${chars.join("")}…`;
 }
 
 /**

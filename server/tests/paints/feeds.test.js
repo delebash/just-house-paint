@@ -161,6 +161,35 @@ describe("loadFeed — errors", () => {
     expect(err.status).toBe(403);
   });
 
+  test("a request that got no answer keeps its cause: never 'fetch failed' alone", async () => {
+    // undici rejects with "fetch failed" and keeps why in `cause` — the brand's error said only that (2026-10-20)
+    const refused = Object.assign(new Error("connect ECONNREFUSED 10.0.0.1:443"), { code: "ECONNREFUSED" });
+    const fetch = vi.fn(async () => {
+      throw new TypeError("fetch failed", { cause: refused });
+    });
+    const err = await loadFeed("behr", { fetch }).catch((e) => e);
+    expect(err).toBeInstanceOf(FeedError);
+    expect(err.message).toBe("couldn't reach www.behr.com: fetch failed (connect ECONNREFUSED 10.0.0.1:443)");
+    expect(err.cause.cause).toBe(refused);
+    // a code its message doesn't name, and every address of an AggregateError
+    const proxy = vi.fn(async () => {
+      throw new TypeError("fetch failed", { cause: Object.assign(new Error("Proxy response (403) !== 200 when HTTP Tunneling"), { code: "UND_ERR_ABORTED" }) });
+    });
+    expect((await loadFeed("behr", { fetch: proxy }).catch((e) => e)).message).toMatch(/\(UND_ERR_ABORTED: Proxy response \(403\)/);
+    const all = Object.assign(new AggregateError([new Error("connect ETIMEDOUT 1.2.3.4:443"), new Error("connect ENETUNREACH ::1:443")]), { code: "ETIMEDOUT" });
+    const aggregate = vi.fn(async () => {
+      throw new TypeError("fetch failed", { cause: all });
+    });
+    expect((await loadFeed("behr", { fetch: aggregate }).catch((e) => e)).message).toMatch(/\(connect ETIMEDOUT 1\.2\.3\.4:443; connect ENETUNREACH ::1:443\)$/);
+    // a cancel stays the cancel
+    const ac = new AbortController();
+    ac.abort();
+    const cancelled = vi.fn(async () => {
+      throw new DOMException("This operation was aborted", "AbortError");
+    });
+    expect((await loadFeed("behr", { fetch: cancelled, signal: ac.signal }).catch((e) => e)).name).toBe("AbortError");
+  });
+
   test("a body that is not JSON, or not the expected shape", async () => {
     const html = vi.fn(async () => new Response("<html>", { status: 200 }));
     await expect(loadFeed("behr", { fetch: html })).rejects.toThrow(/not JSON/);

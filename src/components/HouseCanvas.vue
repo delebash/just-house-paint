@@ -10,6 +10,9 @@
 //   - box:    drag a box; the part finder outlines what is inside (`box`).
 // Drawing stays pointer-only, as in every paint app; the keyboard reaches the photo itself (a Tab
 // stop with a name), whose arrow keys move it once zoomed — the zoom buttons zoom around its middle.
+// The mouse, a pen and touch are one thing here — Pointer Events (w3.org/TR/pointerevents3, through
+// Konva's pointer events): one pointer draws, boxes or pans at a time (a second finger never paints),
+// and a pointer the system takes back (pointercancel: a palm set down, an edge swipe) drops its stroke.
 // Every light mark (the brush's ring, the box, the split line) has a dark copy drawn under it, the
 // two-tone edge selection tools use, so it shows on a white wall as on a dark one.
 import { UiButton } from "@delebash/ui";
@@ -66,6 +69,31 @@ function fitToStage() {
 const zoomBy = (factor) => zoomAt(view.value.scale * factor, size.value.width / 2, size.value.height / 2);
 defineExpose({ fit: fitToStage, zoomBy, zoomTo100: () => zoomAt(1, size.value.width / 2, size.value.height / 2, true) });
 
+// The screen's pixel ratio, followed. Konva reads window.devicePixelRatio once, as it loads
+// (Konva.pixelRatio): a window moved to a sharper screen, or zoomed, kept drawing the photo at the old
+// ratio — blurry. A change is heard as MDN shows it (a resolution query for the ratio now, asked anew
+// after each change — developer.mozilla.org/docs/Web/API/Window/devicePixelRatio, "Monitoring screen
+// resolution or zoom level changes"), and each layer's canvas takes the new one (Konva's
+// Canvas#setPixelRatio — konvajs.org/api/Konva.Canvas.html) and draws again.
+let stopFollowingRatio = null;
+function followPixelRatio() {
+  stopFollowingRatio?.();
+  applyPixelRatio();
+  const query = window.matchMedia(`(resolution: ${window.devicePixelRatio || 1}dppx)`);
+  query.addEventListener("change", followPixelRatio);
+  stopFollowingRatio = () => query.removeEventListener("change", followPixelRatio);
+}
+/** The stage's layers at the screen's ratio now — also a stage made after a change (the photo shown again). */
+function applyPixelRatio() {
+  const ratio = window.devicePixelRatio || 1;
+  for (const layer of stage.value?.getNode()?.getLayers() || []) {
+    if (layer.getCanvas().getPixelRatio() === ratio) continue;
+    layer.getCanvas().setPixelRatio(ratio);
+    layer.batchDraw();
+  }
+}
+watch(stage, applyPixelRatio, { flush: "post" });
+
 let observer = null;
 onMounted(() => {
   observer = new ResizeObserver(([entry]) => {
@@ -74,8 +102,12 @@ onMounted(() => {
     if (fitted) fitToStage();
   });
   observer.observe(host.value);
+  followPixelRatio();
 });
-onBeforeUnmount(() => observer?.disconnect());
+onBeforeUnmount(() => {
+  observer?.disconnect();
+  stopFollowingRatio?.();
+});
 watch(() => props.photo, fitToStage);
 watch(() => props.sideBySide, fitToStage);
 watch(
@@ -108,34 +140,55 @@ function onWheel(e) {
 }
 
 let panFrom = null;
-// a mouse event's position, or a touch's first finger
-const clientOf = (evt) => ({ x: evt.touches?.[0]?.clientX ?? evt.clientX, y: evt.touches?.[0]?.clientY ?? evt.clientY });
+// the pointer drawing, boxing or panning now (its pointerId), null when none: any other — a second
+// finger, a pen set down meanwhile — is ignored until it is lifted
+let active = null;
+const ours = (e) => e.evt.pointerId === active;
 function onDown(e) {
+  if (active !== null) return;
   const pt = photoPoint();
   if (props.tool === "brush" || props.tool === "eraser") {
     if (inside(pt)) drawing.value = { points: [pt.x, pt.y] };
   } else if (props.tool === "box") {
     if (inside(pt)) boxing.value = { x0: pt.x, y0: pt.y, x1: pt.x, y1: pt.y };
   } else {
-    const c = clientOf(e.evt);
-    panFrom = { x: c.x, y: c.y, view: { ...view.value }, moved: false };
+    panFrom = { x: e.evt.clientX, y: e.evt.clientY, view: { ...view.value }, moved: false };
   }
+  if (!drawing.value && !boxing.value && !panFrom) return;
+  active = e.evt.pointerId;
+  // its moves and its lifting reach the stage off the canvas too (Element.setPointerCapture —
+  // developer.mozilla.org/docs/Web/API/Element/setPointerCapture — through Konva's, which routes them)
+  stage.value.getNode().setPointerCapture(active);
 }
 function onMove(e) {
+  if (active !== null && !ours(e)) return;
   const pt = photoPoint();
   pointer.value = pt;
   if (drawing.value && pt) drawing.value = { points: [...drawing.value.points, pt.x, pt.y] };
   else if (boxing.value && pt) boxing.value = { ...boxing.value, x1: Math.min(imgW.value, Math.max(0, pt.x)), y1: Math.min(imgH.value, Math.max(0, pt.y)) };
   else if (panFrom) {
-    const c = clientOf(e.evt);
-    const dx = c.x - panFrom.x;
-    const dy = c.y - panFrom.y;
+    const dx = e.evt.clientX - panFrom.x;
+    const dy = e.evt.clientY - panFrom.y;
     if (Math.abs(dx) + Math.abs(dy) > 3) panFrom.moved = true;
     view.value = { ...panFrom.view, x: panFrom.view.x + dx, y: panFrom.view.y + dy };
     if (panFrom.moved) fitted = false;
   }
 }
-function onUp() {
+function onUp(e) {
+  if (ours(e)) finish();
+}
+/** The system took the pointer back (pointercancel — a palm set down, an edge swipe, the browser's own
+ *  gesture): what it was drawing is dropped, not painted — the press wasn't the user's stroke; a box
+ *  isn't asked for, a pan stays where it got to and picks nothing. */
+function onCancel(e) {
+  if (!ours(e)) return;
+  active = null;
+  drawing.value = null;
+  boxing.value = null;
+  panFrom = null;
+}
+function finish() {
+  active = null;
   if (drawing.value) {
     const p = drawing.value.points;
     const points = [];
@@ -155,11 +208,13 @@ function onUp() {
   }
 }
 
-/** The pointer left the canvas: a stroke, a box or a pan ends there (its button may be let go outside,
- *  where the canvas never hears it). */
-function onLeave() {
+/** The pointer left the canvas: the brush's ring goes. A captured pointer is heard off the canvas and
+ *  leaves only once it is lifted; one that leaves while it draws (the capture didn't take) ends its
+ *  stroke, box or pan there — its button may be let go outside, where the canvas never hears it. */
+function onLeave(e) {
+  if (active !== null && !ours(e)) return;
   pointer.value = null;
-  if (drawing.value || boxing.value || panFrom) onUp();
+  if (active !== null) finish();
 }
 
 // the arrow keys move a zoomed (or moved) photo by this many screen pixels — a map's step (Leaflet's
@@ -221,8 +276,8 @@ const splitMarks = computed(() =>
     <span v-if="photo" :id="keysId" class="visually-hidden">{{ t("house.canvas.keys") }}</span>
     <v-stage
       v-if="photo" ref="stage" :config="{ width: size.width, height: size.height }"
-      @wheel="onWheel" @mousedown="onDown" @touchstart="onDown" @mousemove="onMove" @touchmove="onMove"
-      @mouseup="onUp" @touchend="onUp" @mouseleave="onLeave"
+      @wheel="onWheel" @pointerdown="onDown" @pointermove="onMove" @pointerup="onUp" @pointercancel="onCancel"
+      @pointerleave="onLeave"
     >
       <v-layer>
         <v-group :config="groupConfig">
@@ -257,6 +312,10 @@ const splitMarks = computed(() =>
   min-height: 0;
   overflow: hidden;
   background: var(--surface-sunken, #1d1d1d);
+  /* a finger on the photo draws, boxes or pans it — the page's own panning and zooming never take it
+     (touch-action — developer.mozilla.org/docs/Web/CSS/touch-action: with them, the browser takes the
+     pointer back, pointercancel, as soon as a finger moves) */
+  touch-action: none;
 }
 .house-canvas[data-tool="look"] {
   cursor: grab;

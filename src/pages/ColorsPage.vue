@@ -8,10 +8,11 @@
 import {
   AiTaskStrips,
   confirmDialog,
-  Icon,
   errorMessage,
-  PaneHeader,
+  Icon,
+  isolate,
   pageFlow,
+  PaneHeader,
   pushToast,
   relativeTime,
   reportError,
@@ -92,7 +93,7 @@ async function setAutoLoad(brand, on) {
 
 // "“Navy trim” (Main street)", the first three, then "2 more"
 function designList(designs) {
-  const names = designs.map((d) => t("paintColors.designName", { design: d.design, house: d.house }));
+  const names = designs.map((d) => t("paintColors.designName", { design: isolate(d.design), house: isolate(d.house) }));
   const shown = names.length > 3 ? [...names.slice(0, 3), t("paintColors.more", { n: names.length - 3 })] : names;
   return new Intl.ListFormat(locale.value, { type: "conjunction" }).format(shown);
 }

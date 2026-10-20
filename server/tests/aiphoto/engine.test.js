@@ -2,15 +2,33 @@
 // Release-asset selection per platform (on GitHub API JSON) and the one-time installs, with a
 // fake download writing real zips (made by the kit's ZipWriter, unpacked by its extractZip).
 import { createHash } from "node:crypto";
-import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, dirname, join } from "node:path";
 import { ZipWriter } from "@delebash/core/platform/zip";
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
+
+// A folder another program holds a moment (an antivirus reading the files just unpacked): the first rename of a
+// path ending as armed in `held.ends` is refused with EBUSY, as Windows answers it; the rest are the real ones.
+const held = vi.hoisted(() => ({ ends: new Set() }));
+vi.mock("node:fs/promises", async (importOriginal) => {
+  const real = await importOriginal();
+  const rename = async (from, to) => {
+    for (const end of held.ends) {
+      if (String(from).endsWith(end)) {
+        held.ends.delete(end);
+        throw Object.assign(new Error(`EBUSY: resource busy or locked, rename '${from}'`), { code: "EBUSY" });
+      }
+    }
+    return real.rename(from, to);
+  };
+  return { ...real, rename, default: { ...real, rename } };
+});
 import {
   backendOrder,
   ENGINE_RELEASES,
+  engineFiles,
   ensureEngine,
   ensureModels,
   IntegrityError,
@@ -18,6 +36,7 @@ import {
   modelUrl,
   resolveReleaseAssets,
   selectEngineAsset,
+  UNPACK_ROOM,
 } from "../../src/aiphoto/engine.js";
 
 const sha = (b) => createHash("sha256").update(b).digest("hex");
@@ -197,6 +216,58 @@ describe("ensureEngine", () => {
     const err = await ensureEngine(dir, { download: slow, release, platform: "win32", arch: "x64", gpu: "vulkan", cancelCheck: () => cancel }).catch((e) => e);
     expect(err.name).toBe("AbortError");
     expect(existsSync(join(dir, "master-1-test", "vulkan", "sd-cli.exe"))).toBe(false);
+  });
+
+  test("installed is every file the release unpacked, not the marker: a file an antivirus took is fetched again", async () => {
+    // a quarantined sd-cli or DLL left the marker, and "installed" was read from it alone — the render then failed
+    // with Windows' exit 0xC0000135 (2026-10-20, the thirteenth review)
+    const dir = tmp();
+    const { release, download, fetched } = fakeRelease(WIN_ZIPS);
+    const opts = { download, release, platform: "win32", arch: "x64", gpu: { cuda: true } };
+    const bin = await ensureEngine(dir, opts);
+    const home = dirname(bin);
+    expect(JSON.parse(readFileSync(join(home, ".aiphoto-engine.json"), "utf8")).files.sort()).toEqual(
+      ["cublas64_12.dll", "cudart64_12.dll", "ggml-cuda.dll", "sd-cli.exe", "stable-diffusion.dll"].sort(),
+    );
+    expect(engineFiles(home, "sd-cli.exe")).toEqual({ installed: true, missing: [] });
+    rmSync(join(home, "stable-diffusion.dll"));
+    expect(engineFiles(home, "sd-cli.exe")).toEqual({ installed: false, missing: ["stable-diffusion.dll"] });
+    await ensureEngine(dir, opts);
+    expect(fetched).toHaveLength(4); // both zips again
+    expect(readFileSync(join(home, "stable-diffusion.dll"), "utf8")).toBe("dll");
+    rmSync(bin);
+    expect(engineFiles(home, "sd-cli.exe").missing).toEqual(["sd-cli.exe"]);
+    expect(engineFiles(join(dir, "nothing-here"), "sd-cli.exe")).toEqual({ installed: false, missing: [] });
+  });
+
+  test("the unpacked engine moves in once an antivirus reading it lets go", async () => {
+    // the rename of the folder just unpacked used to fail the install on the first refusal (the kit's renameHeld)
+    const dir = tmp();
+    const { release, download } = fakeRelease(WIN_ZIPS);
+    held.ends.add("vulkan.partial");
+    try {
+      const bin = await ensureEngine(dir, { download, release, platform: "win32", arch: "x64", gpu: "vulkan" });
+      expect(held.ends.size).toBe(0);
+      expect(readFileSync(bin, "utf8")).toBe("vk");
+    } finally {
+      held.ends.clear();
+    }
+  });
+
+  test("the pinned zips say what they unpack to; a newer release's are given room for five times their size", () => {
+    const cuda = pick({ platform: "win32", arch: "x64", gpu: { cuda: true } });
+    expect(cuda.asset.unpacked).toBe(388407429);
+    expect(cuda.runtime.unpacked).toBe(788957696);
+    const newer = pick({ platform: "win32", arch: "x64", gpu: { vulkan: true } }, NEWER);
+    expect(newer.asset.unpacked).toBe(newer.asset.size * UNPACK_ROOM);
+  });
+
+  test("each build says what it needs from the system", () => {
+    for (const backend of ["cuda12", "rocm", "vulkan", "cpu"]) {
+      expect(pick({ platform: "win32", arch: "x64", gpu: backend }).requires.dlls).toEqual(["MSVCP140.dll", "VCRUNTIME140.dll", "VCRUNTIME140_1.dll", "VCOMP140.DLL"]);
+    }
+    expect(pick({ platform: "darwin", arch: "arm64", gpu: {} }).requires).toEqual({ macos: "26.0" });
+    for (const gpu of ["rocm", "vulkan", "cpu"]) expect(pick({ platform: "linux", arch: "x64", gpu }).requires).toEqual({ glibc: "2.38" });
   });
 
   test("a platform with no build is a clear error", async () => {

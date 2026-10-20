@@ -9,13 +9,15 @@
 // Reset takes every paint off, or goes back to the open design. The page fills its area
 // (pageFill): the canvas and the panel each scroll on their own.
 import { copyToClipboard } from "quasar";
+import { safeTitle } from "@delebash/core/platform/filename";
 import {
   AiTaskStrip,
   confirmDialog,
   EmptyState,
   errorMessage,
-  PaneHeader,
+  isolate,
   pageFill,
+  PaneHeader,
   promptDialog,
   pushToast,
   reportError,
@@ -728,7 +730,7 @@ async function findParts() {
 async function runFind(options) {
   busy.value.find = true;
   try {
-    await house.findParts(t("house.find.task", { name: house.house.name }), findProgress, options);
+    await house.findParts(t("house.find.task", { name: isolate(house.house.name) }), findProgress, options);
   } catch (e) {
     if (e?.name !== "AbortError") onWriteRefused(e);
   } finally {
@@ -749,7 +751,7 @@ async function aiPhoto() {
 async function runAiPhoto(job = null) {
   busy.value.ai = true;
   try {
-    const render = await house.aiPhoto(t("house.ai.task", { name: house.house.name }), { job });
+    const render = await house.aiPhoto(t("house.ai.task", { name: isolate(house.house.name) }), { job });
     aiDialog.value = { render };
   } catch (e) {
     if (e?.name !== "AbortError") reportError(e);
@@ -757,6 +759,11 @@ async function runAiPhoto(job = null) {
     busy.value.ai = false;
   }
 }
+
+/** The house's name as a saved file's: the kit's safeTitle — without what a Windows file name can't hold
+ *  (learn.microsoft.com/windows/win32/fileio/naming-a-file): "10/20" made a folder, ":" or "?" a name
+ *  Windows refuses. */
+const fileTitle = (name) => safeTitle(name, t("aiPhoto.fallbackName"));
 
 /** The painted photo at full size — the original, at most the `photos.fullSizeMaxMegapixels` setting
  *  (Settings → General), the outlines scaled up, the same paint — painted in a Web Worker
@@ -780,7 +787,7 @@ async function saveImage() {
       texture: texture.value,
       quality: 0.92,
     });
-    await saveBlob(out, `${name} — ${t("house.export.suffix")}.jpg`, { title: t("house.export.save"), filterName: "JPEG", filterExt: "jpg" });
+    await saveBlob(out, `${fileTitle(name)} — ${t("house.export.suffix")}.jpg`, { title: t("house.export.save"), filterName: "JPEG", filterExt: "jpg" });
   } catch (e) {
     reportError(e);
   } finally {
@@ -822,7 +829,7 @@ async function saveColorCard() {
       note: t("colorCard.note"),
     });
     const out = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
-    await saveBlob(out, `${house.house.name} — ${t("colorCard.suffix")}.png`, { title: t("designs.colorCard"), filterName: "PNG", filterExt: "png" });
+    await saveBlob(out, `${fileTitle(house.house.name)} — ${t("colorCard.suffix")}.png`, { title: t("designs.colorCard"), filterName: "PNG", filterExt: "png" });
   } catch (e) {
     reportError(e);
   }
@@ -922,8 +929,9 @@ const canRevert = computed(() => !!house.design && house.dirty);
             >
               <template #trigger>{{ t("house.reset.button") }}</template>
               <UiMenuItem :disabled="!hasColors" @select="house.clearColors()">{{ t("house.reset.clear") }}</UiMenuItem>
+              <!-- the design's name in a <bdi>: a right-to-left one keeps the sentence's quotes in place -->
               <UiMenuItem v-if="canRevert" @select="house.revertToDesign()">
-                {{ t("house.reset.revert", { name: house.design.name }) }}
+                <i18n-t keypath="house.reset.revert" scope="global"><template #name><bdi>{{ house.design.name }}</bdi></template></i18n-t>
               </UiMenuItem>
             </UiMenu>
           </span>

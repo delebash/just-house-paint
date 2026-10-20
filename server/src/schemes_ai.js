@@ -8,6 +8,7 @@
 // SCHEMES_PROMPT), edited and tried in the AI Lab; this code fills the row's {{variables}}.
 
 import { displayName, nearestPaints } from "./paints/index.js";
+import { cutToLength } from "./shared/text.js";
 
 export const SCHEMES_FEATURE = "schemes.suggest";
 
@@ -99,7 +100,7 @@ export function parseSchemes(text) {
   for (const x of list) {
     const roles = ["body", "trim", "accent"].map((r) => String(x?.[r] || "").trim());
     if (!roles.every((h) => HEX.test(h))) continue;
-    out.push({ name: String(x.name || "").trim().slice(0, 60) || "Scheme", body: roles[0], trim: roles[1], accent: roles[2], why: String(x.why || "").trim().slice(0, 300) });
+    out.push({ name: cutToLength(String(x.name || "").trim(), 60) || "Scheme", body: roles[0], trim: roles[1], accent: roles[2], why: cutToLength(String(x.why || "").trim(), 300) });
   }
   if (!out.length) throw new Error("the AI's answer has no usable scheme (each needs body, trim and accent as #rrggbb)");
   return out;

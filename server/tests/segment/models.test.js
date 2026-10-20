@@ -4,7 +4,22 @@ import { existsSync } from "node:fs";
 import { mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+// A file another program holds a moment (an antivirus reading the stamp just written): its first rename is
+// refused with EBUSY when armed, as Windows answers it; the rest are the real ones.
+const held = vi.hoisted(() => ({ stamp: 0 }));
+vi.mock("node:fs/promises", async (importOriginal) => {
+  const real = await importOriginal();
+  const rename = async (from, to) => {
+    if (String(from).endsWith(".verified.json.tmp") && held.stamp > 0) {
+      held.stamp--;
+      throw Object.assign(new Error(`EBUSY: resource busy or locked, rename '${from}'`), { code: "EBUSY" });
+    }
+    return real.rename(from, to);
+  };
+  return { ...real, rename, default: { ...real, rename } };
+});
 import {
   CLIP_REVISION,
   ensureModels,
@@ -62,6 +77,7 @@ describe("ensureModels with a fake downloader", () => {
     dir = await mkdtemp(path.join(tmpdir(), "hp-models-"));
   });
   afterEach(async () => {
+    held.stamp = 0;
     await rm(dir, { recursive: true, force: true });
   });
 
@@ -80,6 +96,13 @@ describe("ensureModels with a fake downloader", () => {
     expect(progress.every((p) => p.overallTotal === total)).toBe(true);
     const stamps = JSON.parse(await readFile(path.join(dir, STAMP_FILE), "utf8"));
     expect(stamps["a.onnx"].sha256).toBe(files[0].sha256);
+  });
+
+  it("a stamp another program holds a moment as it is renamed in still lands (the kit's renameHeld)", async () => {
+    held.stamp = 2;
+    await ensureModels(dir, { files, download: fakeDownload() });
+    expect(held.stamp).toBe(0);
+    expect(Object.keys(JSON.parse(await readFile(path.join(dir, STAMP_FILE), "utf8"))).sort()).toEqual(["a.onnx", "b.json"]);
   });
 
   it("skips files already present and valid — no download at all", async () => {

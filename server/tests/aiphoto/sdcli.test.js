@@ -159,6 +159,35 @@ describe("runSdCli", () => {
     expect(err.tail).toMatch(/cannot make enough memory available/);
   });
 
+  test("a program Windows couldn't start is said as such: its NTSTATUS, not 'exit 3221225781'", async () => {
+    // a DLL not found (the Visual C++ runtime, or a quarantined engine DLL), an entry point not found (an old runtime),
+    // a name too long — Node reports the code unsigned (2026-10-20, the thirteenth review)
+    for (const [code, status, hex, reason] of [
+      [3221225781, "STATUS_DLL_NOT_FOUND", "0xC0000135", "dll-missing"],
+      [3221225785, "STATUS_ENTRYPOINT_NOT_FOUND", "0xC0000139", "dll-too-old"],
+      [3221225734, "STATUS_NAME_TOO_LONG", "0xC0000106", "path-too-long"],
+    ]) {
+      const fake = fakeSpawn({ code });
+      const err = await runSdCli("sd-cli", [], { spawn: fake.spawn, close: fake.close }).catch((e) => e);
+      expect(err).toBeInstanceOf(SdCliError);
+      expect(err).toMatchObject({ code, reason });
+      expect(err.message).toBe(`sd-cli couldn't start: Windows' ${status} (exit ${hex})`);
+    }
+    // any other exit keeps no reason
+    const fake = fakeSpawn({ code: 1 });
+    expect((await runSdCli("sd-cli", [], { spawn: fake.spawn, close: fake.close }).catch((e) => e)).reason).toBeNull();
+  });
+
+  test("sd-cli gone from its folder (an antivirus took it) is said, not the spawn's own error", async () => {
+    const spawn = async () => {
+      throw new Error("Couldn't start the engine binary (spawn ENOENT)");
+    };
+    const err = await runSdCli(join(FIX, "no-such-sd-cli.exe"), [], { spawn }).catch((e) => e);
+    expect(err).toBeInstanceOf(SdCliError);
+    expect(err.reason).toBe("exe-missing");
+    expect(err.message).toMatch(/^sd-cli is missing: /);
+  });
+
   test("abort kills the process, closes its job and rejects with the AbortError", async () => {
     const fake = fakeSpawn({
       chunks: [

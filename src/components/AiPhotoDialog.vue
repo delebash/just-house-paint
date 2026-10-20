@@ -6,7 +6,8 @@
 // the graphics card while it drew (the server's `sharedGpu`), which ones: they make it slower
 // (RESEARCH §12) — and Save image. It is a picture the AI drew: the instant preview stays the
 // accurate one, and the dialog says so.
-import { AppModal, fmtBytes, reportError, requestBlob, saveBlob, UiButton, useServerImage } from "@delebash/ui";
+import { safeTitle } from "@delebash/core/platform/filename";
+import { AppModal, fmtBytes, isolate, reportError, requestBlob, saveBlob, UiButton, useServerImage } from "@delebash/ui";
 import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import EngineInstallCard from "./EngineInstallCard.vue";
@@ -35,7 +36,8 @@ async function save() {
   saving.value = true;
   try {
     const blob = await requestBlob(`/v1/renders/${encodeURIComponent(props.render.id)}/image`);
-    await saveBlob(blob, `${props.houseName || t("aiPhoto.fallbackName")} — ${t("aiPhoto.suffix")}.png`, { title: t("aiPhoto.save"), filterName: "PNG", filterExt: "png" });
+    // the house's name made safe for a file's (the kit's safeTitle — what Windows can't hold goes)
+    await saveBlob(blob, `${safeTitle(props.houseName, t("aiPhoto.fallbackName"))} — ${t("aiPhoto.suffix")}.png`, { title: t("aiPhoto.save"), filterName: "PNG", filterExt: "png" });
   } catch (e) {
     reportError(e);
   } finally {
@@ -49,7 +51,7 @@ async function save() {
     <EngineInstallCard v-if="!render" kind="aiphoto" @installed="emit('installed')" />
     <template v-else>
       <p class="hint">{{ t("aiPhoto.note") }}</p>
-      <img v-if="src" class="aiphoto__img" :src="src" :alt="t('aiPhoto.alt', { name: houseName })" />
+      <img v-if="src" class="aiphoto__img" :src="src" :alt="t('aiPhoto.alt', { name: isolate(houseName) })" />
       <p class="muted">
         <template v-if="render.deltaE != null">{{ t("aiPhoto.deltaE", { n: render.deltaE.toFixed(1) }) }} · </template>
         {{ t("aiPhoto.seconds", { n: Math.round(render.seconds || 0) }) }}

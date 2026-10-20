@@ -104,6 +104,8 @@ export function makeServer({ fetch = async () => new Response("offline", { statu
   ctx.aiphoto = aiphoto ? aiphoto(ctx) : null;
   if (sharedGpu) ctx.sharedGpu = sharedGpu;
   if (removeHouseDir) ctx.removeHouseDir = removeHouseDir;
+  // an engine's install checks the drive: a test's has room unless the test says otherwise
+  ctx.freeBytes = async () => Number.POSITIVE_INFINITY;
   ctx.download = async () => {
     throw new Error("no network in tests");
   };

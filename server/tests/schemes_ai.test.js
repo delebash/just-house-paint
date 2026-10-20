@@ -119,3 +119,10 @@ describe("POST /v1/schemes/ai", () => {
   });
 
 });
+
+test("an AI scheme's name and reason are cut between characters, never inside an emoji", () => {
+  const name = `${"a".repeat(59)}🏠 more`;
+  const [s] = parseSchemes(JSON.stringify({ schemes: [{ name, body: "#112233", trim: "#445566", accent: "#778899", why: "x" }] }));
+  expect(s.name).toBe("a".repeat(59)); // the house would have been half a surrogate at 60
+  expect(s.name).not.toMatch(/[\uD800-\uDBFF]$/);
+});

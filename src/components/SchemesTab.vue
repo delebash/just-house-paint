@@ -11,6 +11,7 @@
 import {
   AiTaskStrip,
   EmptyState,
+  isolate,
   post,
   reportError,
   schemaRules,
@@ -98,7 +99,7 @@ async function askAi() {
   busy.value.ai = true;
   try {
     const body = { houseId: house.house.id, brand: brand.value, ...(mood.value.trim() ? { mood: mood.value.trim() } : {}) };
-    const out = await withAiTask({ feature: "schemes.suggest", label: t("schemes.ai.task", { name: house.house.name }), meta: { houseId: house.house.id } }, async (task) => {
+    const out = await withAiTask({ feature: "schemes.suggest", label: t("schemes.ai.task", { name: isolate(house.house.name) }), meta: { houseId: house.house.id } }, async (task) => {
       const r = await post("/v1/schemes/ai", body, { signal: task.signal });
       return { result: r, usage: r.usage, model: r.model };
     });

@@ -88,6 +88,10 @@ describe("createFinder", () => {
       dataDir: scratch(),
       modelDir,
       createSegmenter: seg.factory,
+      // the runtime loads, and is the app's (engine_needs.test.js checks the refusals)
+      loadRuntime: async () => ({}),
+      missingDlls: () => [],
+      modulePath: () => null,
       partsConfig: () => config,
       priority: () => ["garageDoor", "frontDoor", "body"],
       idleMs: () => 60_000,
@@ -148,7 +152,9 @@ describe("the engine routes", () => {
       const engineDir = scratch();
       const modelDir = scratch();
       mkdirSync(path.join(engineDir, tag, PINNED.backend), { recursive: true });
-      writeFileSync(path.join(engineDir, tag, PINNED.backend, ".aiphoto-engine.json"), "{}");
+      // installed: the marker and sd-cli beside it (the engine's files are checked, not the marker alone)
+      writeFileSync(path.join(engineDir, tag, PINNED.backend, ".aiphoto-engine.json"), JSON.stringify({ files: [PINNED.exe] }));
+      writeFileSync(path.join(engineDir, tag, PINNED.backend, PINNED.exe), "exe");
       for (const m of Object.values(SD_FILES)) writeFileSync(path.join(modelDir, m.file), "x");
       return createAiPhoto({
         dataDir: ctx.dataDir,

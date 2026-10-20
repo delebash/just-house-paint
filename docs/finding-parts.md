@@ -33,8 +33,9 @@ A scheme paints them the trim's color; give them their own on the **Colors** tab
 Until it is installed, a house's **Parts** tab offers the part finder: **Install (3.1 GB)** downloads
 it, once. Its progress shows on the card while it downloads; **Cancel** there stops it. If the
 finder's engine can't run on the computer, the card says so instead, and nothing is downloaded. On a
-computer with a graphics card the finder uses the card; finding the parts of one photo takes under a
-minute (a little longer the first time, while the model loads); its progress shows under the
+Windows computer with a graphics card the finder uses the card (on macOS and Linux it runs on the
+processor, which is slower); finding the parts of one photo takes under a minute (a little longer the first
+time, while the model loads); its progress shows under the
 house's name while it works — the part it is looking for and how far along it is ("Trim · 40%") — with
 **Cancel**. While it works, the **Brush**, the **Eraser**, the **Box**, **Undo** and **Redo** are off:
 the parts it finds replace the outlines when it's done, and Undo starts over from them. Open the house again — or reload the window — while it works,
@@ -76,7 +77,7 @@ have every part found again.
 
 ## Settings
 
-**App Settings → General → Part finder**: whether the graphics card helps, after how many idle
+**App Settings → General → Part finder**: whether the graphics card helps (on Windows), after how many idle
 minutes the finder lets go of its memory, how far past the house a part may reach, and how much of
 a piece must be on the house to count — so a car parked in front isn't taken for a door. What the finder looks for — each part's words and
 threshold — is in **App Settings → Advanced**. **App Settings → Storage** shows how much space it

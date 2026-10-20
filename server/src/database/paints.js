@@ -128,8 +128,30 @@ const HUE = "mod(degrees(atan2(lab_b, lab_a)) + 360, 360)";
 // the hue measured from a start angle (a bound parameter), 0–360
 const HUE_FROM = `mod(${HUE} - ? + 360, 360)`;
 
+/** Text as search compares it: its accents off ("Cafè" → "cafe", "Crème" → "creme") — the canonical
+ *  decomposition (String.prototype.normalize("NFD") —
+ *  developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String/normalize) without its
+ *  combining marks (\p{M}) — and lower case. */
+export const folded = (s) =>
+  String(s ?? "")
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .toLowerCase();
+
+// the connections the search's fold() is registered on (better-sqlite3's db.function, deterministic —
+// github.com/WiseLibs/better-sqlite3/blob/master/docs/api.md#functionname-options-function)
+const foldReady = new WeakSet();
+function withFold(h) {
+  if (!foldReady.has(h.raw)) {
+    h.raw.function("fold", { deterministic: true }, (s) => (s === null ? null : folded(s)));
+    foldReady.add(h.raw);
+  }
+  return h;
+}
+
 /**
- * Search: `q` matches the name or the code (case-insensitive), `family` (the brand's own),
+ * Search: `q` matches the name or the code (case- and accent-insensitive: "cafe" finds "Parisian Cafè" —
+ * both sides `folded`), `family` (the brand's own),
  * `colorFamily` (paints/order.js: "neutrals" or a hue family of `colorOrder`), `exterior` (true →
  * paints the brand marks for exterior use or doesn't say), archived colors only when asked.
  * `order`: "name", or "color" — the near-grays light to dark, then each hue band light to dark.
@@ -146,8 +168,9 @@ export function searchPaints(
     p.push(brand);
   }
   if (q) {
-    where.push("(name LIKE ? ESCAPE '\\' OR code LIKE ? ESCAPE '\\')");
-    const like = `%${String(q).replace(/[\\%_]/g, (m) => `\\${m}`)}%`;
+    withFold(h);
+    where.push("(fold(name) LIKE ? ESCAPE '\\' OR fold(code) LIKE ? ESCAPE '\\')");
+    const like = `%${folded(q).replace(/[\\%_]/g, (m) => `\\${m}`)}%`;
     p.push(like, like);
   }
   if (family) {

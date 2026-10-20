@@ -7,7 +7,7 @@
 // when the brand republishes it (PPG's sits on its site host under a generated name; Benjamin
 // Moore's trends file carries the year). Pages and files measured 2026-10-18 (RESEARCH §10).
 // `fetch` is always injected, so nothing here reaches the network unless the app passes it in.
-import { FeedError } from "./feeds.js";
+import { FeedError, fetchWithCause } from "./feeds.js";
 import { importFile } from "./importers.js";
 import { dedupeByCode } from "./normalize.js";
 
@@ -54,7 +54,7 @@ export async function loadPaletteFiles(brand, { fetch, signal, onFile, pages = B
   if (typeof fetch !== "function") throw new TypeError("loadPaletteFiles needs an injected fetch");
   const spec = pages.find((p) => p.brand === brand);
   if (!spec) throw new FeedError(`no palette page for brand "${brand}"`);
-  const res = await fetch(spec.page, { headers: { accept: "text/html" }, signal });
+  const res = await fetchWithCause(fetch, spec.page, { headers: { accept: "text/html" }, signal });
   if (!res.ok) throw new FeedError(`HTTP ${res.status} from ${spec.page}`, { status: res.status, url: spec.page });
   let links = paletteLinks(await res.text(), spec.page, spec.files);
   if (!spec.every) links = links.slice(0, 1);
@@ -62,7 +62,7 @@ export async function loadPaletteFiles(brand, { fetch, signal, onFile, pages = B
   const rows = [];
   for (const [i, url] of links.entries()) {
     signal?.throwIfAborted();
-    const file = await fetch(url, { signal });
+    const file = await fetchWithCause(fetch, url, { signal });
     if (!file.ok) throw new FeedError(`HTTP ${file.status} from ${url}`, { status: file.status, url });
     const name = decodeURIComponent(new URL(url).pathname.split("/").pop() || "palette");
     const out = await importFile(Buffer.from(await file.arrayBuffer()), name, { brand });

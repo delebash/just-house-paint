@@ -6,7 +6,7 @@
 // (NameDialog over DesignIn's rules); a delete asks first, naming what is lost. A design saved before
 // the house had some trim-group parts leaves them unpainted: opening it offers, in a banner, to paint
 // them the design's trim color — one click, never unasked (the store's unpaintedTrim).
-import { confirmDialog, EmptyState, Icon, relativeTime, reportError, schemaRules, UiBanner, UiButton, UiServerImage, UiTag } from "@delebash/ui";
+import { confirmDialog, EmptyState, Icon, isolate, relativeTime, reportError, schemaRules, UiBanner, UiButton, UiServerImage, UiTag } from "@delebash/ui";
 import { DesignIn } from "just-house-paint-server/schemas/houses.js";
 import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
@@ -51,7 +51,7 @@ const offerMessage = computed(() => {
 async function remove(design) {
   const yes = await confirmDialog({
     title: t("designs.delete.title"),
-    message: t("designs.delete.message", { name: design.name }),
+    message: t("designs.delete.message", { name: isolate(design.name) }),
     confirmLabel: t("designs.delete.confirm"),
     danger: true,
   });
@@ -78,7 +78,8 @@ const renderPath = (r) => `/v1/renders/${encodeURIComponent(r.id)}/image`;
 const designName = (id) => house.designs.find((d) => d.id === id)?.name;
 // an AI photo's row is named by what tells it from the others: its design, when, and its ΔE
 function renderLabel(r) {
-  const words = { design: designName(r.designId) || t("designs.renders.onScreen"), when: relativeTime(r.createdAt) };
+  const name = designName(r.designId);
+  const words = { design: name ? isolate(name) : t("designs.renders.onScreen"), when: relativeTime(r.createdAt) };
   return r.deltaE != null ? t("designs.renders.openDeltaE", { ...words, n: r.deltaE.toFixed(1) }) : t("designs.renders.open", words);
 }
 </script>
@@ -87,7 +88,7 @@ function renderLabel(r) {
   <div class="designs">
     <p class="hint">{{ t("designs.hint") }}</p>
     <div class="designs__actions">
-      <UiButton v-if="house.designId" intent="primary" :disabled="!house.dirty" :label="t('designs.save', { name: house.design?.name })" @click="save" />
+      <UiButton v-if="house.designId" intent="primary" :disabled="!house.dirty" :label="t('designs.save', { name: isolate(house.design?.name) })" @click="save" />
       <UiButton :intent="house.designId ? 'secondary' : 'primary'" :disabled="!Object.keys(house.colors).length" :label="t('designs.saveAs')" @click="naming = {}" />
       <UiButton intent="ghost" :disabled="!Object.keys(house.colors).length" :label="t('designs.colorCard')" :title="t('designs.colorCardHint')" @click="emit('color-card')" />
     </div>
@@ -109,10 +110,10 @@ function renderLabel(r) {
         </q-item-section>
         <q-item-section side class="row-side designs__side">
           <UiTag v-if="d.id === house.designId && house.dirty" intent="secondary" :value="t('designs.changed')" />
-          <UiButton intent="ghost" size="icon" :title="t('designs.rename', { name: d.name })" :aria-label="t('designs.rename', { name: d.name })" @click="naming = d">
+          <UiButton intent="ghost" size="icon" :title="t('designs.rename', { name: isolate(d.name) })" :aria-label="t('designs.rename', { name: isolate(d.name) })" @click="naming = d">
             <template #icon><Icon name="Pencil" :size="14" /></template>
           </UiButton>
-          <UiButton intent="ghost" size="icon" :title="t('designs.delete.action', { name: d.name })" :aria-label="t('designs.delete.action', { name: d.name })" @click="remove(d)">
+          <UiButton intent="ghost" size="icon" :title="t('designs.delete.action', { name: isolate(d.name) })" :aria-label="t('designs.delete.action', { name: isolate(d.name) })" @click="remove(d)">
             <template #icon><Icon name="Trash" :size="14" /></template>
           </UiButton>
         </q-item-section>
