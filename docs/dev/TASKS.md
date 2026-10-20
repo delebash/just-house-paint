@@ -464,6 +464,54 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         (.restoring-) copy back. Kept, argued: a window holding a dialog through another window's restore saves into
         the restored data (its save is the user's own new change; a deleted house or design is refused by its own
         404); linkTree's ~0.33 ms a file (a house ~30 files — 100 houses ≈ 1 s, once per backup).
+        An unusual user's computer (an agent's, measured on this machine — LongPathsEnabled on, Defender off, the VC++
+        runtime installed, all NTFS, which hide some of these; being fixed): Change folder always fails on Windows (the
+        picker returns an existing folder; renaming the staged copy onto it is EPERM; the copy freezes the window); a
+        FAT32 data folder crashes the server ~15 s in (proper-lockfile's mtime check, its default onCompromised
+        throws; a network share waking does the same); a chosen data folder missing or unwritable gives the shell's
+        "JavaScript error" dialog or a raw stack, the connection page no reason, no way back to the default; the
+        finder and the AI photo need the Visual C++ 2015–2022 runtime, unshipped and unnamed ("module could not be
+        found", "exit 3221225781"); the macOS AI photo engine needs macOS 26 (minos 26.0) and the Linux one glibc 2.38
+        (Ubuntu 22.04 can't) — found after the 9 GB download, the status says available; a second Windows account's
+        app shuts down the first's server (the shutdown route trusts any local process) and the first's window then
+        uses the second's data; behind TLS inspection every download fails (Node's own CA list —
+        NODE_USE_SYSTEM_CA), brand lists ignore HTTPS_PROXY, no system proxy, "fetch failed" loses its cause; long
+        paths: native code isn't longPathAware (the AI photo past ~190 characters, the finder ~220, the server ~245);
+        antivirus: a quarantined sd-cli reads installed (a marker file), a quarantined DLL "exit 3221225781", a
+        quarantined onnxruntime.dll loads Windows' own 1.17 and the server dies mid-Find, renames after a write or
+        unpack have no retry; Smart App Control blocks the unsigned files with no help entry; no slow warning for an
+        integrated GPU's Vulkan build, no RAM/VRAM check before the 9 GB download, DirectML on adapter 0 (often the
+        integrated GPU), the help and Settings promise the graphics card on macOS and Linux where the finder is CPU;
+        saved file names use the house name raw ("10/20" a folder, ":" invalid); a decimal comma reads 0,05 as 5 and
+        the sliders' boxes ignore it; OneDrive or network data folders unwarned; an HDD adds ~90 s per AI photo (the
+        help says 20 s–1 min); a move to a higher-DPI monitor leaves the photo blurry; touch: no touchcancel (a palm
+        leaves the brush on), two fingers paint; small: search ignores accents, 80-character cuts split emoji,
+        right-to-left names unisolated, the log download's UTC date, a folder ending in "." (Node "data.", SQLite
+        "data"), a Hyper-V reserved port says nothing, no free-space check before the 3.3 / 9.6 GB installs. Right:
+        non-ASCII folders and install paths end to end (native libraries too), a UNC folder (hard links over SMB), 197
+        characters, odd photo names stored safely, the backup's link fallback and ZIP64, local-midnight logs,
+        SmartScreen in the help, model downloads honour HTTPS_PROXY, no firewall prompt.
+        Their fixes — decided (mine, argued; each names its standard): Change folder moves into the picked folder when
+        it is empty (refused in words when not), copies with the async fs.promises.cp, removes its staging copy on
+        failure; the data-folder lock passes proper-lockfile's documented onCompromised (logged, the lock taken again)
+        — never a crash; a data folder that can't be used is said at start (the shell's dialog: Try again / Use the
+        default folder; the headless server one line, not a stack) and its first error reaches the connection page;
+        the health answer names its owner (a hash of the OS user): the shell never stops another user's server;
+        the server runs with NODE_USE_SYSTEM_CA (Node's documented switch), the shell hands it the system proxy
+        (session.resolveProxy → HTTPS_PROXY), brand lists go through the kit's fetch, a failed fetch keeps its
+        cause; a data folder past 180 characters or ending in "." or " " is refused in words; the engines say what
+        they need before downloading — the VC++ runtime (detected; Microsoft's own download named, not shipped: its
+        licence is Visual Studio's), macOS 26, glibc 2.38 — and turn 0xC0000135 / 0xC0000139 / a missing exe into
+        words; the installed check checks the engine's files, the finder's runtime check its ONNX Runtime version;
+        renames after a write or unpack retry a held file (the kit's renameHeld); free space checked before an
+        install; the slow note for every non-CUDA build; RAM checked before the AI photo's download; DirectML takes the
+        adapter with the most memory; the help and Settings say the finder's graphics card is Windows'; saved file
+        names made safe (the kit's safeTitle rules); a decimal comma accepted where it can only be one; the canvas
+        follows the screen's pixel ratio (matchMedia); Pointer Events with pointercancel, one pointer at a time; search
+        folds accents (NFD); cuts by grapheme (Intl.Segmenter); names isolated (<bdi>); the log's local date; a
+        reserved port said; help entries for Smart App Control, OneDrive and network folders, a slow disk, the
+        minimum systems. Kept, argued: HF_ENDPOINT mirrors (no user asked; the downloads honour a proxy); the Linux
+        keyring prompt (unverified, no secrets kept there); Windows on ARM's AI photo on the CPU (said in the help).
 NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
         the installed 0.1.2 updating to it (the silent Restart now).
 
