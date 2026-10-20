@@ -915,6 +915,15 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         failed under load without letting it go, so every later move in the file was refused — they wait 15 s and
         always end it now. The app's server removes only with fs.promises.rm (checked). Dry run started; the
         seventeenth (2026-10-20): the sixteenth's code attacked, and the screens on its build.
+        Dry run 39428267423: Ubuntu and macOS green at every step (the kit's data-folder tests, the packaged app and its
+        server from temp copies, one data folder shared — the start check's fix holds); Windows failed at the kit's
+        data-folder tests: its runner has the symlink right, so it ran "a relative link stays relative", and the
+        sixteenth's refusal of every file link on Windows refused it — wrong: it blocks Change folder for anyone whose
+        model cache holds file links (Developer Mode, administrators). Being fixed: the refusal only when this process
+        can't make a link (probed once in the target), links copied as they are when it can. From JustVoice: its own
+        rmSync recursive emptied a junctioned folder's target the same way ("Clear speech models", its factory reset —
+        fixed there, 70bf2234). From JustWrite: the boot smoke's fixed 15 s failed under a parallel run (kit 9557b67: a
+        timeout option, 60 s by default).
 NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
         the installed 0.1.2 updating to it (the silent Restart now).
 
