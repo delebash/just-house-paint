@@ -21,6 +21,9 @@ export class JobRegistry {
   constructor({ keepMs = 10 * 60_000, onFinish = null } = {}) {
     this.keepMs = keepMs;
     this.jobs = new Map();
+    // a forgotten job's end, kept for this process's life (the last 1000): a window that slept through it is told it
+    // ended — not that the server started again (410 Gone; the thirteenth review)
+    this.ended = new Map();
     this.onFinish = onFinish;
     // work on the graphics card that isn't a job (AI color schemes on the local model): kind → { label, n }
     this.holds = new Map();
@@ -129,10 +132,14 @@ export class JobRegistry {
     return true;
   }
 
-  /** Forget finished jobs older than `keepMs`. */
+  /** Forget finished jobs older than `keepMs` — each one's end kept (ended). */
   sweep(now = Date.now()) {
     for (const [id, j] of this.jobs) {
-      if (j.state !== "running" && j.finishedAt && now - Date.parse(j.finishedAt) > this.keepMs) this.jobs.delete(id);
+      if (j.state !== "running" && j.finishedAt && now - Date.parse(j.finishedAt) > this.keepMs) {
+        this.jobs.delete(id);
+        this.ended.set(id, { id, kind: j.kind, key: j.key, state: j.state, finishedAt: j.finishedAt });
+        if (this.ended.size > 1000) this.ended.delete(this.ended.keys().next().value);
+      }
     }
   }
 

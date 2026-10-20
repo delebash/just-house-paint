@@ -25,6 +25,7 @@ import { dbPath, recreateAppTables } from "./database/index.js";
 import { APP_TABLES } from "./database/schema.js";
 import { seedWorkspace } from "./database/seed.js";
 import { deleteSetting, getSetting, setSetting } from "./database/settings.js";
+import { renewEpoch } from "./changes.js";
 import { housesRoot, removeAllHouseDirs } from "./files.js";
 
 const log = getLogger("just_house_paint.data");
@@ -52,7 +53,8 @@ async function teardown() {
   const state = getState();
   try {
     await state.jobs?.cancelAll();
-    await state.finder?.releaseGpu();
+    // a CPU inference the finder is in the middle of: waited for, at most 30 s (the restore waits on this)
+    await Promise.race([state.finder?.releaseGpu(), new Promise((r) => setTimeout(r, 30_000).unref?.())]);
   } catch {
     // best effort, as below
   }
@@ -66,8 +68,7 @@ async function teardown() {
 /** The data replaced: every window reloads (changes.js — the data's epoch) — only once it has been (a refused restore
  *  changed nothing: no window reloads for it). */
 function replaced() {
-  const state = getState();
-  state.changes?.replaced(state.db);
+  getState().changes?.replaced();
 }
 
 /** Back to the first-run state (POST /v1/data/reset). */
@@ -85,6 +86,8 @@ export async function resetWorkspace() {
   // houses' files go last (removing them yields to other requests — never with the tokens gone)
   if (auth !== undefined) setSetting(db, "auth", auth);
   seedWorkspace(db);
+  // the data's new epoch before anything can ask (no await since the tables were made again)
+  renewEpoch(db);
   await removeAllHouseDirs(getState().dataDir);
   replaced();
   log.info("workspace reset to its first-run state");
@@ -97,6 +100,11 @@ export const router = (dataDir, { gate } = {}) =>
     runReset: resetWorkspace,
     assetDirs: () => ({ houses: housesRoot(dataDir) }),
     ...keepAuth,
+    // and the data's new epoch, in the same transaction as the restored rows (the backup's own row replaced)
+    afterCopy: (h) => {
+      keepAuth.afterCopy(h);
+      renewEpoch(h);
+    },
     // a backup from an older version: its settings get what this one's seed adds and upgrades (as at start)
     afterTables: () => seedWorkspace(getDb()),
     // what would write into the data being replaced stops before it is (the gate is closed by then), and what was

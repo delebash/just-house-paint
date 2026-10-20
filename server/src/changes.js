@@ -17,7 +17,10 @@ import { getSetting, setSetting } from "./database/settings.js";
 // the writes that change what another window shows: the houses, their parts, designs, paints now and AI photos; the
 // brands and their colors; the app's settings; the engines (the house page offers or uses them). Not one: a window's
 // own prefs, a scheme worked out, a log line, a cancel (the job's end is counted), an AI run, the tokens.
-const DATA_WRITES = /^\/v1\/(houses|designs|renders|brands|paints|settings|segment\/install|aiphoto\/install)(\/|$)/;
+export const DATA_WRITES = /^\/v1\/(houses|designs|renders|brands|paints|settings|segment\/install|aiphoto\/install)(\/|$)/;
+
+/** The data's epoch renewed, on `h` — inside a restore's transaction (its afterCopy), right after a reset's seed. */
+export const renewEpoch = (h) => setSetting(h, EPOCH_KEY, randomUUID());
 // a window not heard from in a day is forgotten (each load of a page is a new window), looked over at most hourly
 const FORGET_MS = 24 * 3600_000;
 const EPOCH_KEY = "dataEpoch";
@@ -31,23 +34,20 @@ export class ChangeCounter {
 
   /** `db`: where the data's epoch is kept (a settings row, not one Settings shows). */
   constructor({ db = null } = {}) {
-    this.#db = db;
+    if (db) this.useDatabase(db);
   }
 
-  /** The database the data's epoch is kept in (the app opens it after the counter's middleware is in place). */
+  /** The database the data's epoch is kept in (the app opens it after the counter's middleware is in place): one
+   *  made there now if it has none — a poll only ever reads it. */
   useDatabase(db) {
     this.#db = db;
+    if (typeof getSetting(db, EPOCH_KEY) !== "string") renewEpoch(db);
   }
 
-  /** The data's epoch: renewed by a restore or a reset (a new one made when there is none yet). */
+  /** The data's epoch: renewed by a restore or a reset that succeeded (renewEpoch). */
   get epoch() {
-    if (!this.#db) return this.boot;
-    let e = getSetting(this.#db, EPOCH_KEY);
-    if (typeof e !== "string") {
-      e = randomUUID();
-      setSetting(this.#db, EPOCH_KEY, e);
-    }
-    return e;
+    const e = this.#db ? getSetting(this.#db, EPOCH_KEY) : null;
+    return typeof e === "string" ? e : this.boot;
   }
 
   #window(id) {
@@ -71,12 +71,10 @@ export class ChangeCounter {
     if (clientId) this.#window(clientId).n += 1;
   }
 
-  /** Everything changed (a restore, a reset that succeeded): every window reloads. `db`: the database the data's
-   *  new epoch goes in. */
-  replaced(db = this.#db) {
+  /** Everything changed (a restore, a reset that succeeded — its epoch already renewed): every window asks again. */
+  replaced() {
     this.#total += 1;
-    if (db) setSetting(db, EPOCH_KEY, randomUUID());
-    else this.boot = randomUUID();
+    if (!this.#db) this.boot = randomUUID();
   }
 
   /** The count of changes window `clientId` didn't make in this process. */

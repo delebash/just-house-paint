@@ -428,7 +428,8 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         apps, the docs' words) and an unusual user's computer (odd and long paths, OneDrive, FAT/exFAT, network
         drives, a non-English locale, no NVIDIA card, high DPI, touch, antivirus, a proxy) — two agents, read-only.
         Dry run 39390758821 (app 290c777, kit 54b1e8b) all green on every runner and the AppImage as a user opens it.
-        The twelfth's fixes attacked (an agent's, scratch scripts on Electron's Node; being fixed): Add part changes the
+        The twelfth's fixes attacked (an agent's, scratch scripts on Electron's Node; all FIXED as decided below, two
+        kept with their reasons): Add part changes the
         version (the parts rows) but the store neither sends If-Match nor takes the answer — this window's next stroke
         is refused "changed in another window", and a part added in another window resets this one's Undo; Undo to
         another design's draft then Save sends the wrong patch (setColors moves designId, not designBase) — the user's

@@ -175,7 +175,7 @@ async function load() {
     const masks = await loadMasks(house.parts.map((p) => p.key));
     // the outlines' version read with the house, before them: the page's writes send it from now on
     house.useOutlines(house.house.outlines);
-    history.reset({ colors: house.colors, designId: house.designId, masks });
+    history.reset({ colors: house.colors, designId: house.designId, designBase: house.designBase, masks });
     photographed.value = {};
     refreshPhotographed();
     repaint();
@@ -272,7 +272,7 @@ async function reloadParts() {
     // their version only with all of them: a part still holding the old outline keeps the old version, whose next
     // write is refused and reads them again
     if (!failed.length) house.useOutlines(v);
-    history.reset({ colors: house.colors, designId: house.designId, masks });
+    history.reset({ colors: house.colors, designId: house.designId, designBase: house.designBase, masks });
     photographed.value = {};
     refreshPhotographed();
     repaint();
@@ -314,16 +314,17 @@ function repaint() {
 watch(
   () => house.colors,
   async (colors) => {
-    history.record({ colors, designId: house.designId });
+    history.record({ colors, designId: house.designId, designBase: house.designBase });
     await paints.paints(Object.values(colors));
     repaint();
   },
 );
-// a design saved as a new one, or the open one deleted: the same colors, another (or no) design
+// a design saved as a new one, or the open one deleted: the same colors, another (or no) design; a design saved:
+// its new merge base — the current step says so, as no new step
 watch(
-  () => house.designId,
-  (id) => {
-    if (sameColorsAs(house.colors, history.current().colors)) history.amendDesign(id);
+  () => [house.designId, house.designBase],
+  ([id, base]) => {
+    if (sameColorsAs(house.colors, history.current().colors)) history.amendDesign(id, base);
   },
 );
 watch(texture, (v) => {
@@ -525,6 +526,15 @@ let retryRefresh = null;
 async function refreshFromServer() {
   if (!house.house || loading || !painter) return;
   clearTimeout(retryRefresh);
+  // busy before the first await: no stroke starts on outlines about to be read again
+  outlineBusy.value++;
+  try {
+    await refreshNow();
+  } finally {
+    outlineBusy.value--;
+  }
+}
+async function refreshNow() {
   const id = house.house.id;
   // what the picture is made of: repainted only when it changed (another window's change to another house, its
   // prefs or settings leave this one as it is — a repaint is ~300 ms at 2048 px)
@@ -559,8 +569,18 @@ onBeforeUnmount(() => {
   }
 });
 
+// a stroke while the outlines are being read again isn't drawn: said once each time
+let busySaid = false;
+watch(outlineBusy, (n) => {
+  if (!n) busySaid = false;
+});
 async function onStroke({ points, radius, mode }) {
-  if (finding.value || outlineBusy.value) return;
+  if (finding.value) return;
+  if (outlineBusy.value) {
+    if (!busySaid) pushToast({ title: t("house.busyReading"), kind: "info", duration: 4000 });
+    busySaid = true;
+    return;
+  }
   const key = house.selectedPart;
   const mask = key && painter?.mask(key);
   if (!mask) return;
@@ -604,8 +624,9 @@ async function onBox(box) {
  *  saved to the server (it owns them). An outline the record doesn't have (a part added by hand
  *  after it) goes back to empty. */
 async function applyRecord(rec, prev) {
-  // a design deleted since this record: the colors come back as a draft
-  house.setColors(rec.colors, house.designs.some((d) => d.id === rec.designId) ? rec.designId : null);
+  // a design deleted since this record: the colors come back as a draft; else with the merge base they had
+  const kept = house.designs.some((d) => d.id === rec.designId);
+  house.setColors(rec.colors, kept ? rec.designId : null, kept ? rec.designBase : null);
   const keys = [...new Set([...Object.keys(rec.masks), ...Object.keys(prev.masks)])];
   const changed = keys.filter((k) => rec.masks[k] !== prev.masks[k]);
   if (!changed.length || !painter) return;

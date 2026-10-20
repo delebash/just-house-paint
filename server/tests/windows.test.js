@@ -249,3 +249,16 @@ describe("a server started again", () => {
     expect(s.ctx.changes.windows).toBeGreaterThan(0);
   });
 });
+
+describe("a job that ended while a window slept", () => {
+  test("once forgotten, its end is answered 410 with how it ended — only a job the server never had is 404", async () => {
+    s = makeServer();
+    const job = s.ctx.jobs.start({ kind: "find-parts", key: "h" }, async () => 1);
+    await s.settle(job.id);
+    s.ctx.jobs.sweep(Date.now() + 11 * 60_000); // past the keep: forgotten
+    const r = await s.app.request(`/v1/jobs/${job.id}`);
+    expect(r.status).toBe(410);
+    expect(await r.json()).toMatchObject({ state: "done", kind: "find-parts" });
+    expect((await s.app.request("/v1/jobs/00000000-0000-4000-8000-000000000000")).status).toBe(404);
+  });
+});

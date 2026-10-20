@@ -15,16 +15,20 @@
   server refuses it — see [On another computer, or without a window](getting-started.md#on-another-computer-or-without-a-window).
 - **Several windows at once** — the desktop app, a browser on another computer, a phone: what one
   changes shows in the others within seconds (**App Settings → General → Other windows**), two painting
-  different parts of one design keep both, and a stroke made on outlines another window has just
-  changed is refused and the house shown as it is now — never one window's work saved over the other's.
+  different parts of one design keep both, and a stroke, a Box or a part added on outlines another window
+  has just changed is refused and the house shown as it is now — never one window's work saved over the
+  other's.
 - **Restoring a backup is all or nothing**: if it can't finish — a file in the app's data open in another
-  program, say — it says so and your data is as it was (work that was running, like finding parts, stops).
-  While it runs, other windows' changes are refused; then they show the restored houses. **A backup** can be
-  made while you or another window keep working.
-- **Left open for days**: a window that is minimized or hidden asks the server nothing; the app checks for
+  program, say — it says so and your data is as it was (work that was running, like finding parts, stops);
+  in the rare case it can't even put your data back while it runs, it asks you to restart the app, which puts
+  it back as it starts. While it runs, other windows' changes are refused; then they show the restored houses.
+  **A backup** can be made while you or another window keep working.
+- **Left open for days**: a window that is minimized or hidden asks the server only about work it is waiting
+  for (a part search, an AI photo, a download); the app checks for
   updates every few hours and when the computer wakes; the server started again (the tray's **Restart
   server**) no longer refuses your next stroke; a part search or an AI photo survives a moment without the
-  network; a token removed in **App Settings → Server** brings the window to the token page.
+  network, and one that ended while the computer slept shows its result when it wakes; a token removed in
+  **App Settings → Server** brings the window to the token page.
 - **On a small screen** the window is never taller or wider than the screen.
 - **Easier to read and use**: the house cards in the dark theme, a switch that is off, the Parts tab's
   paint names, the Colors tab's swatches; **Remove the color**; a scheme that can't be made from a

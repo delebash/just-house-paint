@@ -215,9 +215,10 @@ async function putBack(dataDir, name) {
  */
 export async function sweepHouseDirs(dataDir, ids) {
   // a reset's old houses folder moved aside, a restore's replaced or staged copy (the kit's data_api),
-  // still there because Windows held a file. With no houses folder at all, the newest replaced copy — the old
-  // one — or else a staged one is put back first (a restore swaps the folders before its tables; one stopped in
-  // between is put right by the kit's record before this runs, and tidyAtStart leaves everything while it isn't).
+  // still there because Windows held a file. With no houses folder at all, the newest replaced copy — the old one —
+  // is put back; a staged copy (the backup's) never is: a restore swaps the folders before its tables, so the tables
+  // are the old ones (one stopped in between is put right by the kit's record before this runs, and tidyAtStart
+  // leaves everything while it isn't).
   const all = existsSync(dataDir) ? readdirSync(dataDir) : [];
   const newest = (tag) => all.filter((n) => n.startsWith(`houses${tag}`)).sort().at(-1);
   // a put-back an earlier start couldn't finish names its copy here: never removed as a leftover, tried
@@ -226,7 +227,7 @@ export async function sweepHouseDirs(dataDir, ids) {
   const owed = existsSync(pending) ? readFileSync(pending, "utf8").trim() : null;
   // the replaced (old) copy first: a restore swaps the folders before its tables, so one stopped in between left the
   // old tables — and the kit's record puts that right before this runs; this is the fallback
-  const back = existsSync(housesRoot(dataDir)) ? (owed && all.includes(owed) ? owed : null) : (newest(".replaced-") ?? newest(".restoring-"));
+  const back = existsSync(housesRoot(dataDir)) ? (owed && all.includes(owed) ? owed : null) : (newest(".replaced-") ?? null);
   if (back) {
     if (await putBack(dataDir, back)) {
       rmSync(pending, { force: true });

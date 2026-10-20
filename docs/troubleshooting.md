@@ -29,8 +29,10 @@ color schemes are being made on this computer's AI model: the card does one at a
 holds one of their models). Wait for it, or press **Cancel** on its progress.
 
 **"This house was changed in another window".** The app is open somewhere else too (another window, a
-browser, a phone) and its outlines changed there just before your stroke, Box or **Find the parts**. Yours
-wasn't saved; the house now shows them as they are — do it again. "The parts are being found" means
+browser, a phone) and its outlines changed there — a stroke, a Box, a part added, the parts found — just before
+your stroke, Box, part or **Find the parts**. Yours wasn't saved; the house now shows them as they are — do it
+again. "The house is being read again" means this window is fetching another window's change: draw again in a
+moment. "The parts are being found" means
 another window is finding this house's parts: wait for it to finish.
 
 **"A file in the app's data is open in another program"** when restoring a backup. Nothing was changed.
@@ -38,7 +40,10 @@ Close the program using the app's data folder — an image viewer, a backup or s
 again.
 
 **"A backup is being restored" or "The app is being reset".** Another window is restoring or resetting
-the app; your change wasn't saved. When it is done every window shows the new data — then do it again.
+the app; your change wasn't saved. When it is done every window shows the data as it is then — do it again.
+
+**"A change is still being saved"** when restoring or resetting. Another window's change was still being saved
+after a minute, so nothing was replaced. Try again in a moment.
 
 **"The app needs a restart" or "The restore couldn't put your data back".** A restore stopped half-way and a
 file held by another program kept the app from putting your data back while it ran. Close the program, then

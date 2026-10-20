@@ -49,7 +49,7 @@ import { router as settingsRouter } from "./api/settings_api.js";
 import { router as syncRouter } from "./api/sync_api.js";
 import { AppState, setState } from "./app_state.js";
 import { readAuth } from "./auth.js";
-import { ChangeCounter } from "./changes.js";
+import { ChangeCounter, DATA_WRITES } from "./changes.js";
 import { router as dataRouter } from "./data_admin.js";
 import { openAppDatabase } from "./database/index.js";
 import { FEATURE_CATALOG } from "./feature_catalog.js";
@@ -154,7 +154,8 @@ export async function createApp(dataDir = null, { services = {} } = {}) {
   // While a restore or a reset replaces the data, every other window's write is refused (503, Retry-After) and the
   // ones already running finish first — never a save that lands half-way or answers 200 and is lost (the kit's
   // MaintenanceGate; the data router closes it). The shell's shutdown always passes.
-  const gate = new MaintenanceGate({ exempt: [SHUTDOWN_PATH] });
+  // only the app's data writes: a slow AI run or a brand's download never holds a restore up
+  const gate = new MaintenanceGate({ exempt: [SHUTDOWN_PATH], isDataWrite: (c) => DATA_WRITES.test(c.req.path) });
   app.use("*", gate.middleware());
   // Each window's writes that succeed are counted apart (changes.js — its X-Client-Id), so the other windows'
   // pages read again (GET /v1/sync/rev); a restore and a reset are everyone's change (data_admin.js).

@@ -83,9 +83,9 @@ browser, **App Settings → Updates** shows the version and what's new.
 Several windows can use one server at once — the desktop app and a browser, two browsers, a phone. What
 one changes shows in the others by itself within a few seconds (**App Settings → General → Other
 windows** sets how often they look). Two people painting different parts of one design keep both. If
-one changes a house's outlines (a brush stroke, a Box, Find the parts) just as the other does, the later
-one is refused — "This house was changed in another window" — and the house is shown as it is now: draw
-it again.
+one changes a house's outlines (a brush stroke, a Box, a part added, Find the parts) just as the other
+does, the later one is refused — "This house was changed in another window" — and the house is shown as it is
+now: draw it again.
 
 Behind a reverse proxy on the same computer (Caddy, nginx, `tailscale serve`), name its public address
 in `JUST_HOUSE_PAINT_ALLOWED_HOSTS` (`paint.example.com`; several with commas) — the server answers
@@ -100,7 +100,8 @@ password: the keys are in it. The access tokens are not, and a restore keeps thi
 (and its downloaded engines' settings). A backup can be made while you or another window keep working. A
 restore is all or nothing: while it runs, other windows' changes are refused (try them again after), and then
 they show the restored houses; if it can't finish, your data is as it was — work that was running (finding
-parts, an AI photo) stops.
+parts, an AI photo) stops. In the rare case it can't even put your data back while it runs, it asks you to
+restart the app, which puts it back as it starts.
 
 ## Everything stays on your computer
 

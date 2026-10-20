@@ -30,16 +30,24 @@ export function jobGone() {
   return Object.assign(new Error(message), { name: "JobGone", status: 404, problem: { title: message, detail: "" }, errors: [], requestId: null });
 }
 
-/** One look at the job — a network failure or a busy server (a laptop waking, Wi-Fi coming back, the server
- *  starting again) is tried again with a growing wait (0.4 s → 10 s), not the end of the job (the twelfth review);
- *  a job the server no longer has is jobGone. */
+/** The job ended a while ago and the server forgot it (410 — a window asleep through it): `state` says how; the
+ *  caller reads what it left (a find's parts, the AI photo kept). */
+export function jobEnded(state) {
+  return Object.assign(new Error(`ended: ${state}`), { name: "JobEnded", state });
+}
+
+/** One look at the job — a network failure (a laptop waking, Wi-Fi coming back) is tried again with a growing wait
+ *  (0.4 s → 10 s) for as long as it takes, a busy server (5xx) ten times; neither is the end of the job (the twelfth
+ *  review). A job that ended while away is jobEnded; one the server never had (it started again) is jobGone. */
 async function poll(id, signal) {
+  let busy = 0;
   for (let delay = POLL_MS; ; delay = Math.min(delay * 2, 10_000)) {
     try {
       return await get(`/v1/jobs/${encodeURIComponent(id)}`);
     } catch (e) {
+      if (e?.status === 410) throw jobEnded(e.problem?.state || "done");
       if (e?.status === 404) throw jobGone();
-      if (e?.status && e.status < 500) throw e;
+      if (e?.status && (e.status < 500 || ++busy > 10)) throw e;
       await wait(delay, signal);
     }
   }

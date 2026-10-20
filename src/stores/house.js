@@ -9,7 +9,7 @@
 // window changed since is refused (412) and the page reads them again.
 import { del, get, patch as patchJson, post, request } from "@delebash/ui";
 import { defineStore } from "pinia";
-import { runServerJob } from "../services/jobs.js";
+import { jobGone, runServerJob } from "../services/jobs.js";
 
 const hp = (id, rest = "") => `/v1/houses/${encodeURIComponent(id)}${rest}`;
 
@@ -149,7 +149,13 @@ export const useHouseStore = defineStore("house", {
     /** The server's designs in place of these. The open design changed in another window: the draft is rebased —
      *  a three-way merge, each part this window left as the design had it takes the design's new paint, one it
      *  changed keeps this window's. Deleted there: the colors stay, a draft. */
-    takeDesigns(designs) {
+    takeDesigns(incoming) {
+      // an answer read before this window's own save landed (older than the design held) never undoes it on screen
+      const held = new Map(this.designs.map((d) => [d.id, d]));
+      const designs = incoming.map((d) => {
+        const mine = held.get(d.id);
+        return mine && String(mine.updatedAt || "") > String(d.updatedAt || "") ? mine : d;
+      });
       this.designs = designs;
       const open = this.designId && designs.find((d) => d.id === this.designId);
       if (!open) {
@@ -204,9 +210,11 @@ export const useHouseStore = defineStore("house", {
       try {
         await runServerJob({ start, feature: "parts.find", label, meta: { houseId: id }, describe });
       } catch (e) {
-        // the server started again: its parts are read as they are (the run may have saved before), then said
-        if (e?.name !== "JobGone") throw e;
-        gone = e;
+        // it ended while the window was away (done: read quietly, as if followed to the end), or the server started
+        // again: its parts are read as they are (the run may have saved before), then said
+        if (e?.name === "JobEnded" && e.state === "done") gone = null;
+        else if (e?.name === "JobGone" || e?.name === "JobEnded") gone = e.name === "JobGone" ? e : jobGone();
+        else throw e;
       }
       // another house opened meanwhile: this one's parts are on the server, read when it opens again
       if (this.house?.id !== id) return;
@@ -243,8 +251,14 @@ export const useHouseStore = defineStore("house", {
       this.bumpMasks([key]);
       return part;
     },
+    /** A part added by hand: its row changes the outlines' version — made on the version the page holds (If-Match),
+     *  its answer is the next one (as a stroke's is). */
     async addPart(key, paintable = true) {
-      const part = await post(hp(this.house.id, "/parts"), { key, paintable });
+      const id = this.house.id;
+      const headers = this.ifMatch(id);
+      const { outlines, ...part } = await post(hp(id, "/parts"), { key, paintable }, { headers });
+      this.answered(id, headers["If-Match"], outlines);
+      if (this.house?.id !== id) return part;
       this.parts = [...this.parts, part];
       this.selectedPart = key;
       return part;
@@ -257,9 +271,11 @@ export const useHouseStore = defineStore("house", {
       const house = await patchJson(hp(id, "/current-paints"), { [key]: paintId || null });
       if (this.house?.id === id) this.house = { ...house, outlines: this.house.outlines };
     },
-    /** The colors on screen replaced whole, and the design they belong to (an Undo, a Redo). */
-    setColors(colors, designId = this.designId) {
+    /** The colors on screen replaced whole, the design they belong to and the design's colors they started from
+     *  (an Undo, a Redo — a step back to another design's draft takes that draft's merge base along). */
+    setColors(colors, designId = this.designId, designBase = designId === this.designId ? this.designBase : null) {
       this.designId = designId;
+      this.designBase = designId ? designBase : null;
       this.colors = { ...colors };
     },
     /** Reset (a): every paint taken off — the photo as taken. */
@@ -351,9 +367,13 @@ export const useHouseStore = defineStore("house", {
       try {
         render = await runServerJob({ start, feature: "aiphoto.render", label, meta: { houseId: id } });
       } catch (e) {
-        // the server started again: its AI photos as they are (this one may have been kept before)
-        if (e?.name === "JobGone" && this.house?.id === id) this.renders = await get(hp(id, "/renders")).catch(() => this.renders);
-        throw e;
+        if (e?.name !== "JobGone" && e?.name !== "JobEnded") throw e;
+        // the server started again, or the photo ended while the window was away: its AI photos as they are
+        const renders = await get(hp(id, "/renders")).catch(() => null);
+        if (renders && this.house?.id === id) this.renders = renders;
+        // made while away: the newest one is it
+        if (e.name === "JobEnded" && e.state === "done" && renders?.length) return renders[0];
+        throw e.name === "JobEnded" ? jobGone() : e;
       }
       // kept with its house on the server; listed here only while that house is open
       if (this.house?.id === id) this.renders = [render, ...this.renders];

@@ -3,7 +3,7 @@
 // DELETE to stop it; /v1/houses/:id/jobs — a house's running ones.
 
 import { Hono, input } from "@delebash/core/platform";
-import { notFound } from "@delebash/core/platform/errors";
+import { ApiError, notFound } from "@delebash/core/platform/errors";
 import { getState } from "../app_state.js";
 import { getHouse } from "../database/houses.js";
 import { IdParams } from "../schemas/houses.js";
@@ -13,9 +13,14 @@ import { houseNotFound } from "./refusals.js";
 export function router(ctx = getState()) {
   const app = new Hono();
   app.get("/v1/jobs/:id", input({ params: IdParams }), (c) => {
-    const job = ctx.jobs.get(c.req.valid("param").id);
-    if (!job) throw notFound(`no job ${c.req.valid("param").id}`);
-    return c.json(job);
+    const id = c.req.valid("param").id;
+    const job = ctx.jobs.get(id);
+    if (job) return c.json(job);
+    // ended a while ago and forgotten: 410 Gone (RFC 9110 §15.5.11) with how it ended — the window reads what it
+    // left; unknown (the server started again since): 404
+    const ended = ctx.jobs.ended?.get(id);
+    if (ended) throw new ApiError(410, "job-ended", "This work ended a while ago", `it ended as ${ended.state}`, { state: ended.state, kind: ended.kind });
+    throw notFound(`no job ${id}`);
   });
   // A house's running jobs (finding its parts, an AI photo): a page opened or reloaded while one runs
   // attaches to it instead of showing the house as it was before

@@ -7,6 +7,10 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 const calls = [];
 const answers = new Map();
 const answer = (key, value) => answers.set(key, value);
+const withHeaders = (out, o) => {
+  calls.at(-1).push(o?.headers || {});
+  return out;
+};
 const reply = (method, path, body) => {
   calls.push([method, path, body]);
   for (const [k, v] of answers) if (`${method} ${path}`.startsWith(k)) return typeof v === "function" ? v(body) : structuredClone(v);
@@ -14,10 +18,11 @@ const reply = (method, path, body) => {
 };
 vi.mock("@delebash/ui", () => ({
   get: async (p) => reply("GET", p),
-  post: async (p, b) => reply("POST", p, b),
+  // the request's headers ride on its call (an If-Match)
+  post: async (p, b, o) => withHeaders(reply("POST", p, b), o),
   patch: async (p, b) => reply("PATCH", p, b),
   del: async (p) => reply("DELETE", p),
-  request: async (p, o) => reply(o?.method || "GET", p, o?.body),
+  request: async (p, o) => withHeaders(reply(o?.method || "GET", p, o?.body), o),
   postForm: async (p, form) => reply("POST", p, Object.fromEntries(form.entries())),
   // the kit's runner: one task; the helper reports progress on it
   withAiTask: async (opts, fn) => {
@@ -59,6 +64,11 @@ describe("runServerJob", () => {
       throw Object.assign(new Error("404"), { status: 404 });
     });
     await expect(runServerJob({ start: async () => ({ id: "j2", state: "running", progress: 0 }), feature: "x", label: "x", pollMs: 1 })).rejects.toMatchObject({ name: "JobGone" });
+    // ended while the window slept, then forgotten: how it ended, never "the server started again"
+    answer("GET /v1/jobs/j3", () => {
+      throw Object.assign(new Error("410"), { status: 410, problem: { state: "done" } });
+    });
+    await expect(runServerJob({ start: async () => ({ id: "j3", state: "running", progress: 0 }), feature: "x", label: "x", pollMs: 1 })).rejects.toMatchObject({ name: "JobEnded", state: "done" });
   }, 10000);
 
   test("its waits between polls leave no listener behind on the task's signal", async () => {
@@ -305,6 +315,55 @@ describe("the open house", () => {
     answer("GET /v1/houses/h1/designs", [{ id: "d1", name: "Classic", colors: { body: "p:A", trim: "p:B2" } }]);
     await s.refreshDesigns();
     expect(s.colors).toEqual({ body: "p:A", trim: "p:mine" });
+  });
+
+  test("a part added by hand: made on the outlines' version the page holds, its answer the next one for the stroke after", async () => {
+    // the thirteenth review: the new part changed the version, the store kept the old, the next stroke was refused
+    const s = await opened();
+    s.useOutlines('"v1"');
+    answer("POST /v1/houses/h1/parts", { key: "shutters", paintable: true, area: 0, outlines: '"v2"' });
+    const part = await s.addPart("shutters");
+    expect(calls.at(-1)[3]).toEqual({ "If-Match": '"v1"' });
+    expect(part).not.toHaveProperty("outlines");
+    expect(s.outlinesVersion).toBe('"v2"');
+    answer("PUT /v1/houses/h1/parts/shutters/mask", { key: "shutters", paintable: true, area: 3, outlines: '"v3"' });
+    await s.saveMask("shutters", new Blob(["png"]));
+    expect(calls.at(-1)[3]).toMatchObject({ "If-Match": '"v2"' });
+    expect(s.outlinesVersion).toBe('"v3"');
+  });
+
+  test("a step back to another design's draft takes that draft's merge base along: its save sends the right parts", async () => {
+    // the thirteenth review: Undo moved the design, not its base — the save sent the wrong parts, the change was lost
+    const s = await opened();
+    answer("GET /v1/houses/h1/designs", [
+      { id: "d1", name: "One", colors: { body: "P", trim: "T" } },
+      { id: "d2", name: "Two", colors: { body: "Q", trim: "T2" } },
+    ]);
+    await s.refreshDesigns();
+    s.openDesign("d1");
+    s.setColor("body", "Q");
+    const step = { colors: { ...s.colors }, designId: s.designId, designBase: s.designBase }; // the record Undo returns to
+    s.openDesign("d2");
+    s.setColors(step.colors, step.designId, step.designBase); // the page's applyRecord
+    answer("PATCH /v1/designs/d1", (b) => ({ id: "d1", name: "One", colors: { body: "P", trim: "T", ...b.colors } }));
+    await s.saveDesign();
+    expect(calls.at(-1)[2]).toEqual({ colors: { body: "Q" } });
+    expect(s.colors).toEqual({ body: "Q", trim: "T" });
+  });
+
+  test("a designs answer older than the design held (read before this window's save landed) never undoes the save", async () => {
+    const s = await opened();
+    answer("GET /v1/houses/h1/designs", [{ id: "d1", name: "Classic", colors: { body: "p:1" }, updatedAt: "2026-10-20T10:00:00.000Z" }]);
+    await s.refreshDesigns();
+    s.openDesign("d1");
+    s.setColor("body", "p:2");
+    answer("PATCH /v1/designs/d1", { id: "d1", name: "Classic", colors: { body: "p:2" }, updatedAt: "2026-10-20T10:00:05.000Z" });
+    await s.saveDesign();
+    // a refresh answered before the save, read after it
+    answer("GET /v1/houses/h1/designs", [{ id: "d1", name: "Classic", colors: { body: "p:1" }, updatedAt: "2026-10-20T10:00:00.000Z" }]);
+    await s.refreshDesigns();
+    expect(s.colors).toEqual({ body: "p:2" });
+    expect(s.design.colors).toEqual({ body: "p:2" });
   });
 
   test("a scheme paints the roles' parts this house has", async () => {

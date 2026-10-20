@@ -148,11 +148,11 @@ describe("houses", () => {
     await sweepHouseDirs(s.dataDir, ["my-house"]);
     expect(readFileSync(path.join(s.dataDir, "houses", "my-house", "display.jpg"), "utf8")).toBe("mine");
     expect(readdirSync(s.dataDir).filter((n) => n.startsWith("houses."))).toEqual([]);
-    // only a staged copy left: that one, rather than none
+    // only a staged copy left: never put back (it is the backup's, under the old tables) — it goes
     rmSync(housesRoot(s.dataDir), { recursive: true, force: true });
     mkdirSync(file("houses.restoring-1760000000005"), { recursive: true });
     await sweepHouseDirs(s.dataDir, ["my-house"]);
-    expect(existsSync(path.join(s.dataDir, "houses", "my-house"))).toBe(true);
+    expect(existsSync(path.join(s.dataDir, "houses", "my-house"))).toBe(false);
     expect(readdirSync(s.dataDir).filter((n) => n.startsWith("houses."))).toEqual([]);
   });
 

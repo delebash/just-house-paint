@@ -170,6 +170,7 @@
     }
   },
   "house": {
+    "busyReading": "The house is being read again — draw again in a moment.",
     "back": "Your houses",
     "loadFailed": "Couldn't open this house: {reason}",
     "gone": {
