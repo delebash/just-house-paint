@@ -610,6 +610,9 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         packaged server (start-packaged): Ubuntu 22.04 — the AI photo not offered, "needs glibc 2.38, this one has 2.35";
         the AppImage on Ubuntu 24.04 — available (cpu), so the glibc read works there; Windows (no GPU) — available
         (cpu); macOS 26 (macos-latest is macos-26-arm64) — available (metal); the part finder's runtime loads on all.
+        From JustVoice's session: the macOS launcher took the first file in Contents/MacOS (find | head -n 1) — an app
+        with another program there started that one; FIXED in the template and here: the bundle's own executable by
+        its Info.plist (CFBundleExecutable, PlistBuddy) — the next dry run's macOS runner checks it (--headless).
 NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
         the installed 0.1.2 updating to it (the silent Restart now).
 
