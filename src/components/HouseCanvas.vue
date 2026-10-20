@@ -103,10 +103,14 @@ onMounted(() => {
   });
   observer.observe(host.value);
   followPixelRatio();
+  // the capture lost without a lift (a native menu, Alt+Tab): the stroke ends there — Konva fires no event of its
+  // own for it, the DOM does (W3C Pointer Events, "lostpointercapture"; it bubbles to the stage's container)
+  stage.value?.getNode()?.container?.()?.addEventListener("lostpointercapture", onLost);
 });
 onBeforeUnmount(() => {
   observer?.disconnect();
   stopFollowingRatio?.();
+  stage.value?.getNode()?.container?.()?.removeEventListener("lostpointercapture", onLost);
 });
 watch(() => props.photo, fitToStage);
 watch(() => props.sideBySide, fitToStage);
@@ -146,9 +150,13 @@ let active = null;
 const ours = (e) => e.evt.pointerId === active;
 function onDown(e) {
   if (active !== null) return;
+  // the primary button only — a mouse's left, a finger, a pen's tip — or a pen's eraser end (button 5, W3C Pointer
+  // Events' "button" table): a right click, a middle click or a pen's barrel button never paints
+  const eraserEnd = e.evt.pointerType === "pen" && e.evt.button === 5;
+  if (e.evt.button !== 0 && !eraserEnd) return;
   const pt = photoPoint();
   if (props.tool === "brush" || props.tool === "eraser") {
-    if (inside(pt)) drawing.value = { points: [pt.x, pt.y] };
+    if (inside(pt)) drawing.value = { points: [pt.x, pt.y], erase: eraserEnd || props.tool === "eraser" };
   } else if (props.tool === "box") {
     if (inside(pt)) boxing.value = { x0: pt.x, y0: pt.y, x1: pt.x, y1: pt.y };
   } else {
@@ -164,7 +172,7 @@ function onMove(e) {
   if (active !== null && !ours(e)) return;
   const pt = photoPoint();
   pointer.value = pt;
-  if (drawing.value && pt) drawing.value = { points: [...drawing.value.points, pt.x, pt.y] };
+  if (drawing.value && pt) drawing.value = { ...drawing.value, points: [...drawing.value.points, pt.x, pt.y] };
   else if (boxing.value && pt) boxing.value = { ...boxing.value, x1: Math.min(imgW.value, Math.max(0, pt.x)), y1: Math.min(imgH.value, Math.max(0, pt.y)) };
   else if (panFrom) {
     const dx = e.evt.clientX - panFrom.x;
@@ -187,13 +195,17 @@ function onCancel(e) {
   boxing.value = null;
   panFrom = null;
 }
+/** The pointer's capture lost while it drew (no pointerup will come): what it drew so far is its stroke. */
+function onLost(evt) {
+  if (active !== null && evt.pointerId === active) finish();
+}
 function finish() {
   active = null;
   if (drawing.value) {
     const p = drawing.value.points;
     const points = [];
     for (let i = 0; i < p.length; i += 2) points.push({ x: p[i], y: p[i + 1] });
-    emit("stroke", { points, radius: props.brushSize / 2, mode: props.tool === "eraser" ? "erase" : "paint" });
+    emit("stroke", { points, radius: props.brushSize / 2, mode: drawing.value.erase ? "erase" : "paint" });
     drawing.value = null;
   } else if (boxing.value) {
     const b = boxing.value;

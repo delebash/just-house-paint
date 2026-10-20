@@ -78,9 +78,13 @@ the AI photo about 10 GB. Make room, or move the data folder to a bigger drive (
 Change folder…**).
 
 **"The data folder … can't be used".** The folder the app keeps its data in isn't there (a USB drive unplugged, a
-network folder offline) or can't be written. Plug it back in and press **Try again**, or **Use the default
-folder**. A folder whose path is over 180 characters, or whose name ends in a dot or a space, can't be used
-either.
+network folder offline, the folder renamed) or can't be written. Plug it back in and press **Try again**. **Use the
+default folder** opens the app on its default folder this time only — your data stays where it is, and the app
+asks again at its next start. When choosing a folder (**Change folder…**), one whose path would be over 180
+characters, or whose name ends in a dot or a space, is refused.
+
+**"The data folder is already being moved".** A **Change folder…** is still copying: wait for it to finish (the
+app restarts on the new folder). Until then the app's server stays stopped.
 
 **"Not a photo" for an iPhone's HEIC photo.** The app reads JPEG, PNG and WebP. Send or
 save the photo as JPEG, or set the iPhone to take JPEGs (**Settings → Camera → Formats → Most

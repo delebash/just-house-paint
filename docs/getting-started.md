@@ -32,9 +32,9 @@ The installers aren't signed with a publisher's certificate yet, so the first ti
 - **macOS** on Apple silicon (M1 and later). The AI photo needs macOS 26 or later.
 - **Linux**: Ubuntu 22.04 or newer (or a system as recent). The AI photo needs Ubuntu 24.04 or newer
   (glibc 2.38).
-- For the AI photo: a graphics card with 8 GB of its own memory and 12 GB of memory in the computer (16 GB on a
-  Mac, or without such a card) — see [The AI photo](ai-photo.md). The app checks what it can before the 9 GB
-  download and says what's missing.
+- For the AI photo: 12 GB of memory with a graphics card of its own, 16 GB on a Mac or with the processor's own
+  graphics; on an 8 GB NVIDIA card it takes about 20 seconds (see [The AI photo](ai-photo.md)). Before the 9 GB
+  download the app says what the computer lacks — the system, the memory, the room on the drive.
 - Room on the data folder's drive: about 3.6 GB free for the part finder, 10 GB for the AI photo (the app checks
   before it downloads).
 
@@ -126,12 +126,14 @@ restart the app, which puts it back as it starts.
 Your photos, designs and colors stay in the app's data folder (App Settings → Storage). Nothing is
 uploaded unless you choose an online AI provider in AI Settings.
 
-**Where to keep the data folder.** **Change folder…** moves it to an empty folder you pick. Best on a drive
+**Where to keep the data folder.** **Change folder…** moves it into a new folder named **Just House Paint**
+inside the folder you pick (what else is in that folder is never touched), after checking the drive has room;
+the app restarts on it, and the old folder's copy is removed at the next start. Best on a drive
 inside the computer: a folder synced by OneDrive, Dropbox or another sync service can hold the app's files
 while they are written, and OneDrive's "files on demand" leaves the 12 GB of models online-only, so the
 engines fail without the network; a network drive or a USB stick works only while it is there. A FAT32 USB
-stick can't hold the AI photo's model (over 4 GB). Keep the folder's path short (under 180 characters) — some
-parts of the engines can't open longer ones.
+stick can't hold the AI photo's model (over 4 GB). Pick a folder with a short path (the app's folder in it must
+stay under 180 characters) — some parts of the engines can't open longer ones.
 
 > Colors on a screen are never exactly the paint. Check a real paint sample on your house before
 > you buy.

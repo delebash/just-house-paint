@@ -121,6 +121,19 @@ describe("the AI photo says what this computer lacks, before the download", () =
     expect((await s.app.request("/v1/segment/install", { method: "POST" })).status).toBe(202);
   });
 
+  test("a resumed install counts what its unfinished downloads already hold — never refused for room it has", async () => {
+    // the kit preallocates each `<file>.part` at its full size and keeps it for resume (the fourteenth review: 507)
+    s = makeServer({ aiphoto: aiphoto() });
+    const { finderModelDir } = await import("../src/services.js");
+    s.ctx.finder = { ...s.ctx.finder, downloadBytes: () => 3e6 };
+    const margin = 256 * 1024 * 1024;
+    s.ctx.freeBytes = async () => margin + 1.5e6;
+    expect((await s.app.request("/v1/segment/install", { method: "POST" })).status).toBe(507);
+    mkdirSync(finderModelDir(s.dataDir), { recursive: true });
+    writeFileSync(path.join(finderModelDir(s.dataDir), "sam3_image_encoder.onnx.part"), Buffer.alloc(2e6));
+    expect((await s.app.request("/v1/segment/install", { method: "POST" })).status).toBe(202);
+  });
+
   test("the finder's runtime not loading refuses its install too", async () => {
     s = makeServer({ aiphoto: aiphoto() });
     const real = s.ctx.finder.runtimeAnswer;

@@ -588,6 +588,21 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         stroke (W3C Pointer Events); the guard checks the launchers' NODE_USE_SYSTEM_CA and the connection page's new
         reasons (required where the release is, advisory for the others); the docs as the code says; the release's
         headless check prints the AI photo's status on each runner (glibc read inside the AppImage's server).
+        Done: the shell's part by an agent (37 tests fail on the old code; kit core 1326; JustWrite 173, docgen 165,
+        template 54, the app 431) — one move at a time, the app's own folder inside the one picked (room checked,
+        times kept, only its own entries cleaned), a lock taken over by another server ends this one, "Use the
+        default folder" for this start only, the path rule for a folder being chosen, a named folder never made, the
+        window kept off its port on any listen failure, NO_PROXY loopback for any proxy, the owner the OS account; its
+        two calls accepted (the old folder's own Chromium folder and lock cleaned too; the data-dir variable held to
+        the path rule in the desktop app too — it is chosen at each start). Mine: a resumed install counts its
+        partial downloads; number fields strict (a group separator only where groups go); the canvas draws with the
+        primary button only, a pen's eraser end erases, a lost capture ends the stroke; the guard checks the
+        launchers' NODE_USE_SYSTEM_CA and the connection page's reasons; the e2e drivers make the data folder they
+        name; the Storage panel's words; the docs. JustVoice's csrf test (403 since the 2026-10-19 Host guard — its
+        test host "testserver" not allowed) sent to its session. Caught by the e2e run before committing: every app's build failed — the shell's Change
+        folder borrowed dirSize from disk_api.js, whose lazy imports of the AI runner split the Electron main into
+        chunks Rolldown refuses with `output.file`; dirSize is its own module (platform/dir_size.js, disk_api
+        re-exports it) and a kit test walks the shell's imports for any lazy one (fails on the faulty import).
 NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
         the installed 0.1.2 updating to it (the silent Restart now).
 

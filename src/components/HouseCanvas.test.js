@@ -22,6 +22,8 @@ let pointerAt = { x: 50, y: 40 };
 // the stand-in stage's one layer (its canvas's pixel ratio, its redraws) and the pointers it captured
 let layer;
 let captured;
+// the stand-in stage's container (where the DOM's lostpointercapture arrives)
+let container;
 const newLayer = () => {
   const canvas = { ratio: 1, getPixelRatio: () => canvas.ratio, setPixelRatio: (r) => (canvas.ratio = r) };
   return { canvas, draws: 0, getCanvas: () => canvas, batchDraw: () => layer.draws++ };
@@ -31,7 +33,7 @@ const KONVA = {
   "v-stage": {
     name: "v-stage",
     props: ["config"],
-    methods: { getNode: () => ({ getPointerPosition: () => pointerAt, batchDraw() {}, getLayers: () => [layer], setPointerCapture: (id) => captured.push(id) }) },
+    methods: { getNode: () => ({ getPointerPosition: () => pointerAt, batchDraw() {}, getLayers: () => [layer], setPointerCapture: (id) => captured.push(id), container: () => container }) },
     render() { return h("div", { class: "stage-stub" }, this.$slots.default?.()); },
   },
   "v-layer": shape("v-layer"),
@@ -67,6 +69,7 @@ beforeEach(() => {
   pointerAt = { x: 50, y: 40 };
   layer = newLayer();
   captured = [];
+  container = document.createElement("div");
   queries = [];
   vi.stubGlobal("ResizeObserver", class { observe() {} unobserve() {} disconnect() {} });
   vi.stubGlobal("matchMedia", (media) => {
@@ -81,7 +84,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 // a Konva pointer event on the stage: pointer 1 (a mouse) unless told
-const fire = (type, evt = {}) => stage().vm.$emit(type, { evt: { pointerId: 1, pointerType: "mouse", clientX: 0, clientY: 0, ...evt } });
+const fire = (type, evt = {}) => stage().vm.$emit(type, { evt: { pointerId: 1, pointerType: "mouse", button: 0, clientX: 0, clientY: 0, ...evt } });
 
 test("the photo is a Tab stop with a name, and its hint says the keys and that drawing needs a pointer", () => {
   const host = mountCanvas().find(".house-canvas").element;
@@ -251,4 +254,28 @@ test("the canvas follows the screen's pixel ratio: a window moved to a sharper s
     if (ratio) Object.defineProperty(window, "devicePixelRatio", ratio);
     else delete window.devicePixelRatio;
   }
+});
+
+test("only the primary button draws; a pen's eraser end erases; a capture lost mid-stroke ends it there", () => {
+  // the fourteenth review: a right click left a dot, a lost capture (a native menu, Alt+Tab) kept the stroke live
+  mountCanvas({ tool: "brush", brushSize: 4 });
+  fire("pointerdown", { button: 2 }); // right
+  fire("pointerup", { button: 2 });
+  fire("pointerdown", { button: 1 }); // middle
+  fire("pointerup", { button: 1 });
+  expect(wrapper.emitted("stroke")).toBeUndefined();
+  // the pen's eraser end, the brush chosen: it erases
+  fire("pointerdown", { pointerId: 4, pointerType: "pen", button: 5 });
+  fire("pointerup", { pointerId: 4, pointerType: "pen", button: 5 });
+  expect(wrapper.emitted("stroke").at(-1)[0].mode).toBe("erase");
+  // the tip paints; its capture lost before any lift: what it drew is the stroke, and no later move adds to it
+  fire("pointerdown", { pointerId: 6, pointerType: "pen" });
+  pointerAt = { x: 60, y: 45 };
+  fire("pointermove", { pointerId: 6, pointerType: "pen" });
+  container.dispatchEvent(Object.assign(new Event("lostpointercapture", { bubbles: true }), { pointerId: 6 }));
+  const strokes = wrapper.emitted("stroke").length;
+  expect(wrapper.emitted("stroke").at(-1)[0].mode).toBe("paint");
+  fire("pointermove", { pointerId: 6, pointerType: "pen" });
+  fire("pointerup", { pointerId: 6, pointerType: "pen" });
+  expect(wrapper.emitted("stroke").length).toBe(strokes);
 });

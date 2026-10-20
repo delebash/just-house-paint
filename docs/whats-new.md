@@ -33,9 +33,10 @@
 - **On more computers**: the part finder and the AI photo say what a computer lacks before anything downloads —
   Microsoft's Visual C++ runtime (with its link), macOS 26 or a newer Linux for the AI photo, room on the drive,
   enough memory — and an engine an antivirus damaged says so instead of failing; **Change folder…** works on
-  Windows (it moves the data into the empty folder you pick, without freezing the window); a data folder on a USB
-  stick or a network drive that isn't there is said at start, with **Use the default folder**; behind a company
-  network's proxy or certificate, downloads and brand lists work; two people signed in to one computer no longer
+  Windows (it moves the data into a new folder for the app inside the one you pick, one move at a time, without
+  freezing the window); a data folder on a USB stick or a network drive that isn't there is said at start, with
+  **Use the default folder** for that time only; behind most company
+  networks' proxies and certificates, downloads and brand lists work; two people signed in to one computer no longer
   stop each other's app; the photo stays sharp moved to another screen; a pen or a finger draws one stroke at a
   time; a comma works as the decimal point; paint search ignores accents; a saved picture's file name never holds
   characters Windows refuses.
