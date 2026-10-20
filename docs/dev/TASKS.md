@@ -659,6 +659,38 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         and wants NODE_USE_SYSTEM_CA=1; EFBIG said in words (a FAT32 drive's 4 GB limit); the docs and comments as the
         code is. Kept, argued: the owner from USERDOMAIN and the user name (a service runs as another account anyway;
         the SID needs a process per check).
+        The screens and keyboard again (an agent's, the built app on fake data in a temp folder, 960×700, 1366×768,
+        1920×1032, light and dark, 223 screenshots with a probe each, keyboard traces, the accessibility tree; scripts
+        and shots in the scratchpad's screens2): blocks — no field built on UiField has a name (it declares `for` as a
+        prop and reads `$attrs.for`, never there: Settings' 13 boxes, Rename, the hex box, What you'd like); the help
+        drawer's text can't be scrolled from the keyboard (focus on QDialog's wrapper, the body not focusable). Hard to
+        use — dark theme: white on every solid button 2.82:1 (`--on-accent` white in both), danger banners 2.27:1
+        (`--danger-ink` defined nowhere — the kit's fallback #b91c1c); the selected segment can't be seen (#fff on
+        #fbfaf7, 1.04:1 — "The new color | On it now" records the wrong paint); the title bar's icon buttons (AI
+        status, Back, Forward) and the AI page's radiogroup, images, switch and button have no name; toasts and the
+        task strip likely unannounced (role=status inserted filled, no live region from the start, the bar no
+        progressbar); no keyboard way to draw a Box and Box and pan need a drag (WCAG 2.1.1, 2.5.7); the side panel
+        keeps the last tab's scroll. Looks wrong — a long path overflows the install card; field edges 1.25:1 / 1.44:1;
+        the info banner's text 4.3:1; the slow and low-memory notes drawn as errors; card hints ~104–135ch wide; the
+        split slider has no visible label; the hex box says Required when Tabbed through, the picker then hidden; the
+        tabs' focus ring cut top and bottom; the Paint colors ⌄ buttons out of line; Your houses' cards on the header
+        rule, the "?" alone on a row at 960; the VC++ link browser-blue; Reset shows the template's words ("demo
+        seed", "projects"). Small — FSI/PDI marks in every name (braille shows them); names read twice (aria-label
+        and an equal title; "No color" per row); the Settings tablist unnamed, no tabpanels, the AI page's tabs links;
+        radio groups don't check on arrows; menus keep Tab inside (the kit's choice); "Load the X colors
+        automatically" vs the visible "Load automatically" (2.5.3); "On this wall" an aria-label on a plain div; the
+        AI page's scroller under its hardware card at 960 and a 4.49:1 sublabel; Logs and Updates a scroller in the
+        panel's scroller, Advanced's JSON boxes 171 px for 3542 px; Change folder's question doesn't name the new
+        folder; the AI photo dialog 1100 px for an 880 px card. Help vs screen — ai-features "Reset" (Reset to
+        default), troubleshooting "Older than…", painting's and color-schemes' lowercase words, troubleshooting names
+        only one connection reason (another person signed in, Windows reserved the port, the server stopped as it
+        started), Reset Just House Paint and Load the colors in no page; "＋ Add model", the AI tasks' Run it again
+        with no name, "Export backup…", "Working size (pixels)", "Show more (n left)", "Save “…”", "Pick a color";
+        the install size in GiB vs "Not enough room" in GB; macOS's "macOS ." with no version. Right: no page scroll
+        below 1024, tabs' keys, menus' keys, dialogs' focus, the paint grid's one stop, Undo/Redo keys, the canvas
+        region and its zoom, toggles, rings, the no-color swatch's name, EmptyState centred, the connection page's
+        five reasons, the install cards' states, right-to-left names shown in their direction, light contrast but
+        two.
 NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
         the installed 0.1.2 updating to it (the silent Restart now).
 
