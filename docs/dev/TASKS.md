@@ -1161,6 +1161,25 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         them, binary, quoted from it), the contradictions settled, and a help page for each Settings section and AI
         Settings' controls, the tray's items, the command line, and the messages a user must act on (troubleshooting).
         Smart App Control and macOS 15's Open Anyway checked on the vendors' pages before they are written.
+        The eighteenth's screens (an agent's, the build of c4c121b / 2f60ea1, 354 shots, the tree on 23 surfaces; the
+        scratchpad's screens5): no block (one renderer crash once, in a Tab trace with the tree read — not again in a
+        targeted repro or a full rerun). Hard to use — at 960 a picked color's heading comes to the panel's top but its
+        matches (255–503 px) stay below the 242 px panel; Find the closest paints says nothing to a screen reader, and
+        "No paint of this brand near …" isn't a status. Looks wrong — the success, info and warning toasts keep their
+        fixed light colors in the dark theme (4.26, 4.35, 3.08:1 — the info one carries Box's reason now); the Logs'
+        DEBUG lines 3.10 / 4.05:1 (opacity 0.6). Small — the AI tasks panel's × and Cancel all touch their words; with
+        many tasks it has two scrollers; Appearance's row description uncapped (82 characters); Paint colors' lede and
+        one banner at 76; the AI photo dialog ~100 px of empty space; Enter in General's box leaves the focus on Save
+        (QBtn takes it), not the box the comment says. Right — every seventeenth fix (the pick's scroll and words, the
+        no-match line, Save's aria-disabled, banners' icon and action, units, hints ≤ 70, off segments' tooltips and
+        toasts, the dialogs' labels and Reset, the toast's close 24 px, "Write it like", "Choose a color", the chips,
+        the AI tasks panel's focus and still page), contrast and edges, no unnamed control, no page scroll, the help.
+        Their fixes — decided: the pick brings the matches into view too (block nearest, after the heading); Find and
+        the no-match line said through the announcer; the success, info and warning toasts on the host's ink and tint
+        pairs (as the error one); the Logs' dim lines in --muted, not opacity; the panel's × and Cancel all through
+        UiButton's icon slot; the AI tasks panel one scroller (its aside); Appearance's descriptions at 30em; the lede
+        32em, banner text 33em; the AI photo dialog's install card at 34em; Enter in General's box gives the focus back
+        to the box after the save.
 NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
         the installed 0.1.2 updating to it (the silent Restart now).
 
