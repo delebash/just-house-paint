@@ -89,7 +89,8 @@ function fakeFetch(input, init = {}) {
       }),
     );
   }
-  if (p === "/v1/segment/status") return Promise.resolve(json({ installed: server.finderInstalled, downloadBytes: 3_364_167_120 }));
+  if (p === "/v1/segment/status")
+    return Promise.resolve(json({ installed: server.finderInstalled, downloadBytes: 3_364_167_120, ...(server.finderInstalled ? {} : { runtime: server.runtime || { ok: true } }) }));
   if (p === "/v1/aiphoto/status") return Promise.resolve(json({ engineInstalled: false, modelsInstalled: false, backend: "cuda12", slow: false, downloadBytes: 9e9 }));
   if (p === "/v1/segment/install") return Promise.resolve(json({ id: "j-install", state: "running", progress: 0 }, 202));
   if (p === "/v1/houses/h1/find-parts") {
@@ -184,6 +185,16 @@ test("without the part finder: its install is offered, runs as a task, and then 
   expect(text()).toContain("Body");
   expect(text()).toContain("Trim");
 }, 20000);
+
+test("when the part finder's engine can't load here, the card says so and downloads nothing", async () => {
+  server.finderInstalled = false;
+  server.runtime = { ok: false, error: "libonnxruntime.so.1: cannot open shared object file" };
+  await mountPage();
+  expect(text()).toContain("The part finder can't run on this computer: its engine didn't load (libonnxruntime.so.1");
+  expect(byText("button", "Install (").disabled || byText("button", "Install (").classList.contains("disabled")).toBe(true);
+  await click(byText("button", "Install ("));
+  expect(server.calls).not.toContain("POST /v1/segment/install");
+});
 
 test("a color from the Colors tab paints the selected part, and the Parts tab shows it with its ΔE", async () => {
   server.parts = PARTS;

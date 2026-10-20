@@ -941,3 +941,26 @@ at the app's display size, through the app's own code; scripts and overlays in s
   house2's garage, the user's garage); **every other instance was a neighbor's house**, the touching ones included
   (2–11% of the photo on b02, c02, d01, d02, d03, d05, d09, d11, e01, e02, e03, house2). So "touching the main one"
   can't tell a wing from a neighbor — it took the neighbors in — and the house rule is the main instance alone.
+- **The obstruction test set, done** (2026-10-19, all 26 photos again with the main-house rule; overlays in session
+  e638ccef's scratchpad `obst/shots/`): no neighbor's part on any photo. What stands in front — cars (d03, d11, c02),
+  trees and hedges (c01, c10, d04, d07, d12), people (d01), poles, fences (d06, d09, e01) — stays out of the parts
+  on 25 of 26: SAM 3's own "house" outline leaves them out. The one leak: c06's walls run into the lower edge of an
+  evergreen beside the house (~1.5% of the photo). **Cutting obstacles out with SAM 3's "tree"/"bush" (0.5) — not
+  done:** on the nine photos checked (c06, c01, d04, d07, d12, e01, the user's, house1, house2) no tree or bush mask
+  touches the paint except on c06, and there it is the BARE tree in front of the entrance, outlined as a blob over
+  the columns and doors the house shows through (5.45% of the photo) — cutting it would leave an unpainted patch —
+  while the evergreen's leaking edge isn't in any tree mask. The leak stays an Eraser fix. Smaller misses seen:
+  c06's glass double doors outlined as window trim (no "door" found), d02 a hanging ornament as a Decoration, d04 a
+  wooden gate beside the entrance in the walls.
+- **The day's changes in the real app** (2026-10-19, the desktop app's UnPackaged build against the server on the
+  checkout's data folder; scratchpad `weak/real/`): the server's start upgraded this install's settings (Decorations
+  in the parts list, the trim's door-casing words, Decorations in the schemes' trim role, the 1 GB note); a copy of the
+  user's house found 11 parts in 50–53 s with Decorations 5,982 px (both medallions; "Decorations 1%" on the Parts
+  tab); house3's body painted SW 7008 Alabaster reads as freshly painted weatherboard (the lap lines kept), no console
+  error. Found on the way: **deleting the copy right after its parts were found failed — 500, EPERM — halfway** (the
+  row gone, two masks and the photos left in the folder; the same folder removed fine seconds later; sharp doesn't
+  hold a file it read by path, tested): Windows holds a just-written file for a moment. The removal now retries
+  (Node's rmSync maxRetries), the delete answers 204 whatever the folder does (a later retry), and the server removes
+  leftover house folders at start. Also seen: house3's dark fence panel lies inside its "house" outline and is painted
+  with the walls; SAM 3's "fence" (0.5) doesn't outline it there and, on d06, outlines the iron fence over the front
+  door — cutting fences out would cut the door, so not done (an Eraser fix, as the evergreen's edge).

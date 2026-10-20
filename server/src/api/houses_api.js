@@ -90,7 +90,11 @@ export function router(ctx = getState()) {
       if (job) ctx.jobs.cancel(job.id);
     }
     deleteHouse(ctx.db, id);
-    removeHouseDir(ctx.dataDir, id);
+    // the house is gone; a folder Windows still holds goes a little later (or at the next start)
+    if (!removeHouseDir(ctx.dataDir, id)) {
+      const later = setTimeout(() => removeHouseDir(ctx.dataDir, id), 30_000);
+      later.unref?.();
+    }
     return c.body(null, 204);
   });
 

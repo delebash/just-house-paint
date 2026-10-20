@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 // /v1/houses, /v1/designs, /v1/jobs and the parts routes (app-structure §18: each route's happy
 // path, one 422 from its schema, one refusal).
-import { existsSync } from "node:fs";
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import sharp from "sharp";
 import { afterEach, describe, expect, test } from "vitest";
 import { nameFromFile } from "../src/api/houses_api.js";
-import { maskPath } from "../src/files.js";
+import { maskPath, removeHouseDir, sweepHouseDirs } from "../src/files.js";
 import { fakeFinder, jpeg, makeServer } from "./domain_helpers.js";
 
 let s;
@@ -60,6 +60,20 @@ describe("houses", () => {
     expect((await s.app.request(`/v1/houses/${house.id}`, { method: "DELETE" })).status).toBe(204);
     expect(existsSync(path.join(s.dataDir, "houses", house.id))).toBe(false);
     expect((await s.app.request(`/v1/houses/${house.id}`)).status).toBe(404);
+  });
+
+  test("a folder Windows still holds doesn't fail the delete; a house's leftover folder goes at start", async () => {
+    s = makeServer();
+    const house = await (await s.upload(await jpeg(100, 80))).json();
+    const kept = await (await s.upload(await jpeg(100, 80))).json();
+    // a folder whose house is gone (a delete Windows held, a photo added as the server stopped)
+    mkdirSync(path.join(s.dataDir, "houses", "gone-house", "masks"), { recursive: true });
+    writeFileSync(path.join(s.dataDir, "houses", "gone-house", "masks", "body.png"), "x");
+    expect(sweepHouseDirs(s.dataDir, [house.id, kept.id])).toBe(1);
+    expect(existsSync(path.join(s.dataDir, "houses", "gone-house"))).toBe(false);
+    expect(existsSync(path.join(s.dataDir, "houses", house.id))).toBe(true);
+    expect(removeHouseDir(s.dataDir, house.id)).toBe(true);
+    expect(sweepHouseDirs(path.join(s.dataDir, "nowhere"), [])).toBe(0); // no houses folder yet
   });
 
   test("the paint each part has now is kept on the house: set, replaced whole, gone with the house", async () => {

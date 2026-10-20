@@ -243,7 +243,11 @@ MY REC (shown 2026-10-18): ~25–30 freely licensed house photos from Wikimedia 
         through, since each prompt costs ~2 s a photo and a wrong match removes paint. Downloading the
         photos needs the user's OK when it starts.
 DECIDED: the user, verbatim: "i agree with your testing we will do it later save waht you need to".
-STATE:  later — not started.
+DONE 2026-10-19 (under "fix we spots and anything else, do it all"): 26 Commons photos the 10/17 probes had already
+        fetched (no download), the recipe on each, overlays reviewed (RESEARCH §13). Found and fixed: neighbors' windows,
+        doors and soffits painted (the house rule took every "house" instance) — the house is now the main instance
+        alone. Obstacles in front stay out on 25 of 26; cutting "tree"/"bush" out was measured and NOT done (it would
+        cut the house behind a bare tree; the one leak, an evergreen's edge, isn't in its mask) — an Eraser fix.
 
 ## The repo and the recs — the go [2026-10-18]
 GO:     the user, verbatim: "yes create repo your rec on all go".
