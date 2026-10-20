@@ -152,7 +152,9 @@ It is all or nothing:
 
 A restore keeps this computer's access tokens and where its AI engine and models are (the engine's
 build and the models' folder). Every other setting comes from the backup — the part finder's and the AI
-photo's too. A backup from an older version gets this version's new settings at once.
+photo's too. A backup from an older version gets this version's new settings at once; a setting in it that doesn't fit this
+version is set back to its default, and the app says which. A backup this app can't read — not one of its
+backups, cut off, or holding a house it can't keep — is refused, and nothing is changed.
 
 ## Reset Just House Paint
 
@@ -185,22 +187,22 @@ downloaded models, and the logs.
 and never the folder the app uses. Its question names the apps that share this app's AI models (if
 they still use the old copy's, they download their models again). If the app ran on the old copy after
 the move, Storage says "The old copy was used after the move — last changed …": removing it removes
-that work too, so move what you need out of it first. An old copy the app can't find where the move
-left it — its drive unplugged, a network folder offline, the folder renamed — is listed as **Not
-found**, with **Forget…**: the app never removes it or drops it by itself, and **Forget…** asks first ("Forget
-the old copy?" → **Forget it**), then only takes it off the list (nothing on any drive is touched). A server of the app still running on the old copy has
+that work too, so move what you need out of it first. An old copy the app can't find is **Not found**, with
+why — its folder isn't there (its drive unplugged, the folder renamed or deleted), or the folder there now isn't
+that copy (another drive in its place, a folder copied by hand); one on a drive that didn't answer (a network
+folder offline, a drive waking) reads **Didn't answer just now**, with **Try again**. Such a copy is never removed
+and the app never drops it by itself: it stays listed until it is found again or you press **Forget…**, which asks
+first ("Forget the old copy?" → **Forget it**), then only takes it off the list (nothing on any drive is
+touched). A server of the app still running on the old copy has
 to be stopped before it can go.
 
 **When the app isn't on your data folder** — when the data's folder couldn't be used at the start
-(**Use the default folder** in the start's question), or the app runs on an old copy, Storage says so
-at the top: "This start uses the default folder: … can't be used now", or "This folder holds the old
-copy of the data…", with what to do — connect the folder and restart, or **Use the default folder from
-now on…**, which stops the app looking for that folder (nothing in it is touched). Once the folder is
-there and usable it says "restart the app to use it"; there but not usable (the app isn't allowed to write in
-it, say), it says "Your data is in … , which can't be used now:" and why — once it can, restart, or **Use the
-default folder from now on…**. When `JUST_HOUSE_PAINT_DATA_DIR` names the folder,
-**Use the default folder from now on…** isn't offered: change the variable to the folder Storage
-names.
+(**Use the default folder** in the start's question), or the app runs on an old copy, Storage says so at the
+top, in one sentence: where your data is and, when that folder can't be used, why — fix that and restart, or
+**Use the default folder from now on…**, which stops the app looking for that folder (nothing in it is
+touched); once that folder can be used again, restart the app to use it. When `JUST_HOUSE_PAINT_DATA_DIR`
+names the old copy, change it to the folder Storage names (**Use the default folder from now on…** isn't
+offered then). Meanwhile **Change folder…** isn't shown.
 
 **Disk usage** — where the data folder's space goes:
 

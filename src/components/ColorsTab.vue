@@ -32,6 +32,9 @@ const ui = useUiStore();
 // the "On this wall" swatches' group is named by its words
 const tonesId = useId();
 
+// the latest match — an earlier one answering later is dropped (a filter changed under it — the nineteenth review);
+// declared before the pick's watch, which matches as the tab is set up
+let matchSeq = 0;
 const brand = ref(null);
 const q = ref("");
 const exterior = ref(true);
@@ -235,6 +238,7 @@ function sayMatches() {
 // another brand, or Exterior colors only changed: the matches shown were for the old ones — gone, never stale ("No
 // paint of this brand near …" stayed after the filter it named was turned off — the eighteenth review)
 watch([brand, exterior], () => {
+  matchSeq++; // a match still answering was for the old ones: it lands nowhere
   nearest.value = [];
   matchedHex.value = null;
 });
@@ -271,11 +275,19 @@ async function gridSettled() {
  *  view, `say: false`). */
 async function match({ say = true } = {}) {
   if (!/^#[0-9a-fA-F]{6}$/.test(hex.value)) return false;
+  const seq = ++matchSeq;
   try {
-    nearest.value = await paints.nearest(hex.value, { brand: brand.value, k: 6, exterior: exterior.value });
+    const found = await paints.nearest(hex.value, { brand: brand.value, k: 6, exterior: exterior.value });
+    if (seq !== matchSeq) return false;
+    nearest.value = found;
     matchedHex.value = hex.value;
     paints.remember(nearest.value.map((n) => n.paint));
-    if (say) sayMatches();
+    if (say) {
+      // Find's result in view too — below the box in a short panel (only a pick scrolled it in — the nineteenth review)
+      await nextTick();
+      document.querySelector(".colors__nearest, .colors__none")?.scrollIntoView?.({ block: "nearest" });
+      sayMatches();
+    }
     return true;
   } catch (e) {
     reportError(e);

@@ -39,5 +39,17 @@ test("the counter moving bumps the pages; a busy page holds it; a new series rel
   await vi.advanceTimersByTimeAsync(1000);
   expect(reload).toHaveBeenCalledTimes(1);
   expect(otherWindows.changes).toBe(start + 2);
+  // the reload is marked (a page's "leave without saving?" lets it go), the words kept for after it, and the new
+  // series taken first: kept on the page, it would not reload again for it (the nineteenth review)
+  expect(otherWindows.replaced).toBe(true);
+  expect(sessionStorage.getItem("justhousepaint.replacedElsewhere")).toBe("1");
+  await vi.advanceTimersByTimeAsync(2000);
+  expect(reload).toHaveBeenCalledTimes(1);
   stop();
+  // the next start says it once
+  sessionStorage.setItem("justhousepaint.replacedElsewhere", "1");
+  const again = watchOtherWindows({ reload });
+  expect(sessionStorage.getItem("justhousepaint.replacedElsewhere")).toBeNull();
+  again();
+  otherWindows.replaced = false;
 });

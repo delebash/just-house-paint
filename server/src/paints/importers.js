@@ -84,8 +84,30 @@ const hasColor = (cols) => cols.hex !== undefined || cols.rgb !== undefined || (
 const hasLabel = (cols) => cols.code !== undefined || cols.name !== undefined;
 
 /** Rows of cells (the first rows may be titles) → normalized paint rows. */
-export function rowsFromTable(table, { brand, filename, mapping, aliases, headerSearchRows = 20 }) {
+export /** The rows (or swatches) a file's import leaves out, counted by why and said in words — at most five numbers each
+ *  ("12 rows without a usable color (rows 3, 7, 9, 15, 20 …)"): each row was a warning of its own, with the row's
+ *  raw JSON, and 400 bad rows made a 64,692-character toast (the nineteenth review). */
+function skippedRows() {
+  const why = new Map();
+  return {
+    add(err, n) {
+      const msg = String(err?.message || err);
+      const key = /no usable color/.test(msg) ? "without a usable color" : /neither a code nor a name/.test(msg) ? "with neither a number nor a name" : "that couldn't be read";
+      if (!why.has(key)) why.set(key, []);
+      why.get(key).push(n);
+    },
+    words(what) {
+      return [...why].map(([key, ns]) => {
+        const shown = ns.slice(0, 5).join(", ") + (ns.length > 5 ? " …" : "");
+        return `${ns.length} ${what}${ns.length === 1 ? "" : "s"} ${key} (${what}${ns.length === 1 ? "" : "s"} ${shown})`;
+      });
+    },
+  };
+}
+
+function rowsFromTable(table, { brand, filename, mapping, aliases, headerSearchRows = 20 }) {
   const warnings = [];
+  const skipped = skippedRows();
   let headerAt = -1;
   let cols = {};
   for (let i = 0; i < Math.min(table.length, headerSearchRows); i++) {
@@ -127,14 +149,15 @@ export function rowsFromTable(table, { brand, filename, mapping, aliases, header
         ),
       );
     } catch (err) {
-      warnings.push(`row ${i + 1}: ${err.message}`);
+      skipped.add(err, i + 1);
     }
   }
-  return { rows, warnings };
+  return { rows, warnings: [...warnings, ...skipped.words("row")] };
 }
 
 function rowsFromSwatches({ swatches, warnings }, { brand, filename, patterns }) {
   const rows = [];
+  const skipped = skippedRows();
   for (const [i, s] of swatches.entries()) {
     const { code, name } = splitLabel(s.name, { brand, patterns });
     try {
@@ -145,9 +168,10 @@ function rowsFromSwatches({ swatches, warnings }, { brand, filename, patterns })
         ),
       );
     } catch (err) {
-      warnings.push(`swatch ${i + 1}: ${err.message}`);
+      skipped.add(err, i + 1);
     }
   }
+  warnings.push(...skipped.words("swatch"));
   return { rows, warnings };
 }
 

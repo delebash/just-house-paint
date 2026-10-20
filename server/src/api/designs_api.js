@@ -10,6 +10,7 @@ const nameTaken = (name) => new RequestValidationError([{ loc: ["body", "name"],
 import { createDesign, deleteDesign, getDesign, getHouse, listDesigns, updateDesign } from "../database/houses.js";
 import { DesignIn, DesignPatch, IdParams } from "../schemas/houses.js";
 import { getState } from "../app_state.js";
+import { cleanName, nameKey } from "../shared/text.js";
 
 /** `ctx`: { db, maxDesignsPerHouse() } — the limit is a settings row. */
 export function router(ctx = getState()) {
@@ -22,8 +23,14 @@ export function router(ctx = getState()) {
     if (!d) throw designNotFound(id);
     return d;
   };
-  const sameName = (houseId, name, except = null) =>
-    listDesigns(ctx.db, houseId).some((d) => d.id !== except && d.name.toLocaleLowerCase() === name.toLocaleLowerCase());
+  // compared as a person sees them: composed, invisible characters ignored, any case (shared/text.js nameKey)
+  const sameName = (houseId, name, except = null) => listDesigns(ctx.db, houseId).some((d) => d.id !== except && nameKey(d.name) === nameKey(name));
+  /** The name kept (cleanName); one that shows nothing is refused as the schema refuses an empty one. */
+  const kept = (name) => {
+    const clean = cleanName(name);
+    if (!nameKey(clean)) throw new RequestValidationError([{ loc: ["body", "name"], msg: "Name required", type: "value_error" }]);
+    return clean;
+  };
 
   app.get("/v1/houses/:id/designs", input({ params: IdParams }), (c) => {
     mustHouse(c.req.valid("param").id);
@@ -34,7 +41,7 @@ export function router(ctx = getState()) {
     const houseId = c.req.valid("param").id;
     mustHouse(houseId);
     const { name, colors } = c.req.valid("json");
-    const clean = name.trim();
+    const clean = kept(name);
     if (sameName(houseId, clean)) throw nameTaken(clean);
     if (listDesigns(ctx.db, houseId).length >= ctx.maxDesignsPerHouse()) {
       const n = ctx.maxDesignsPerHouse();
@@ -46,7 +53,7 @@ export function router(ctx = getState()) {
   app.patch("/v1/designs/:id", input({ params: IdParams, body: DesignPatch }), (c) => {
     const current = mustDesign(c.req.valid("param").id);
     const { name, colors } = c.req.valid("json");
-    const clean = name?.trim();
+    const clean = name === undefined ? undefined : kept(name);
     if (clean !== undefined && sameName(current.houseId, clean, current.id)) throw nameTaken(clean);
     return c.json(updateDesign(ctx.db, current.id, { name: clean, colors }));
   });

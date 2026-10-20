@@ -12,6 +12,7 @@ import { copyToClipboard } from "quasar";
 import { safeTitle } from "@delebash/core/platform/filename";
 import {
   AiTaskStrip,
+  announce,
   confirmDialog,
   EmptyState,
   errorMessage,
@@ -36,7 +37,7 @@ import {
 } from "@delebash/ui";
 import { onKeyStroke } from "@vueuse/core";
 import { stroke as brushStroke } from "just-house-paint-server/shared/masks.js";
-import { computed, onBeforeUnmount, onMounted, ref, shallowRef, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { onBeforeRouteLeave, onBeforeRouteUpdate, useRoute, useRouter } from "vue-router";
 import AiPhotoDialog from "../components/AiPhotoDialog.vue";
@@ -222,6 +223,8 @@ onBeforeRouteLeave(confirmLeave);
 // asks in its own words; the desktop app's shell shows its box on Electron's will-prevent-unload) — they were
 // dropped silently (the eighteenth review)
 function onBeforeUnload(e) {
+  // a reload for data another window replaced (a restore, a reset): the colors were on data that is gone
+  if (otherWindows.replaced) return;
   if (!house.house || !house.dirty || !Object.keys(house.colors).length) return;
   e.preventDefault();
   e.returnValue = "";
@@ -728,7 +731,14 @@ watch(
 async function findParts() {
   if (finding.value) return;
   if (!engines.finderInstalled) {
+    // the part finder's install, shown and said: the Parts tab, its card brought into view and its Install focused
+    // (with parts listed the card was below them, out of view, and nothing happened — the nineteenth review)
     tab.value = "parts";
+    await nextTick();
+    const card = document.querySelector(".house__tab .engine");
+    card?.scrollIntoView?.({ block: "nearest" });
+    card?.querySelector("button:not([disabled])")?.focus();
+    announce(t("house.tools.needsFinder"));
     return;
   }
   // the parts changed by hand can stay as they are (on unless the user unticks it)

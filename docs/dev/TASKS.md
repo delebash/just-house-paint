@@ -1321,6 +1321,39 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         help opens at the section shown (settings#<section>); a no-break space between a number and its unit in the
         memory words; the e2e harness closes its page first without beforeunload (Playwright's page.close), then the
         app; the Server hint's command words in code font.
+        The nineteenth's fixes made (two agents' and mine; not yet committed). The routes: a brand is one of the app's own
+        (BRANDS with no prototype); a stroke, a Box and an added part checked for a running find in the outlines' turn
+        too, an added part refused while a find runs; prefs capped in the kit (32 deep, 64 KB, 200 keys, no built-in
+        names) and read with no prototype; the search's offset bounded and its control characters stripped; part keys
+        never a Windows device name; names cleaned (NFC, no control or bidi-override characters) and compared without
+        invisible ones, a name of only invisible characters refused; caps on the free maps; harmony needs a kind;
+        paints-gone a 409, an unreadable palette a 415, an empty one a 422 under its field; an outline must be a PNG; a
+        broken form said as broken; an import's left-out rows counted and worded. The kit platform (the shell agent):
+        Fetch Metadata — a GET the browser marks cross-site is refused unless it carries an allowed Origin or is a
+        navigation to the UI (the desktop window's own fetches are cross-site with Origin app://… — measured; images are
+        fetched, so fine); non-finite numbers refused in every JSON body; tokens trimmed, visible ASCII only (a padded
+        one stored before matches again); X-Client-Id 1–64 visible characters, 500 remembered; a restore's broken form a
+        422, its upload counted and refused past the drive's room as it streams, every zip error a 422 but a file that
+        isn't a zip (400, the router's pinned answer — kept), a backup with an unsafe house id refused; settings that
+        don't fit this version set back to their defaults and named — by their screen labels — in a toast after the
+        reload (overruled the agent's refusal: an older backup must restore); the start's tidy skips an unsafe folder.
+        The nineteenth attack's: Clear models and Delete through a link remove only a row's own files (the quant GGUFs,
+        mmproj, draft, their blobs and locks — the kit keeps no download record, so "what the row names") — the user's
+        files, another tool's quant in the same repo, other repos kept; NTFS file ids read as bigint (two files were one
+        above 2^53), utimes' millisecond allowed; hfRepo / mtpDraftRepo <owner>/<name>, every removal kept inside hf;
+        records without a move id re-pointed; "didn't answer" per path, Try again; "connected" by the start's own check
+        for the variable's folder; the sweep's comparisons async (3.0 s, was 21 s frozen); Restart now asks about
+        unsaved work first (real electron-updater: Stay keeps it, Leave installs); the sweep's record kept until the
+        target answers to the move's id; "Not found" worded per cause; Storage's banner one sentence; focus after
+        Forget on the next control, "Forgotten" said. The UI kit: a toast with an action never merged; toast colours from
+        kit tokens with fixed pairs that pass in both themes (docgen's, JustVoice's transparent info) and the app's and
+        template's own inks mapped; an off link-style button without href and without middle click; Clear's icon slot;
+        the Server hint's commands in code font. Mine: finished-unseen installs and brand loads finished; a reload for
+        data replaced elsewhere skips the box and says so after; the Colors tab's match sequenced and declared before the
+        pick's watch, Find's result in view; Find the parts again with the finder missing takes the user to its Install
+        (the card in view, Install focused, said); the thumbnail's address by the photo's time; start-packaged keeps
+        its real error; the app's Backups hint dropped; Settings' help at the section shown; "12 GB" unbroken; the e2e
+        harness closes its page first; the help's Storage and restore words.
 NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
         the installed 0.1.2 updating to it (the silent Restart now).
 

@@ -102,7 +102,9 @@ async function remove(house) {
 }
 
 const open = (house) => router.push(`/house/${encodeURIComponent(house.id)}`);
-const thumb = (house) => imagePath(house.id, "thumb", house.updatedAt);
+// the thumbnail's address follows the photo, which never changes once added — not the house's time, which every stroke
+// moves (another window on Your houses fetched every thumbnail again at each — the nineteenth review)
+const thumb = (house) => imagePath(house.id, "thumb", house.createdAt);
 </script>
 
 <template>

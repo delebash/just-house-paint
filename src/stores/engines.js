@@ -42,7 +42,11 @@ export const useEnginesStore = defineStore("engines", {
       this.installing = { ...this.installing, [kind]: true };
       try {
         const { path, feature } = INSTALLS[kind];
-        await runServerJob({ start: () => post(path), feature, label });
+        await runServerJob({ start: () => post(path), feature, label }).catch((e) => {
+          // it finished while the window was away (asleep): finished — the status read next says so (it was said
+          // as the error "ended: done" — the nineteenth review)
+          if (!(e?.name === "JobEnded" && e.state === "done")) throw e;
+        });
       } finally {
         this.installing = { ...this.installing, [kind]: false };
         await this.loadStatus().catch(() => {});

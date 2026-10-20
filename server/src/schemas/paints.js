@@ -30,7 +30,8 @@ export const PaintSearch = T.Object({
   exterior: opt(T.Boolean(), false),
   archived: opt(T.Boolean(), false),
   limit: opt(T.Integer({ minimum: 1, maximum: 500 }), 120),
-  offset: opt(T.Integer({ minimum: 0 }), 0),
+  // at most what SQLite's integer holds — past 64 bits the search answered 500 (the nineteenth review's fuzz)
+  offset: opt(T.Integer({ minimum: 0, maximum: Number.MAX_SAFE_INTEGER }), 0),
 });
 
 /** GET /v1/paints/nearest — the real paints closest to a color. */

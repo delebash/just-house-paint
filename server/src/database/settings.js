@@ -62,7 +62,9 @@ export function writeSettings(db, values) {
 // ── the renderer's preferences (the kit's /v1/prefs hooks) ───────────────────
 
 export function readPrefs(db) {
-  const out = {};
+  // no prototype: a row named "__proto__" (stored before the kit refused the name) is a key, never the object's
+  // prototype — it was stored and never read back (the nineteenth review's fuzz)
+  const out = Object.create(null);
   for (const row of db.all(`SELECT key, value FROM settings WHERE ${PREF_ROWS}`)) {
     out[row.key.slice(PREF.length)] = decode(row.value);
   }

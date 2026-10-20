@@ -5,8 +5,10 @@
 
 import { literal, opt, strictObject, T } from "@delebash/core/platform/schema";
 
-/** A part's key: a camelCase word ("garageDoor") — the part finder's recipe names them so. */
-export const PART_KEY = "^[a-z][a-zA-Z0-9]{0,39}$";
+/** A part's key: a camelCase word ("garageDoor") — the part finder's recipe names them so. Never a Windows device
+ *  name (con, prn, aux, nul, com0–9, lpt0–9): a key is its outline's file name (masks/<key>.png), and on Windows 10
+ *  those are devices, not files (the nineteenth review's fuzz). */
+export const PART_KEY = "^(?!(?:con|prn|aux|nul|com[0-9]|lpt[0-9])$)[a-z][a-zA-Z0-9]{0,39}$";
 
 /** An id the server made (a random UUID) — also a folder name, so nothing that could leave it. */
 const Id = T.String({ minLength: 1, maxLength: 64, pattern: "^[A-Za-z0-9_-]+$" });
@@ -31,20 +33,27 @@ export const HousePatch = strictObject({
 });
 
 /** PUT /v1/houses/:id/current-paints — the paint each part has now, { part: paintId }, the whole map. */
+// a house has at most 40 parts (the finder's recipe) and a few added: more keys than this is no house's (100,000 were
+// taken and made the house's answer 1.8 MB — the nineteenth review's fuzz)
+const MAX_PARTS = 100;
+
 export const CurrentPaintsIn = T.Record(T.String({ pattern: PART_KEY }), T.String({ minLength: 1, maxLength: 120 }), {
   additionalProperties: false, // a key that isn't a part name is refused, not stored
+  maxProperties: MAX_PARTS,
 });
 
 /** PATCH /v1/houses/:id/current-paints — only the parts named (JSON Merge Patch): { part: paintId | null }, null
  *  makes a part's paint unknown again. */
 export const CurrentPaintsPatch = T.Record(T.String({ pattern: PART_KEY }), T.Union([T.String({ minLength: 1, maxLength: 120 }), T.Null()]), {
   additionalProperties: false,
+  maxProperties: MAX_PARTS,
 });
 
 /** { partKey: paintId | null } — a new design: null (or absent) leaves a part unpainted; a PATCH: only the parts
  *  named change (JSON Merge Patch, RFC 7396 — null takes a part's color off). */
 export const DesignColors = T.Record(T.String({ pattern: PART_KEY }), T.Union([T.String({ minLength: 1, maxLength: 120 }), T.Null()]), {
   additionalProperties: false, // a key that isn't a part name is refused, not stored
+  maxProperties: MAX_PARTS,
 });
 
 export const DesignIn = strictObject({

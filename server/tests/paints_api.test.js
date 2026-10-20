@@ -101,13 +101,26 @@ describe("brands", () => {
     form.append("brand", "valspar");
     const r = await s.app.request("/v1/paints/import", { method: "POST", body: form });
     expect(r.status).toBe(422);
-    expect((await r.json()).detail).toMatch(/3 colors without a number left out/);
+    // under the file's field (the family's errors list)
+    expect((await r.json()).errors).toMatchObject([{ loc: ["body", "file"], msg: expect.stringMatching(/3 colors without a number left out/) }]);
     const mixed = new FormData();
     mixed.append("file", new Blob([["code,name,hex", "1001,Pale Ecru,#efe6d2", ",Deep Sea,#123456"].join("\n")]), "valspar.csv");
     mixed.append("brand", "valspar");
     const ok = await (await s.app.request("/v1/paints/import", { method: "POST", body: mixed })).json();
     expect(ok).toMatchObject({ paintCount: 1, warnings: ["1 colors without a number left out"] });
     expect((await (await s.app.request("/v1/brands")).json()).find((b) => b.key === "valspar").paintCount).toBe(1);
+  });
+
+  test("a brand key that is a built-in object name is no brand (the nineteenth review's fuzz)", async () => {
+    s = makeServer({ fetch: fakeFetch });
+    for (const key of ["constructor", "__proto__", "toString", "hasOwnProperty", "valueOf"]) {
+      const form = new FormData();
+      form.append("file", new Blob([writeAse([{ group: "G", swatches: [{ name: "OC-17 White Dove", model: "RGB", values: [0.94, 0.93, 0.89] }] }])]), "palette.ase");
+      form.append("brand", key);
+      expect((await s.app.request("/v1/paints/import", { method: "POST", body: form })).status).toBe(422);
+    }
+    expect((await s.json("POST", "/v1/brands/constructor/load")).status).toBe(404);
+    expect((await s.json("POST", "/v1/schemes/harmony", { base: "#808080", brand: "constructor" })).status).toBe(404);
   });
 
   test("an official palette file is imported for its brand; clearing a brand removes its colors", async () => {
@@ -177,6 +190,15 @@ describe("search, nearest, schemes", () => {
     expect(r.status).toBe(201);
     return rows;
   }
+
+  test("a search's control characters are no search; an offset past 64 bits is refused, never a 500 (the nineteenth's fuzz)", async () => {
+    s = makeServer({ fetch: fakeFetch });
+    await s.settle((await (await s.json("POST", "/v1/brands/sherwin-williams/load")).json()).id);
+    const all = (await (await s.app.request("/v1/paints?brand=sherwin-williams")).json()).total;
+    const nul = await (await s.app.request("/v1/paints?brand=sherwin-williams&q=%00")).json();
+    expect(nul.total).toBe(all); // stripped: the same as no query, not a match of every row by a NUL
+    expect((await s.app.request("/v1/paints?brand=sherwin-williams&offset=9223372036854775808")).status).toBe(422);
+  });
 
   test("search by name or code, paged; its query is checked", async () => {
     const rows = await withPalette();

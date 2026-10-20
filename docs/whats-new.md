@@ -105,7 +105,8 @@
 - **Your data stays outside the app on macOS and Linux**: on a Mac in Library/Application Support
   (never inside the app, which an update replaces — coming from v0.1.2, see the first point above), and the
   AppImage and its server on its own share one folder. **Require a token on this computer too** no longer leaves the window unable to do anything.
-- A backup restored from an older version gets this one's settings at once, and a restored house's
+- A backup restored from an older version gets this one's settings at once (a setting that doesn't fit this version
+  is set back to its default, and named), and a restored house's
   first **Find the parts** or **AI photo** no longer fails.
 - **Quicker with big photos**: **Texture** applies when you let go (about four times faster);
   **Save image** works in the background — the window stays responsive — and saves at most 16 megapixels,

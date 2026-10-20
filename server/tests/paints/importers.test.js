@@ -137,7 +137,8 @@ describe(".xlsx", () => {
       ["PPG9993-2", "Fixture Train", "#bfc3c6", 54],
     ]);
     expect(rows[0].sourceRef).toBe("voc_invented.xlsx [Sheet1]#row2");
-    expect(warnings).toEqual([expect.stringMatching(/^row 4: .*no usable color/), "1 repeated codes dropped"]);
+    // counted by why, in words — never the row as raw JSON (the nineteenth review)
+    expect(warnings).toEqual(["1 row without a usable color (row 4)", "1 repeated codes dropped"]);
   });
 
   test("title rows above the header are skipped; a hex column works too", async () => {

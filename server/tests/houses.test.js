@@ -390,8 +390,11 @@ describe("houses", () => {
     const family = "👨‍👩‍👧";
     expect(nameFromFile(`${"b".repeat(74)}${family}.jpg`)).toBe("b".repeat(74));
     expect(nameFromFile(`${"b".repeat(72)}${family}.jpg`)).toBe(`${"b".repeat(72)}${family}`);
-    // one character longer than 80 on its own (a run of combining marks): its code points, never half of one
-    expect(nameFromFile(`e${"\u0301".repeat(100)}.jpg`)).toBe(`e${"\u0301".repeat(79)}`);
+    // one character longer than 80 on its own (a run of combining marks): its code points, never half of one — after
+    // the name's composed form (NFC: "e" and its first acute are one "é")
+    expect(nameFromFile(`e${"\u0301".repeat(100)}.jpg`)).toBe(`\u00e9${"\u0301".repeat(79)}`);
+    // names in two Unicode forms, with an invisible character, a NUL or a bidi override, are kept as one clean name
+    expect(nameFromFile("Cafe\u0301\u200b\u0000\u202e.jpg")).toBe("Caf\u00e9\u200b");
     // a name given with the photo: cut the same way
     s = makeServer();
     const made = await (await s.upload(await jpeg(80, 60), "x.jpg", `${"c".repeat(79)}🏡`)).json();
@@ -444,6 +447,29 @@ describe("parts", () => {
     }
     expect(await (await s.app.request(`/v1/houses/${house.id}/jobs`)).json()).toEqual([]);
     expect((await s.app.request("/v1/houses/nope/jobs")).status).toBe(404);
+  });
+
+  test("a part added while the parts are being found is refused — the find's commit would drop it (the nineteenth's fuzz)", async () => {
+    s = makeServer();
+    const house = await (await s.upload(await jpeg(400, 300))).json();
+    const find = fakeFinder.find;
+    let finish;
+    fakeFinder.find = function (...args) {
+      return new Promise((r) => (finish = () => r(find.apply(this, args))));
+    };
+    try {
+      const job = await (await s.json("POST", `/v1/houses/${house.id}/find-parts`)).json();
+      await vi.waitFor(() => expect(finish).toBeTypeOf("function"));
+      const added = await s.json("POST", `/v1/houses/${house.id}/parts`, { key: "fence" });
+      expect(added.status).toBe(409);
+      expect((await added.json()).title).toBe("The parts are being found");
+      finish();
+      await s.settle(job.id);
+    } finally {
+      fakeFinder.find = find;
+    }
+    // once it's done, the part comes
+    expect((await s.json("POST", `/v1/houses/${house.id}/parts`, { key: "fence" })).status).toBe(201);
   });
 
   test("a house restored before its parts were found has no masks folder (a backup keeps no empty one): finding them works", async () => {
@@ -521,6 +547,10 @@ describe("parts", () => {
     expect(put.status).toBe(200);
     expect((await put.json()).area).toBeGreaterThan(256 * 192 * 0.45);
     expect((await s.app.request(`/v1/houses/${house.id}/parts/shutters/mask`, { method: "PUT", headers: { "content-type": "text/plain" }, body: "x" })).status).toBe(422);
+    // a JPEG sent as image/png is no outline (sharp read it — the nineteenth review's fuzz)
+    const jpg = await jpeg(house.displayWidth, house.displayHeight);
+    const lying = await s.app.request(`/v1/houses/${house.id}/parts/shutters/mask`, { method: "PUT", headers: { "content-type": "image/png", "if-match": "*" }, body: jpg });
+    expect(lying.status).toBe(422);
   });
 
   test("finding again keeps the parts changed by hand when asked, the found ones cut around them", async () => {
@@ -605,6 +635,17 @@ describe("designs", () => {
     expect((await s.app.request(`/v1/designs/${d.id}`, { method: "DELETE" })).status).toBe(204);
     expect((await s.json("PATCH", `/v1/designs/${d.id}`, { name: "x" })).status).toBe(404);
     expect((await (await s.app.request(url)).json()).map((x) => x.name)).toEqual(["Two", "Three"]);
+    // names as a person sees them (on another house, which this test's list doesn't count)
+    const other = `/v1/houses/${(await (await s.upload(await jpeg(100, 80))).json()).id}/designs`;
+    await s.json("POST", other, { name: "Classic" });
+    // names as a person sees them (the nineteenth review's fuzz): "Classic" with a zero-width space, or composed
+    // otherwise, is the same name; a name of only invisible characters is no name; NUL and overrides aren't kept
+    expect((await s.json("POST", other, { name: "Clas\u200bsic" })).status).toBe(422);
+    const cafe = await (await s.json("POST", other, { name: "Cafe\u0301" })).json();
+    expect(cafe.name).toBe("Caf\u00e9");
+    expect((await s.json("POST", other, { name: "Caf\u00e9" })).status).toBe(422);
+    expect((await s.json("POST", other, { name: "\u200b\u2060" })).status).toBe(422);
+    expect((await (await s.json("POST", other, { name: "Night\u0000 \u202eblue" })).json()).name).toBe("Night blue");
   });
 
   test("deleting a house deletes its designs and parts", async () => {

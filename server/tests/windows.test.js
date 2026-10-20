@@ -162,7 +162,7 @@ describe("outlines from two windows", () => {
 });
 
 describe("the AI photo and the paints another window removed", () => {
-  test("a chosen paint no longer loaded is named (422), never left out of the picture", async () => {
+  test("a chosen paint no longer loaded is named (409 — a conflict with what is loaded), never left out of the picture", async () => {
     s = makeServer();
     const house = await houseWithParts();
     const form = new FormData();
@@ -170,7 +170,7 @@ describe("the AI photo and the paints another window removed", () => {
     form.append("brand", "behr");
     await s.app.request("/v1/paints/import", { method: "POST", body: form });
     const r = await s.json("POST", `/v1/houses/${house.id}/aiphoto`, { colors: { body: "behr:X-1", trim: "behr:GONE" } });
-    expect(r.status).toBe(422);
+    expect(r.status).toBe(409);
     expect(await r.json()).toMatchObject({ title: "Some colors aren't loaded any more", parts: ["trim"] });
   });
 

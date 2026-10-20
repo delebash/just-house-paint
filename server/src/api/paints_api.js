@@ -121,7 +121,8 @@ export function router(ctx = getState()) {
     try {
       body = await c.req.parseBody();
     } catch {
-      body = {};
+      // a form cut off, or with no boundary: said as that — it read "file: Field required" (the nineteenth's fuzz)
+      throw new RequestValidationError([{ loc: ["body"], msg: "The upload was cut off or isn't a form — send the file again", type: "value_error" }]);
     }
     const file = body.file;
     if (!(file instanceof Blob)) throw new RequestValidationError([{ loc: ["body", "file"], msg: "Field required", type: "missing" }]);
@@ -132,9 +133,14 @@ export function router(ctx = getState()) {
     try {
       result = await importFile(Buffer.from(await file.arrayBuffer()), file.name || "palette", { brand });
     } catch (e) {
-      throw new ApiError(422, "unreadable-palette", "Unreadable palette file", String(e?.message || e));
+      // the file isn't a palette this app reads: its type, not a field's value (415)
+      throw new ApiError(415, "unreadable-palette", "Unreadable palette file", String(e?.message || e));
     }
-    if (!result.rows.length) throw new ApiError(422, "empty-palette", "No colors in the file", result.warnings.join("; ") || "the file holds no colors this app can read");
+    if (!result.rows.length) {
+      // a 422 names its field (the family's errors list — the form puts it under the file's button)
+      const why = result.warnings.join("; ") || "the file holds no colors this app can read";
+      throw new RequestValidationError([{ loc: ["body", "file"], msg: `No colors in the file: ${why}`, type: "value_error" }]);
+    }
     const saved = replaceBrandPaints(ctx.db, brand, result.rows, { source: "file" });
     const lost = designsWithBrand(ctx.db, brand, { missing: true });
     return c.json({ brand, format: result.format, paintCount: saved.paintCount, warnings: result.warnings, lost }, 201);
@@ -151,7 +157,8 @@ export function router(ctx = getState()) {
     return c.json(
       searchPaints(ctx.db, {
         brand: q.brand,
-        q: q.q,
+        // control characters are no search (a NUL matched every paint — the nineteenth review's fuzz)
+        q: q.q?.replace(/[\u0000-\u001F\u007F-\u009F]/gu, ""),
         family: q.family,
         colorFamily: q.colorFamily,
         exterior: q.exterior,

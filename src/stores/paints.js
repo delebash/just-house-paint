@@ -93,7 +93,11 @@ export const usePaintsStore = defineStore("paints", {
      *  worked or not — a failed load's reason is on its row (the server's lastError). */
     async loadFeed(brand, label) {
       try {
-        return await runServerJob({ start: () => post(`/v1/brands/${encodeURIComponent(brand)}/load`), feature: "paints.load", label, meta: { brand } });
+        return await runServerJob({ start: () => post(`/v1/brands/${encodeURIComponent(brand)}/load`), feature: "paints.load", label, meta: { brand } }).catch((e) => {
+          // loaded while the window was away: loaded — the brands read next show it (no "ended: done" error)
+          if (!(e?.name === "JobEnded" && e.state === "done")) throw e;
+          return null;
+        });
       } finally {
         // loaded, failed or cancelled: what the server has of the brand now is what counts
         this.forgetBrand(brand);

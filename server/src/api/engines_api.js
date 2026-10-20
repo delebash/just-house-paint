@@ -180,7 +180,8 @@ export function router(ctx = getState()) {
     const gone = Object.entries(chosen).filter(([key, id]) => id && paintable.has(key) && !paints[id]);
     if (gone.length) {
       const parts = gone.map(([key]) => ctx.partLabel?.(key) ?? key);
-      throw new ApiError(422, "paints-gone", "Some colors aren't loaded any more", `the paint of the ${parts.join(", ")} — load its brand again, or pick another color`, {
+      // a conflict with what is loaded now, not a malformed request: 409 (a 422 carries its fields' errors)
+      throw new ApiError(409, "paints-gone", "Some colors aren't loaded any more", `the paint of the ${parts.join(", ")} — load its brand again, or pick another color`, {
         parts: gone.map(([key]) => key),
       });
     }

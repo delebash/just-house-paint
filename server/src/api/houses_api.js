@@ -13,7 +13,7 @@ import { addingHouseDir, displayPath, houseAdded, originalPath, removeHouseDir, 
 import { ingestPhoto, NotAnImage, TooManyPixels } from "../images.js";
 import { CurrentPaintsIn, CurrentPaintsPatch, HousePatch, IdParams, ImageQuery } from "../schemas/houses.js";
 import { getState } from "../app_state.js";
-import { cutToLength } from "../shared/text.js";
+import { cleanName, cutToLength, nameKey } from "../shared/text.js";
 
 const CONTENT_TYPES = { jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp" };
 
@@ -23,8 +23,8 @@ const NAME_MAX = 80;
 /** A photo's name from its file name: "my-house_2024.jpg" → "my house 2024". */
 export function nameFromFile(filename) {
   const base = path.basename(String(filename || "")).replace(/\.[^.]+$/, "");
-  const name = base.replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim();
-  return cutToLength(name, NAME_MAX) || "My house";
+  const name = cleanName(base.replace(/[_-]+/g, " "));
+  return (nameKey(name) && cutToLength(name, NAME_MAX)) || "My house";
 }
 
 /**
@@ -51,7 +51,8 @@ export function router(ctx = getState()) {
     try {
       body = await c.req.parseBody();
     } catch {
-      body = {};
+      // a form cut off, or with no boundary: said as that — it read "file: Field required" (the nineteenth's fuzz)
+      throw new RequestValidationError([{ loc: ["body"], msg: "The upload was cut off or isn't a form — send the file again", type: "value_error" }]);
     }
     const file = body.file;
     if (!(file instanceof Blob)) throw new RequestValidationError([{ loc: ["body", "file"], msg: "Field required", type: "missing" }]);
@@ -60,7 +61,8 @@ export function router(ctx = getState()) {
         limit: limits.maxPhotoBytes,
       });
     }
-    const name = typeof body.name === "string" && body.name.trim() ? cutToLength(body.name.trim(), NAME_MAX) : nameFromFile(file.name);
+    const given = typeof body.name === "string" ? cleanName(body.name) : "";
+    const name = nameKey(given) ? cutToLength(given, NAME_MAX) : nameFromFile(file.name);
     const id = crypto.randomUUID();
     let made;
     try {
@@ -91,7 +93,9 @@ export function router(ctx = getState()) {
 
   app.patch("/v1/houses/:id", input({ params: IdParams, body: HousePatch }), (c) => {
     must(c.req.valid("param").id);
-    return c.json(renameHouse(ctx.db, c.req.valid("param").id, c.req.valid("json").name.trim()));
+    const name = cleanName(c.req.valid("json").name);
+    if (!nameKey(name)) throw new RequestValidationError([{ loc: ["body", "name"], msg: "Name required", type: "value_error" }]);
+    return c.json(renameHouse(ctx.db, c.req.valid("param").id, name));
   });
 
   // The paint each part has now (the light on the photo is worked out from it): PUT the whole map, PATCH only the

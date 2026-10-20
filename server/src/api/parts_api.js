@@ -74,8 +74,9 @@ export function router(ctx = getState()) {
 
   /** The version the request was made on — refused when another window changed the outlines since. */
   const mustBeCurrent = (c, house) => ctx.outlines.check(house.id, c.req.header("if-match"));
-  /** A stroke or a Box while the parts are being found would be lost under what the finder saves: refused
-   *  (another window's run — this window's own tools are off while it runs). */
+  /** A stroke, a Box or an added part while the parts are being found would be lost under what the finder saves:
+   *  refused (another window's run — this window's own tools are off while it runs) — before the work, and again in
+   *  the outlines' turn, where a find started meanwhile is seen. */
   const notWhileFinding = (house) => {
     if (ctx.jobs.running("find-parts", house.id)) {
       throw new ApiError(409, "finding-parts", "The parts are being found", "your change wasn't saved — the house shows the parts found when it's done");
@@ -192,6 +193,9 @@ export function router(ctx = getState()) {
     }
     return ctx.outlines.serial(house.id, async () => {
       mustBeCurrent(c, house); // again, once its turn came: a write queued before it may have changed them
+      // and the finding check again: a find started while this PNG decoded would save its parts over the stroke
+      // (answered 200, then lost — the nineteenth review's fuzz)
+      notWhileFinding(house);
       const part = await saveMasks(house, [[key, mask]], () => updatePartMask(ctx.db, house.id, key, { area: area(mask) }));
       return c.json({ ...part, outlines: newVersion(c, house) });
     });
@@ -204,8 +208,11 @@ export function router(ctx = getState()) {
     const empty = new Uint8Array(house.displayWidth * house.displayHeight);
     // a new part's row changes the version: made on the outlines the page holds, it answers the next one
     mustBeCurrent(c, house);
+    // never while the parts are being found: the find's commit replaced the parts and the new one was gone
+    notWhileFinding(house);
     return ctx.outlines.serial(house.id, async () => {
       mustBeCurrent(c, house);
+      notWhileFinding(house);
       const part = await saveMasks(house, [[key, empty]], () => updatePartMask(ctx.db, house.id, key, { area: 0, paintable, source: "added" }));
       return c.json({ ...part, outlines: newVersion(c, house) }, 201);
     });
@@ -229,6 +236,7 @@ export function router(ctx = getState()) {
     // the outlines read, changed and saved alone: a stroke saved meanwhile waits its turn (never lost under it)
     return ctx.outlines.serial(house.id, async () => {
       mustBeCurrent(c, house);
+      notWhileFinding(house); // a find started while the finder outlined the box would save over it
       return c.json(await boxInto(house, key, mode, region, c));
     });
   });

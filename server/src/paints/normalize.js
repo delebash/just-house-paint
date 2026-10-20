@@ -28,7 +28,10 @@ const toLab65 = converter("lab65");
  *   the prefix the plan names.
  * Every prefix is data, so the app can seed and change it without touching code.
  */
-export const BRANDS = Object.freeze({
+// No prototype: a brand key that is a built-in object name ("constructor", "__proto__", "toString") is no brand — with
+// a plain object BRANDS[key] was truthy for them, and an import stored paints under "constructor" (the nineteenth
+// review's fuzz)
+export const BRANDS = Object.freeze(Object.assign(Object.create(null), {
   "sherwin-williams": { label: "Sherwin-Williams", display: { prefix: "SW", sep: " " } },
   behr: { label: "Behr", display: { prefix: "", sep: "" } },
   "benjamin-moore": { label: "Benjamin Moore", display: { prefix: "BM", sep: " " } },
@@ -39,7 +42,7 @@ export const BRANDS = Object.freeze({
   },
   "hgtv-home": { label: "HGTV Home by Sherwin-Williams", display: { prefix: "HGSW", sep: "" } },
   "dutch-boy": { label: "Dutch Boy", display: { prefix: "Dutch Boy", sep: " " } },
-});
+}));
 
 /**
  * Hue families a row's `family` may take. The feeds mix collection names ("Living Well",

@@ -8,7 +8,7 @@ import { restoreUnfinished, sweepWorkFolders } from "@delebash/core/platform/dat
 import { getLogger } from "@delebash/core/platform/log";
 import { dbPath } from "./database/index.js";
 import { listHouses, listRenders } from "./database/houses.js";
-import { sweepHouseDirs, sweepRenders, sweepSaving } from "./files.js";
+import { isSafeName, sweepHouseDirs, sweepRenders, sweepSaving } from "./files.js";
 
 const log = getLogger("just_house_paint.startup");
 
@@ -21,7 +21,13 @@ export async function tidyAtStart(dataDir, db) {
     return;
   }
   sweepWorkFolders(dbPath(dataDir));
-  const houses = listHouses(db).map((h) => h.id);
+  // a house whose id isn't a safe folder name (a backup restored before restores checked them — the nineteenth
+  // review: houseDir threw, and the app didn't start) is skipped and said, never a start that fails
+  const houses = [];
+  for (const { id } of listHouses(db)) {
+    if (isSafeName(id)) houses.push(id);
+    else log.warning(`a house whose id isn't a safe folder name is left out of the start's tidy: ${JSON.stringify(String(id)).slice(0, 80)}`);
+  }
   await sweepHouseDirs(dataDir, houses);
   await sweepSaving(dataDir, houses);
   await sweepRenders(dataDir, new Map(houses.map((id) => [id, new Set(listRenders(db, id).map((r) => r.file))])));

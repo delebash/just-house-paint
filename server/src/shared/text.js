@@ -25,3 +25,24 @@ export function cutToLength(text, max) {
   }
   return out;
 }
+
+// Characters a name never keeps: control characters (NUL and the C0/C1 ranges) and the bidi embeddings, overrides and
+// isolates (U+202A–202E, U+2066–2069) — an override in a name spilled into the sentence around it; LRM and RLM stay
+// (a right-to-left name may need them). And the invisible ones, which make two names that look the same different
+// (a zero-width space, joiners, the word joiner, the BOM) — the nineteenth review's fuzz.
+const DROPPED = /[\u0000-\u001F\u007F-\u009F\u202A-\u202E\u2066-\u2069]/gu;
+const INVISIBLE = /[\u200B-\u200D\u2060\uFEFF]/gu;
+
+/** A name a person gave, as it is kept: in Unicode's composed form (NFC — "Café" typed two ways is one name),
+ *  without control or bidi-override characters, its spaces collapsed and trimmed. */
+export function cleanName(text) {
+  return String(text ?? "")
+    .normalize("NFC")
+    .replace(DROPPED, "")
+    .replace(/\s+/gu, " ")
+    .trim();
+}
+
+/** What two names are compared by: the kept name without its invisible characters, in lower case — "Blue" and
+ *  "Blue" with a zero-width space are one name. Empty: the name shows nothing. */
+export const nameKey = (text) => cleanName(text).replace(INVISIBLE, "").toLocaleLowerCase();

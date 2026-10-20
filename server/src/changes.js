@@ -23,6 +23,13 @@ export const DATA_WRITES = /^\/v1\/(houses|designs|renders|brands|paints|setting
 export const renewEpoch = (h) => setSetting(h, EPOCH_KEY, randomUUID());
 // a window not heard from in a day is forgotten (each load of a page is a new window), looked over at most hourly
 const FORGET_MS = 24 * 3600_000;
+// A window's id is what its page sends (X-Client-Id — the kit's transport sends a UUID): taken only when it is up to 64
+// visible ASCII characters, else the write counts as no window's; and at most 500 windows are remembered, the one
+// heard from longest ago forgotten first (the nineteenth review: any length, any number, kept a day).
+const CLIENT_ID = /^[!-~]{1,64}$/;
+const MAX_WINDOWS = 500;
+/** `id` as a window's id, or null. */
+export const clientIdOf = (id) => (typeof id === "string" && CLIENT_ID.test(id) ? id : null);
 const EPOCH_KEY = "dataEpoch";
 
 export class ChangeCounter {
@@ -56,11 +63,14 @@ export class ChangeCounter {
       this.#swept = now;
       for (const [k, v] of this.#mine) if (now - v.seen > FORGET_MS) this.#mine.delete(k);
     }
+    // the Map keeps the order windows were last heard from in: the first is the one heard from longest ago
     let w = this.#mine.get(id);
-    if (!w) {
+    if (w) this.#mine.delete(id);
+    else {
       w = { n: 0, seen: now };
-      this.#mine.set(id, w);
+      while (this.#mine.size >= MAX_WINDOWS) this.#mine.delete(this.#mine.keys().next().value);
     }
+    this.#mine.set(id, w);
     w.seen = now;
     return w;
   }
@@ -68,7 +78,8 @@ export class ChangeCounter {
   /** A change made by window `clientId` — none: by no window (a job's end with no window behind it). */
   note(clientId = null) {
     this.#total += 1;
-    if (clientId) this.#window(clientId).n += 1;
+    const id = clientIdOf(clientId);
+    if (id) this.#window(id).n += 1;
   }
 
   /** Everything changed (a restore, a reset that succeeded — its epoch already renewed): every window asks again. */
@@ -79,7 +90,8 @@ export class ChangeCounter {
 
   /** The count of changes window `clientId` didn't make in this process. */
   revFor(clientId = null) {
-    return this.#total - (clientId ? this.#window(clientId).n : 0);
+    const id = clientIdOf(clientId);
+    return this.#total - (id ? this.#window(id).n : 0);
   }
 
   /** How many windows it remembers (a test reads it). */

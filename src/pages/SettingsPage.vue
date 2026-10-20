@@ -60,7 +60,12 @@ import { useUiStore } from "../stores/ui.js";
 const props = defineProps({ section: { type: String, default: "" } });
 const router = useRouter();
 const ui = useUiStore();
-const { t } = useI18n();
+const { t, te } = useI18n();
+/** A setting's name as General or Advanced shows it (the restore names the settings it set back to their defaults). */
+const settingLabel = (key) => {
+  for (const area of ["general", "advanced"]) if (te(`settings.${area}.fields.${key}`)) return t(`settings.${area}.fields.${key}`);
+  return key;
+};
 
 // The family's sections take the kit's words (`kit.settingsSections.*`); the app's own its own,
 // one t() per section so the i18n report sees each key.
@@ -128,7 +133,8 @@ watch(
 
 <template>
   <q-page :style-fn="pageFlow" class="page settings">
-    <PaneHeader :eyebrow="t('app.name')" :title="t('settings.title')" help-key="settings" />
+    <!-- the help opens at the section shown (its heading's anchor in settings.md) -->
+    <PaneHeader :eyebrow="t('app.name')" :title="t('settings.title')" :help-key="`settings#${active}`" />
     <SettingsShell :sections="SECTIONS" :model-value="active" @update:model-value="go">
       <GeneralSection v-if="active === 'general'" />
       <AdvancedSection v-else-if="active === 'advanced'" />
@@ -147,8 +153,8 @@ watch(
 
       <section v-else-if="active === 'backups'" class="card">
         <h2>{{ t("kit.settingsSections.backups") }}</h2>
-        <p class="hint">{{ t("settings.backupsHint") }}</p>
-        <DataManagement :app-name="t('app.name')" />
+        <!-- what a backup holds and leaves out is the kit's own hint, below (two hints disagreed) -->
+        <DataManagement :app-name="t('app.name')" :setting-label="settingLabel" />
       </section>
 
       <StoragePanel v-else-if="active === 'storage'" :data-dir="health?.dataDir || ''" :shell="storageShell" :saves="t('settings.storage.saves')">

@@ -46,6 +46,8 @@ const MEANING = {
     likeDefaults(v, HARMONY_DEFAULTS);
     const unknown = (v.kinds || []).find((k) => !SCHEME_KINDS.includes(k));
     if (unknown) throw new TypeError(`"${unknown}" isn't a scheme kind (${SCHEME_KINDS.join(", ")})`);
+    // no kind at all and every scheme came back empty, silently (the nineteenth review's fuzz)
+    if (Array.isArray(v.kinds) && !v.kinds.length) throw new TypeError(`name at least one scheme kind (${SCHEME_KINDS.join(", ")})`);
   },
   "aiphoto.compose": (v) => likeDefaults(v, DEFAULT_COMPOSE),
   "paints.colorOrder": (v) => {

@@ -99,8 +99,7 @@
     },
     "appearanceHint": "How the app looks — applied at once and kept by the app.",
     "accentNote": "The default, 166°, is green.",
-    "backupsHint": "A backup holds everything the app keeps: your houses with their photos and designs, the paint colors, your settings and your AI setup. The downloaded engines and models aren't in it — they download again.",
-    "logsHint": "What the server and this window reported, newest last.",
+        "logsHint": "What the server and this window reported, newest last.",
     "storage": {
       "saves": "your houses and their photos",
       "houses": "Your houses' photos",
@@ -229,6 +228,7 @@
       "box": "Box",
       "boxHint": "Draw a box around something the selected part should take in — drag, or click one corner and then the other",
       "offWhileFinding": "Off while the parts are being found — their new outlines replace these when it's done",
+      "needsFinder": "Finding the parts needs the part finder: install it on the Parts tab.",
       "offNoFinder": "Off until the part finder is installed — it outlines what is inside the box (Install, on the Parts tab)",
       "size": "Brush size",
       "outlines": "Outlines",
@@ -510,7 +510,7 @@
       "task": "Installing the AI photo",
       "slow": "This computer has no graphics card the AI photo can use: one AI photo would take about ten minutes.",
       "slowGpu": "The AI photo is quickest on an NVIDIA graphics card (about 20 seconds); on this computer's graphics card one AI photo may take several minutes.",
-      "lowMemory": "This computer has {have} GB of memory, and one AI photo takes about {need} GB: here it may be very slow, or not finish.",
+      "lowMemory": "This computer has {have}\u00a0GB of memory, and one AI photo takes about {need}\u00a0GB: here it may be very slow, or not finish.",
       "filesGone": "Files of the AI photo's engine are gone ({files}) — an antivirus may have removed them. Install puts them back.",
       "unavailable": "The AI photo's engine has no build for this computer's system and processor, so it can't be installed here.",
       "needs": {
@@ -562,6 +562,9 @@
     "leftOut": "{n} {brand} colors came in; some of the file was left out",
     "leftOutMore": "{shown}; and {more} more",
     "fileOnly": "From its palette file"
+  },
+  "windows": {
+    "replaced": "The data was replaced in another window (a backup restored, or a reset) — this window shows it as it is now."
   },
   "jobs": {
     "failed": "The work stopped with an error.",

@@ -16,17 +16,18 @@
 
 import { LLM_TABLES } from "@delebash/core/llm";
 import * as llmDb from "@delebash/core/llm/db";
-import { makeDataRouter } from "@delebash/core/platform";
+import { makeDataRouter, schemaProblem } from "@delebash/core/platform";
 import { sortedTables } from "@delebash/core/platform/data_api";
 import { getLogger } from "@delebash/core/platform/log";
 import * as lifecycle from "@delebash/core/runner/lifecycle";
 import { getDb, getState } from "./app_state.js";
 import { dbPath, recreateAppTables } from "./database/index.js";
 import { APP_TABLES } from "./database/schema.js";
-import { seedWorkspace } from "./database/seed.js";
+import { SETTING_DEFAULTS, seedWorkspace } from "./database/seed.js";
 import { deleteSetting, getSetting, setSetting } from "./database/settings.js";
 import { renewEpoch } from "./changes.js";
-import { housesRoot, removeAllHouseDirs } from "./files.js";
+import { HOUSE_ID, housesRoot, removeAllHouseDirs } from "./files.js";
+import { SETTINGS } from "./schemas/settings.js";
 
 const log = getLogger("just_house_paint.data");
 
@@ -45,6 +46,43 @@ export const keepAuth = {
   // and a backup carries none: a file shared or left somewhere never hands out a way in
   scrubBackup: (h) => deleteSetting(h, "auth"),
 };
+
+/** A backup's own rules, on its unpacked database before anything is replaced (the kit's checkBackup — the
+ *  nineteenth review: a restored house id that isn't a safe folder name made the next start fail): every house's id
+ *  is one the app makes (HOUSE_ID). A throw is the restore's refusal, in these words. (Its settings never refuse it —
+ *  an older version's backup restores: resetUnfitSettings.) */
+export function checkBackup(h) {
+  const has = !!h.one("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'houses'");
+  if (!has) return;
+  for (const { id } of h.all("SELECT id FROM houses")) {
+    if (typeof id !== "string" || !HOUSE_ID.test(id)) {
+      throw new Error(`its houses include one whose id isn't a safe folder name (${JSON.stringify(String(id)).slice(0, 60)}) — this backup can't be restored`);
+    }
+  }
+}
+
+/** The restored settings rows that don't fit this version's schemas (schemas/settings.js) — a value out of today's
+ *  range, of another shape, unreadable — set back to their defaults (the seed's), inside the restore's transaction;
+ *  returns their keys, which the restore's answer names (`resetSettings`) so the screen can say so. A backup from an
+ *  older version always restores (the help: it gets this one's settings at once). */
+export function resetUnfitSettings(h) {
+  const reset = [];
+  for (const { key, value } of h.all("SELECT key, value FROM settings")) {
+    if (!Object.hasOwn(SETTINGS, key)) continue; // the preferences, the tokens, the kit's own rows
+    let v;
+    let fits = true;
+    try {
+      v = JSON.parse(value);
+    } catch {
+      fits = false;
+    }
+    if (fits && !schemaProblem(SETTINGS[key], v)) continue;
+    if (Object.hasOwn(SETTING_DEFAULTS, key)) setSetting(h, key, SETTING_DEFAULTS[key]);
+    else deleteSetting(h, key); // (every setting is seeded; the seed after the restore fills a missing one)
+    reset.push(key);
+  }
+  return reset;
+}
 
 /** Cancel the jobs and wait for them to end, let the part finder and the local AI model go — best effort by design:
  * a reset or restore never fails on its teardown. Before a restore replaces anything (beforeReplace) and after it
@@ -100,10 +138,13 @@ export const router = (dataDir, { gate } = {}) =>
     runReset: resetWorkspace,
     assetDirs: () => ({ houses: housesRoot(dataDir) }),
     ...keepAuth,
-    // and the data's new epoch, in the same transaction as the restored rows (the backup's own row replaced)
+    checkBackup,
+    // and the data's new epoch, in the same transaction as the restored rows (the backup's own row replaced); the
+    // settings an older backup holds that don't fit this version set back to their defaults, named in the answer
     afterCopy: (h) => {
       keepAuth.afterCopy(h);
       renewEpoch(h);
+      return { resetSettings: resetUnfitSettings(h) };
     },
     // a backup from an older version: its settings get what this one's seed adds and upgrades (as at start)
     afterTables: () => seedWorkspace(getDb()),

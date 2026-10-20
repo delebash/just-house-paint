@@ -38,7 +38,7 @@ export const SETTINGS = {
   "paints.maxImportMegabytes": T.Integer({ minimum: 1, maximum: 200 }),
   // Which brands' colors the app loads by itself ({ brand: true | false }; a brand missing counts as
   // on) — on for every brand out of the box (the user's decision, 2026-10-18).
-  "paints.autoLoad": T.Record(T.String({ maxLength: 40 }), T.Boolean()),
+  "paints.autoLoad": T.Record(T.String({ maxLength: 40 }), T.Boolean(), { maxProperties: 50 }),
   // Ordering the colors by color (paints/order.js): CIE chroma under `grayChroma` is a near-gray, the
   // rest go in bands of `bandDegrees` of hue from the first family's start; the Color family filter's
   // families are hue ranges, each from its `from` to the next one's.
@@ -65,14 +65,15 @@ export const SETTINGS = {
   "schemes.roleParts": strictObject({ body: T.Array(PartKey), trim: T.Array(PartKey), accent: T.Array(PartKey) }),
   "schemes.harmony": T.Record(
     T.String({ maxLength: 40 }),
-    T.Union([T.Number(), T.Boolean(), T.String({ maxLength: 40 }), T.Array(T.String({ maxLength: 40 })), T.Array(T.Number())]),
+    T.Union([T.Number(), T.Boolean(), T.String({ maxLength: 40 }), T.Array(T.String({ maxLength: 40 }), { maxItems: 40 }), T.Array(T.Number(), { maxItems: 40 })]),
+    { maxProperties: 40 },
   ),
   // The AI photo: the model's working size (pixels), its prompt templates, how it is put back.
   "aiphoto.workingPixels": T.Integer({ minimum: 256 * 256, maximum: 1600 * 1200 }),
   // Other programs holding more graphics memory than this (MB) are named under the AI photo (0 = never).
   "aiphoto.sharedGpuNoteMb": T.Integer({ minimum: 0, maximum: 1024 * 1024 }),
-  "aiphoto.templates": T.Record(T.String({ maxLength: 40 }), T.String({ maxLength: 2000 })),
-  "aiphoto.compose": T.Record(T.String({ maxLength: 40 }), T.Union([T.Number(), T.Boolean(), T.Array(T.Number())])),
+  "aiphoto.templates": T.Record(T.String({ maxLength: 40 }), T.String({ maxLength: 2000 }), { maxProperties: 40 }),
+  "aiphoto.compose": T.Record(T.String({ maxLength: 40 }), T.Union([T.Number(), T.Boolean(), T.Array(T.Number(), { maxItems: 40 })]), { maxProperties: 40 }),
 };
 
 export const SETTING_KEYS = Object.keys(SETTINGS);

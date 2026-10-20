@@ -18,6 +18,12 @@ const log = getLogger("just_house_paint.files");
 
 const SAFE = /^[A-Za-z0-9_-]+$/;
 
+/** A name that is safe as a folder of its own (houseDir takes it). */
+export const isSafeName = (s) => typeof s === "string" && SAFE.test(s);
+/** A house's id as the app makes and takes one (schemas/houses.js's Id: 1 to 64 of these characters) — what a restored
+ *  backup's houses must hold (data_admin.js checkBackup). */
+export const HOUSE_ID = /^[A-Za-z0-9_-]{1,64}$/;
+
 /** A path component that came from a request — refuse anything that could leave the folder. */
 export function safeName(s) {
   if (!SAFE.test(String(s))) throw new Error(`unsafe file name: ${JSON.stringify(s)}`);

@@ -123,6 +123,8 @@ export function maskToPng(mask, width, height) {
 
 /** A PNG (any channels) → an 8-bit mask at `width` × `height` (resized when it differs). */
 export async function pngToMask(png, width, height) {
+  // a PNG, as the route says — sharp reads a JPEG or an SVG sent as image/png too (the nineteenth review's fuzz)
+  if ((await sharp(png).metadata()).format !== "png") throw new TypeError("not a PNG");
   const { data, info } = await sharp(png).resize(width, height, { fit: "fill" }).extractChannel(0).raw().toBuffer({ resolveWithObject: true });
   if (info.width !== width || info.height !== height) throw new Error("mask size mismatch");
   return new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
