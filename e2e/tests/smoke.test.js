@@ -139,6 +139,37 @@ test("a photo is added through the window, kept by the server, the house opens, 
   assert.deepEqual((await page.locator(".houses__name").allTextContents()).map((s) => s.trim()), ["second", "my house"]);
 });
 
+// Another window's change shows here by itself (2026-10-20, the eleventh review): this window sends its id with every
+// request (the kit's transport, X-Client-Id — across origins from app://, so through CORS), the server counts the
+// others' changes, and the open page reads again — here a house added "in another window" (the harness, no id)
+test("a house added in another window shows on Your houses by itself", async () => {
+  await d.navigate("#/");
+  await waitFor(async () => (await page.locator(".houses__name").count()) === 2, { what: "two house cards" });
+  const form = new FormData();
+  form.append("file", new Blob([PHOTO], { type: "image/png" }), "from-the-other-window.png");
+  await d.api("/houses", { method: "POST", body: form });
+  await waitFor(async () => (await page.locator(".houses__name").count()) === 3, { what: "the other window's house", timeout: 15_000 });
+  assert.equal((await page.locator(".houses__name").first().textContent()).trim(), "from the other window");
+});
+
+// A backup goes from the server straight to the chosen file — the shell's saveFromUrl, wired in the boot file
+// (2026-10-20: gigabytes the window never holds); the Save dialog stubbed in main
+test("Export backup streams the server's zip to the file the dialog names", async () => {
+  const out = path.join(os.tmpdir(), `just-house-paint-e2e-${Date.now()}.zip`);
+  await d.app.evaluate(({ dialog }, file) => {
+    dialog.showSaveDialog = async () => ({ canceled: false, filePath: file });
+  }, out);
+  await d.navigate("#/settings/backups");
+  await page.locator("button", { hasText: "Export backup" }).click();
+  try {
+    await waitFor(async () => existsSync(out) && statSync(out).size > 100, { what: "the saved backup", timeout: 30_000 });
+    assert.equal(readFileSync(out).subarray(0, 2).toString(), "PK", "a zip");
+    assert.equal(existsSync(`${out}.part`), false, "no .part left");
+  } finally {
+    rmSync(out, { force: true });
+  }
+});
+
 // Save image paints in a module worker loaded from app:// (2026-10-20: the full-size paint left the main
 // thread) — the worker must load there and write a real JPEG where the Save dialog says (stubbed in main)
 test("Save image paints in its worker and writes the JPEG where the dialog says", async () => {

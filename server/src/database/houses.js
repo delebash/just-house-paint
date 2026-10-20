@@ -63,12 +63,25 @@ export function getHouse(h, id) {
   return one && { ...one, currentPaints: currentPaintsOf(h, id) };
 }
 
-/** Set the paint each part has now: `paints` ({ part: paintId }) replaces the house's whole map. */
+/** Set the paint each part has now: `paints` ({ part: paintId }) replaces the house's whole map (PUT). */
 export function setCurrentPaints(h, id, paints) {
   h.tx(() => {
     h.run("DELETE FROM current_paints WHERE house_id = ?", [id]);
     for (const [key, paintId] of Object.entries(paints)) {
       h.run("INSERT INTO current_paints (house_id, key, paint_id) VALUES (?, ?, ?)", [id, key, paintId]);
+    }
+    h.run("UPDATE houses SET updated_at = ? WHERE id = ?", [nowIso(), id]);
+  });
+  return getHouse(h, id);
+}
+
+/** The paint some parts have now changed (JSON Merge Patch, RFC 7396 — PATCH): `patch` ({ part: paintId | null })
+ *  sets those parts' (null: unknown again) and leaves the others — two windows each setting a part keep both. */
+export function patchCurrentPaints(h, id, patch) {
+  h.tx(() => {
+    for (const [key, paintId] of Object.entries(patch)) {
+      h.run("DELETE FROM current_paints WHERE house_id = ? AND key = ?", [id, key]);
+      if (paintId) h.run("INSERT INTO current_paints (house_id, key, paint_id) VALUES (?, ?, ?)", [id, key, paintId]);
     }
     h.run("UPDATE houses SET updated_at = ? WHERE id = ?", [nowIso(), id]);
   });
@@ -137,6 +150,16 @@ function writeColors(h, designId, colors) {
   }
 }
 
+/** Only the parts `patch` names (JSON Merge Patch, RFC 7396): a paint sets one, null takes its color off, the
+ *  others stay — two windows painting different parts of one design keep both (the eleventh review, 2026-10-20:
+ *  the whole map rewritten lost the first window's wall). */
+function mergeColors(h, designId, patch) {
+  for (const [partKey, paintId] of Object.entries(patch || {})) {
+    h.run("DELETE FROM design_colors WHERE design_id = ? AND part_key = ?", [designId, partKey]);
+    if (paintId) h.run("INSERT INTO design_colors (design_id, part_key, paint_id) VALUES (?, ?, ?)", [designId, partKey, paintId]);
+  }
+}
+
 /**
  * The designs whose colors name a paint of `brand` — with `missing`, only paints no longer stored (the
  * brand loaded again without them, or removed; the id stays, so the color comes back with the paint).
@@ -182,7 +205,7 @@ export function updateDesign(h, id, { name, colors }) {
   const now = nowIso();
   h.tx(() => {
     if (name !== undefined) h.run("UPDATE designs SET name = ? WHERE id = ?", [name, id]);
-    if (colors !== undefined) writeColors(h, id, colors);
+    if (colors !== undefined) mergeColors(h, id, colors);
     h.run("UPDATE designs SET updated_at = ? WHERE id = ?", [now, id]);
     h.run("UPDATE houses SET updated_at = ? WHERE id = ?", [now, current.houseId]);
   });

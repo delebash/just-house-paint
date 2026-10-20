@@ -261,7 +261,7 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         check passes a blank page and could serve a stale dist/spa from the checkout; "window loaded" when a page
         inside the layout fails; Windows never compares its data folders; saveFromUrl and the backup wiring
         untested; the backup's "never whole" pinned only by Content-Length.
-        The screens (an agent's, 173 captures of the built app — being fixed by an agent — at 960×700, 1366×768, 1920×1032, light and dark, faked
+        The screens (an agent's, 173 captures of the built app — FIXED by an agent, measured again on a rebuilt app at 960/1366/1920 light and dark (house cards on the family's tokens; the tooltip's pending timer cleared, tested; Parts' swatch and ΔE under the paint name, 210–290 px; one .swatch rule, "Remove the color"; the house page a grid below 1024 px, no page scroll at 960×700, the panel's tabs one row with arrows; the kit's tab strips one row with arrows, Logs' selects fit, AI rows 880 px, Quick Setup left; EmptyState fit-content; the schemes' rows say why — a gray base, chroma under achromaticChroma, is not a bug; the no-color swatch a red diagonal named "No color"; off toggles 5.1–6.3:1; Paint colors' Import/Remove in the row's menu; "Reset Just House Paint"; About's link the accent ink; the boot plate a house, light and dark; the focus ring skips contenteditable) — at 960×700, 1366×768, 1920×1032, light and dark, faked
         parts and paints): Your houses' cards white in dark (names unreadable — a raw q-card); the Help button's
         tooltip stuck on screen after Help closes, one more per close (the kit's tooltip.js show() leaves a pending
         timer); the Parts tab squeezes the paint name to ~45–110 px (the side section ~190 px); the Colors tab's "On
@@ -287,7 +287,7 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         place on each platform, the updater's feed, the first start after) and several clients on one server at once
         (lost updates, deletes under a running job, a restore while another client saves) — two agents, read-only.
         Several clients (an agent's, two windows by fetch on the real server and on createApp with a fake finder;
-        being fixed): nothing checks versions and an open page never reads again (HousePage load() only). Saving a
+        all FIXED as decided below — kit 062d3ab, the app's server and page with tests; RESEARCH §13): nothing checks versions and an open page never reads again (HousePage load() only). Saving a
         design sends the whole colors map and the server rewrites it — A's body lost to B's trim save; "paint it has
         now" the same; a stroke, Undo or Redo PUTs the page's whole stale outline — another window's Box undone,
         60000 px in two parts at once; a Find started elsewhere is unseen (the brush stays on, the stroke made during
@@ -304,7 +304,8 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         during a stroke or a job, reset during a stroke or upload, the GPU one job at a time and re-attach, the
         single-step writes, the General form's changed-keys-only save, engine remove vs Box; no crash.
         The 0.1.2 user updating (an agent's, a real 0.1.2 server on a temp folder with houses, parts, designs, a
-        brand, a token and backups, then main on the same folder): Mac users of 0.1.2 lose their houses on update —
+        brand, a token and backups, then main on the same folder; all FIXED as decided below — What's new's first
+        two points, the shell's clamp, the draft release): Mac users of 0.1.2 lose their houses on update —
         0.1.2 kept data in Just House Paint.app/Contents/MacOS/data, a Mac update replaces the .app by hand first, and
         0.1.3's adopt looks only inside the new app (from code; What's new says the data "stays outside the app");
         a proxy or another name for this computer now gets 403 host-not-allowed (What's new says only "safer");

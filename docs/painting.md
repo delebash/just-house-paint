@@ -1,12 +1,15 @@
 # Painting your house
 
 Select a part on the **Parts** tab (or click it on the photo with **Select**), then pick a color on
-the **Colors** tab. The paint shows at once. **No color** beside the chosen paint takes it off the
-part; **Show more** under the colors loads the brand's next ones.
+the **Colors** tab. The paint shows at once. **Remove the color** under the chosen paint takes it off
+the part; **Show more** under the colors loads the brand's next ones.
 
-The **Parts** tab lists the parts to paint, each with its share of the house and its paint (**edited**
-once you changed its outline by hand); the roof, windows, stone, brick and lamps are listed under
-**Staying as they are**.
+The **Parts** tab lists the parts to paint, each with its paint's swatch and name, and under it the part's
+color as photographed, its share of the house, how close the paint on screen is (**ΔE**) and **edited**
+once you changed its outline by hand. A part with no color has an empty swatch crossed by a red line.
+The roof, windows, stone, brick and lamps are listed under **Staying as they are**. In a narrow window
+the side panel's tabs stay on one row: the arrows beside them (or the arrow keys on a tab) reach the
+rest, and the photo's tools sit across the top of the page.
 
 ## How the color is shown
 

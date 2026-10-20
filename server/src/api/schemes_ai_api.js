@@ -40,8 +40,19 @@ export function router(ctx = getState()) {
 
   app.post("/v1/schemes/ai", input({ body: AiSchemesIn }), async (c) => {
     const { houseId, brand, mood, count } = c.req.valid("json");
-    // a local AI model would load on the graphics card beside the running one (a cloud one doesn't wait)
-    if (ctx.jobs && ctx.usesLocalAi?.(SCHEMES_FEATURE)) assertGpuFree(ctx.jobs, "local-ai");
+    // a local AI model would load on the graphics card beside the running one (a cloud one doesn't wait); while
+    // it runs, the AI photo (which stops the local model) waits for it
+    const local = ctx.jobs && ctx.usesLocalAi?.(SCHEMES_FEATURE);
+    if (local) assertGpuFree(ctx.jobs, "local-ai");
+    const release = local ? ctx.jobs.hold("local-ai", "AI color schemes") : () => {};
+    try {
+      return await suggest(c, { houseId, brand, mood, count });
+    } finally {
+      release();
+    }
+  });
+
+  const suggest = async (c, { houseId, brand, mood, count }) => {
     const house = getHouse(ctx.db, houseId);
     if (!house) throw houseNotFound(houseId);
     if (!BRANDS[brand]) throw notFound(`no brand ${brand}`);
@@ -58,7 +69,7 @@ export function router(ctx = getState()) {
       if (/AI's answer/.test(String(e?.message))) throw new ApiError(502, "ai-answer-unusable", "The AI's answer couldn't be used", e.message);
       throw e;
     }
-  });
+  };
 
 
   return app;

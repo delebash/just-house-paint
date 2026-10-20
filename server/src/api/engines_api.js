@@ -7,7 +7,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { assertGpuFree } from "../jobs.js";
 import { Hono, input } from "@delebash/core/platform";
 import { ApiError, notFound } from "@delebash/core/platform/errors";
-import { houseNotFound } from "./refusals.js";
+import { designNotFound, houseNotFound } from "./refusals.js";
 import { addRender, deleteRender, getDesign, getHouse, getRender, listParts, listRenders } from "../database/houses.js";
 import { paintsById } from "../database/paints.js";
 import { removeHouseFile, renderPath } from "../files.js";
@@ -93,18 +93,27 @@ export function router(ctx = getState()) {
     let chosen = colors || {};
     if (designId) {
       const d = getDesign(ctx.db, designId);
-      if (!d || d.houseId !== house.id) throw notFound(`no design ${designId} for this house`);
+      if (!d || d.houseId !== house.id) throw designNotFound(designId);
       chosen = d.colors;
     }
     const paintable = new Set(listParts(ctx.db, house.id).filter((p) => p.paintable && p.area > 0).map((p) => p.key));
     // each part's paint now, where its owner said: the lock paints in the light it gives
     const now = house.currentPaints || {};
     const paints = paintsById(ctx.db, [...Object.values(chosen), ...Object.values(now)].filter(Boolean));
+    // a paint no longer loaded (its brand removed, or loaded again without it — in another window, maybe) is named,
+    // never left out of the picture unsaid
+    const gone = Object.entries(chosen).filter(([key, id]) => id && paintable.has(key) && !paints[id]);
+    if (gone.length) {
+      const parts = gone.map(([key]) => ctx.partLabel?.(key) ?? key);
+      throw new ApiError(422, "paints-gone", "Some colors aren't loaded any more", `the paint of the ${parts.join(", ")} — load its brand again, or pick another color`, {
+        parts: gone.map(([key]) => key),
+      });
+    }
     const surfaces = Object.entries(chosen)
       .filter(([key, id]) => id && paintable.has(key) && paints[id])
       .map(([key, id]) => ({ key, hex: paints[id].hex, name: paints[id].name, currentHex: paints[now[key]]?.hex ?? null }));
     assertGpuFree(ctx.jobs, "aiphoto", house.id);
-    const job = ctx.jobs.start({ kind: "aiphoto", key: house.id, label: house.name, failTitle: "The AI photo didn't finish" }, async ({ signal, progress }) => {
+    const job = ctx.jobs.start({ kind: "aiphoto", key: house.id, label: house.name, failTitle: "The AI photo didn't finish", clientId: c.req.header("x-client-id") || null }, async ({ signal, progress }) => {
       const renderId = crypto.randomUUID();
       // what else holds the graphics card, measured beside the render (about a second on Windows)
       const shared = (ctx.sharedGpu?.() ?? Promise.resolve(null)).catch(() => null);

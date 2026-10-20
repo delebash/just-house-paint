@@ -26,6 +26,7 @@ import { AiSchemesIn } from "just-house-paint-server/schemas/paints.js";
 import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
+import { schemeReasons } from "../services/schemeNotes.js";
 import { useHouseStore } from "../stores/house.js";
 import { usePaintsStore } from "../stores/paints.js";
 import { useSettingsStore } from "../stores/settings.js";
@@ -114,6 +115,14 @@ function apply(scheme) {
   house.applyScheme(scheme, settings.values["schemes.roleParts"]);
 }
 
+// a role's swatch: its paint, or the "none" swatch (app.scss) when the scheme has no paint for it
+function roleSwatch(s, role) {
+  const paint = s.roles?.[role]?.paint;
+  return paint ? { style: { background: paint.hex }, title: paint.displayName } : { class: "swatch--none" };
+}
+// why a scheme can't be applied, in words (services/schemeNotes.js) — never a silent disabled Apply
+const why = (s) => schemeReasons(s).map((key) => t(key)).join(" ");
+
 const kindLabel = (s) => (s.kind === "ai" ? s.name : s.kind === "coordinating" ? t("schemes.kinds.coordinating") : t(`schemes.kinds.${s.kind}`));
 </script>
 
@@ -138,14 +147,19 @@ const kindLabel = (s) => (s.kind === "ai" ? s.name : s.kind === "coordinating" ?
 
       <ul class="schemes__list">
         <li v-for="(s, i) in [...coordinating, ...harmony]" :key="`h${i}`" class="scheme">
-          <div class="scheme__colors">
-            <span v-for="role in ROLES" :key="role" class="scheme__color" :style="{ background: s.roles?.[role]?.paint?.hex || 'transparent' }" :title="s.roles?.[role]?.paint?.displayName" />
+          <!-- a role with no paint shows the "none" swatch; why it has none is said under the name -->
+          <div class="scheme__colors" aria-hidden="true">
+            <span v-for="role in ROLES" :key="role" class="scheme__color" v-bind="roleSwatch(s, role)" />
           </div>
           <div class="scheme__text">
             <strong>{{ kindLabel(s) }}</strong>
             <span class="muted">{{ ROLES.map((r) => s.roles?.[r]?.paint?.displayName).filter(Boolean).join(" · ") }}</span>
+            <span v-if="!s.complete" :id="`schemes-why-h${i}`" class="scheme__why">{{ why(s) }}</span>
           </div>
-          <UiButton intent="secondary" size="small" :disabled="!s.complete" :label="t('schemes.apply')" @click="apply(s)" />
+          <UiButton
+            intent="secondary" size="small" :disabled="!s.complete" :aria-describedby="s.complete ? undefined : `schemes-why-h${i}`"
+            :label="t('schemes.apply')" @click="apply(s)"
+          />
         </li>
       </ul>
 
@@ -161,16 +175,20 @@ const kindLabel = (s) => (s.kind === "ai" ? s.name : s.kind === "coordinating" ?
       <p v-if="!house.parts.length" class="muted">{{ t("schemes.ai.needParts") }}</p>
       <ul class="schemes__list">
         <li v-for="(s, i) in ai" :key="`a${i}`" class="scheme">
-          <div class="scheme__colors">
-            <span v-for="role in ROLES" :key="role" class="scheme__color" :style="{ background: s.roles?.[role]?.paint?.hex || 'transparent' }" :title="s.roles?.[role]?.paint?.displayName" />
+          <div class="scheme__colors" aria-hidden="true">
+            <span v-for="role in ROLES" :key="role" class="scheme__color" v-bind="roleSwatch(s, role)" />
           </div>
           <div class="scheme__text">
             <strong>{{ s.name }}</strong>
             <span>{{ s.why }}</span>
             <span class="muted">{{ ROLES.map((r) => s.roles?.[r]?.paint?.displayName).filter(Boolean).join(" · ") }}</span>
+            <span v-if="!s.complete" :id="`schemes-why-a${i}`" class="scheme__why">{{ why(s) }}</span>
           </div>
           <UiTag intent="accent2" :value="t('schemes.ai.tag')" />
-          <UiButton intent="secondary" size="small" :disabled="!s.complete" :label="t('schemes.apply')" @click="apply(s)" />
+          <UiButton
+            intent="secondary" size="small" :disabled="!s.complete" :aria-describedby="s.complete ? undefined : `schemes-why-a${i}`"
+            :label="t('schemes.apply')" @click="apply(s)"
+          />
         </li>
       </ul>
     </template>
@@ -226,5 +244,8 @@ const kindLabel = (s) => (s.kind === "ai" ? s.name : s.kind === "coordinating" ?
   flex: 1 1 auto;
   min-width: 0;
   font-size: var(--fs-small);
+}
+.scheme__why {
+  color: var(--ink-2);
 }
 </style>

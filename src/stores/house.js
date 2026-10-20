@@ -2,7 +2,12 @@
 // The open house — what the house page shows and edits: its parts (and their masks), the colors on
 // the screen, its saved designs and its AI photos. The server owns all of it (family rule 2); the
 // colors on screen are a draft until saved as a design.
-import { del, get, patch as patchJson, post, put, request } from "@delebash/ui";
+//
+// Other windows change the same house (services/otherWindows.js): a design is saved as the parts this
+// window changed (JSON Merge Patch — another window's parts stay), and an outline write carries the
+// outlines' version the page holds (If-Match, the server's outlines.js) — one made on outlines another
+// window changed since is refused (412) and the page reads them again.
+import { del, get, patch as patchJson, post, request } from "@delebash/ui";
 import { defineStore } from "pinia";
 import { runServerJob } from "../services/jobs.js";
 
@@ -40,6 +45,16 @@ export function unpaintedTrim(colors, partKeys, roleParts) {
   return parts.length ? { parts, paintId } : null;
 }
 
+/** What turns colors `from` into `to`, as a JSON Merge Patch (RFC 7396): the parts that differ, null for a
+ *  part `to` leaves unpainted. */
+export function colorsPatch(from, to) {
+  const out = {};
+  for (const k of new Set([...Object.keys(from || {}), ...Object.keys(to || {})])) {
+    if ((from?.[k] || null) !== (to?.[k] || null)) out[k] = to?.[k] || null;
+  }
+  return out;
+}
+
 const sameColors = (a, b) => {
   const ka = Object.keys(a).filter((k) => a[k]);
   const kb = Object.keys(b).filter((k) => b[k]);
@@ -60,6 +75,10 @@ export const useHouseStore = defineStore("house", {
     selectedPart: null,
     // bumps when a part's mask changes on the server (the mask URL's cache-buster)
     maskVersions: {},
+    // the version of the outlines the page holds (the server's ETag): an outline write sends it (If-Match).
+    // The page takes a new one only once it has the outlines that go with it (useOutlines), or from the
+    // answer to its own write
+    outlinesVersion: null,
     // a color read off the photo (the eyedropper, a part's color as photographed) for the Colors tab:
     // { hex, at } until the tab takes it
     pickedColor: null,
@@ -93,11 +112,42 @@ export const useHouseStore = defineStore("house", {
       try {
         const [house, parts, designs, renders] = await Promise.all([get(hp(id)), get(hp(id, "/parts")), get(hp(id, "/designs")), get(hp(id, "/renders"))]);
         if (seq !== openSeq) return;
-        Object.assign(this, { house, parts, designs, renders, colors: {}, designId: null, maskVersions: {}, pickedColor: null, trimOffer: null });
+        Object.assign(this, { house, parts, designs, renders, colors: {}, designId: null, maskVersions: {}, pickedColor: null, trimOffer: null, outlinesVersion: null });
         this.selectedPart = this.paintableParts[0]?.key ?? null;
       } finally {
         this.loading = false;
       }
+    },
+    /** What the server has of the open house now — another window changed it: the house, its parts, designs
+     *  and AI photos read again; the colors on screen stay (this window's draft), the open design's id goes if
+     *  it was deleted. `outlinesChanged`: the outlines aren't the ones the page holds (it reads them again,
+     *  then useOutlines). */
+    async refresh() {
+      const id = this.house.id;
+      const [house, parts, designs, renders] = await Promise.all([get(hp(id)), get(hp(id, "/parts")), get(hp(id, "/designs")), get(hp(id, "/renders"))]);
+      if (this.house?.id !== id) return { outlinesChanged: false };
+      const outlinesChanged = house.outlines !== this.outlinesVersion;
+      Object.assign(this, { house, parts, designs, renders });
+      if (outlinesChanged) this.bumpMasks(parts.map((p) => p.key));
+      if (this.designId && !designs.some((d) => d.id === this.designId)) this.designId = null;
+      if (!parts.some((p) => p.key === this.selectedPart)) this.selectedPart = this.paintableParts[0]?.key ?? null;
+      return { outlinesChanged };
+    },
+    /** The house's designs read again (one deleted in another window). */
+    async refreshDesigns() {
+      const id = this.house.id;
+      const designs = await get(hp(id, "/designs"));
+      if (this.house?.id !== id) return;
+      this.designs = designs;
+      if (this.designId && !designs.some((d) => d.id === this.designId)) this.designId = null;
+    },
+    /** The page has the outlines of version `v` (read after it): its writes send it from now on. */
+    useOutlines(v) {
+      this.outlinesVersion = v;
+    },
+    /** The If-Match an outline write sends (none until the page holds outlines). */
+    ifMatch() {
+      return this.outlinesVersion ? { "If-Match": this.outlinesVersion } : {};
     },
     bumpMasks(keys) {
       const next = { ...this.maskVersions };
@@ -115,7 +165,8 @@ export const useHouseStore = defineStore("house", {
      *  `job`: a run already going (runningJobs) to follow instead of starting one. */
     async findParts(label, describe, { keepEdited = false, job = null } = {}) {
       const id = this.house.id;
-      const start = job ? async () => job : () => post(hp(id, "/find-parts"), { keepEdited });
+      // keeping the hand edits was asked from the parts this page holds: refused if another window changed them
+      const start = job ? async () => job : () => post(hp(id, "/find-parts"), { keepEdited }, { headers: this.ifMatch() });
       await runServerJob({ start, feature: "parts.find", label, meta: { houseId: id }, describe });
       // another house opened meanwhile: this one's parts are on the server, read when it opens again
       if (this.house?.id !== id) return;
@@ -129,20 +180,25 @@ export const useHouseStore = defineStore("house", {
     /** What is inside a box (display pixels) joins the part (`add`) or leaves it (`remove`). */
     async box(key, box, mode = "add") {
       const id = this.house.id;
-      const r = await post(hp(id, `/parts/${encodeURIComponent(key)}/box`), { ...box, mode });
+      const r = await post(hp(id, `/parts/${encodeURIComponent(key)}/box`), { ...box, mode }, { headers: this.ifMatch() });
       if (this.house?.id !== id) return [];
       this.parts = r.parts;
       this.bumpMasks(r.changed);
+      // the page holds the box's result once it has read the changed outlines — it was current before (If-Match)
+      this.outlinesVersion = r.outlines;
       return r.changed;
     },
     /** The brush's result for one part: a PNG Blob at the display size, saved to `houseId` — the house
      *  it was drawn on (a save can run after the page left it). */
     async saveMask(key, pngBlob, houseId = this.house.id) {
       // raw PNG bytes (the kit's put() would send JSON)
-      const part = await request(hp(houseId, `/parts/${encodeURIComponent(key)}/mask`), { method: "PUT", headers: { "Content-Type": "image/png" }, body: pngBlob });
+      const headers = { "Content-Type": "image/png", ...(this.house?.id === houseId ? this.ifMatch() : {}) };
+      const { outlines, ...part } = await request(hp(houseId, `/parts/${encodeURIComponent(key)}/mask`), { method: "PUT", headers, body: pngBlob });
       if (this.house?.id !== houseId) return part;
       this.parts = this.parts.map((p) => (p.key === key ? part : p));
       this.bumpMasks([key]);
+      // this window's own stroke on the outlines it held: the page holds the new version
+      this.outlinesVersion = outlines;
       return part;
     },
     async addPart(key, paintable = true) {
@@ -155,9 +211,9 @@ export const useHouseStore = defineStore("house", {
      *  server with the house (finding the parts again keeps it). */
     async setCurrentPaint(key, paintId) {
       const id = this.house.id;
-      const { [key]: _, ...rest } = this.house.currentPaints || {};
-      const house = await put(hp(id, "/current-paints"), paintId ? { ...rest, [key]: paintId } : rest);
-      if (this.house?.id === id) this.house = house;
+      // this part only (JSON Merge Patch): another window's paints-now stay
+      const house = await patchJson(hp(id, "/current-paints"), { [key]: paintId || null });
+      if (this.house?.id === id) this.house = { ...house, outlines: this.house.outlines };
     },
     /** The colors on screen replaced whole, and the design they belong to (an Undo, a Redo). */
     setColors(colors, designId = this.designId) {
@@ -217,9 +273,12 @@ export const useHouseStore = defineStore("house", {
       this.designId = d.id;
       return d;
     },
+    /** The open design saved: the parts changed on screen since it was read (JSON Merge Patch) — another
+     *  window's changes to its other parts stay, and come back here with the answer. */
     async saveDesign() {
-      const d = await patchJson(`/v1/designs/${encodeURIComponent(this.designId)}`, { colors: this.colors });
+      const d = await patchJson(`/v1/designs/${encodeURIComponent(this.designId)}`, { colors: colorsPatch(this.design?.colors, this.colors) });
       this.designs = this.designs.map((x) => (x.id === d.id ? d : x));
+      if (this.designId === d.id && !sameColors(this.colors, d.colors)) this.colors = { ...d.colors };
       return d;
     },
     async renameDesign(id, name) {

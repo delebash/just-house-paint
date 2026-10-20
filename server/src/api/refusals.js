@@ -6,3 +6,8 @@ import { ApiError } from "@delebash/core/platform/errors";
  *  page can tell its own house is gone (not a part or a file of it) and say so in place of a toast. */
 export const houseNotFound = (id) =>
   new ApiError(404, "house-not-found", "This house isn't here any more", "it was deleted — in another window, or by a reset", { houseId: String(id) });
+
+/** A design that isn't there — deleted in another window (or the house's backup restored): the page reads the
+ *  house's designs again. */
+export const designNotFound = (id) =>
+  new ApiError(404, "design-not-found", "This design isn't here any more", "it was deleted in another window — the house's designs are shown as they are now", { designId: String(id) });

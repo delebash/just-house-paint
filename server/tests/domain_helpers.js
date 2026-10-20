@@ -14,10 +14,13 @@ import { router as jobsRouter } from "../src/api/jobs_api.js";
 import { router as paintsRouter } from "../src/api/paints_api.js";
 import { router as partsRouter } from "../src/api/parts_api.js";
 import { router as schemesAiRouter } from "../src/api/schemes_ai_api.js";
+import { router as syncRouter } from "../src/api/sync_api.js";
 import { MIGRATIONS } from "../src/database/schema.js";
 import { SETTING_DEFAULTS } from "../src/database/seed.js";
 import { getSetting } from "../src/database/settings.js";
+import { ChangeCounter } from "../src/changes.js";
 import { JobRegistry } from "../src/jobs.js";
+import { Outlines } from "../src/outlines.js";
 
 export const LIMITS = { displayMax: 256, thumbMax: 64, jpegQuality: 85, maxPhotoBytes: 2_000_000 };
 
@@ -86,8 +89,10 @@ export function makeServer({ fetch = async () => new Response("offline", { statu
   const dataDir = mkdtempSync(path.join(os.tmpdir(), "hp-test-"));
   const db = openDatabase(path.join(dataDir, "app.db"), { foreignKeys: true });
   migrate(db, MIGRATIONS);
-  const jobs = new JobRegistry();
-  const ctx = { db, dataDir, jobs, fetch, finder: fakeFinder, limits: () => LIMITS, maxDesignsPerHouse: () => 3, harmony: () => ({}), maxImportBytes: () => 5_000_000,
+  // as services.js and app.js wire them: a job's end is its window's change; each window's writes counted apart
+  const changes = new ChangeCounter();
+  const jobs = new JobRegistry({ onFinish: (job) => changes.note(job.clientId) });
+  const ctx = { db, dataDir, jobs, changes, outlines: new Outlines(), checkSeconds: () => 3, fetch, finder: fakeFinder, limits: () => LIMITS, maxDesignsPerHouse: () => 3, harmony: () => ({}), maxImportBytes: () => 5_000_000,
     // read as services.js reads it: the row, else the seed's value
     colorOrder: () => getSetting(db, "paints.colorOrder") ?? SETTING_DEFAULTS["paints.colorOrder"],
     partLabel: (k) => k.replace(/_/g, " "),
@@ -103,7 +108,8 @@ export function makeServer({ fetch = async () => new Response("offline", { statu
     throw new Error("no network in tests");
   };
   const app = createServer({ typeBase: "https://just-house-paint.local/errors/" });
-  for (const r of [housesRouter(ctx), designsRouter(ctx), jobsRouter(ctx), partsRouter(ctx), paintsRouter(ctx), schemesAiRouter(ctx), enginesRouter(ctx)]) app.route("/", r);
+  app.use("*", changes.middleware());
+  for (const r of [syncRouter(ctx), housesRouter(ctx), designsRouter(ctx), jobsRouter(ctx), partsRouter(ctx), paintsRouter(ctx), schemesAiRouter(ctx), enginesRouter(ctx)]) app.route("/", r);
   const close = () => {
     jobs.cancelAll();
     db.raw.close();

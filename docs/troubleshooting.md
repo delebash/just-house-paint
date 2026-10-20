@@ -24,9 +24,25 @@ an online provider and make it the default. The **AI tasks** panel keeps the fai
 its reason and **Retry**. "Find the parts first" means the house has no parts yet: the AI reads
 the house's colors from them.
 
-**"The graphics card is busy".** An AI photo is being drawn, or a house's parts are being found:
-the card does one at a time (an 8 GB card holds one of their models). Wait for it, or press
-**Cancel** on its progress.
+**"The graphics card is busy".** An AI photo is being drawn, a house's parts are being found, or AI
+color schemes are being made on this computer's AI model: the card does one at a time (an 8 GB card
+holds one of their models). Wait for it, or press **Cancel** on its progress.
+
+**"This house was changed in another window".** The app is open somewhere else too (another window, a
+browser, a phone) and its outlines changed there just before your stroke, Box or **Find the parts**. Yours
+wasn't saved; the house now shows them as they are — do it again. "The parts are being found" means
+another window is finding this house's parts: wait for it to finish.
+
+**"A file in the app's data is open in another program"** when restoring a backup. Nothing was changed.
+Close the program using the app's data folder — an image viewer, a backup or sync tool — and restore
+again.
+
+**"A backup is being restored" or "The app is being reset".** Another window is restoring or resetting
+the app; your change wasn't saved. When it is done every window shows the new data — then do it again.
+
+**"Some colors aren't loaded any more"** for the AI photo. A brand was removed, or loaded again without
+some colors, here or in another window. Load the brand again (**Paint colors**), or pick other colors for
+the parts it names.
 
 **A part is wrong, or a white board took the body's color.** The part finder missed it — thin
 trim and fascia boards are its weak spot. Select the part it belongs to and draw a **Box** around

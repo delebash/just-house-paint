@@ -1110,4 +1110,26 @@ at the app's display size, through the app's own code; scripts and overlays in s
   first page inside the layout; the data-folder comparison runs on every build runner; e2e saves a backup through
   the shell's stream. The other apps (the kit's RESEARCH §2): the token page made opt-in, the restore keeps only
   this computer's runner rows, the editor's ring, a dev checkout never a bundle, work beside the database, the
-  save's held rename. The screens: being fixed (TASKS).
+  save's held rename. The screens: fixed by an agent and measured again at 960/1366/1920, light and dark (the
+  kit's RESEARCH §2 "The screens at real sizes, fixed"; a gray base — OKLCH chroma under `achromaticChroma` 0.02 —
+  makes no harmony roles, by design: the row now says why).
+- **The eleventh review** (2026-10-20, two agents, read-only; the kit's RESEARCH §2 "Several windows on one
+  server…"). Several clients — measured by fetch against the real server and `createApp` with a fake finder: every
+  write replaced what the page had read (a design's whole colors map; the paints-now map; a whole outline from a
+  page opened earlier — another window's Box undone, 60000 px in two parts; a Find started elsewhere unseen; Box's
+  reads and save with a stroke landing between, 3 of 12 rounds lost at 2048×1536); a restore had no write gate and
+  stopped the jobs after; a held file left a half-restored `houses/`; a backup during a delete listed a house with
+  no files; a brand changed in one window kept its colors in the others. Fixed: `changes.js` counts each window's
+  writes apart (`X-Client-Id`) and `GET /v1/sync/rev` answers the others' count — the kit's `watchSync`; the house
+  page re-reads in place (`services/otherWindows.js`), a restore or a reset (a new `epoch`) reloads the window;
+  colors are JSON Merge Patch; `outlines.js` versions each house's outlines in memory (ETag / If-Match / 412) and
+  runs their writes one at a time (the kit's Mutex); the page's own writes go in one queue with the version the
+  last answered, and a refusal drops the waiting ones and re-reads; strokes and Box are refused while the parts are
+  found (409); the kit's gate, swap and snapshot. The 0.1.2 user updating — a real 0.1.2 server (the app at
+  v0.1.2, the kit at 8a9b3fb, the commit its release built with) on a temp folder, then main on it: no migration
+  since, every row kept, the two new settings added; the start-up tidy keeps all of a 0.1.2 folder; a 0.1.2 backup
+  restores; Windows' data folder and `installer.nsh` unchanged; the update feed's names unchanged. Not fixable in
+  code: a Mac 0.1.2 kept its data inside the app (`Contents/MacOS/data`, writable when dragged to /Applications)
+  and a Mac update replaces the app by hand first — What's new says what to do; a proxy or another name for this
+  computer now needs `JUST_HOUSE_PAINT_ALLOWED_HOSTS`. The 960 × 700 minimum was taller than a 1280 × 720 work
+  area (1080p at 150 %): the kit's shell clamps it to the screen.

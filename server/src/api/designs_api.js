@@ -2,8 +2,8 @@
 // /v1/houses/:id/designs and /v1/designs/:id — a house's saved color choices ({ part: paint }).
 
 import { Hono, input } from "@delebash/core/platform";
-import { ApiError, notFound, RequestValidationError } from "@delebash/core/platform/errors";
-import { houseNotFound } from "./refusals.js";
+import { ApiError, RequestValidationError } from "@delebash/core/platform/errors";
+import { designNotFound, houseNotFound } from "./refusals.js";
 
 // a name another design of the house has: the name field's own error (a 422 lands under its field, §15)
 const nameTaken = (name) => new RequestValidationError([{ loc: ["body", "name"], msg: `This house already has a design named “${name}”.`, type: "value_error.taken" }]);
@@ -19,7 +19,7 @@ export function router(ctx = getState()) {
   };
   const mustDesign = (id) => {
     const d = getDesign(ctx.db, id);
-    if (!d) throw notFound(`no design ${id}`);
+    if (!d) throw designNotFound(id);
     return d;
   };
   const sameName = (houseId, name, except = null) =>

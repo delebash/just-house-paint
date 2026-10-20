@@ -46,9 +46,12 @@ export const keepAuth = {
 };
 
 /** Cancel the jobs, let the part finder and the local AI model go — best effort by design: a
- * reset or restore never fails on its teardown. */
+ * reset or restore never fails on its teardown. Every window reads again after it, every outline version
+ * before it is stale (changes.js, outlines.js). */
 async function teardown() {
   const state = getState();
+  state.changes?.replaced();
+  state.outlines?.replaced();
   try {
     state.jobs?.cancelAll();
     await state.finder?.releaseGpu();
@@ -78,10 +81,12 @@ export async function resetWorkspace() {
   if (auth !== undefined) setSetting(db, "auth", auth);
   seedWorkspace(db);
   await removeAllHouseDirs(getState().dataDir);
+  // a window that read while it ran reads again
+  getState().changes?.replaced();
   log.info("workspace reset to its first-run state");
 }
 
-export const router = (dataDir) =>
+export const router = (dataDir, { gate } = {}) =>
   makeDataRouter({
     getDbPath: () => dbPath(dataDir),
     metadata: [APP_TABLES, LLM_TABLES],
@@ -90,5 +95,9 @@ export const router = (dataDir) =>
     ...keepAuth,
     // a backup from an older version: its settings get what this one's seed adds and upgrades (as at start)
     afterTables: () => seedWorkspace(getDb()),
+    // what would write into the data being replaced stops before it is (the gate is closed by then), and what was
+    // derived from the old data after
+    beforeReplace: teardown,
     onReplaced: teardown,
+    gate,
   });

@@ -34,6 +34,7 @@ export const SETTING_DEFAULTS = {
   // Save image and the AI photo work on the original at most this size (a 48 MP photo held 4 GB painting)
   "photos.fullSizeMaxMegapixels": 16,
   "designs.maxPerHouse": 30,
+  "windows.checkSeconds": 3,
   "paints.maxImportMegabytes": 30,
   // every brand's colors out of the box: each loads by itself until its owner turns it off
   "paints.autoLoad": Object.fromEntries(Object.keys(BRANDS).map((key) => [key, true])),

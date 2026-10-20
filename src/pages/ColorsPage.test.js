@@ -124,6 +124,14 @@ const click = async (el) => {
 const rowOf = (label) => [...document.querySelectorAll("tr.ui-table-row")].find((tr) => tr.querySelector("strong")?.textContent.trim() === label);
 const cells = (label) => [...rowOf(label).querySelectorAll("td")].map((td) => td.textContent.replace(/\s+/g, " ").trim());
 const buttonIn = (label, words) => [...rowOf(label).querySelectorAll("button")].find((b) => b.textContent.includes(words));
+/** A row's ⋯ menu (Import a file…, Remove — the row's main action stays beside it): its trigger,
+ *  and the item with `words` once it is open. */
+const moreIn = (label) => rowOf(label).querySelector(`[aria-label="More actions for ${label}"]`);
+const menuItem = (words) => [...document.querySelectorAll('[role="menuitem"]')].find((el) => el.textContent.includes(words));
+async function pickInMenu(label, words) {
+  await click(moreIn(label));
+  await click(menuItem(words));
+}
 const autoSwitch = (label) => document.querySelector(`[role="switch"][aria-label="Load the ${label} colors automatically"]`);
 /** A server job polls every 400 ms (services/jobs.js): let the clock run. */
 const settle = async () => {
@@ -159,9 +167,29 @@ test("the seven brands, each with its color count and where its colors came from
   expect(cells("Behr")[1]).toBe("None yet");
   expect(cells("Behr")[2]).toBe("");
   expect(buttonIn("Behr", "Load the colors")).toBeTruthy();
-  expect(buttonIn("Behr", "Remove")).toBeUndefined();
+  // the row's other actions in its menu: Import a file…, and Remove once it has colors
+  await click(moreIn("Behr"));
+  expect(menuItem("Import a file")).toBeTruthy();
+  expect(menuItem("Remove")).toBeUndefined();
+  document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+  await click(moreIn("Behr"));
+  await flushPromises();
   expect(buttonIn("Valspar", "Load again")).toBeTruthy();
-  expect(buttonIn("Valspar", "Remove")).toBeTruthy();
+  await click(moreIn("Valspar"));
+  expect(menuItem("Remove")).toBeTruthy();
+});
+
+test("a brand's row is one line: Load automatically under its name, its other actions in its menu", async () => {
+  server.brands[6].feed = false; // Dutch Boy: no list the app can fetch, only its palette file
+  await mountPage();
+  // no column of its own for the switch: brand, colors, from, actions
+  expect([...document.querySelectorAll("thead th")].map((th) => th.textContent.trim())).toEqual(["Brand", "Colors", "From", ""]);
+  const auto = rowOf("Behr").querySelector("td:first-child .paint-colors__auto");
+  expect(auto.textContent).toContain("Load automatically");
+  expect(auto.querySelector('[role="switch"]')).toBeTruthy();
+  // a brand loaded only from its palette file: Import a file… is its main action, and says so
+  expect(rowOf("Dutch Boy").querySelector("td:first-child").textContent).toContain("From its palette file");
+  expect(buttonIn("Dutch Boy", "Import a file")).toBeTruthy();
 });
 
 test("Load automatically is on for every brand the setting doesn't turn off; turning one off saves it and loads nothing", async () => {
@@ -207,7 +235,7 @@ test("a brand's load shows its progress above the table — not again in the glo
   expect(document.querySelector(".ai-task-stack")).toBeNull();
   // the brand's own buttons wait; another brand's don't
   expect(buttonIn("Behr", "Load the colors").disabled).toBe(true);
-  expect(buttonIn("Behr", "Import a file").disabled).toBe(true);
+  expect(moreIn("Behr").disabled).toBe(true);
   expect(buttonIn("Valspar", "Load again").disabled).toBe(false);
   server.hold = false;
   await settle();
@@ -215,7 +243,7 @@ test("a brand's load shows its progress above the table — not again in the glo
   expect(document.querySelector('.q-page .sts:not([data-status="done"])')).toBeNull();
   expect(document.querySelector(".ai-task-stack")).toBeNull();
   expect(buttonIn("Behr", "Load again").disabled).toBe(false);
-  expect(buttonIn("Behr", "Import a file").disabled).toBe(false);
+  expect(moreIn("Behr").disabled).toBe(false);
   expect(cells("Behr")[1]).toBe("1,212");
 }, 20000);
 
@@ -255,7 +283,7 @@ test("a new list without colors some designs use names those designs", async () 
 test("Remove names the designs that use the brand's colors — the first three, then how many more", async () => {
   server.uses = [design("A", "Main street"), design("B", "Main street"), design("C", "Oak lane"), design("D", "Oak lane")];
   await mountPage();
-  await click(buttonIn("Valspar", "Remove"));
+  await pickInMenu("Valspar", "Remove");
   expect(server.calls).toContain("GET /v1/brands/valspar/designs");
   expect(dialogState.options.message).toBe(
     "The 1,596 Valspar colors will be removed from this computer. “A” (Main street), “B” (Main street), “C” (Oak lane), and 1 more use them — those parts show no color until the colors are added again.",
@@ -264,7 +292,7 @@ test("Remove names the designs that use the brand's colors — the first three, 
   await flushPromises();
   expect(server.calls).not.toContain("DELETE /v1/brands/valspar");
   server.uses = [];
-  await click(buttonIn("Valspar", "Remove"));
+  await pickInMenu("Valspar", "Remove");
   expect(dialogState.options.message).toBe("The 1,596 Valspar colors will be removed from this computer. Designs that use them show no color until they are added again.");
   _resolveDialog(true);
   await flushPromises();

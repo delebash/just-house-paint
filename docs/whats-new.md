@@ -2,6 +2,26 @@
 
 ## v0.1.3
 
+- **On a Mac, coming from v0.1.2: move your data before you replace the app.** v0.1.2 kept your houses
+  inside the app (`Just House Paint.app/Contents/MacOS/data`), and replacing the app removes them. First
+  make a backup (**App Settings → Backups → Export backup**) and restore it after the update — or
+  Control-click the app, choose **Show Package Contents**, and move `Contents/MacOS/data` to
+  `~/Library/Application Support/JustHousePaint`. From this version on, your data stays outside the app.
+- **Behind a reverse proxy, or under another name for your computer** (Caddy, nginx, `tailscale serve`):
+  name its address in `JUST_HOUSE_PAINT_ALLOWED_HOSTS` and give each device an access token, or the
+  server refuses it — see [On another computer, or without a window](getting-started.md#on-another-computer-or-without-a-window).
+- **Several windows at once** — the desktop app, a browser on another computer, a phone: what one
+  changes shows in the others within seconds (**App Settings → General → Other windows**), two painting
+  different parts of one design keep both, and a stroke made on outlines another window has just
+  changed is refused and the house shown as it is now — never one window's work saved over the other's.
+- **Restoring a backup is all or nothing**: if a file in the app's data is open in another program, the
+  restore says so and changes nothing; other windows wait while it runs, then show the restored houses.
+  **A backup** is your data at one moment, even while another window works.
+- **On a small screen** the window is never taller or wider than the screen.
+- **Easier to read and use**: the house cards in the dark theme, a switch that is off, the Parts tab's
+  paint names, the Colors tab's swatches; **Remove the color**; a scheme that can't be made from a
+  gray says why; the house page fits a 960 × 700 window with nothing to scroll; tabs that don't fit
+  scroll with arrows instead of taking a second row; a part with no color shows a "no color" swatch.
 - **A dark wall painted light looks freshly painted.** Stained wood or a dark paint painted much
   lighter no longer shows the old finish's blotches and grain; the lines between the boards and the
   shadows stay. With **On it now** set, the app goes by that paint to tell a dark finish from a light
@@ -34,8 +54,8 @@
 - **The window's smallest size is 960 × 700** — half a 1920 px screen, where the house page fits
   with nothing to scroll (it was 800 × 600, which left the photo a thumbnail).
 - **Your data stays outside the app on macOS and Linux**: on a Mac in Library/Application Support
-  (never inside the app, which an update replaces), and the AppImage and its server on its own share one
-  folder. **Require a token on this computer too** no longer leaves the window unable to do anything.
+  (never inside the app, which an update replaces — coming from v0.1.2, see the first point above), and the
+  AppImage and its server on its own share one folder. **Require a token on this computer too** no longer leaves the window unable to do anything.
 - A backup restored from an older version gets this one's settings at once, and a restored house's
   first **Find the parts** or **AI photo** no longer fails.
 - **Quicker with big photos**: **Texture** applies when you let go (about four times faster);

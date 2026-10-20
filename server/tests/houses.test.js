@@ -482,7 +482,7 @@ describe("parts", () => {
     await s.app.request(`/v1/houses/${house.id}/parts/trim/mask`, { method: "PUT", headers: { "content-type": "image/png" }, body: png });
     await s.json("POST", `/v1/houses/${house.id}/parts`, { key: "shutters" });
     const kept = await s.settle((await (await s.json("POST", `/v1/houses/${house.id}/find-parts`, { keepEdited: true })).json()).id);
-    expect(kept.result).toEqual({ parts: 4, kept: 2 });
+    expect(kept.result).toMatchObject({ parts: 4, kept: 2 });
     const list = async () => (await (await s.app.request(`/v1/houses/${house.id}/parts`)).json()).map((p) => [p.key, p.source, p.area]);
     // the body is cut around the kept trim; what the finder called trim this time and the kept one hasn't
     // (the bottom-left quarter) goes to the body where it lies on the house (the left quarter: 64 × 96) —

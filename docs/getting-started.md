@@ -45,7 +45,7 @@ Mac, Updates offers **Open the release page**, to download it from there.
   **Colors**, **Schemes** and **Designs** beside it.
 - **Paint colors** — the brands' colors on this computer.
 - **AI Settings** — the AI model the color-scheme suggestions use. See [Set up the AI](ai-providers.md).
-- **App Settings** — **General** (photos, designs, the part finder, the AI photo), **Advanced**
+- **App Settings** — **General** (photos, designs, the part finder, the AI photo, other windows), **Advanced**
   (the same settings' structured parts), then **Appearance** (theme, font, size, language),
   **Backups**, **Storage** (the space each part takes, and **Change folder…** to move the data),
   **Server** (its address and the command that starts it on its own, keeping it running in the tray
@@ -80,6 +80,13 @@ The server started on its own uses the same data folder as the desktop app. Open
 stops it and takes over (what it was doing stops too). Updates come through the desktop app — in a
 browser, **App Settings → Updates** shows the version and what's new.
 
+Several windows can use one server at once — the desktop app and a browser, two browsers, a phone. What
+one changes shows in the others by itself within a few seconds (**App Settings → General → Other
+windows** sets how often they look). Two people painting different parts of one design keep both. If
+one changes a house's outlines (a brush stroke, a Box, Find the parts) just as the other does, the later
+one is refused — "This house was changed in another window" — and the house is shown as it is now: draw
+it again.
+
 Behind a reverse proxy on the same computer (Caddy, nginx, `tailscale serve`), name its public address
 in `JUST_HOUSE_PAINT_ALLOWED_HOSTS` (`paint.example.com`; several with commas) — the server answers
 requests from its own computer only under its own names, so a web page can't reach it by renaming
@@ -90,7 +97,9 @@ itself — and keep an access token on: requests through a proxy always need one
 **App Settings → Backups** saves everything — your houses, their photos and outlines, designs,
 settings and your AI providers' keys — in one file, and restores it. Keep the file as you would a
 password: the keys are in it. The access tokens are not, and a restore keeps this computer's own
-(and its downloaded engines' settings).
+(and its downloaded engines' settings). A backup is your data at one moment, even while you or another
+window keep working. A restore is all or nothing: other windows wait while it runs and then show the
+restored houses; if it can't finish, nothing changed.
 
 ## Everything stays on your computer
 

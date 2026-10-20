@@ -16,9 +16,29 @@ const log = getLogger("just_house_paint.jobs");
 const isAbort = (e) => e?.name === "AbortError" || e?.code === "ABORT_ERR";
 
 export class JobRegistry {
-  constructor({ keepMs = 10 * 60_000 } = {}) {
+  /** `onFinish(job)`: a job ended (done, failed or cancelled) — the window that started it changed something
+   *  (changes.js counts it as that window's). */
+  constructor({ keepMs = 10 * 60_000, onFinish = null } = {}) {
     this.keepMs = keepMs;
     this.jobs = new Map();
+    this.onFinish = onFinish;
+    // work on the graphics card that isn't a job (AI color schemes on the local model): kind → { label, n }
+    this.holds = new Map();
+  }
+
+  /** Work of `kind` holds the graphics card until the returned release() — the AI photo, which stops the local
+   *  AI model to free the card, waits for it (assertGpuFree). */
+  hold(kind, label = "") {
+    const h = this.holds.get(kind) ?? { label, n: 0 };
+    h.n += 1;
+    this.holds.set(kind, h);
+    let released = false;
+    return () => {
+      if (released) return;
+      released = true;
+      h.n -= 1;
+      if (!h.n) this.holds.delete(kind);
+    };
   }
 
   /** The running job of this kind and key, if any. */
@@ -42,9 +62,10 @@ export class JobRegistry {
   /**
    * Start `fn({ signal, progress })` as a job (or answer the one already running for this kind
    * and key). `progress(fraction 0–1, message?)` reports along the way; the returned value is the
-   * job's result. Returns the job's snapshot.
+   * job's result. `clientId`: the window that started it; `meta`: its choices (a second start reads
+   * them). Returns the job's snapshot.
    */
-  start({ kind, key = "", label = "", failTitle = "" }, fn) {
+  start({ kind, key = "", label = "", failTitle = "", clientId = null, meta = null }, fn) {
     this.sweep();
     const existing = this.running(kind, key);
     if (existing) return snapshot(existing);
@@ -62,6 +83,8 @@ export class JobRegistry {
       startedAt: new Date().toISOString(),
       finishedAt: null,
       controller,
+      clientId,
+      meta,
     };
     this.jobs.set(job.id, job);
     const progress = (fraction, message) => {
@@ -71,6 +94,11 @@ export class JobRegistry {
     };
     const finish = (state, fields) => {
       Object.assign(job, { state, finishedAt: new Date().toISOString() }, fields);
+      try {
+        this.onFinish?.(job);
+      } catch {
+        // a watcher's error never fails the job
+      }
     };
     Promise.resolve()
       .then(() => fn({ signal: controller.signal, progress }))
@@ -123,9 +151,13 @@ const GPU_KINDS = ["find-parts", "aiphoto"];
  * for `kind` on `key` would run beside a running one: `"aiphoto"` (any running GPU job, another AI
  * photo of the same house too — its colors would be ignored), `"find-parts"` (the AI photo, or the
  * parts of another house; the same house's run is answered by start()), `"box"` and `"local-ai"`
- * (any running GPU job).
+ * (any running GPU job). The AI photo also waits for AI color schemes on the local model (a hold — it would
+ * stop the model under them: the eleventh review, 2026-10-20).
  */
 export function assertGpuFree(jobs, kind, key = "") {
+  if (kind === "aiphoto" && jobs.holds?.has("local-ai")) {
+    throw new ApiError(409, "gpu-busy", "The graphics card is busy", "AI color schemes are being made on this computer's AI model — try again when they're done");
+  }
   for (const j of jobs.jobs.values()) {
     if (j.state !== "running" || !GPU_KINDS.includes(j.kind)) continue;
     if (kind === "find-parts" && j.kind === "find-parts" && j.key === key) continue;

@@ -21,6 +21,7 @@ const GROUPS = [
   ["designs", [["designs.maxPerHouse", "number"], ["paints.maxImportMegabytes", "number"]]],
   ["finder", [["finder.useGpu", "toggle"], ["finder.idleMinutes", "number"], ["finder.houseMargin", "number", 0.01], ["finder.houseMinShare", "number", 0.05]]],
   ["aiphoto", [["aiphoto.workingPixels", "number"], ["aiphoto.sharedGpuNoteMb", "number"]]],
+  ["windows", [["windows.checkSeconds", "number"]]],
 ];
 const KEYS = GROUPS.flatMap(([, fields]) => fields.map(([key]) => key));
 const idOf = (key) => `setting-${key.replace(".", "-")}`;

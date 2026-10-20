@@ -25,6 +25,7 @@ import {
   installFileLog,
   installLogRing,
   makeDiskRouter,
+  MaintenanceGate,
   makeLogsRouter,
   makeShutdownRouter,
   SHUTDOWN_PATH,
@@ -45,8 +46,10 @@ import { router as prefsRouter } from "./api/prefs_api.js";
 import { router as schemesAiRouter } from "./api/schemes_ai_api.js";
 import { router as serverAuthRouter } from "./api/server_auth_api.js";
 import { router as settingsRouter } from "./api/settings_api.js";
+import { router as syncRouter } from "./api/sync_api.js";
 import { AppState, setState } from "./app_state.js";
 import { readAuth } from "./auth.js";
+import { ChangeCounter } from "./changes.js";
 import { router as dataRouter } from "./data_admin.js";
 import { openAppDatabase } from "./database/index.js";
 import { FEATURE_CATALOG } from "./feature_catalog.js";
@@ -148,10 +151,19 @@ export async function createApp(dataDir = null, { services = {} } = {}) {
   app.use("*", csrfOrigin({ appOrigins: APP_ORIGINS, extraOrigins: proxyOrigins, typeBase: TYPE_BASE }));
   app.use("*", starletteCors({ allowOrigins: [...APP_ORIGINS, ...CAPACITOR_ORIGINS], allowMethods: ["*"], allowHeaders: ["*"] }));
   app.use("*", bearerAuth({ readAuth, typeBase: TYPE_BASE, loopbackOpenPaths: [SHUTDOWN_PATH], allowedHosts }));
+  // While a restore or a reset replaces the data, every other window's write is refused (503, Retry-After) and the
+  // ones already running finish first — never a save that lands half-way or answers 200 and is lost (the kit's
+  // MaintenanceGate; the data router closes it). The shell's shutdown always passes.
+  const gate = new MaintenanceGate({ exempt: [SHUTDOWN_PATH] });
+  app.use("*", gate.middleware());
+  // Each window's writes that succeed are counted apart (changes.js — its X-Client-Id), so the other windows'
+  // pages read again (GET /v1/sync/rev); a restore and a reset are everyone's change (data_admin.js).
+  const changes = new ChangeCounter();
+  app.use("*", changes.middleware({ except: [SHUTDOWN_PATH, "/v1/data/restore", "/v1/data/reset"] }));
 
   // 4. The database and the app state the routes read: the house-paint services ride on it.
   const db = openAppDatabase(dataDir);
-  setState(new AppState(dataDir, db, createServices({ db, dataDir }, services)));
+  setState(new AppState(dataDir, db, createServices({ db, dataDir }, { changes, ...services })));
 
   // 5. The family routers.
   app.route("/", healthRouter());
@@ -161,6 +173,7 @@ export async function createApp(dataDir = null, { services = {} } = {}) {
   app.route("/", makeShutdownRouter());
   app.route("/", serverAuthRouter());
   app.route("/", prefsRouter());
+  app.route("/", syncRouter());
   app.route("/", makeLogsRouter(PRODUCT));
   // Settings → Storage's sizes: the kit's buckets plus this app's own stores — the houses' photos,
   // the part finder's model, the AI photo's models and engine (they live outside the kit's cache)
@@ -172,7 +185,7 @@ export async function createApp(dataDir = null, { services = {} } = {}) {
       aiPhoto: [aiphotoModelDir(dataDir), aiphotoEngineDir(dataDir)],
     }),
   );
-  app.route("/", dataRouter(dataDir));
+  app.route("/", dataRouter(dataDir, { gate }));
 
   // 6. The AI stack: the host mounts the runner's process API, installLlm mounts the rest.
   app.route("/", runnerRouter());

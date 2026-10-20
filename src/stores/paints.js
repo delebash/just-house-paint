@@ -81,6 +81,14 @@ export const usePaintsStore = defineStore("paints", {
       this.brands = await get("/v1/brands");
       this.brandsLoaded = true;
     },
+    /** The brands read again after another window changed something (services/otherWindows.js): a brand whose
+     *  colors were loaded again or removed there is forgotten here too — its paints looked up anew. */
+    async refreshBrands() {
+      const mark = (b) => `${b.paintCount}|${b.loadedAt}`;
+      const before = new Map(this.brands.map((b) => [b.key, mark(b)]));
+      await this.loadBrands();
+      for (const b of this.brands) if (before.has(b.key) && before.get(b.key) !== mark(b)) this.forgetBrand(b.key);
+    },
     /** Load a brand's colors (a server job on the task strip). The brands are read again whether it
      *  worked or not — a failed load's reason is on its row (the server's lastError). */
     async loadFeed(brand, label) {

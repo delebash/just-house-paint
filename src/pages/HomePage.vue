@@ -22,10 +22,11 @@ import {
   UiServerImage,
 } from "@delebash/ui";
 import { HousePatch } from "just-house-paint-server/schemas/houses.js";
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import NameDialog from "../components/NameDialog.vue";
+import { otherWindows } from "../services/otherWindows.js";
 import { imagePath, useHousesStore } from "../stores/houses.js";
 import { useUiStore } from "../stores/ui.js";
 
@@ -51,6 +52,8 @@ async function load() {
   }
 }
 onMounted(load);
+// a house added, renamed or deleted in another window (services/otherWindows.js)
+watch(() => otherWindows.changes, load);
 
 const firstLoad = computed(() => houses.loading && !houses.loaded);
 const failedReason = computed(() => {

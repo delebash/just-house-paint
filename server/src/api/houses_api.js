@@ -8,10 +8,10 @@ import path from "node:path";
 import { Hono, input, uploadLimit } from "@delebash/core/platform";
 import { ApiError, notFound, RequestValidationError } from "@delebash/core/platform/errors";
 import { houseNotFound } from "./refusals.js";
-import { createHouse, deleteHouse, getHouse, listHouses, renameHouse, setCurrentPaints } from "../database/houses.js";
+import { createHouse, deleteHouse, getHouse, listHouses, patchCurrentPaints, renameHouse, setCurrentPaints } from "../database/houses.js";
 import { addingHouseDir, displayPath, houseAdded, originalPath, removeHouseDir, thumbPath } from "../files.js";
 import { ingestPhoto, NotAnImage, TooManyPixels } from "../images.js";
-import { CurrentPaintsIn, HousePatch, IdParams, ImageQuery } from "../schemas/houses.js";
+import { CurrentPaintsIn, CurrentPaintsPatch, HousePatch, IdParams, ImageQuery } from "../schemas/houses.js";
 import { getState } from "../app_state.js";
 
 const CONTENT_TYPES = { jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp" };
@@ -78,17 +78,27 @@ export function router(ctx = getState()) {
     return c.json(made, 201);
   });
 
-  app.get("/v1/houses/:id", input({ params: IdParams }), (c) => c.json(must(c.req.valid("param").id)));
+  // the house with its outlines' version (outlines.js) — read before its outlines, so a page never holds outlines
+  // older than the version it sends back
+  app.get("/v1/houses/:id", input({ params: IdParams }), (c) => {
+    const house = must(c.req.valid("param").id);
+    return c.json(ctx.outlines ? { ...house, outlines: ctx.outlines.etag(house.id) } : house);
+  });
 
   app.patch("/v1/houses/:id", input({ params: IdParams, body: HousePatch }), (c) => {
     must(c.req.valid("param").id);
     return c.json(renameHouse(ctx.db, c.req.valid("param").id, c.req.valid("json").name.trim()));
   });
 
-  // The paint each part has now (the light on the photo is worked out from it): the whole map.
+  // The paint each part has now (the light on the photo is worked out from it): PUT the whole map, PATCH only the
+  // parts named (JSON Merge Patch — the window's own changes, so another window's stay).
   app.put("/v1/houses/:id/current-paints", input({ params: IdParams, body: CurrentPaintsIn }), (c) => {
     must(c.req.valid("param").id);
     return c.json(setCurrentPaints(ctx.db, c.req.valid("param").id, c.req.valid("json")));
+  });
+  app.patch("/v1/houses/:id/current-paints", input({ params: IdParams, body: CurrentPaintsPatch }), (c) => {
+    must(c.req.valid("param").id);
+    return c.json(patchCurrentPaints(ctx.db, c.req.valid("param").id, c.req.valid("json")));
   });
 
   app.delete("/v1/houses/:id", input({ params: IdParams }), async (c) => {

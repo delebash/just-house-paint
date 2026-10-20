@@ -100,6 +100,23 @@ body {
 .row-side { position: relative; z-index: 1; pointer-events: none; }
 .row-side :is(button, [title]) { pointer-events: auto; }
 
+/* ── a paint's swatch — the Parts tab's rows, the Colors tab's chosen paint, "On this wall" and "On
+   it now" (one rule: a copy scoped to the Parts tab left the Colors tab's 0 × 0 — the visual review,
+   2026-10-20). A block, so it keeps its size in a line of text too. --none is "no color": the
+   standard "none" swatch (a red diagonal line across an empty box — Adobe's [None]), so an empty
+   swatch doesn't read as an unticked checkbox; its words go with it (role="img" + aria-label). */
+.swatch {
+  display: block; flex-shrink: 0;
+  width: 18px; height: 18px;
+  border-radius: 4px; border: 1px solid var(--border-strong);
+}
+.swatch--big { width: 28px; height: 28px; border-radius: var(--r-sm); }
+.swatch--none {
+  background:
+    linear-gradient(to top right, transparent calc(50% - 1px), var(--danger) calc(50% - 1px), var(--danger) calc(50% + 1px), transparent calc(50% + 1px)),
+    var(--surface);
+}
+
 /* ── forms (app-structure §15, §17): fields as wide as what they hold, the button row on the
    right, a button on a row of labelled fields aligned with the inputs ─────────────────────── */
 .form { display: flex; flex-direction: column; gap: var(--sp-3); }
@@ -138,7 +155,10 @@ body {
   position: fixed; inset: 0; z-index: 200; display: flex; flex-direction: column;
   align-items: center; justify-content: flex-end; background: var(--bg);
 }
-.splash__plate { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; }
+/* the plate's own dark rules (prefers-color-scheme inside the SVG) follow the colour scheme it is
+   shown in: here the app's theme, which is known by now */
+.splash__plate { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; color-scheme: light; }
+[data-theme="dark"] .splash__plate { color-scheme: dark; }
 .splash__strip {
   position: relative; z-index: 1; width: min(560px, 90%);
   display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 0 0 7vh;

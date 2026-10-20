@@ -71,6 +71,28 @@ test("backup, change, restore: the backup's houses and their files come back", a
   expect(existsSync(displayPath(dataDir, after))).toBe(false); // the houses folder is the backup's
 });
 
+test("a restore and a reset are every window's change: their counters move, the outline versions start again", async () => {
+  // the eleventh review (2026-10-20): the other windows read again after the data was replaced, and a stroke made
+  // on outlines read before it is refused (412), never saved over the restored ones
+  const id = await addHouse("Before the backup");
+  const rev = async (who) => (await client.get("/v1/sync/rev", { headers: { "x-client-id": who } })).json();
+  const backup = await client.get("/v1/data/backup");
+  const before = { a: await rev("a"), b: await rev("b"), outlines: (await client.get(`/v1/houses/${id}`)).json().outlines };
+  const form = new FormData();
+  form.append("file", new Blob([backup.rawPayload], { type: "application/zip" }), "backup.zip");
+  // window "a" restores: its own counter moves too — everything changed
+  const restored = await client.app.request("http://testserver/v1/data/restore", { method: "POST", body: form, headers: { host: "testserver", "x-client-id": "a" } });
+  expect(restored.status).toBe(200);
+  const after = { a: await rev("a"), b: await rev("b") };
+  expect(after.a.rev).toBeGreaterThan(before.a.rev);
+  expect(after.b.rev).toBeGreaterThan(before.b.rev);
+  expect(after.b.epoch).not.toBe(before.b.epoch);
+  expect((await client.get(`/v1/houses/${id}`)).json().outlines).not.toBe(before.outlines);
+  // the same for a reset
+  expect((await client.post("/v1/data/reset", { headers: { "x-client-id": "a" } })).statusCode).toBe(200);
+  expect((await rev("b")).rev).toBeGreaterThan(after.b.rev);
+});
+
 test("reset returns the first-run state but keeps the access tokens", async () => {
   await addHouse("Gone after reset");
   await client.patch("/v1/settings", { json: { "designs.maxPerHouse": 60 } });

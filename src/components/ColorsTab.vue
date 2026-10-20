@@ -215,9 +215,10 @@ async function match() {
         {{ house.selectedPart ? t("colors.forPart", { part: selectedName }) : t("colors.pickPart") }}
       </p>
       <div v-if="current" class="colors__current">
-        <span class="swatch swatch--big" :style="{ background: current.hex }" />
+        <span class="swatch swatch--big" :style="{ background: current.hex }" aria-hidden="true" />
         <span>{{ current.displayName }}</span>
-        <UiButton intent="ghost" size="small" :label="t('colors.clear')" @click="house.setColor(house.selectedPart, null)" />
+        <!-- an action, named as one ("No color" read as the part's state — the visual review, 2026-10-20) -->
+        <UiButton intent="secondary" size="small" :label="t('colors.clear')" @click="house.setColor(house.selectedPart, null)" />
       </div>
       <!-- what a click on a paint sets: the new color, or the paint the part has on it now -->
       <div class="colors__target">
@@ -226,7 +227,7 @@ async function match() {
       <p v-if="target === 'now'" class="hint">{{ t("colors.now.hint") }}</p>
       <div v-if="nowPaint" class="colors__current colors__now">
         <span class="hint">{{ t("colors.now.label") }}</span>
-        <span class="swatch" :style="{ background: nowPaint.hex }" />
+        <span class="swatch" :style="{ background: nowPaint.hex }" aria-hidden="true" />
         <span>{{ nowPaint.displayName }}</span>
         <UiButton intent="ghost" size="small" :label="t('colors.now.clear')" @click="clearNow" />
       </div>
@@ -397,11 +398,5 @@ async function match() {
 }
 .chip__code {
   font-size: var(--fs-small);
-}
-.swatch--big {
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
-  border: 1px solid var(--border);
 }
 </style>

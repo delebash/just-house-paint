@@ -12,8 +12,8 @@ Behr, Sherwin-Williams, Valspar, HGTV Home and Dutch Boy publish their colors on
 Benjamin Moore and PPG / Glidden publish palette files for designers (Benjamin Moore one per
 collection, PPG one Excel file of every color), which the app finds on the brand's palette page. The
 first time the app starts, it loads each brand by itself, one after another, and keeps them on
-your computer — their progress shows at the bottom right, with **Cancel**. **Load automatically** on a
-brand's row turns that off for the brand (its colors already here stay; **Remove** clears them) or on
+your computer — their progress shows at the bottom right, with **Cancel**. **Load automatically**, under
+a brand's name, turns that off for the brand (its colors already here stay; **Remove** clears them) or on
 again (an empty brand loads at once). **Load again** fetches a list again; its progress shows above the
 list. Each brand's own website terms apply to what you download — the app downloads each list for your
 own use.
@@ -23,13 +23,14 @@ own use.
 If a brand moves its list or its files and loading fails (the brand's row says why), you can still
 download the brand's palette file from its website yourself — Benjamin Moore's ASE files on its
 "Download Benjamin Moore color palettes" page, PPG's "Voice of Colour Palette … RGB and LRV Values"
-Excel file, or Sherwin-Williams' and Behr's palette downloads. On the brand's row press **Import a
-file…** and choose the file. The app reads Adobe swatch files
+Excel file, or Sherwin-Williams' and Behr's palette downloads. On the brand's row open the menu beside
+its button (the arrow) and choose **Import a file…** — a brand the app can only take from its palette
+file has **Import a file…** as its button — then choose the file. The app reads Adobe swatch files
 (.ase, .aco), Excel (.xlsx) and CSV. How big a file may be is in **App Settings → General**. The
 app keeps each paint by its number: colors in a file without one are left out, and the import says
 how many.
 
-**Remove** takes a brand's colors off this computer; it asks first, and names the designs that use
+**Remove**, in the same menu, takes a brand's colors off this computer; it asks first, and names the designs that use
 them. Those parts show no color until the brand is added again — a house open at the time too: its
 **Parts** tab says "not in the loaded colors" — and the design keeps which color it was, so it comes
 back with the brand.

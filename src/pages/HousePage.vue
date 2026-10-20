@@ -48,6 +48,7 @@ import { drawColorCard } from "../services/colorCard.js";
 import { useHouseHistory } from "../services/houseHistory.js";
 import { exportSize, paintFullSize } from "../services/fullSizeImage.js";
 import { drawPixels, maskOf, pixelsOf, pngOf } from "../services/maskImage.js";
+import { holdChangesWhile, otherWindows } from "../services/otherWindows.js";
 import { outlinePixels } from "../services/outlines.js";
 import { createPainter } from "../services/painter.js";
 import { partName } from "../services/partNames.js";
@@ -127,6 +128,8 @@ house.$onAction(({ name, onError }) => {
   if (name === "open") return; // load() handles its own answer
   onError((e) => {
     const p = e?.problem;
+    // a design deleted in another window: its toast says so, and the house's designs are read again
+    if (e?.status === 404 && /\/design-not-found$/.test(p?.type || "")) house.refreshDesigns().catch(() => {});
     if (e?.status !== 404 || !/\/house-not-found$/.test(p?.type || "") || p.houseId !== house.house?.id) return;
     houseGone.value = true;
     loadFailed.value = e;
@@ -170,6 +173,8 @@ async function load() {
     await paints.paints(housePaints());
     await loadPhoto();
     const masks = await loadMasks(house.parts.map((p) => p.key));
+    // the outlines' version read with the house, before them: the page's writes send it from now on
+    house.useOutlines(house.house.outlines);
     history.reset({ colors: house.colors, designId: house.designId, masks });
     photographed.value = {};
     refreshPhotographed();
@@ -249,14 +254,23 @@ watch(
   },
 );
 
-/** The parts found again — here, or by the page this one replaced while the job ran: every outline
- *  anew (the store bumped their versions), and the history starts over from them. */
+/** The parts found again — here, by the page this one replaced while the job ran, or in another window —
+ *  or outlines another window changed: every outline anew (the store bumped their versions), their version
+ *  taken once they are here, and the history starts over from them (an Undo would put back an outline from
+ *  before the other window's change). No stroke meanwhile (outlineBusy). */
 async function reloadParts() {
-  const masks = await loadMasks(house.parts.map((p) => p.key));
-  history.reset({ colors: house.colors, designId: house.designId, masks });
-  photographed.value = {};
-  refreshPhotographed();
-  repaint();
+  outlineBusy.value++;
+  try {
+    const v = house.house.outlines;
+    const masks = await loadMasks(house.parts.map((p) => p.key));
+    house.useOutlines(v);
+    history.reset({ colors: house.colors, designId: house.designId, masks });
+    photographed.value = {};
+    refreshPhotographed();
+    repaint();
+  } finally {
+    outlineBusy.value--;
+  }
 }
 watch(
   () => [house.house?.id, house.house?.partsFoundAt],
@@ -412,14 +426,60 @@ function findColor(hex) {
   tab.value = "colors";
 }
 
-// one part's saves go to the server one after another — two quick Undos never land out of order
-const saving = new Map(); // key → the last save's promise
+// The page's outline writes (a stroke's save, an Undo's, a Box) go to the server one after another, each with
+// the outlines' version the last one answered (If-Match, stores/house.js): this window's own never refuse each
+// other, and two quick Undos never land out of order. One refused because the outlines aren't the ones it was
+// made on — another window changed them (412), is finding the parts (409), or a backup is being restored (503) —
+// drops the writes still waiting (they were made on the same outlines) and the page reads them again.
+let chain = Promise.resolve();
+let pendingWrites = 0;
+let writeGen = 0;
+// the outlines being read or a Box answering: a stroke now would be made on the outlines from before
+const outlineBusy = ref(0);
+function queueWrite(fn) {
+  const gen = writeGen;
+  pendingWrites++;
+  const next = chain.catch(() => {}).then(() => (gen === writeGen ? fn() : null));
+  chain = next;
+  next.catch(() => {}).finally(() => pendingWrites--);
+  return next;
+}
 function queueSave(key, blob, houseId) {
-  const next = (saving.get(key) || Promise.resolve()).catch(() => {}).then(() => house.saveMask(key, blob, houseId));
-  saving.set(key, next);
-  next.catch(reportError).finally(() => {
-    if (saving.get(key) === next) saving.delete(key);
-  });
+  queueWrite(() => house.saveMask(key, blob, houseId)).catch(onWriteRefused);
+}
+/** The waiting saves sent now, and every write finished — before a Box or Find the parts, which carry the
+ *  version the last save answers. */
+async function flushWrites() {
+  for (const { timer, run } of [...saveTimers.values()]) {
+    clearTimeout(timer);
+    run();
+  }
+  await chain.catch(() => {});
+}
+const STALE = /\/(outlines-changed|finding-parts|maintenance)$/;
+/** A write's failure: shown; one refused for stale outlines also drops the waiting writes, and — another window
+ *  changed them — the outlines are read again (a find, or a restore, brings its own). */
+function onWriteRefused(e) {
+  if (e?.cancelled) return;
+  if (STALE.test(e?.problem?.type || "")) {
+    writeGen++;
+    for (const key of [...saveTimers.keys()]) cancelSave(key);
+    if (e.status === 412) reloadOutlines().catch(reportError);
+  }
+  reportError(e);
+}
+/** The house's outlines as they are on the server now (another window changed them). */
+async function reloadOutlines() {
+  if (!house.house) return;
+  outlineBusy.value++;
+  try {
+    const at = house.house.partsFoundAt;
+    const { outlinesChanged } = await house.refresh();
+    // a find's new parts load through the partsFoundAt watch
+    if (outlinesChanged && house.house?.partsFoundAt === at) await reloadParts();
+  } finally {
+    outlineBusy.value--;
+  }
 }
 
 // an outline's change is saved a moment after the last stroke on it — one timer per part, to the
@@ -441,8 +501,32 @@ function cancelSave(key) {
   clearTimeout(saveTimers.get(key)?.timer);
   saveTimers.delete(key);
 }
+// Another window changed something on the server (services/otherWindows.js): the house, its parts, designs, AI
+// photos and running work read again in place — the zoom, the tool and the colors on screen stay; outlines that
+// changed are read again (the history starts over), a find or an AI photo started there is followed here (the
+// tools off while the parts are found), a brand's colors loaded again or removed there are looked up again. Never
+// while a stroke or a save is under way: the change waits for them.
+const releaseHold = holdChangesWhile(() => saveTimers.size > 0 || pendingWrites > 0 || outlineBusy.value > 0);
+async function refreshFromServer() {
+  if (!house.house || loading || !painter) return;
+  const id = house.house.id;
+  try {
+    const running = await house.runningJobs(id).catch(() => []);
+    await reloadOutlines();
+    if (house.house?.id !== id) return;
+    await paints.refreshBrands();
+    await paints.paints(housePaints());
+    repaint();
+    follow(running);
+  } catch (e) {
+    if (!e?.cancelled) reportError(e);
+  }
+}
+watch(() => otherWindows.changes, refreshFromServer);
+
 // leaving the page saves what is still waiting (a stroke made just before Back isn't lost)
 onBeforeUnmount(() => {
+  releaseHold();
   for (const { timer, run } of [...saveTimers.values()]) {
     clearTimeout(timer);
     run(true);
@@ -450,7 +534,7 @@ onBeforeUnmount(() => {
 });
 
 async function onStroke({ points, radius, mode }) {
-  if (finding.value) return;
+  if (finding.value || outlineBusy.value) return;
   const key = house.selectedPart;
   const mask = key && painter?.mask(key);
   if (!mask) return;
@@ -464,15 +548,21 @@ async function onStroke({ points, radius, mode }) {
 }
 
 async function onBox(box) {
-  if (!house.selectedPart || finding.value) return;
+  if (!house.selectedPart || finding.value || outlineBusy.value) return;
+  const key = house.selectedPart;
+  outlineBusy.value++;
   try {
-    const changed = await house.box(house.selectedPart, box, "add");
+    await flushWrites();
+    const changed = await queueWrite(() => house.box(key, box, "add"));
+    if (!changed) return; // dropped: the outlines it was drawn on are being read again
     const masks = await loadMasks(changed);
     history.record({ masks });
     refreshPhotographed(changed);
     repaint();
   } catch (e) {
-    reportError(e);
+    onWriteRefused(e);
+  } finally {
+    outlineBusy.value--;
   }
 }
 
@@ -565,6 +655,8 @@ async function findParts() {
   } else if (house.parts.length) {
     if (!(await confirmDialog(ask))) return;
   }
+  // its version is the one the last stroke's save answers
+  await flushWrites();
   await runFind({ keepEdited });
 }
 
@@ -575,7 +667,7 @@ async function runFind(options) {
   try {
     await house.findParts(t("house.find.task", { name: house.house.name }), findProgress, options);
   } catch (e) {
-    if (e?.name !== "AbortError") reportError(e);
+    if (e?.name !== "AbortError") onWriteRefused(e);
   } finally {
     busy.value.find = false;
   }
@@ -749,7 +841,9 @@ const canRevert = computed(() => !!house.design && house.dirty);
     </UiBanner>
 
     <div v-else-if="house.house" class="house__body">
-      <section class="house__stage">
+      <!-- the photo's tools: above the photo in a wide window, across the photo and the panel in a
+           narrow one (the styles' grid areas) -->
+      <div class="house__toolbar">
         <div class="house__tools">
           <UiSegmented v-model="tool" :options="tools" :aria-label="t('house.tools.label')" />
           <label v-if="tool === 'brush' || tool === 'eraser'" class="house__tool">
@@ -778,7 +872,7 @@ const canRevert = computed(() => !!house.design && house.dirty);
           </span>
           <span class="house__tool">
             <span>{{ t("house.compare.label") }}</span>
-            <UiSelect v-model="compareWith" :options="compareOptions" width="name" :aria-label="t('house.compare.label')" />
+            <UiSelect v-model="compareWith" :options="compareOptions" width="fit" class="house__compare" :aria-label="t('house.compare.label')" />
           </span>
           <label v-if="compareWith !== 'off'" class="house__tool house__side">
             <UiToggle v-model="sideBySide" :aria-label="t('house.compare.sideBySide')" />
@@ -797,14 +891,14 @@ const canRevert = computed(() => !!house.design && house.dirty);
             <UiSlider v-model="light" :min="0.5" :max="2" :step="0.05" width="short" :aria-label="t('house.tools.light')" />
           </label>
         </div>
-        <HouseCanvas
-          class="house__canvas"
-          :photo="photo" :painted="painted" :overlay="overlay" :before="before" :version="version"
-          :split="compareWith !== 'off' ? split : null" :side-by-side="compareWith !== 'off' && sideBySide"
-          :tool="tool" :brush-size="brushSize" :stroke-color="strokeColor"
-          @pick="onPick" @stroke="onStroke" @box="onBox"
-        />
-      </section>
+      </div>
+      <HouseCanvas
+        class="house__canvas"
+        :photo="photo" :painted="painted" :overlay="overlay" :before="before" :version="version"
+        :split="compareWith !== 'off' ? split : null" :side-by-side="compareWith !== 'off' && sideBySide"
+        :tool="tool" :brush-size="brushSize" :stroke-color="strokeColor"
+        @pick="onPick" @stroke="onStroke" @box="onBox"
+      />
 
       <aside class="house__panel">
         <UiTabStrip v-model="tab" :tabs="tabs" :aria-label="t('house.tabs.label')" />
@@ -843,34 +937,52 @@ const canRevert = computed(() => !!house.design && house.dirty);
   display: flex;
   flex-direction: column;
 }
+/* A grid: the photo's tools over the photo, the panel beside both. The panel is 380 px on a wide
+   window, down to 300 px as the page narrows (40 % of it): in an 800 px window the photo is 225 px
+   wide instead of 160 (measured on the built app).
+   In a narrow window (under Quasar's md breakpoint, 1024 px) the tools take the panel's width too:
+   beside the panel they had 384 px at 960 × 700, wrapped onto six rows, and the page scrolled with
+   the photo at its floor (the visual review, 2026-10-20); across the page they take three rows, the
+   page doesn't scroll and the photo is 284 px tall (266 px with the AI photo's reason in the header,
+   252 px with the brush's size) — measured on the built app. */
 .house__body {
   flex: 1 1 auto;
-  display: flex;
-  gap: var(--sp-3);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) clamp(300px, 40%, 380px);
+  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-areas: "tools panel" "canvas panel";
+  gap: var(--sp-2) var(--sp-3);
   min-height: 0;
 }
-.house__stage {
-  flex: 1 1 auto;
-  min-width: 0;
+@media (max-width: 1023.98px) {
+  .house__body {
+    grid-template-areas: "tools tools" "canvas panel";
+  }
+}
+.house__toolbar {
+  grid-area: tools;
   display: flex;
   flex-direction: column;
   gap: var(--sp-2);
-  min-height: 0;
+  min-width: 0;
 }
-/* the photo never shrinks to nothing: in a narrow window (a browser on the headless server — the
-   desktop window's minimum, src-electron/electron-main.js, keeps the page whole) the wrapped tool
-   rows took ~440 px of an 800 × 600 window's 225 px-wide column; the page's scroller takes the rest.
-   A zero basis: sized by the room left, never by its own content — the canvas the ResizeObserver
-   sizes is that content, and at the floor the two fed each other ("ResizeObserver loop", measured) */
+/* the photo never shrinks to nothing — 200 px at least (the visual review's floor, 2026-10-20): in a smaller
+   window (a browser on the headless server; the desktop window's minimum, 960 × 700 —
+   src-electron/electron-main.js — keeps the page whole) the page's scroller takes the rest. Its row
+   is the room left (minmax(0, 1fr)), never its own content — the canvas the ResizeObserver sizes is
+   that content, and at the floor the two fed each other ("ResizeObserver loop", measured) */
 .house__canvas {
-  flex: 1 1 0;
-  min-height: 160px;
+  grid-area: canvas;
+  min-height: 200px;
 }
+/* a wrapped row of tools sits 8 px under the one above it: at 12 px the six rows of a narrow window
+   (960 × 700) pushed the photo off the page — the page scrolled beside the panel's scroller (the
+   visual review, 2026-10-20) */
 .house__tools {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--sp-3);
+  gap: var(--sp-2) var(--sp-3);
 }
 /* in a narrow window a control drops under its label, as wide as the row lets it */
 .house__tool {
@@ -885,6 +997,12 @@ const canRevert = computed(() => !!house.design && house.dirty);
   white-space: nowrap;
   flex-shrink: 0;
 }
+/* Compare's choice as wide as what it shows, up to a name's width: at the name's width it was a
+   full-width box that dropped under its label in a narrow window, a line of its own (the visual
+   review at 960 × 700, 2026-10-20) */
+.house__compare {
+  max-width: min(100%, var(--w-name));
+}
 /* the five tools wrap onto a second line rather than run past a narrow photo */
 .house__tools .ui-seg {
   flex-wrap: wrap;
@@ -895,10 +1013,11 @@ const canRevert = computed(() => !!house.design && house.dirty);
   margin: 0;
   max-width: 32ch;
 }
-/* 380 px on a wide window, down to 300 px as the page narrows (40 % of it): in an 800 px window the
-   photo is 225 px wide instead of 160 (measured on the built app) */
+/* never wider than its column for what it holds: its tab strip is one row now (it scrolls, the kit's
+   UiTabStrip), and that row's width as a minimum held the panel at 329 px at 960 × 700 (measured) */
 .house__panel {
-  flex: 0 0 clamp(300px, 40%, 380px);
+  grid-area: panel;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   min-height: 0;

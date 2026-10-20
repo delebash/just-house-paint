@@ -35,7 +35,14 @@ export const CurrentPaintsIn = T.Record(T.String({ pattern: PART_KEY }), T.Strin
   additionalProperties: false, // a key that isn't a part name is refused, not stored
 });
 
-/** { partKey: paintId | null } — null (or absent) leaves a part unpainted. */
+/** PATCH /v1/houses/:id/current-paints — only the parts named (JSON Merge Patch): { part: paintId | null }, null
+ *  makes a part's paint unknown again. */
+export const CurrentPaintsPatch = T.Record(T.String({ pattern: PART_KEY }), T.Union([T.String({ minLength: 1, maxLength: 120 }), T.Null()]), {
+  additionalProperties: false,
+});
+
+/** { partKey: paintId | null } — a new design: null (or absent) leaves a part unpainted; a PATCH: only the parts
+ *  named change (JSON Merge Patch, RFC 7396 — null takes a part's color off). */
 export const DesignColors = T.Record(T.String({ pattern: PART_KEY }), T.Union([T.String({ minLength: 1, maxLength: 120 }), T.Null()]), {
   additionalProperties: false, // a key that isn't a part name is refused, not stored
 });

@@ -48,6 +48,10 @@
         "title": "Part finder",
         "hint": "Whether the graphics card helps find the parts, when the finder lets go of its memory, and how far past the house a part may reach — so a car parked in front isn't taken for a door."
       },
+      "windows": {
+        "title": "Other windows",
+        "hint": "The app open in more than one place at once — the desktop app, a browser on this server, a phone: how often each one looks for what the others changed. It shows their changes by itself."
+      },
       "aiphoto": {
         "title": "AI photo",
         "hint": "The size the AI draws at, in pixels: bigger is sharper and slower. Other programs holding the graphics card make it slower too: above the amount below, the AI photo names them (0 never does)."
@@ -71,6 +75,9 @@
           "idleMinutes": "Let go after (minutes idle)",
           "houseMargin": "Parts reach past the house by (share of the photo)",
           "houseMinShare": "A piece counts when this share of it is on the house"
+        },
+        "windows": {
+          "checkSeconds": "Look for other windows' changes every (seconds)"
         },
         "aiphoto": {
           "workingPixels": "Working size (pixels)",
@@ -313,7 +320,7 @@
     "search": "Search by name or number",
     "exterior": "Exterior colors only",
     "archived": "Show discontinued colors",
-    "clear": "No color",
+    "clear": "Remove the color",
     "noMatch": "No color matches.",
     "more": "Show more ({n} left)",
     "order": {
@@ -369,6 +376,16 @@
       "needBase": "Give the body a color first (Colors tab) — the schemes are built around it.",
       "otherBrand": "The body's paint is {brand}'s — choose {brand} above, or give the body a color of this brand.",
       "from": "Around {paint}"
+    },
+    "why": {
+      "noHue": "The paint is nearly gray: it has no hue to build this scheme on. Classic works with any color.",
+      "noBody": "No paint of this brand to use for the body.",
+      "noTrim": "No paint of this brand near the trim's color is light or dark enough against the body.",
+      "noAccent": "No paint of this brand near the door's color is colorful enough and far enough from the body.",
+      "pairTrim": "The trim the brand pairs with it isn't light or dark enough against the body.",
+      "pairNoAccent": "The brand pairs no further color with it for the door.",
+      "pairAccent": "The door color the brand pairs with it isn't colorful enough, or is too close to the body.",
+      "other": "This scheme can't be made from this brand's paints."
     },
     "kinds": {
       "complementary": "Complementary",
@@ -495,6 +512,7 @@
     "more": "{n} more",
     "note": "Colors on a screen are close to the paint, never the same: check a real paint chip before you buy. Brand names belong to their owners; this app isn't connected to any of them.",
     "autoAria": "Load the {brand} colors automatically",
+    "moreActions": "More actions for {brand}",
     "fileOnly": "From its palette file"
   },
   "jobs": {

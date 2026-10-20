@@ -33,6 +33,8 @@ export const SETTINGS = {
   "photos.maxMegabytes": T.Integer({ minimum: 1, maximum: 200 }),
   "photos.fullSizeMaxMegapixels": T.Integer({ minimum: 1, maximum: 200 }),
   "designs.maxPerHouse": T.Integer({ minimum: 1, maximum: 200 }),
+  // how often an open window asks whether another window changed something (seconds)
+  "windows.checkSeconds": T.Integer({ minimum: 1, maximum: 60 }),
   "paints.maxImportMegabytes": T.Integer({ minimum: 1, maximum: 200 }),
   // Which brands' colors the app loads by itself ({ brand: true | false }; a brand missing counts as
   // on) — on for every brand out of the box (the user's decision, 2026-10-18).

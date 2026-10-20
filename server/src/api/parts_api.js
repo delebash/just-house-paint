@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: MIT
 // /v1/houses/:id/parts — the parts the finder found (or the user drew): their masks, finding them
 // (a job), a box whose contents move into a part, a mask fixed by the brush, a part added by hand.
+// The outlines carry a version (outlines.js): a stroke, a Box and Find the parts send the one the page
+// read (If-Match) and are refused (412) when another window changed them since; the writes run one at a
+// time per house, and each answers the new version (`outlines`, and the ETag header).
 
 import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
@@ -19,7 +22,7 @@ import { assertGpuFree } from "../jobs.js";
 const log = getLogger("just_house_paint.parts");
 
 /**
- * `ctx`: { db, dataDir, jobs, finder } — `finder` is the part finder (segment/):
+ * `ctx`: { db, dataDir, jobs, finder, outlines } — `finder` is the part finder (segment/):
  *   finder.find(house, { signal, progress }) → [{ key, paintable, score, mask }] at display size
  *   finder.box(house, { x0, y0, x1, y1 }) → a Uint8Array region at display size
  */
@@ -66,65 +69,96 @@ export function router(ctx = getState()) {
     return rows();
   };
 
+  /** The version the request was made on — refused when another window changed the outlines since. */
+  const mustBeCurrent = (c, house) => ctx.outlines.check(house.id, c.req.header("if-match"));
+  /** A stroke or a Box while the parts are being found would be lost under what the finder saves: refused
+   *  (another window's run — this window's own tools are off while it runs). */
+  const notWhileFinding = (house) => {
+    if (ctx.jobs.running("find-parts", house.id)) {
+      throw new ApiError(409, "finding-parts", "The parts are being found", "your change wasn't saved — the house shows the parts found when it's done");
+    }
+  };
+  /** The outlines changed: their new version, on the answer too (ETag). */
+  const newVersion = (c, house) => {
+    const etag = ctx.outlines.bump(house.id);
+    c.header("ETag", etag);
+    return etag;
+  };
+
   app.get("/v1/houses/:id/parts", input({ params: IdParams }), (c) => {
     const house = mustHouse(c.req.valid("param").id);
+    c.header("ETag", ctx.outlines.etag(house.id));
     return c.json(listParts(ctx.db, house.id));
   });
 
   app.post("/v1/houses/:id/find-parts", input({ params: IdParams, body: FindPartsIn }), (c) => {
     const house = mustHouse(c.req.valid("param").id);
     const keepEdited = c.req.valid("json")?.keepEdited === true;
+    // whether to keep the hand edits was asked from what this page read: another window's edits since aren't in it
+    mustBeCurrent(c, house);
+    // a run another window started with the other choice isn't joined as if it were this one's
+    const running = ctx.jobs.running("find-parts", house.id);
+    if (running && (running.meta?.keepEdited === true) !== keepEdited) {
+      throw new ApiError(409, "already-finding", "The parts are already being found", "another window started it, with its own choice about the hand edits — wait for it, or cancel it first");
+    }
     assertGpuFree(ctx.jobs, "find-parts", house.id);
     if (ctx.enginesRemoving?.has("finder")) throw new ApiError(409, "engine-busy", "The part finder is being removed", "try again when it's done");
-    const job = ctx.jobs.start({ kind: "find-parts", key: house.id, label: house.name, failTitle: "Finding the parts didn't finish" }, async ({ signal, progress }) => {
+    const start = { kind: "find-parts", key: house.id, label: house.name, failTitle: "Finding the parts didn't finish", clientId: c.req.header("x-client-id") || null, meta: { keepEdited } };
+    const job = ctx.jobs.start(start, async ({ signal, progress }) => {
       const found = await ctx.finder.find(house, { signal, progress });
       signal.throwIfAborted();
-      // the parts changed by hand, read as the run ends (a stroke made while it ran counts too)
-      const before = listParts(ctx.db, house.id);
-      const kept = keepEdited ? before.filter((p) => p.source === "edited" || p.source === "added") : [];
-      const keptKeys = new Set(kept.map((p) => p.key));
-      if (kept.length) {
-        // a hand-made outline keeps its pixels: the parts found now are cut around it
-        const theirs = new Uint8Array(house.displayWidth * house.displayHeight);
-        for (const p of kept) {
-          const m = await readMask(house, p.key);
-          for (let i = 0; i < m.length; i++) if (m[i] >= 128) theirs[i] = 255;
-        }
-        for (const p of found) if (!keptKeys.has(p.key)) subtractRegion(p.mask, theirs);
-        // what the finder gave a part kept as drawn, on the house itself, and no part has now, goes back to the
-        // base part (the body): a Trim fixed by hand before the doors' casings were trim leaves them on the
-        // walls, not in no part. Only on the house's own outline (`house`): what the other parts reach past it
-        // (their margin — sky, a neighbor's roof) is never painted as wall; no outline given, nothing moves
-        const base = found.find((p) => p.base && p.house && !keptKeys.has(p.key));
-        if (base) {
-          const taken = theirs;
-          for (const p of found) if (!keptKeys.has(p.key)) for (let i = 0; i < taken.length; i++) if (p.mask[i] >= 128) taken[i] = 255;
-          for (const p of found) {
-            if (!keptKeys.has(p.key)) continue;
-            for (let i = 0; i < taken.length; i++) if (p.mask[i] >= 128 && !taken[i] && base.house[i] >= 128) base.mask[i] = 255;
-          }
-        }
-      }
-      const asIs = (p) => ({ key: p.key, paintable: p.paintable, area: p.area, score: p.score, source: p.source });
-      const rows = [
-        // the finder's order, a kept part in its place; kept parts it didn't find after them
-        ...found.map((p) =>
-          keptKeys.has(p.key) ? asIs(kept.find((k) => k.key === p.key)) : { key: p.key, paintable: p.paintable, area: area(p.mask), score: p.score, source: "auto" },
-        ),
-        ...kept.filter((k) => !found.some((p) => p.key === k.key)).map(asIs),
-      ];
-      const fresh = found.filter((p) => !keptKeys.has(p.key)).map((p) => [p.key, p.mask]);
-      const parts = await saveMasks(house, fresh, () => replaceParts(ctx.db, house.id, rows), signal);
-      // the outlines of parts not found this time go with their rows (a smaller folder and backup)
-      const stays = new Set(rows.map((r) => r.key));
-      // each one only while its part is still gone (a part added again meanwhile keeps its new outline)
-      for (const p of before) {
-        if (!stays.has(p.key) && !getPart(ctx.db, house.id, p.key)) await removeHouseFile(maskPath(ctx.dataDir, house.id, p.key));
-      }
-      return { parts: parts.length, kept: kept.length };
+      // the commit alone among the house's outline writes: a stroke saved meanwhile is read below, never lost
+      return ctx.outlines.serial(house.id, () => commitFound(house, found, keepEdited, signal));
     });
     return c.json(job, 202);
   });
+
+  /** A find's result saved: the parts changed by hand kept when asked, the others the finder's. */
+  const commitFound = async (house, found, keepEdited, signal) => {
+    // the parts changed by hand, read as the run ends (a stroke made while it ran counts too)
+    const before = listParts(ctx.db, house.id);
+    const kept = keepEdited ? before.filter((p) => p.source === "edited" || p.source === "added") : [];
+    const keptKeys = new Set(kept.map((p) => p.key));
+    if (kept.length) {
+      // a hand-made outline keeps its pixels: the parts found now are cut around it
+      const theirs = new Uint8Array(house.displayWidth * house.displayHeight);
+      for (const p of kept) {
+        const m = await readMask(house, p.key);
+        for (let i = 0; i < m.length; i++) if (m[i] >= 128) theirs[i] = 255;
+      }
+      for (const p of found) if (!keptKeys.has(p.key)) subtractRegion(p.mask, theirs);
+      // what the finder gave a part kept as drawn, on the house itself, and no part has now, goes back to the
+      // base part (the body): a Trim fixed by hand before the doors' casings were trim leaves them on the
+      // walls, not in no part. Only on the house's own outline (`house`): what the other parts reach past it
+      // (their margin — sky, a neighbor's roof) is never painted as wall; no outline given, nothing moves
+      const base = found.find((p) => p.base && p.house && !keptKeys.has(p.key));
+      if (base) {
+        const taken = theirs;
+        for (const p of found) if (!keptKeys.has(p.key)) for (let i = 0; i < taken.length; i++) if (p.mask[i] >= 128) taken[i] = 255;
+        for (const p of found) {
+          if (!keptKeys.has(p.key)) continue;
+          for (let i = 0; i < taken.length; i++) if (p.mask[i] >= 128 && !taken[i] && base.house[i] >= 128) base.mask[i] = 255;
+        }
+      }
+    }
+    const asIs = (p) => ({ key: p.key, paintable: p.paintable, area: p.area, score: p.score, source: p.source });
+    const rows = [
+      // the finder's order, a kept part in its place; kept parts it didn't find after them
+      ...found.map((p) =>
+        keptKeys.has(p.key) ? asIs(kept.find((k) => k.key === p.key)) : { key: p.key, paintable: p.paintable, area: area(p.mask), score: p.score, source: "auto" },
+      ),
+      ...kept.filter((k) => !found.some((p) => p.key === k.key)).map(asIs),
+    ];
+    const fresh = found.filter((p) => !keptKeys.has(p.key)).map((p) => [p.key, p.mask]);
+    const parts = await saveMasks(house, fresh, () => replaceParts(ctx.db, house.id, rows), signal);
+    // the outlines of parts not found this time go with their rows (a smaller folder and backup)
+    const stays = new Set(rows.map((r) => r.key));
+    // each one only while its part is still gone (a part added again meanwhile keeps its new outline)
+    for (const p of before) {
+      if (!stays.has(p.key) && !getPart(ctx.db, house.id, p.key)) await removeHouseFile(maskPath(ctx.dataDir, house.id, p.key));
+    }
+    return { parts: parts.length, kept: kept.length, outlines: ctx.outlines.bump(house.id) };
+  };
 
   app.get("/v1/houses/:id/parts/:key/mask", input({ params: PartParams }), (c) => {
     const house = mustHouse(c.req.valid("param").id);
@@ -142,6 +176,8 @@ export function router(ctx = getState()) {
     const house = mustHouse(c.req.valid("param").id);
     const key = c.req.valid("param").key;
     if (!getPart(ctx.db, house.id, key)) throw notFound(`house ${house.id} has no part ${key}`);
+    mustBeCurrent(c, house);
+    notWhileFinding(house);
     if (!/^image\/png\b/i.test(c.req.header("content-type") || "")) {
       throw new RequestValidationError([{ loc: ["body"], msg: "Expected an image/png body", type: "value_error" }]);
     }
@@ -151,7 +187,11 @@ export function router(ctx = getState()) {
     } catch {
       throw new RequestValidationError([{ loc: ["body"], msg: "Not a readable PNG", type: "value_error" }]);
     }
-    return c.json(await saveMasks(house, [[key, mask]], () => updatePartMask(ctx.db, house.id, key, { area: area(mask) })));
+    return ctx.outlines.serial(house.id, async () => {
+      mustBeCurrent(c, house); // again, once its turn came: a write queued before it may have changed them
+      const part = await saveMasks(house, [[key, mask]], () => updatePartMask(ctx.db, house.id, key, { area: area(mask) }));
+      return c.json({ ...part, outlines: newVersion(c, house) });
+    });
   });
 
   app.post("/v1/houses/:id/parts", input({ params: IdParams, body: PartNew }), async (c) => {
@@ -159,7 +199,10 @@ export function router(ctx = getState()) {
     const { key, paintable } = c.req.valid("json");
     if (getPart(ctx.db, house.id, key)) throw conflict(`house ${house.id} already has a part ${key}`);
     const empty = new Uint8Array(house.displayWidth * house.displayHeight);
-    return c.json(await saveMasks(house, [[key, empty]], () => updatePartMask(ctx.db, house.id, key, { area: 0, paintable, source: "added" })), 201);
+    // an empty outline takes no other part's pixels: the version stays
+    return ctx.outlines.serial(house.id, async () =>
+      c.json(await saveMasks(house, [[key, empty]], () => updatePartMask(ctx.db, house.id, key, { area: 0, paintable, source: "added" })), 201),
+    );
   });
 
   // A box: the finder outlines what is inside it; `add` gives it to this part (taking it from the
@@ -174,7 +217,18 @@ export function router(ctx = getState()) {
     const outside = [["x0", x0, house.displayWidth], ["x1", x1, house.displayWidth], ["y0", y0, house.displayHeight], ["y1", y1, house.displayHeight]].find(([, v, max]) => v > max);
     if (outside) throw new RequestValidationError([{ loc: ["body", outside[0]], msg: "Outside the photo", type: "value_error" }]);
     if (x1 - x0 < 2 || y1 - y0 < 2) throw new RequestValidationError([{ loc: ["body"], msg: "Draw a box at least 2 pixels wide and tall", type: "value_error" }]);
+    mustBeCurrent(c, house);
+    notWhileFinding(house);
     const region = await ctx.finder.box(house, { x0, y0, x1, y1 });
+    // the outlines read, changed and saved alone: a stroke saved meanwhile waits its turn (never lost under it)
+    return ctx.outlines.serial(house.id, async () => {
+      mustBeCurrent(c, house);
+      return c.json(await boxInto(house, key, mode, region, c));
+    });
+  });
+
+  /** The box's region given to part `key` (or taken out of it): every changed outline saved together. */
+  const boxInto = async (house, key, mode, region, c) => {
     const parts = listParts(ctx.db, house.id);
     let changed;
     const masks = {};
@@ -193,8 +247,8 @@ export function router(ctx = getState()) {
         for (const k of changed) updatePartMask(ctx.db, house.id, k, { area: area(masks[k]) });
       },
     );
-    return c.json({ changed, parts: listParts(ctx.db, house.id) });
-  });
+    return { changed, parts: listParts(ctx.db, house.id), outlines: changed.length ? newVersion(c, house) : ctx.outlines.etag(house.id) };
+  };
 
   return app;
 }

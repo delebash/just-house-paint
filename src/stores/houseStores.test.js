@@ -252,11 +252,20 @@ describe("the open house", () => {
     expect(s.colors).toEqual({ body: "p:1" });
     expect(s.dirty).toBe(false);
     s.setColor("trim", "p:3");
-    answer("PATCH /v1/designs/d1", (b) => ({ id: "d1", name: "Classic", colors: b.colors }));
+    // the server merges (JSON Merge Patch): only the part changed here is sent — another window's stay — and the
+    // design comes back whole, another window's trim-less body change included
+    answer("PATCH /v1/designs/d1", (b) => ({ id: "d1", name: "Classic", colors: { body: "p:1", ...b.colors } }));
     await s.saveDesign();
+    expect(calls.at(-1)[2]).toEqual({ colors: { trim: "p:3" } });
     expect(s.dirty).toBe(false);
     s.setColor("trim", null);
-    expect(s.colors).toEqual({ body: "p:1" });
+    answer("PATCH /v1/designs/d1", () => ({ id: "d1", name: "Classic", colors: { body: "p:5" } }));
+    await s.saveDesign();
+    expect(calls.at(-1)[2]).toEqual({ colors: { trim: null } }); // null takes the trim's color off
+    expect(s.colors).toEqual({ body: "p:5" }); // the screen shows the design as saved, the other window's body too
+    s.setColor("trim", "p:3");
+    s.setColor("trim", null);
+    expect(s.colors).toEqual({ body: "p:5" });
   });
 
   test("a scheme paints the roles' parts this house has", async () => {

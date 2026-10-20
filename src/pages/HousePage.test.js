@@ -76,9 +76,12 @@ function fakeFetch(input, init = {}) {
   const p = url.pathname;
   server.calls.push(`${method} ${p}`);
   if (p === "/v1/houses/h1" && server.gone) return Promise.resolve(json({ type: "about:blank", title: "Not Found", status: 404, detail: "no house h1" }, 404));
-  if (p === "/v1/houses/h1") return Promise.resolve(json({ ...HOUSE, ...server.house, partsFoundAt: server.partsFoundAt ?? null, currentPaints: server.currentPaints }));
-  if (p === "/v1/houses/h1/current-paints" && method === "PUT") {
-    server.currentPaints = JSON.parse(init.body);
+  if (p === "/v1/houses/h1")
+    return Promise.resolve(json({ ...HOUSE, ...server.house, partsFoundAt: server.partsFoundAt ?? null, currentPaints: server.currentPaints, outlines: server.version }));
+  // only the parts named (JSON Merge Patch): null takes one off
+  if (p === "/v1/houses/h1/current-paints" && method === "PATCH") {
+    const merged = { ...(server.currentPaints || {}), ...JSON.parse(init.body) };
+    server.currentPaints = Object.fromEntries(Object.entries(merged).filter(([, v]) => v));
     return Promise.resolve(json({ ...HOUSE, currentPaints: server.currentPaints }));
   }
   if (p === "/v1/houses/h1/parts") return Promise.resolve(json(server.parts));
@@ -102,6 +105,18 @@ function fakeFetch(input, init = {}) {
   if (mask && method === "PUT" && server.goneNow) {
     const problem = { type: "https://just-house-paint.local/errors/house-not-found", title: "This house isn't here any more", status: 404, detail: "it was deleted — in another window, or by a reset" };
     return Promise.resolve(json({ ...problem, houseId: server.goneNow }, 404));
+  }
+  // the outlines' version (the server's outlines.js): a write on another version is refused (412), one on this one
+  // answers the next
+  if (mask && method === "PUT" && server.version) {
+    const sent = new Headers(init.headers).get("if-match");
+    server.ifMatch.push(sent);
+    if (sent !== server.version) {
+      const problem = { type: "https://just-house-paint.local/errors/outlines-changed", title: "This house was changed in another window", status: 412, detail: "your last change wasn't saved — the house is shown as it is now" };
+      return Promise.resolve(json({ ...problem, houseId: "h1" }, 412));
+    }
+    server.version = `"v${Number(server.version.slice(2, -1)) + 1}"`;
+    return Promise.resolve(json({ ...server.parts.find((x) => x.key === mask[1]), outlines: server.version }));
   }
   if (mask && method === "PUT") return Promise.resolve(json(server.parts.find((x) => x.key === mask[1])));
   if (mask) return Promise.resolve(new Response(new Blob([mask[1]])));
@@ -145,6 +160,9 @@ function fakeFetch(input, init = {}) {
   }
   if (decodeURIComponent(p) === `/v1/paints/${WHITE.id}`) return Promise.resolve(json(WHITE));
   if (p === "/v1/paints/nearest") return Promise.resolve(json([{ paint: PAINT, deltaE: 3.2 }]));
+  // the Schemes tab: harmony schemes around a paint, and the brand's own pairings (none here)
+  if (p === "/v1/schemes/harmony") return Promise.resolve(json(server.harmony || []));
+  if (/^\/v1\/paints\/[^/]+\/schemes$/.test(p)) return Promise.resolve(json([]));
   if (p === "/v1/paints") {
     server.searches.push(Object.fromEntries(url.searchParams));
     // `paintTotal`: the brand has more than the two shown (Show more)
@@ -200,7 +218,7 @@ const settle = async () => {
 };
 
 beforeEach(() => {
-  server = { calls: [], parts: [], designs: [], finderInstalled: true, currentPaints: {}, searches: [] };
+  server = { calls: [], parts: [], designs: [], finderInstalled: true, currentPaints: {}, searches: [], ifMatch: [] };
   vi.stubGlobal("fetch", vi.fn(fakeFetch));
   vi.stubGlobal("ResizeObserver", class { observe() {} unobserve() {} disconnect() {} });
   vi.stubGlobal("matchMedia", vi.fn(() => ({ matches: false, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {} })));
@@ -1035,7 +1053,7 @@ test("the paint on a part now: picked with On it now (not painted), kept on the 
   expect(text()).toContain("Pick the paint this part has today");
   await click(byText(".chip", "Chalk White"));
   expect(server.currentPaints).toEqual({ body: WHITE.id });
-  expect(server.calls).toContain("PUT /v1/houses/h1/current-paints");
+  expect(server.calls).toContain("PATCH /v1/houses/h1/current-paints");
   const now = document.body.querySelector(".colors__now");
   expect(now?.textContent).toContain("On it now:");
   expect(now.textContent).toContain("Behr Chalk White W1");
@@ -1054,3 +1072,110 @@ test("the paint on a part now: picked with On it now (not painted), kept on the 
   expect(document.body.querySelector(".colors__now")).toBeNull();
   expect(light()).toBe("#3366aa");
 });
+
+test("a part with no color shows the “none” swatch, named for a screen reader; a painted part its paint", async () => {
+  server.parts = PARTS;
+  await mountPage();
+  const swatchOf = (part) => byText(".parts__row", part).querySelector(".swatch");
+  // an empty box read as an unticked checkbox (the visual review, 2026-10-20)
+  expect(swatchOf("Body").classList.contains("swatch--none")).toBe(true);
+  expect(swatchOf("Body").getAttribute("role")).toBe("img");
+  expect(swatchOf("Body").getAttribute("aria-label")).toBe("No color");
+  await click(byText(".q-tab", "Colors"));
+  await click(byText(".chip", "Sea Blue"));
+  // the chosen paint's button takes it off — an action, named as one
+  expect(byText(".colors__current .q-btn", "Remove the color")).toBeTruthy();
+  await click(byText(".q-tab", "Parts"));
+  expect(swatchOf("Body").classList.contains("swatch--none")).toBe(false);
+  expect(swatchOf("Body").getAttribute("aria-hidden")).toBe("true");
+  expect(swatchOf("Body").style.background).toBe("rgb(51, 102, 170)");
+  // the part's facts (its share, its ΔE) on a line of their own under its paint's name
+  const facts = byText(".parts__row", "Body").querySelector(".parts__facts");
+  expect(facts.textContent).toMatch(/ΔE \d+\.\d/);
+  expect(facts.compareDocumentPosition(byText(".parts__row", "Body").querySelector(".parts__paint")) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
+  await click(byText(".q-tab", "Colors"));
+  await click(byText(".colors__current .q-btn", "Remove the color"));
+  await click(byText(".q-tab", "Parts"));
+  expect(swatchOf("Body").classList.contains("swatch--none")).toBe(true);
+});
+
+test("a scheme that can't be applied says why on its row — never empty colors and a silent Apply", async () => {
+  server.parts = PARTS;
+  // a near-gray body: the server's note for each hue-based scheme (server/src/paints/harmony.js)
+  server.harmony = [
+    { kind: "complementary", complete: false, notes: ["the base color has no hue to build this scheme on"], roles: null },
+    { kind: "classic", complete: true, notes: [], roles: { body: { paint: PAINT }, trim: { paint: WHITE }, accent: { paint: PAINT } } },
+  ];
+  await mountPage();
+  await click(byText(".q-tab", "Colors"));
+  await click(byText(".chip", "Sea Blue"));
+  await click(byText(".q-tab", "Schemes"));
+  await flushPromises();
+  const schemeRow = (kind) => [...document.querySelectorAll(".scheme")].find((li) => li.querySelector("strong")?.textContent === kind);
+  const row = schemeRow("Complementary");
+  const why = row.querySelector(".scheme__why");
+  expect(why.textContent).toBe("The paint is nearly gray: it has no hue to build this scheme on. Classic works with any color.");
+  const apply = row.querySelector("button");
+  expect(apply.disabled).toBe(true);
+  expect(apply.getAttribute("aria-describedby")).toBe(why.id);
+  // no paint for a role: the "none" swatch, not an empty box
+  expect(row.querySelectorAll(".scheme__color.swatch--none")).toHaveLength(3);
+  const classic = schemeRow("Classic");
+  expect(classic.querySelector(".scheme__why")).toBeNull();
+  expect(classic.querySelector("button").disabled).toBe(false);
+  expect(classic.querySelector("button").hasAttribute("aria-describedby")).toBe(false);
+});
+
+// Several windows on one server (the eleventh review, 2026-10-20)
+test("a stroke saved on outlines another window changed is refused: said so, read again, the next one lands", async () => {
+  server.parts = PARTS;
+  server.version = '"v1"';
+  await mountPage();
+  await click(byText(".ui-seg button", "Brush"));
+  // a stroke on the outlines the page read: sent with their version, the next one taken from the answer
+  canvas().vm.$emit("stroke", { points: [1, 1, 3, 1], radius: 2, mode: "add" });
+  await new Promise((r) => setTimeout(r, 700));
+  await flushPromises();
+  expect(server.ifMatch).toEqual(['"v1"']);
+  // another window changes them: this page's next stroke is refused, and the page reads the house again
+  server.version = '"v7"';
+  server.calls.length = 0;
+  canvas().vm.$emit("stroke", { points: [5, 5, 6, 5], radius: 2, mode: "add" });
+  await new Promise((r) => setTimeout(r, 700));
+  await flushPromises();
+  await flushPromises();
+  // refused (the 412's words go to the toast, reportError): the house and its outlines read again
+  expect(server.ifMatch).toEqual(['"v1"', '"v2"']);
+  expect(server.calls).toContain("GET /v1/houses/h1");
+  expect(server.calls).toContain("GET /v1/houses/h1/parts/body/mask");
+  // read again: the next stroke carries the version that came with them
+  canvas().vm.$emit("stroke", { points: [7, 7, 8, 7], radius: 2, mode: "add" });
+  await new Promise((r) => setTimeout(r, 700));
+  await flushPromises();
+  expect(server.ifMatch.at(-1)).toBe('"v7"');
+  expect(server.version).toBe('"v8"');
+}, 20000);
+
+test("another window's change: the page reads the house again in place, and follows the parts it is finding", async () => {
+  server.parts = PARTS;
+  await mountPage();
+  await click(byText(".ui-seg button", "Brush"));
+  const { otherWindows } = await import("../services/otherWindows.js");
+  // the other window started finding the parts and saved a design
+  server.jobs = [{ id: "j-find", kind: "find-parts", key: "h1", state: "running", progress: 0.2, message: "" }];
+  server.holdFind = true;
+  server.designs = [{ id: "d9", houseId: "h1", name: "From the other window", colors: {}, createdAt: "2026-10-20T00:00:00Z", updatedAt: "2026-10-20T00:00:00Z" }];
+  server.calls.length = 0;
+  otherWindows.changes++;
+  await vi.waitFor(() => expect(document.querySelector(".q-page .sts")).not.toBeNull(), { timeout: 3000 });
+  expect(server.calls).toContain("GET /v1/houses/h1/jobs");
+  expect(server.calls).toContain("GET /v1/houses/h1/designs");
+  // the brush is off while the parts are found
+  expect(byText(".ui-seg button", "Brush").getAttribute("aria-disabled")).toBe("true");
+  await click(byText(".q-tab", "Designs"));
+  expect(text()).toContain("From the other window");
+  server.partsFoundAt = "2026-10-20T10:00:00.000Z";
+  server.holdFind = false;
+  server.jobs = [];
+  await settle();
+}, 20000);
