@@ -13,7 +13,7 @@
   neighbor's house in the photo.
 - **The AI photo says when other programs slowed it**: under its time, the programs that held the
   graphics card when it started, and how much.
-- **Linux**: the AppImage starts on Ubuntu 24.04 with nothing to install — before, its
+- **Linux**: the AppImage opens on Ubuntu 24.04 with nothing to install — before, its
   server didn't start.
 - **The part finder's card says when it can't run** on the computer, before anything is downloaded.
 - **Deleting a house** right after finding its parts no longer stops halfway.

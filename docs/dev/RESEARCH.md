@@ -986,3 +986,6 @@ at the app's display size, through the app's own code; scripts and overlays in s
   measured that way. c5125ff's "the AI photo started after an install waits for a busy card" — it is skipped then
   (the user presses AI photo again). The AI photo's note on other programs is one reading as the render starts, not
   "while it drew" (the words say so now).
+- **The window too** (2026-10-19, dry run 39357687376): the kit's shell prints "[shell] window loaded" when its window's
+  page loads, and the start check waits for it — every runner showed it: Windows 1.6 s, macOS 5.5 s, Linux (unpacked,
+  22.04) 1.5 s, the AppImage itself on Ubuntu 24.04 2.5 s, each with the part finder's runtime loading.
