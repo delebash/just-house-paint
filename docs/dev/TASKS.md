@@ -520,7 +520,22 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         paint search folds accents and case (a deterministic fold() SQL function in the store — 34 ms on 20k rows);
         names cut by grapheme (Intl.Segmenter) on the server and the color card; names inside sentences isolated
         (FSI/PDI, <bdi>); the log download named by the local date. Left by it: isolate.js belongs in the kit; the AI
-        schemes cut their names by UTF-16 units (schemes_ai.js); the kit's SyncPanel names a backup by the UTC date.
+        schemes cut their names by UTF-16 units (schemes_ai.js); the kit's SyncPanel names a backup by the UTC date. (All three
+        done by me: isolate and localDate in the kit; the schemes cut by grapheme — server/src/shared/text.js.)
+        The kit's shell and data folder — DONE by an agent (24 tests fail on the old code; kit core 1299; a live smoke
+        on a scratch Electron app): Change folder copies into the picked empty folder with fs.promises.cp (a
+        non-empty one refused; a failure removes what it copied); the lock's onCompromised logs and takes it again
+        (never throws); a data folder that can't be used: the shell's message box (Try again / Use the default
+        folder / Quit), the headless start one line and exit 3, the reason to the connection page
+        (serverStatus.serverError); the health answer's owner (a hash of the OS user) — the shell stops only its own
+        user's server; NODE_USE_SYSTEM_CA and the system proxy for the server (launchers too); the 180-character /
+        trailing-dot rule; a reserved port said (serverStatus.portReserved). Its additions, accepted (each the
+        decisions' consequence): the window's requests to another user's server blocked until its own listens (else
+        it loaded their data); NO_PROXY for loopback (undici proxied the local AI model's calls); .DS_Store,
+        Thumbs.db and desktop.ini don't make a folder non-empty; the path rule on every system. Left by it: the
+        connection page's words for portOtherUser, portReserved and serverError; Electron's "Error invoking remote
+        method" prefix on Change folder's refusals; two app tests comparing the health answer whole; the other
+        apps' launchers.
 NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
         the installed 0.1.2 updating to it (the silent Restart now).
 
