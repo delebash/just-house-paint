@@ -552,6 +552,42 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         The thirteenth's fixes committed (app 487b364, kit 0cec745: server 430, unit 161, e2e 16; kit core 1299, ui 43;
         JustWrite 21 + 741, JustVoice 8 + 260, docgen 165 + 5). The fourteenth (2026-10-20; started): the thirteenth's
         three agents' code attacked — one agent, read-only. Dry run 39400636078 green on every runner and the AppImage.
+        Its findings (an agent's, scratch scripts on the kit's own code; being fixed): two Change folder moves can run
+        at once (the "Moving…" lock is the panel's; a picked folder's .moving marker is wiped as unfinished while its
+        move still runs) — the old folder emptied, the new without app.db or houses; the tray's Start/Restart server
+        reopens the old folder mid-copy (the copy is async now); after a lost lock the server keeps serving while
+        another holds a fresh lock — two servers on one folder; "Use the default folder" deletes the pointer — the
+        user's data stranded, unsaid, no way back (and the 180-character rule now refuses the other apps' working
+        pointers); a Windows known folder (Documents, only desktop.ini) counts as empty and is deleted whole by the
+        next start's cleanup after a later move; the other-user guard rests on one 500 ms probe (a busy server reads
+        "port taken" and the window boots on the other user's data); NO_PROXY gets loopback only when the shell sets
+        the proxy (a user's own HTTP_PROXY sends the local AI's calls to it); the free-space check counts a resumed
+        download's .part at full size (507 on resume); number fields: "1,5" silently 15 in a whole-number field,
+        "1,23" vs "1,234" a 100-fold difference by one deleted digit; the canvas paints with any button (right
+        click, middle, a pen's barrel and eraser end) and a lost pointer capture leaves the stroke live; the other
+        apps' connection pages and launchers untracked; a missing named folder on a present drive is made empty; the
+        owner hash follows HOME; the docs promise a graphics-memory check the code doesn't make, mix GB units, and
+        overstate the proxy; Change folder has no free-space check and drops timestamps (12 GB hashed again). Right:
+        a single move start to finish, the preload's strip, an older server as "mine", fold() never in a schema
+        object, cutToLength within ajv's maxLength, the brand feeds through the kit's fetch, ONNX Runtime and its
+        binding from one folder, DXGI's offsets, the exit codes, the disk numbers, isolation never in a file name.
+        Their fixes — decided (mine, argued): one move at a time in the shell (a flag; Change folder refused while
+        one runs, the server not started, the tray's items off — Electron's MenuItem `enabled`), the marker holds the
+        old folder's path and is ours only when it matches; Change folder moves into a new folder named for the app
+        inside the one picked (the usual practice — the picked folder's own files never touched), refuses a
+        non-empty one there, checks the room first and keeps timestamps; the next start's cleanup removes only what
+        the move copied; a lost lock is taken again only when it is free or ours-stale (proper-lockfile's meaning of
+        compromised) — another server holding it fresh ends this one by the folder-in-use path; "Use the default
+        folder" is for this start only — the pointer kept, the dialog says where the data stays and that it asks
+        again next start; the 180-character and trailing-dot rules for a folder being chosen, a working pointer only
+        logged; a named folder that doesn't exist is said missing, never made; the window kept off its port
+        whenever its own server failed to listen there, until it does; NO_PROXY gets loopback whenever any proxy is
+        set; the owner is the OS user (and its Windows domain), not HOME; the free space counts what a .part already
+        holds; a number field takes a group separator only where groups go (a whole-number field says "1,5" is
+        wrong); the canvas draws with the primary button only, a pen's eraser end erases, a lost capture ends the
+        stroke (W3C Pointer Events); the guard checks the launchers' NODE_USE_SYSTEM_CA and the connection page's new
+        reasons (required where the release is, advisory for the others); the docs as the code says; the release's
+        headless check prints the AI photo's status on each runner (glibc read inside the AppImage's server).
 NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
         the installed 0.1.2 updating to it (the silent Restart now).
 
