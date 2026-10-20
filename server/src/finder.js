@@ -218,8 +218,12 @@ export function createFinder(ctx) {
       const exclusive = resolveOverlaps(result.parts, ctx.priority() || DEFAULT_PART_PRIORITY);
       return exclusive
         .filter((p) => p.mask && p.area > 0)
-        // `base`: the part that is the house minus every other (the body — method "subtract")
-        .map((p) => ({ key: p.key, paintable: byKey[p.key]?.paintable ?? true, score: p.score, mask: p.mask, base: byKey[p.key]?.method === "subtract" }));
+        // `base`: the part that is the house minus every other (the body — method "subtract"), with `house`,
+        // the house's own outline it was cut from
+        .map((p) => {
+          const base = byKey[p.key]?.method === "subtract";
+          return { key: p.key, paintable: byKey[p.key]?.paintable ?? true, score: p.score, mask: p.mask, base, ...(base ? { house: p.instances?.[0]?.mask ?? null } : {}) };
+        });
     },
 
     /** The region inside a box [x0, y0, x1, y1] (display pixels): the best instance's mask. */

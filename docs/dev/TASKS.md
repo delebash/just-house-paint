@@ -188,6 +188,32 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         another device, a second copy and the headless command (a macOS/Linux launcher, started on every release
         runner) — all fixed, with tests (RESEARCH §13). Settled: the headless note counting a browser; the finder's
         release. Left: a 0.1.3 backup restored into 0.1.2 (0.1.2 can't change).
+        The eighth (2026-10-19; security, accessibility, the seventh's fixes). Security — FIXED in the kit and the
+        template, with tests (RESEARCH §13; the kit's §2): CORS only for the app's own origins, the Host guard
+        against DNS rebinding (<APP>_ALLOWED_HOSTS for a proxy), proxied requests never loopback, a restore keeps
+        the engine tables, backups without tokens, zip sizes checked. The seventh's fixes' findings — FIXED, with
+        tests. Accessibility — being fixed. The findings as reported (an agent's, its probes reproduced 1–3): any web page can read the desktop server's data, keys and tokens (CORS `*` and
+        loopback skipping auth); DNS rebinding passes the CSRF check (Origin compared to an unchecked Host) — writes,
+        and an engine-config binary URL with no hash runs at the next install; a malicious backup restores
+        runner_binary/runner_setting rows (code at the next engine install); a reverse proxy on the machine makes
+        every request loopback; backups carry API keys and tokens in plain text; a restore's zip inflates with no
+        cap. Clean: zip-slip, triggers/views in a backup, path inputs, static UI, uploads, pinned downloads, logs, XSS.
+        Accessibility (an agent's, from the code): no visible focus on the app's own rows and chips (Quasar's
+        outline:0, the kit's --focus-ring undefined → ~1.2:1); the selected part/design/paint not announced
+        (aria-pressed/current missing, color-only borders); the photo canvas mouse-only (zoom can't pan by keyboard);
+        120 paint chips each a tab stop; every AI photo row named the same; hints only in titles (a disabled
+        button's, the ΔE badge's); Ctrl+Z/Y fires under open dialogs and not in a focused dropdown; light theme
+        --muted 3.4:1, green ΔE badge 4.2:1, the AI tag 2.4:1; outlines/brush/box/split can vanish on a white house;
+        the house page at the 800 px minimum (the photo ~160 px, the tools spill); focus lost to the body while
+        jobs disable their buttons; small: shade swatches' color only in titles, an 18 px target, cut house names.
+        The seventh's fixes, attacked (an agent's): Keep's reassignment gives the body pixels off the house (the text
+        parts are clipped only to the house plus its margin — sky, a neighbor's roof at margin 0); the Linux help
+        command's glob never matches the file (lower-case name); the Windows command fails in PowerShell (needs .\)
+        and the section never says to quit the desktop app first; a new app from the template gets a launcher that
+        isn't executable (new-app.js writes 0644, git records 100644, the guard checks only that it exists); a
+        put-back that fails at start, then any write making a new houses folder, lets the next start delete the
+        only copy; the shell's did-fail-load counts a failed iframe. Clean: the sweep on live houses, saveMasks,
+        using()/releaseGpu, keepAuth, afterTables, the gone-state handler, calmAgain, replaceAssetDir, the launcher.
 NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
         the installed 0.1.2 updating to it (the silent Restart now).
 

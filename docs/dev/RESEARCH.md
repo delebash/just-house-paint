@@ -1038,9 +1038,22 @@ at the app's display size, through the app's own code; scripts and overlays in s
   window's address works from another device (the server listens on 127.0.0.1 — a section on starting it on its own
   with `--host 0.0.0.0`), that a second copy always says the folder is in use (the desktop app takes over a server
   on its port, a kit design: said so), and named a headless command only Windows had (a shell launcher for macOS
-  and Linux, the release starts it on every runner without a display). Settled, not changed: with the server on its
+  and Linux, the release starts it on every runner without a display — dry run 39363747241: Windows' .cmd 1.0 s,
+  Linux 1.0 s with no display, the Mac app's Resources script 1.0 s, the extracted AppImage on 24.04 1.5 s, each
+  serving the page; the windows too, 2.0 / 2.5 / 5.1 / 3.1 s). Settled, not changed: with the server on its
   own, a browser showing the app on that computer counts among the AI photo's "other programs" — it does hold the
   card, and the note shows only past 1 GB (the words now say "the computer that draws it"); the finder's release
   can't wait forever (`running` drops in `finally`, a cancelled find stops at its next prompt). Left as it is: a
   0.1.3 backup restored into 0.1.2 — 0.1.2's Advanced refuses the parts list's `onHouse` (a downgrade; 0.1.2 can't
   change).
+- **The eighth review** (2026-10-19, three agents: security, accessibility, the seventh's fixes attacked). Security —
+  the family's servers (the kit's RESEARCH §2, "The servers' guards, attacked"): CORS for every origin let any web
+  page read this computer's server (backups with the AI keys, the tokens); DNS rebinding passed the CSRF check and
+  could set an engine binary that the next install runs; a malicious backup's engine rows did the same; a reverse
+  proxy made every client loopback; backups carried the tokens; a restore's zip could fill the disk — all fixed in
+  the kit and the template, with tests. The seventh's fixes: Keep's reassignment now stays on the house's own
+  outline (the finder's `house`), a put-back that fails is copied instead (and owed to the next start by
+  `.houses-put-back`, never removed as a leftover), the Linux help names the real lower-case AppImage, the Windows
+  command is `.\…` (PowerShell) and the help says to quit the desktop app first, a new app gets its launcher
+  executable (`new-app.js` stages it +x; the guard checks the git mode), the shell's failed-load line counts the
+  page itself only. Accessibility: being fixed (TASKS).

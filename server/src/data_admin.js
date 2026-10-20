@@ -41,6 +41,8 @@ export const keepAuth = {
     if (keptAuth === undefined) deleteSetting(h, "auth");
     else setSetting(h, "auth", keptAuth);
   },
+  // and a backup carries none: a file shared or left somewhere never hands out a way in
+  scrubBackup: (h) => deleteSetting(h, "auth"),
 };
 
 /** Cancel the jobs, let the part finder and the local AI model go — best effort by design: a

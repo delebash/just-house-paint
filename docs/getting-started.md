@@ -59,21 +59,34 @@ The desktop app's server answers only on its own computer. To use Just House Pai
 on another computer or a tablet, start the server on its own on the computer that has your houses,
 listening on your network:
 
-- **Windows** — in the app's folder (where `justhousepaint.exe` is):
-  `just-house-paint-server serve --host 0.0.0.0`
-- **macOS** — `"/Applications/Just House Paint.app/Contents/Resources/just-house-paint-server" serve --host 0.0.0.0`
-- **Linux** — unpack the AppImage once (`./Just-House-Paint-*.AppImage --appimage-extract`), then
-  `squashfs-root/just-house-paint-server serve --host 0.0.0.0`
+1. In the desktop app, add an access token (**App Settings → Server**): without one, anyone on your
+   network can open it. **Copy the address with this token** copies `http://127.0.0.1:17499/…` —
+   keep it; you'll put the computer's network address in place of `127.0.0.1`.
+2. Quit the desktop app (the tray's **Quit**): one server at a time can use your data.
+3. Start the server on its own, in a terminal:
+   - **Windows** — in the app's folder (where `justhousepaint.exe` is):
+     `.\just-house-paint-server serve --host 0.0.0.0`
+   - **macOS** — `"/Applications/Just House Paint.app/Contents/Resources/just-house-paint-server" serve --host 0.0.0.0`
+   - **Linux** — unpack the AppImage once (`./just-house-paint-*.AppImage --appimage-extract`), then
+     `squashfs-root/just-house-paint-server serve --host 0.0.0.0`
+4. On the other computer, open the address from step 1 with this computer's network address in it
+   (`http://<its address>:17499/…`).
 
-Then open `http://<that computer's address>:17499` in the other browser. Add an access token first
-(**App Settings → Server**): without one, anyone on your network can open it. **Copy the address
-with this token** copies the address the page was opened at — from the desktop window that is
-`127.0.0.1`; put the server computer's network address in its place.
+The server started on its own uses the same data folder as the desktop app. Opening the desktop app
+stops it and takes over (what it was doing stops too). Updates come through the desktop app — in a
+browser, **App Settings → Updates** shows the version and what's new.
 
-The server started on its own uses the same data folder as the desktop app, and one server at a
-time can: opening the desktop app stops a server started on its own on the same computer (what it
-was doing stops too). Updates come through the desktop app — in a browser, **App Settings →
-Updates** shows the version and what's new.
+Behind a reverse proxy on the same computer (Caddy, nginx, `tailscale serve`), name its public address
+in `JUST_HOUSE_PAINT_ALLOWED_HOSTS` (`paint.example.com`; several with commas) — the server answers
+requests from its own computer only under its own names, so a web page can't reach it by renaming
+itself — and keep an access token on: requests through a proxy always need one.
+
+## Backups
+
+**App Settings → Backups** saves everything — your houses, their photos and outlines, designs,
+settings and your AI providers' keys — in one file, and restores it. Keep the file as you would a
+password: the keys are in it. The access tokens are not, and a restore keeps this computer's own
+(and its downloaded engines' settings).
 
 ## Everything stays on your computer
 

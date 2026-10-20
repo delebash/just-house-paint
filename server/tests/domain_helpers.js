@@ -64,7 +64,8 @@ export const fakeFinder = {
     progress(0.5, "halfway");
     this.calls.push(["find", house.id]);
     return [
-      { key: "body", paintable: true, score: 0.9, mask: body, base: true },
+      // `house`: the outline the body was cut from — here the photo's left quarter, so the trim lies half off it
+      { key: "body", paintable: true, score: 0.9, mask: body, base: true, house: Uint8Array.from({ length: w * h }, (_, i) => (i % w < w / 4 ? 255 : 0)) },
       { key: "trim", paintable: true, score: 0.8, mask: trim },
       { key: "roof", paintable: false, score: 0.7, mask: new Uint8Array(w * h) },
     ];

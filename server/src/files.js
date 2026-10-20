@@ -8,8 +8,8 @@
 //   <dataDir>/houses/<id>/masks/<part>.png one 8-bit mask per part, display size
 //   <dataDir>/houses/<id>/renders/<id>.png AI photos
 
-import { existsSync, mkdirSync, readdirSync, renameSync, rmSync, writeFileSync } from "node:fs";
-import { rm } from "node:fs/promises";
+import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import { cp, rm } from "node:fs/promises";
 import path from "node:path";
 import { getLogger } from "@delebash/core/platform/log";
 
@@ -139,6 +139,32 @@ export async function removeAllHouseDirs(dataDir, { rename = renameSync } = {}) 
   }
 }
 
+// the file naming a restore's copy a start couldn't put back yet
+const PUT_BACK = ".houses-put-back";
+
+/** A restore's copy `name` (beside the data) made the houses folder: renamed into place, else — a file in it
+ *  held — copied, file by file, into it (a houses folder there already keeps what it has). True when done. */
+async function putBack(dataDir, name) {
+  const from = path.join(dataDir, name);
+  const root = housesRoot(dataDir);
+  if (!existsSync(root)) {
+    try {
+      renameSync(from, root);
+      return true;
+    } catch {
+      // held: copied instead
+    }
+  }
+  try {
+    await cp(from, root, { recursive: true, force: false, errorOnExist: false });
+    await rm(from, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 }).catch(() => {});
+    return true;
+  } catch (e) {
+    log.warning(`the houses folder is missing and ${name} couldn't be put back (${e.code || e.message}); tried again at the next start`);
+    return false;
+  }
+}
+
 /**
  * At start: remove the folders a removal left marked, of houses that don't exist — and an unmarked one
  * only when it is half removed (v0.1.2's leftovers). A whole folder without its house stays: a database
@@ -150,17 +176,21 @@ export async function sweepHouseDirs(dataDir, ids) {
   // two renames), the newest staged copy — the backup's — or else the replaced one is put back first.
   const all = existsSync(dataDir) ? readdirSync(dataDir) : [];
   const newest = (tag) => all.filter((n) => n.startsWith(`houses${tag}`)).sort().at(-1);
-  if (!existsSync(housesRoot(dataDir))) {
-    const back = newest(".restoring-") ?? newest(".replaced-");
-    if (back) {
-      try {
-        renameSync(path.join(dataDir, back), housesRoot(dataDir));
-        log.warning(`the houses folder was missing; ${back} put back in its place`);
-      } catch (e) {
-        log.warning(`the houses folder is missing and ${back} couldn't be put back (${e.code || e.message})`);
-        return 0; // nothing removed while the only copy may be beside it
-      }
+  // a put-back an earlier start couldn't finish names its copy here: never removed as a leftover, tried
+  // again (a photo added meanwhile made a new houses folder: the copy's files join it)
+  const pending = path.join(dataDir, PUT_BACK);
+  const owed = existsSync(pending) ? readFileSync(pending, "utf8").trim() : null;
+  const back = existsSync(housesRoot(dataDir)) ? (owed && all.includes(owed) ? owed : null) : (newest(".restoring-") ?? newest(".replaced-"));
+  if (back) {
+    if (await putBack(dataDir, back)) {
+      rmSync(pending, { force: true });
+      log.warning(`the houses folder was missing; ${back} put back in its place`);
+    } else {
+      writeFileSync(pending, back);
+      return 0; // nothing removed while the only copy may be beside it
     }
+  } else if (owed) {
+    rmSync(pending, { force: true }); // its copy is gone: nothing owed
   }
   const leftover = (name) => [ASIDE, ".replaced-", ".restoring-"].some((tag) => name.startsWith(`houses${tag}`));
   for (const name of existsSync(dataDir) ? readdirSync(dataDir) : []) {

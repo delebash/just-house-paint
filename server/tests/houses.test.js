@@ -116,23 +116,35 @@ describe("houses", () => {
     expect(readdirSync(s.dataDir).filter((n) => n.startsWith("houses."))).toEqual([]);
   });
 
-  test.skipIf(process.platform !== "win32")("a staged copy Windows holds isn't put back — and then nothing beside it is removed", async () => {
+  test.skipIf(process.platform !== "win32")("a staged copy Windows holds is copied into place instead of renamed", async () => {
     s = makeServer();
     rmSync(housesRoot(s.dataDir), { recursive: true, force: true });
     mkdirSync(path.join(s.dataDir, "houses.restoring-1760000000001", "h"), { recursive: true });
     mkdirSync(path.join(s.dataDir, "houses.replaced-1760000000001", "h"), { recursive: true });
     const fd = openSync(path.join(s.dataDir, "houses.restoring-1760000000001", "h", "display.jpg"), "w");
     try {
-      expect(await sweepHouseDirs(s.dataDir, ["h"])).toBe(0);
+      await sweepHouseDirs(s.dataDir, ["h"]);
     } finally {
       closeSync(fd);
     }
-    expect(existsSync(path.join(s.dataDir, "houses.restoring-1760000000001"))).toBe(true);
-    expect(existsSync(path.join(s.dataDir, "houses.replaced-1760000000001"))).toBe(true);
-    // the start after: put back, the other copy removed
-    await sweepHouseDirs(s.dataDir, ["h"]);
     expect(existsSync(path.join(s.dataDir, "houses", "h", "display.jpg"))).toBe(true);
     expect(existsSync(path.join(s.dataDir, "houses.replaced-1760000000001"))).toBe(false);
+    // the start after: what was held beside it goes
+    await sweepHouseDirs(s.dataDir, ["h"]);
+    expect(readdirSync(s.dataDir).filter((n) => n.startsWith("houses."))).toEqual([]);
+  });
+
+  test("a put-back a start couldn't finish is finished at the next — never removed as a leftover", async () => {
+    s = makeServer();
+    // a photo added since made a new houses folder; the restore's copy is named as still owed
+    const added = await (await s.upload(await jpeg(100, 80))).json();
+    mkdirSync(path.join(s.dataDir, "houses.restoring-1760000000001", "restored"), { recursive: true });
+    writeFileSync(path.join(s.dataDir, "houses.restoring-1760000000001", "restored", "display.jpg"), "the backup's");
+    writeFileSync(path.join(s.dataDir, ".houses-put-back"), "houses.restoring-1760000000001");
+    await sweepHouseDirs(s.dataDir, [added.id, "restored"]);
+    expect(readFileSync(path.join(s.dataDir, "houses", "restored", "display.jpg"), "utf8")).toBe("the backup's");
+    expect(existsSync(displayPath(s.dataDir, added.id))).toBe(true); // what it had stays
+    expect(readdirSync(s.dataDir).filter((n) => n.startsWith("houses.") || n === ".houses-put-back")).toEqual([]);
   });
 
   test("a reset takes a restore's leftovers too, and the next start never puts one back as the houses", async () => {
@@ -376,9 +388,10 @@ describe("parts", () => {
     expect(kept.result).toEqual({ parts: 4, kept: 2 });
     const list = async () => (await (await s.app.request(`/v1/houses/${house.id}/parts`)).json()).map((p) => [p.key, p.source, p.area]);
     // the body is cut around the kept trim; what the finder called trim this time and the kept one hasn't
-    // (the bottom-left quarter) goes to the body — never to no part
+    // (the bottom-left quarter) goes to the body where it lies on the house (the left quarter: 64 × 96) —
+    // never what reaches past the house
     expect(await list()).toEqual([
-      ["body", "auto", 256 * 86 + 128 * 96],
+      ["body", "auto", 256 * 86 + 64 * 96],
       ["trim", "edited", 256 * 10],
       ["roof", "auto", 0],
       ["shutters", "added", 0],

@@ -71,16 +71,17 @@ export function router(ctx = getState()) {
           for (let i = 0; i < m.length; i++) if (m[i] >= 128) theirs[i] = 255;
         }
         for (const p of found) if (!keptKeys.has(p.key)) subtractRegion(p.mask, theirs);
-        // what the finder gave a part kept as drawn, and no part has now, goes back to the base part (the
-        // body, as before the finder found it): a Trim fixed by hand before the doors' casings were trim
-        // leaves them on the walls, never in no part
-        const base = found.find((p) => p.base && !keptKeys.has(p.key));
+        // what the finder gave a part kept as drawn, on the house itself, and no part has now, goes back to the
+        // base part (the body): a Trim fixed by hand before the doors' casings were trim leaves them on the
+        // walls, not in no part. Only on the house's own outline (`house`): what the other parts reach past it
+        // (their margin — sky, a neighbor's roof) is never painted as wall; no outline given, nothing moves
+        const base = found.find((p) => p.base && p.house && !keptKeys.has(p.key));
         if (base) {
           const taken = theirs;
           for (const p of found) if (!keptKeys.has(p.key)) for (let i = 0; i < taken.length; i++) if (p.mask[i] >= 128) taken[i] = 255;
           for (const p of found) {
             if (!keptKeys.has(p.key)) continue;
-            for (let i = 0; i < taken.length; i++) if (p.mask[i] >= 128 && !taken[i]) base.mask[i] = 255;
+            for (let i = 0; i < taken.length; i++) if (p.mask[i] >= 128 && !taken[i] && base.house[i] >= 128) base.mask[i] = 255;
           }
         }
       }
