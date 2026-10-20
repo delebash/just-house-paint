@@ -423,6 +423,11 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         · Kept, argued: keep-running hides the window (Electron's tray pattern — destroying it would lose the open
           page and its unsaved colors; hidden, it no longer polls); llm_usage keeps a row per AI call the user makes
           (tiny, the AI usage page reads it).
+        The thirteenth (2026-10-20; started): the twelfth's fixes attacked (the database version's collisions, the
+        epoch row, the commit record, the three-way rebase, the generation logic, the legacy restore for the other
+        apps, the docs' words) and an unusual user's computer (odd and long paths, OneDrive, FAT/exFAT, network
+        drives, a non-English locale, no NVIDIA card, high DPI, touch, antivirus, a proxy) — two agents, read-only.
+        Dry run 39390758821 (app 290c777, kit 54b1e8b) building.
 NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
         the installed 0.1.2 updating to it (the silent Restart now).
 
