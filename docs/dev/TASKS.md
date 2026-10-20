@@ -1740,7 +1740,15 @@ v0.1.2 (2026-10-19): Restart now installs silently and restarts (the kit's 8a9b3
         0.1.0 or 0.1.1 still shows the wizard this once (their shell is the old one); What's new says so. RELEASED (run
         39315855260, the feed checked). The installed 0.1.1 → 0.1.2 as those users will: found, downloaded in 2 s, Restart
         now → the wizard, Next, it installs, Finish (Run Just House Paint ticked) → the app at 0.1.2 in 0.6 s, its data
-        untouched. LEFT: the first update FROM 0.1.2 is the one that shows the silent Restart now — check it then.
+        untouched. The first update FROM 0.1.2 — checked with v0.1.3, below: silent.
+v0.1.3 (2026-10-21): the reviews' fixes of 10/19–10/21 (What's new). Checked before the tag: kit core 1426 + lint, UI
+        60, the guard clean; app lint, i18n, 449 server and 196 renderer tests, build + e2e 16/16; template 57 + 89, e2e
+        12/12; JustWrite, JustVoice and docgen on the kit. RELEASED (run 39507092618, tag 0f01e03, the kit at 5488e5c;
+        the Windows .exe, the macOS .dmg/.zip, the Linux AppImage, their block maps, latest*.yml — the feed names the
+        published files). The installed 0.1.2 updated itself as a user does (Windows UI Automation): App Settings →
+        Updates said "Version 0.1.3 is out.", Download took 3 s, Restart now — the app quit in 0.6 s, no installer
+        window at all, back 16 s later as 0.1.3 ("This is the latest version"), the uninstall entry 0.1.3, its data
+        folder untouched; closed with its window's close, no process left.
 
 ## The review before the release [2026-10-18]
 FOUND (a read-only review of the renderer, each traced through the code; to fix before the release):
