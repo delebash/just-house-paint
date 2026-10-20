@@ -613,6 +613,52 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         From JustVoice's session: the macOS launcher took the first file in Contents/MacOS (find | head -n 1) — an app
         with another program there started that one; FIXED in the template and here: the bundle's own executable by
         its Info.plist (CFBundleExecutable, PlistBuddy) — the next dry run's macOS runner checks it (--headless).
+        The fourteenth's shell code attacked (an agent's, scratch scripts on Electron's Node against the kit's own code;
+        being fixed): Change folder accepts the install folder (one "up" from the data in the picker) — the next update's
+        uninstall keeps only data/ and dataroot.txt and deletes the rest, the user's data with it (measured with the
+        installer's removal ported); the next start's cleanup deletes the copied names from the old folder whenever it
+        runs, even after the app ran there again (a data-dir variable, "Use the default folder") — new work deleted
+        (measured); a server start already waiting (the proxy lookup, the port probe) when the move begins forks on the
+        old folder mid-copy (measured); fs.cp makes relative links absolute into the old folder (the HF snapshots, the
+        engine's .so links on macOS/Linux — Node's verbatimSymlinks); the strict number reading refuses ".7", "5.",
+        "15.", "+15", "1 500", ",5" and UiNumber then clears the box (SyncPanel turns the null into 0: "15." set
+        auto-sync to manual only — JustWrite, JustVoice); a token kept in the window (require one on this computer too)
+        is left behind by a move — locked out; preserveTimestamps keeps no NTFS millisecond mtime (0/20) and the
+        engines compare exactly — 12 GB hashed again after every move; the pointer's write has no retry and a failure
+        leaves the full copy and a raw EPERM; Quit mid-copy leaves a half copy for good; killed while emptying the old
+        folder keeps it for good; a server stopped by a lost lock leaves the window uninformed until a reload;
+        headless servers still send loopback through the user's own proxy (http.js, llm/base.js); partBytes credits
+        sparse .part files (macOS/Linux) and leftovers; other apps sharing this app's model cache lose it after a move,
+        unsaid; an old drive gone for good asks at every start with no way to stop, and the default folder can't be
+        chosen again; FAT32: the lock lost every ~20 s, taken back 5–7 s later; small: USERDOMAIN can be missing, the
+        guard's comment stripping is JS-only, docs ("removed at the next start", "--data-dir" must exist, the pen's
+        eraser and the primary button unsaid, "under 180" vs ≤ 180), two stale comments, "copy failed: EFBIG" raw.
+        Right: one move at a time, the cleanup's limits, the room check, inside-the-data refused, the lock's retake,
+        guardPort, JustVoice's default, NO_PROXY's ::1, the canvas in real Chromium (CDP touch, mouse, pen), the bundle
+        test.
+        Their fixes — decided (mine, argued — Change folder's third round, so made simpler, not patched again): the old
+        folder is never removed by the app on its own — a move copies, checks (fsync), writes the pointer (renameHeldSync)
+        and switches; Settings → Storage then shows the old copy with its size and **Remove the old copy** (it removes
+        only what the move copied, never the folder the app runs on) — no cleanup race, no "killed while emptying", no
+        late deletion; a target inside the app's install folder or bundle is refused (Microsoft: user data never in the
+        program folder) except the default folder itself, which Storage offers as **Move back to the default folder**;
+        a start already under way is checked again right before it forks, and the move waits for it; links copied as
+        they are (verbatimSymlinks); quitting while a move copies is held ("the data is being moved — quit when it's
+        done"), and a half copy an earlier stop left is removed at the next start (its marker names the old folder, the
+        pointer doesn't name the new); the window's token carried across the move (a one-time file in the new folder,
+        read and removed at the relaunch); the engines compare a file's time with a 2-second tolerance (rsync's
+        --modify-window — FAT's 2 s too); a server stopped by a lost lock reloads the window, which then shows the
+        connection page's reason; loopback never through a proxy, headless too (undici EnvHttpProxyAgent noProxy in
+        http.js and llm/base.js); partBytes counts a .part's allocated blocks (st.blocks × 512 off Windows) and only
+        the files the install fetches; the move's confirm names the apps sharing its models (as Clear models does);
+        Storage, while a start uses the default folder, offers **Use the default folder from now on** (the pointer
+        forgotten); on a drive whose file times are coarse (FAT) the lock lives in the system's temp folder, keyed by the
+        data folder's path; number fields read with @internationalized/number's NumberParser (React Spectrum's —
+        partial input, the language's minus and grouping) and a refused text stays in the box with its rule's error,
+        never cleared — SyncPanel never turns an empty value into 0; the guard strips # / rem / :: comments in launchers
+        and wants NODE_USE_SYSTEM_CA=1; EFBIG said in words (a FAT32 drive's 4 GB limit); the docs and comments as the
+        code is. Kept, argued: the owner from USERDOMAIN and the user name (a service runs as another account anyway;
+        the SID needs a process per check).
 NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
         the installed 0.1.2 updating to it (the silent Restart now).
 
