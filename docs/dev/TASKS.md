@@ -428,6 +428,26 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         apps, the docs' words) and an unusual user's computer (odd and long paths, OneDrive, FAT/exFAT, network
         drives, a non-English locale, no NVIDIA card, high DPI, touch, antivirus, a proxy) — two agents, read-only.
         Dry run 39390758821 (app 290c777, kit 54b1e8b) all green on every runner and the AppImage as a user opens it.
+        The twelfth's fixes attacked (an agent's, scratch scripts on Electron's Node; being fixed): Add part changes the
+        version (the parts rows) but the store neither sends If-Match nor takes the answer — this window's next stroke
+        is refused "changed in another window", and a part added in another window resets this one's Undo; Undo to
+        another design's draft then Save sends the wrong patch (setColors moves designId, not designBase) — the user's
+        change dropped; a start-up roll-forward that can't remove the old folder shuts writes for the whole session
+        (the data is fine); a job that finished while the window slept and was then forgotten (10 min) reads as "the
+        server started again"; the gate drains every non-GET — a slow AI-schemes run or brand load blocks writes 60 s
+        then refuses the restore; the epoch has gaps (the backup's dataEpoch row served between the copy and
+        onReplaced; a reset's GET writes a temporary one); designs read just before a save can revert it on screen; a
+        stroke can start in the refresh's first await; small: words while shut until restart ("try again when it's
+        done"), the on-wake update check runs before Wi-Fi and its error replaces "available" for 6 h, releaseGpu
+        unbounded in teardown, the journal written in place (two-folder apps), 5xx retried forever, a dialog-held
+        window's save lands in restored data, a crashed first restore's copy put back under empty tables; left open:
+        a stroke while busy dropped silently, linkTree's blocking, EmptyState in the other apps not rendered. Docs:
+        "needs a restart" in a case where the data is fine; "your data is as it was" not until a restart in the
+        unfinished case; "a hidden window asks nothing" false while a job runs; "every window shows the new data"
+        false after a refused restore; no entry for "A change is still being saved"; Add part changes outlines too.
+        Right: the hash's collisions need the same millisecond and area; the lock cleanup; answered() and per-house
+        versions; DATA_WRITES complete; restart vs restore; the commit record's crash points; the start-up order; the
+        other apps on the legacy restore; visibility, the token notice, the Mac steps.
 NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
         the installed 0.1.2 updating to it (the silent Restart now).
 
