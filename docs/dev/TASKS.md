@@ -1220,6 +1220,8 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         template 81 + 54, e2e 12; JustWrite 745 + 180, JustVoice 261 + 1366, docgen 5 + 165); the peers told (Clear
         models through a link especially). Dry run started. The nineteenth (2026-10-20): the eighteenth's code
         attacked, the screens on its build, and a fresh angle — the server's routes under hostile and odd input.
+        Dry run 39452696637 green on every runner, linux-user too (Windows 75 data-folder tests with the link ones,
+        macOS and Linux 71 + 4 Windows-only skipped; one data folder shared on each; engines as before).
 NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
         the installed 0.1.2 updating to it (the silent Restart now).
 
