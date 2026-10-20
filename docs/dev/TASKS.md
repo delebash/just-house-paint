@@ -924,6 +924,13 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         rmSync recursive emptied a junctioned folder's target the same way ("Clear speech models", its factory reset —
         fixed there, 70bf2234). From JustWrite: the boot smoke's fixed 15 s failed under a parallel run (kit 9557b67: a
         timeout option, 60 s by default).
+        Fixed (kit 6e850f1): the move probes once whether it may make a symlink — with the right every link is copied as
+        the kind it was (junctions as junctions; PowerShell's LinkType tells them apart — NOT STANDARD, RESEARCH §2),
+        without it folder links become junctions and a file link is refused by name. Dry run 39429983087 green on every
+        runner, linux-user too: Windows ran all 67 data-folder tests (the link ones with the right), Ubuntu and macOS 63
+        (4 Windows-only skipped); the packaged app and its server from temp copies, one data folder shared (Ubuntu
+        beside the build, macOS in Application Support); engines: Ubuntu 22.04 the AI photo not offered (glibc 2.35 <
+        2.38), macOS metal, Windows cpu; the finder's runtime on all.
 NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
         the installed 0.1.2 updating to it (the silent Restart now).
 
