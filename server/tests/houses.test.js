@@ -8,7 +8,8 @@ import sharp from "sharp";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { nameFromFile } from "../src/api/houses_api.js";
 import { ingestPhoto, isHeic } from "../src/images.js";
-import { createHouse, deleteHouse } from "../src/database/houses.js";
+import { addRender, createHouse, deleteHouse } from "../src/database/houses.js";
+import { tidyAtStart } from "../src/startup.js";
 import { addingHouseDir, displayPath, housesRoot, maskPath, removeAllHouseDirs, removeHouseDir, sweepHouseDirs, sweepRenders } from "../src/files.js";
 import { fakeFinder, jpeg, LIMITS, makeServer } from "./domain_helpers.js";
 
@@ -223,6 +224,17 @@ describe("houses", () => {
     expect(await sweepRenders(s.dataDir, new Map([["h1", new Set(["kept.png"])]]), { tmp })).toBe(1);
     expect(readdirSync(renders)).toEqual(["kept.png"]);
     expect(readdirSync(tmp).sort()).toEqual(["aiphoto-now", "someone-else"]); // another copy may be drawing in a new one
+  });
+
+  test("the start's tidy keeps every AI photo a row names and takes the one no row names", async () => {
+    s = makeServer();
+    const house = await (await s.upload(await jpeg(100, 80))).json();
+    const renders = path.join(s.dataDir, "houses", house.id, "renders");
+    mkdirSync(renders, { recursive: true });
+    for (const f of ["kept.png", "half-written.png"]) writeFileSync(path.join(renders, f), "x");
+    addRender(s.db, { houseId: house.id, file: "kept.png", engine: "test" });
+    await tidyAtStart(s.dataDir, s.db); // exactly what serve.js runs before it listens
+    expect(readdirSync(renders)).toEqual(["kept.png"]);
   });
 
   test("a reset while a photo is read: its files still land, in the new houses folder", async () => {

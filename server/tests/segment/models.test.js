@@ -132,6 +132,10 @@ describe("ensureModels with a fake downloader", () => {
     await expect(ensureModels(dir, { files, download: fakeDownload({}, calls), cancelCheck: () => true })).rejects.toBeInstanceOf(ModelDownloadCancelled);
     expect(calls).toEqual([]);
     await expect(sha256File(path.join(dir, "a.onnx"), () => true)).rejects.toBeInstanceOf(ModelDownloadCancelled);
+    // inside the check itself: the one file present, Cancel answering only at its second ask — the first is
+    // before the file, the second can only come from within its hash (ensureModels passes cancelCheck on)
+    let asked = 0;
+    await expect(ensureModels(dir, { files: [files[0]], download: fakeDownload({}, calls), cancelCheck: () => ++asked >= 2 })).rejects.toBeInstanceOf(ModelDownloadCancelled);
   });
 
   it("needs a downloader and a folder", async () => {

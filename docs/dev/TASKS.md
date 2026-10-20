@@ -250,6 +250,39 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         overwrite the new); small: a backup saved onto a full disk leaves a partial file, a killed AI photo leaves
         temp files and maybe a half PNG, Cancel waits out the finder's hash check. Clean: downloads resume, no
         network at first start, SQLite busy, jobs after a restart, memory over house switches, SAM encodings.
+        The tenth (2026-10-20; the checks themselves, the kit's changes in the other apps, the screens). The checks
+        (an agent's, mutations in a scratch copy — each survived all 385 server tests; being fixed): the restore
+        test's "backup with a token" was already scrubbed (dropping afterCopy's delete survives); scrubBackup's wiring
+        untested; the finder's Cancel test throws before any hash (isValid not passing cancelCheck survives); the
+        outline save test passes with the old write-in-place; the start-up AI-photo sweep in serve.js is never run
+        (r.id for r.file would delete every AI photo); the guard's rules pass on comments and variants (CORS "*" in a
+        list, a regex ".*"; afterCopy in a comment; clipboard via ?. or an alias; the workflow steps in YAML
+        comments, the windowed step deletable, continue-on-error unchecked; an untracked launcher); the --headless
+        check passes a blank page and could serve a stale dist/spa from the checkout; "window loaded" when a page
+        inside the layout fails; Windows never compares its data folders; saveFromUrl and the backup wiring
+        untested; the backup's "never whole" pinned only by Content-Length.
+        The screens (an agent's, 173 captures of the built app at 960×700, 1366×768, 1920×1032, light and dark, faked
+        parts and paints): Your houses' cards white in dark (names unreadable — a raw q-card); the Help button's
+        tooltip stuck on screen after Help closes, one more per close (the kit's tooltip.js show() leaves a pending
+        timer); the Parts tab squeezes the paint name to ~45–110 px (the side section ~190 px); the Colors tab's "On
+        this wall" and "on it now" swatches 0×0 (.swatch scoped to PartsTab); at 960×700 the house page scrolls
+        12–55 px beside its panel's scroller and the panel's tabs wrap; Settings' section strip wraps at 960; kit
+        panels stretched (Logs' selects 846 px, AI Settings' cards ~1650 px, Quick Setup centred); the empty state's
+        box ~1655 px wide; the Schemes tab's harmony rows empty with Apply off and no reason (synthetic palette —
+        unverified); an uncolored part's empty swatch reads as a checkbox; dark-theme off toggles nearly
+        invisible; small: Paint colors' rows wrap at 960, "Reset just house paint" in lowercase, About's link in
+        browser blue, the boot plate still the template's notes icon and light-only. Right: dialogs, Help, the
+        connection page, most Settings cards, title bar, nav, the house page at 1366/1920, focus rings.
+        The kit's changes in the other apps (an agent's, from the code — fixing in the kit): the health answer's
+        tokenRequired stops JustVoice's, JustWrite's and docgen's windows at the token page, which they can't pass
+        (JustVoice keeps its token under jt:token; the others' Settings keep none) — their escape (Settings →
+        Server, open from this computer) gone; the restore's kept runner_setting holds the user's default preset,
+        model-list rules and update policy, not only this computer's (a moved backup loses them, or points the
+        default at a preset that's gone); JustWrite's TipTap editor (tabindex 0, contenteditable) gets the focus ring
+        around the whole writing area on a click; smaller: a dev checkout run from an AppImage-hosted terminal
+        (APPIMAGE set) would move its data/ out; backups and restores unpack on the system drive's temp; the shell's
+        .part rename has no retry for a held file; Docker's host.docker.internal calling JustVoice's /mcp is refused
+        (no allowedHosts wired there).
 NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
         the installed 0.1.2 updating to it (the silent Restart now).
 

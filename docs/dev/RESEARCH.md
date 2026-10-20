@@ -1098,3 +1098,16 @@ at the app's display size, through the app's own code; scripts and overlays in s
   photo past sharp's 268 MP limit says its size (413), not "not an image"; a killed AI photo's picture without a row
   and its day-old work folder go at start; Cancel answers during the part finder's hash check; saves land whole (the
   kit's `.part` then rename).
+- **The tenth review** (2026-10-20, three agents: the checks themselves — mutations in a scratch copy; the kit's
+  changes as the other apps meet them; the screens, 173 captures of the built app). The checks: each weak test now
+  fails on its mutant (a backup that carries a token built by hand; the scrub checked in the backup's own database;
+  the finder's Cancel inside the hash with one file; a disk filling on the second outline leaves both whole —
+  `outline_save.test.js` stubs node:fs; the start's tidy moved into `startup.js` and tested with real rows); the
+  guard reads code without comments and catches the variants (CORS `"*"` anywhere in the list, a named list, a
+  match-all regex; `afterCopy` as code; `?.` and aliased clipboard writes; the release's window and `--headless`
+  steps each on their own uncommented line; `continue-on-error`; an untracked launcher); `--headless` loads the
+  page's script and starts from the temp folder (a stale dist/spa can't stand in); the window line waits for the
+  first page inside the layout; the data-folder comparison runs on every build runner; e2e saves a backup through
+  the shell's stream. The other apps (the kit's RESEARCH §2): the token page made opt-in, the restore keeps only
+  this computer's runner rows, the editor's ring, a dev checkout never a bundle, work beside the database, the
+  save's held rename. The screens: being fixed (TASKS).

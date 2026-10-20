@@ -17,10 +17,9 @@ import { runServer } from "@delebash/core/platform";
 import { setLevel } from "@delebash/core/platform/log";
 import { createApp } from "./app.js";
 import { getDb } from "./app_state.js";
-import { listHouses, listRenders } from "./database/houses.js";
 import { seedWorkspace } from "./database/seed.js";
-import { sweepHouseDirs, sweepRenders } from "./files.js";
 import { defaultDataDir } from "./paths.js";
+import { tidyAtStart } from "./startup.js";
 import { DEFAULT_PORT, PRODUCT, VERSION } from "./version.js";
 
 export async function main(argv = process.argv.slice(2)) {
@@ -35,9 +34,7 @@ export async function main(argv = process.argv.slice(2)) {
       setLevel(logLevel);
       const app = await createApp(dataDir);
       seedWorkspace(getDb());
-      const houses = listHouses(getDb()).map((h) => h.id);
-      await sweepHouseDirs(dataDir, houses);
-      await sweepRenders(dataDir, new Map(houses.map((id) => [id, new Set(listRenders(getDb(), id).map((r) => r.file))])));
+      await tidyAtStart(dataDir, getDb());
       const h = host || "127.0.0.1";
       const p = port ?? DEFAULT_PORT;
       return { app, host: h, port: p, banner: `${PRODUCT} ${VERSION} server listening on http://${h}:${p}` };
