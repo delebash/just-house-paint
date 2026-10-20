@@ -4,7 +4,8 @@
 // so a color click repaints at once, and only a changed mask or texture is prepared again.
 // Pure over arrays: the page hands it ImageData pixels and masks, and draws what it returns.
 
-import { applyLight, chipDeltaE, lightGain, litHex, luminance, partTones, photoExposure, preparePart, tintPhoto } from "./tint.js";
+import { lightLimits } from "./lightLimits.js";
+import { applyLight, chipDeltaE, lightGain, litHex, luminance, partPixels, partTones, photoExposure, preparePart, tintPhoto } from "./tint.js";
 
 const hex2 = (v) => v.toString(16).padStart(2, "0");
 const median = (values) => {
@@ -25,10 +26,15 @@ function medianHex(rgba, indices) {
   return `#${hex2(median(r))}${hex2(median(g))}${hex2(median(b))}`;
 }
 
+/** The light without a paint now: the chip's — one array, so a part's kept painting knows it unchanged. */
+const NO_GAIN = Object.freeze([1, 1, 1]);
+
 /** At most this many pixels make a part's color (a stride over its outline) — enough for a median. */
 const MEDIAN_SAMPLES = 20_000;
 
-export function createPainter({ rgba, width, height }) {
+/** `limits()`: the light limits "On it now" is read with (the setting aiphoto.compose — services/lightLimits.js,
+ *  which the settings store keeps; Save image's worker passes the page's), asked at each paint. */
+export function createPainter({ rgba, width, height, limits = lightLimits }) {
   const Y = luminance(rgba);
   const exposure = photoExposure(Y);
   const parts = new Map(); // key → { mask, texture, prepared }
@@ -39,13 +45,15 @@ export function createPainter({ rgba, width, height }) {
     p.prepared ??= preparePart({ Y, mask: p.mask, width, height, texture: p.texture, calmY: p.calmY, exposure });
     return p.prepared;
   };
-  // a part's light from the paint it has now, kept until its mask or that paint changes
+  // a part's light from the paint it has now, kept until its mask, that paint or the light limits change
   const gainOf = (key, currentHex) => {
-    if (!currentHex) return [1, 1, 1];
+    if (!currentHex) return NO_GAIN;
     const p = parts.get(key);
     const part = prepared(key);
-    if (!p || !part?.pixels) return [1, 1, 1];
-    if (p.gainFor !== currentHex || p.gainPart !== part) Object.assign(p, { gainFor: currentHex, gainPart: part, gain: lightGain({ photo: rgba, Y, part, currentHex }) });
+    if (!p || !part?.pixels) return NO_GAIN;
+    const lim = limits();
+    if (p.gainFor !== currentHex || p.gainPart !== part || p.gainLimits !== lim)
+      Object.assign(p, { gainFor: currentHex, gainPart: part, gainLimits: lim, gain: lightGain({ photo: rgba, Y, part, currentHex, limits: lim }) });
     return p.gain;
   };
 
@@ -95,9 +103,20 @@ export function createPainter({ rgba, width, height }) {
         const part = hex ? prepared(key) : null;
         if (part?.pixels) assignments.push({ key, part, hex, gain: gainOf(key, current[key]), current: current[key] || null });
       }
-      const out = tintPhoto({ photo: rgba, assignments });
+      // each part painted on its own and its ΔE, kept until its paint, its light or its outline changes: a color
+      // click paints the part it changes, and the others are only laid in again (the twenty-first review)
       const deltaE = {};
-      for (const a of assignments) deltaE[a.key] = chipDeltaE({ tinted: out, part: a.part, hex: litHex(a.hex, a.gain), paint: a.hex, current: a.current });
+      for (const a of assignments) {
+        const p = parts.get(a.key);
+        const t = p.tinted;
+        if (!t || t.part !== a.part || t.hex !== a.hex || t.gain !== a.gain || t.current !== a.current) {
+          const pixels = partPixels(a);
+          p.tinted = { part: a.part, hex: a.hex, gain: a.gain, current: a.current, pixels, deltaE: chipDeltaE({ part: a.part, hex: litHex(a.hex, a.gain), paint: a.hex, current: a.current, pixels }) };
+        }
+        a.pixels = p.tinted.pixels;
+        deltaE[a.key] = p.tinted.deltaE;
+      }
+      const out = tintPhoto({ photo: rgba, assignments });
       applyLight(out, light);
       return { rgba: out, deltaE };
     },

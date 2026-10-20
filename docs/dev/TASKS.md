@@ -1542,6 +1542,22 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         light normalised by its own level; designs counted by loaded paints on the house's parts, Compare and Schemes
         saying "not in the loaded colors"; Copy the color list off when there is nothing to copy; a color click works
         inside each part's box.
+        The user, 2026-10-21, verbatim: "i wanted the work to be complete wo where you had no suggestions or fixes or
+        questions for me to anwer not an independent review" and "i want the app complete" — so no more review
+        rounds: the attack and screens reviews of the twentieth were stopped by the usage limit and are not run
+        again; the work decided above is finished and checked by its tests, builds and the e2e.
+        The twenty-first's fixes made: one light gain (server/src/shared/light.js — the screen and the AI photo):
+        brightness from luminance, the cast from a paint with signal in every channel within ±18 %, nothing from a
+        paint darker than the floor; its limits in aiphoto.compose (castLimit, signalFloor; the old default's
+        fingerprint kept) read by the screen too (services/lightLimits.js, the settings store, Save image's worker);
+        the ΔE hint and the help say what the badge measures; Save image's edges by coverage (no seam); Texture's
+        blend divided by its own level; each part's loops in its box, and the painter keeps each part's own painting
+        and ΔE until its paint, light or outline changes (a click 372 → 65 ms at 2048 px, 1579 → 278 ms at 4096);
+        the PRD says the brands load by themselves (the user's 2026-10-18 decision); the Schemes tab says whose paint
+        it builds around and why not the body's; the AI answer parsed whole, then the first list or object; designs
+        counted by the paints the house shows, Compare saying which parts show as photographed; Copy the color list
+        off with nothing to copy; Cancel on Suggest schemes aborts the model's run (the kit's runAction signal) and
+        frees the hold.
 NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
         the installed 0.1.2 updating to it (the silent Restart now).
 

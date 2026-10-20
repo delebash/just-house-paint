@@ -12,12 +12,27 @@ import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { partName } from "../services/partNames.js";
 import { useHouseStore } from "../stores/house.js";
+import { usePaintsStore } from "../stores/paints.js";
 import { useSettingsStore } from "../stores/settings.js";
 import NameDialog from "./NameDialog.vue";
 
 const emit = defineEmits(["show-render", "color-card"]);
 const { t, te, locale } = useI18n();
 const house = useHouseStore();
+const paints = usePaintsStore();
+// a design's colors as the house shows them: on parts the house has, its paints still on the server — one whose brand
+// no longer has it counted apart (the twenty-first review: a removed brand's design still said "6 colors")
+const partKeys = computed(() => new Set(house.paintableParts.map((p) => p.key)));
+function colorCounts(d) {
+  let shown = 0;
+  let gone = 0;
+  for (const [key, id] of Object.entries(d.colors)) {
+    if (!partKeys.value.has(key)) continue;
+    if (paints.missing[id]) gone++;
+    else shown++;
+  }
+  return { shown, gone };
+}
 const settings = useSettingsStore();
 
 const nameRule = schemaRules(DesignIn).name;
@@ -104,7 +119,9 @@ function renderLabel(r) {
           >
             <span class="row-action__body">
               <q-item-label class="designs__name">{{ d.name }}</q-item-label>
-              <q-item-label caption>{{ t("designs.colors", { n: Object.keys(d.colors).length }, Object.keys(d.colors).length) }} · {{ relativeTime(d.updatedAt) }}</q-item-label>
+              <q-item-label caption>
+                {{ t("designs.colors", { n: colorCounts(d).shown }, colorCounts(d).shown) }}<template v-if="colorCounts(d).gone"> · {{ t("designs.notLoaded", { n: colorCounts(d).gone }, colorCounts(d).gone) }}</template> · {{ relativeTime(d.updatedAt) }}
+              </q-item-label>
             </span>
           </q-btn>
         </q-item-section>

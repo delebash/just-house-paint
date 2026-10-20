@@ -5,6 +5,7 @@
 // standard worker import: vite.dev/guide/features#web-workers), so the page stays responsive while
 // it works.
 import { i18n } from "../i18n/index.js";
+import { lightLimits } from "./lightLimits.js";
 
 /** The size the image is saved at: the original's, or — over `maxMegapixels` — scaled down to it,
  *  the same shape. No limit when the setting has no positive number. */
@@ -19,10 +20,10 @@ export function exportSize(width, height, maxMegapixels) {
  * Paint the image in a worker; resolves its JPEG Blob. `photo`: the original (a Blob); `width` ×
  * `height`: the size to paint at (exportSize); `masks`: [{ key, mask }] — the parts' outlines at
  * `maskWidth` × `maskHeight` (the display photo's), copied: the copies move to the worker, the page
- * keeps its own; `colors`, `order`, `light`, `current`, `texture`: as the screen paints them;
- * `quality`: the JPEG's (0–1).
+ * keeps its own; `colors`, `order`, `light`, `current`, `texture`: as the screen paints them, and the
+ * screen's light limits (`limits` — services/lightLimits.js, unless given); `quality`: the JPEG's (0–1).
  */
-export function paintFullSize({ masks, ...rest }) {
+export function paintFullSize({ masks, limits = lightLimits(), ...rest }) {
   const copies = masks.map(({ key, mask }) => ({ key, mask: mask.slice() }));
   const worker = new Worker(new URL("./fullSizeImage.worker.js", import.meta.url), { type: "module" });
   return new Promise((resolve, reject) => {
@@ -37,7 +38,7 @@ export function paintFullSize({ masks, ...rest }) {
       reject(failed(e?.message));
     };
     worker.postMessage(
-      { ...rest, masks: copies },
+      { ...rest, limits, masks: copies },
       copies.map((c) => c.mask.buffer),
     );
   });

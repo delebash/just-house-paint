@@ -33,7 +33,7 @@ user's own computer as a family app: the desktop app, or its server with the UI 
 | F2 | **Find the parts** — one click finds body, trim, front door, garage door, shutters, columns, railings, gutters, chimney, plus what isn't painted (roof, windows, stone, brick, lamps); the first run downloads the part-finding model (~3.4 GB) with progress; once per photo | the recipe's unit tests; a real-model test on the three probe photos (env-gated) asserting the garage door and the body are found |
 | F3 | **Fix the parts** — show outlines; brush to add or erase a part's area; tap a spot to select what's there; move an area to another part | mask-operation unit tests; the tap route's test (real model, gated); e2e: a brush stroke changes the mask |
 | F4 | **Paint** — pick a part, pick a brand color (search by name or number, filter by color family and exterior use), see it at once on the photo; a badge says how close the painted wall is to the paint chip (ΔE) | tint unit tests (ΔE < 1 on synthetic surfaces); the measured ΔE on the probe photos; a component test |
-| F5 | **Paint colors** — Settings → Paint colors: for each brand, "Load colors from <brand>'s public list" (off until you turn it on, with the brand's terms noted), or import a brand's official palette file (ASE, XLSX, CSV); the 7 launch brands: Behr, Sherwin-Williams, Benjamin Moore, Valspar, Glidden + PPG, HGTV Home, Dutch Boy. The app ships no brand data | loader and importer tests on synthetic files; a live test (env-gated) per feed |
+| F5 | **Paint colors** — every brand's public list loads by itself at the first start, one after another ("Load automatically" per brand on Paint colors, on until you turn it off — the user's decision, 2026-10-18: "out of box eveything just works"), with the brand's terms noted; or import a brand's official palette file (ASE, XLSX, CSV); the 7 launch brands: Behr, Sherwin-Williams, Benjamin Moore, Valspar, Glidden + PPG, HGTV Home, Dutch Boy. The app ships no brand data | loader and importer tests on synthetic files; a live test (env-gated) per feed |
 | F6 | **Color schemes** — the brand's own coordinating colors; schemes built from a color you like (complementary, analogous, triadic, classic light-trim) snapped to real paints of your brand; AI suggestions from your house's current colors and what won't change (roof, stone) | harmony unit tests; the AI feature's route test with a stub engine |
 | F7 | **Compare and keep** — before/after slider; save several designs per house; switch between them | store and route tests; e2e: save a design, reopen it |
 | F8 | **AI photo** (an option button) — a generated repaint inside the parts' outlines only, pasted back into your photo, the paint color locked; says plainly its colors are approximate; local engine (needs an NVIDIA or Vulkan GPU; ~18 s on an RTX 2070 SUPER; ~9 GB of downloads the first time) | argument/progress/paste-back tests; a real run test (env-gated) |
@@ -42,9 +42,10 @@ user's own computer as a family app: the desktop app, or its server with the UI 
 
 ## Outside data, accounts and services
 
-- **Brand color lists** — loaded at the user's request from the brands' public lists (Sherwin-Williams'
-  host also serves Valspar, HGTV Home and Dutch Boy; Behr's query index), or imported from the brands'
-  official palette files. Each brand's terms limit automated access and reuse (RESEARCH §10); the app
+- **Brand color lists** — loaded by themselves from the brands' public lists (Sherwin-Williams' host also
+  serves Valspar, HGTV Home and Dutch Boy; Behr's query index) unless the user turns a brand's "Load
+  automatically" off (the user's decision, 2026-10-18 — TASKS), or imported from the brands' official palette
+  files. Each brand's terms limit automated access and reuse (RESEARCH §10); the app
   says so beside the switch, names colors as the brand does ("SW 7008 Alabaster") with a
   not-affiliated notice, and shows an on-screen color disclaimer. No request to the brands is sent
   (option D, dropped 2026-10-19 — TASKS).

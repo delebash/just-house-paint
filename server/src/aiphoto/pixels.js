@@ -10,6 +10,7 @@
 
 import { differenceCiede2000, parse } from "culori";
 import sharp from "sharp";
+import { LIGHT_DEFAULTS, lightFrom } from "../shared/light.js";
 
 /** Defaults — DATA the app seeds into its database (editable there). */
 export const DEFAULT_COMPOSE = Object.freeze({
@@ -31,9 +32,13 @@ export const DEFAULT_COMPOSE = Object.freeze({
   // …unless the paint is close to the surface's old color anyway (ΔE2000 below this): then the AI
   // had little to change, and the whole surface is locked.
   sameColorDeltaE: 10,
-  // The light a part's paint now says falls on it (lightGain), per channel, is capped to this range:
-  // a wrong pick can't turn the picture to nonsense (the painter's own cap — src/services/tint.js).
-  gainLimits: Object.freeze([0.25, 4]),
+  // The light a part's paint now says falls on it (lightGain — shared/light.js, the screen's painter reads the same
+  // three): its brightness is capped to `gainLimits`, a wrong pick can't turn the picture to nonsense; its color
+  // cast stays within `castLimit` of the brightness per channel, and comes only from a paint whose every channel
+  // reaches `signalFloor` (linear) — a colorful one gives the brightness only, one darker than that nothing.
+  gainLimits: LIGHT_DEFAULTS.gainLimits,
+  castLimit: LIGHT_DEFAULTS.castLimit,
+  signalFloor: LIGHT_DEFAULTS.signalFloor,
 });
 
 /** The model's working size — the defaults are the measured recipe's 1024×768 for a 4:3 photo. */
@@ -179,24 +184,16 @@ export function medianColor(rgb, idx) {
 }
 
 /**
- * The light on a surface, worked out from the paint it has NOW (`currentHex`): per channel, the
- * photo's median over its normally lit pixels `idx` ÷ that paint, in linear light, capped to
- * `limits` — the photo's real exposure and color cast (the painter's lightGain, src/services/
- * tint.js). [1, 1, 1] without a paint now or lit pixels.
+ * The light on a surface, worked out from the paint it has NOW (`currentHex`): the photo's median over its
+ * normally lit pixels `idx` against that paint, in linear light — the photo's real exposure and, from a paint with
+ * signal in every channel, its color cast (shared/light.js, the painter's rule too). `compose`: the setting
+ * aiphoto.compose (its gainLimits, castLimit, signalFloor). [1, 1, 1] without a paint now or lit pixels.
  */
-export function lightGain(photo, idx, currentHex, limits = DEFAULT_COMPOSE.gainLimits) {
+export function lightGain(photo, idx, currentHex, compose = DEFAULT_COMPOSE) {
   if (!currentHex || !idx.length) return [1, 1, 1];
   const seen = medianColor(photo, idx);
   const now = paintColor(currentHex);
-  return [
-    [seen.r, now.r],
-    [seen.g, now.g],
-    [seen.b, now.b],
-  ].map(([s, n]) => {
-    const lin = toLinear(n);
-    const g = lin > 1e-4 ? toLinear(s) / lin : 1;
-    return Math.min(limits[1], Math.max(limits[0], g));
-  });
+  return lightFrom([seen.r, seen.g, seen.b].map(toLinear), [now.r, now.g, now.b].map(toLinear), compose);
 }
 
 /** The paint `paintHex` in a part's light (`gain`) as #rrggbb, clipped at white — the chip at [1, 1, 1]. */

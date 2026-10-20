@@ -343,15 +343,17 @@ test("a part is prepared in the box around it: the same light as the whole photo
     for (let i = 0; i < mask.length; i++) if (mask[i] >= 128) inside.push(values[i]);
     return Math.max(1e-4, percentile(inside, 75));
   };
-  /** partLight as the whole photo's blur gave it. */
+  // the lighting blended toward its blur, at this texture
+  const blend = (values, blurred) => values.map((v, i) => texture * v + (1 - texture) * blurred[i]);
+  /** partLight as the whole photo's blur gave it — the blend divided by its own normally lit level. */
   const wholePhotoLight = (part, mask, hex) => {
-    const base = level(Y, mask);
     const blurred = maskedBlur(Y, mask, w, h, part.radius);
+    const base = level(blend(Y, blurred), mask);
     const s = calmStrength(part, hex);
     if (s <= 0) return (i) => (texture * Y[i] + (1 - texture) * blurred[i]) / base;
     const cY = calmFinish({ Y, mask, width: w, height: h });
     const cBlurred = maskedBlur(cY, mask, w, h, part.radius);
-    const lvl = base ** (1 - s) * level(cY, mask) ** s;
+    const lvl = base ** (1 - s) * level(blend(cY, cBlurred), mask) ** s;
     const lit = s >= 1 ? (i) => cY[i] : (i) => Y[i] ** (1 - s) * cY[i] ** s;
     return (i) => (texture * lit(i) + (1 - texture) * ((1 - s) * blurred[i] + s * cBlurred[i])) / lvl;
   };
@@ -376,4 +378,26 @@ test("a part is prepared in the box around it: the same light as the whole photo
   // an empty outline (a part added by hand, not drawn yet): nothing to paint
   const empty = preparePart({ Y, mask: new Uint8Array(w * h), width: w, height: h, texture });
   expect(empty).toMatchObject({ pixels: 0, box: null, blurred: null });
+});
+
+test("two parts meeting on a soft edge fill the pixel between them — no line of the old color (Save image's seam)", () => {
+  // a brown wall; body on the left, trim on the right, the column between them half each (a scaled outline's edge)
+  const w = 6;
+  const h = 2;
+  const photo = photoOf(w, h, () => [0x87, 0x75, 0x69]);
+  const Y = luminance(photo);
+  const body = preparePart({ Y, mask: maskOf(w, h, (x) => (x < 3 ? 255 : x === 3 ? 128 : 0)), width: w, height: h });
+  const trim = preparePart({ Y, mask: maskOf(w, h, (x) => (x > 3 ? 255 : x === 3 ? 127 : 0)), width: w, height: h });
+  const out = tintPhoto({ photo, assignments: [{ part: body, hex: "#edeae0" }, { part: trim, hex: "#ffffff" }] });
+  const at = (x) => [out[x * 4], out[x * 4 + 1], out[x * 4 + 2]];
+  // the edge pixel is the two paints' own mix — the photo's brown doesn't show through (it was #b8ac9f-ish before)
+  const [l, r] = [at(2), at(4)];
+  for (let c = 0; c < 3; c++) {
+    expect(at(3)[c]).toBeGreaterThanOrEqual(Math.min(l[c], r[c]) - 1);
+    expect(at(3)[c]).toBeLessThanOrEqual(Math.max(l[c], r[c]) + 1);
+  }
+  // one part alone keeps its soft edge against the photo
+  const alone = tintPhoto({ photo, assignments: [{ part: body, hex: "#edeae0" }] });
+  expect(alone[3 * 4]).toBeLessThan(l[0]);
+  expect(alone[3 * 4]).toBeGreaterThan(0x87);
 });

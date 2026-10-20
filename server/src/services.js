@@ -96,7 +96,7 @@ export function createServices({ db, dataDir }, overrides = {}) {
     // (Node's own fetch ignores them — the brand lists failed behind a proxy the model downloads went through)
     fetch: overrides.fetch ?? ((...a) => http.fetch(...a)),
     download: overrides.download ?? kitDownload,
-    run: overrides.run ?? ((body) => runAction(stores.getPromptStore(), buildLlmConfig(), body)),
+    run: overrides.run ?? ((body, opts) => runAction(stores.getPromptStore(), buildLlmConfig(), body, opts)),
     limits: () => ({
       displayMax: setting("photos.displayMax"),
       thumbMax: setting("photos.thumbMax"),

@@ -83,18 +83,54 @@ export function schemeVariables(facts, { mood = "", count = 3 } = {}) {
 
 const HEX = /^#[0-9a-f]{6}$/i;
 
+/** Where the JSON value opening at `start` ("{" or "[") closes — its brackets matched outside strings — or -1. */
+function closeOf(s, start) {
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  for (let i = start; i < s.length; i++) {
+    const c = s[i];
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (c === "\\") escaped = true;
+      else if (c === '"') inString = false;
+    } else if (c === '"') inString = true;
+    else if (c === "{" || c === "[") depth++;
+    else if ((c === "}" || c === "]") && --depth === 0) return i;
+  }
+  return -1;
+}
+
+/** The JSON in the AI's answer: the whole answer when it is JSON (a code fence around it taken off), else the first
+ *  object or list in it that parses — prose before it may hold a "[", prose after it a "}" (the twenty-first review:
+ *  a bare list always failed, sliced from the first "{"). */
+function jsonIn(s) {
+  const whole = s.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
+  try {
+    return JSON.parse(whole);
+  } catch {
+    // prose around it
+  }
+  let found = false;
+  for (let start = s.search(/[[{]/), tries = 0; start >= 0 && tries < 50; tries++) {
+    found = true;
+    const end = closeOf(s, start);
+    if (end > start) {
+      try {
+        return JSON.parse(s.slice(start, end + 1));
+      } catch {
+        // not this one
+      }
+    }
+    const next = s.slice(start + 1).search(/[[{]/);
+    start = next < 0 ? -1 : start + 1 + next;
+  }
+  throw new Error(found ? "the AI's answer isn't valid JSON" : "the AI's answer holds no JSON");
+}
+
 /** The schemes in the AI's answer: JSON (code fences and prose around it tolerated). */
 export function parseSchemes(text) {
-  const s = String(text || "");
-  const start = s.indexOf("{");
-  const end = s.lastIndexOf("}");
-  if (start < 0 || end <= start) throw new Error("the AI's answer holds no JSON");
-  let data;
-  try {
-    data = JSON.parse(s.slice(start, end + 1));
-  } catch {
-    throw new Error("the AI's answer isn't valid JSON");
-  }
+  const data = jsonIn(String(text || ""));
   const list = Array.isArray(data?.schemes) ? data.schemes : Array.isArray(data) ? data : [];
   const out = [];
   for (const x of list) {
@@ -124,8 +160,9 @@ export function snapScheme(scheme, paints, { brand, exteriorOnly = true } = {}) 
  * Ask the AI. `run({ action, variables })` is the kit's run path (runAction: the feature's prompt
  * row and engine preset) → an LLMResponse. Returns { schemes, usage, model }.
  */
-export async function suggestWithAi({ run, facts, paints, brand, mood, count = 3 }) {
-  const resp = await run({ action: SCHEMES_FEATURE, variables: schemeVariables(facts, { mood, count }) });
+export async function suggestWithAi({ run, facts, paints, brand, mood, count = 3, signal }) {
+  // `signal`: the request's — the window's Cancel (its fetch aborted) stops the model's run too (the twenty-first review)
+  const resp = await run({ action: SCHEMES_FEATURE, variables: schemeVariables(facts, { mood, count }) }, { signal });
   const schemes = parseSchemes(resp.text).map((s) => snapScheme(s, paints, { brand }));
   return { schemes, model: resp.model, usage: { prompt_tokens: resp.prompt_tokens || 0, completion_tokens: resp.completion_tokens || 0 } };
 }

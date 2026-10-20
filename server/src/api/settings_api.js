@@ -46,6 +46,10 @@ const COMPOSE_LIMITS = {
   repaintedRange: [0, 100],
   sameColorDeltaE: [0, 200],
   gainLimits: [0.01, 100],
+  // the light from a paint now (shared/light.js): its color cast at most ×2 / ÷2 the brightness (0: none); the signal
+  // floor a linear channel value (1: no paint gives a cast — or a reading)
+  castLimit: [0, 1],
+  signalFloor: [0, 1],
 };
 
 function composeInRange(value) {

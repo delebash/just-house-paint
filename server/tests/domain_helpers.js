@@ -84,7 +84,7 @@ export const fakeFinder = {
 
 /** `fetch`: the brands' public lists (a fake in tests). */
 /** `run`: the AI run path (a fake: answers with `aiAnswer.text`). */
-export const aiAnswer = { text: "{}", calls: [], error: null };
+export const aiAnswer = { text: "{}", calls: [], error: null, hang: false, aborted: 0 };
 export function makeServer({ fetch = async () => new Response("offline", { status: 503 }), aiphoto = null, sharedGpu = null, removeHouseDir = null } = {}) {
   const dataDir = mkdtempSync(path.join(os.tmpdir(), "hp-test-"));
   const db = openDatabase(path.join(dataDir, "app.db"), { foreignKeys: true });
@@ -96,9 +96,18 @@ export function makeServer({ fetch = async () => new Response("offline", { statu
     // read as services.js reads it: the row, else the seed's value
     colorOrder: () => getSetting(db, "paints.colorOrder") ?? SETTING_DEFAULTS["paints.colorOrder"],
     partLabel: (k) => k.replace(/_/g, " "),
-    run: async (body) => {
+    run: async (body, { signal } = {}) => {
       aiAnswer.calls.push(body);
       if (aiAnswer.error) throw aiAnswer.error;
+      // `hang`: a model that never answers — until the request's signal aborts it, as the kit's runAction rejects
+      if (aiAnswer.hang) {
+        await new Promise((_, reject) =>
+          signal?.addEventListener("abort", () => {
+            aiAnswer.aborted++;
+            reject(Object.assign(new Error("This operation was aborted"), { name: "AbortError" }));
+          }),
+        );
+      }
       return { text: aiAnswer.text, model: "fake-model", prompt_tokens: 120, completion_tokens: 80 };
     } };
   ctx.aiphoto = aiphoto ? aiphoto(ctx) : null;

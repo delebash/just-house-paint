@@ -107,27 +107,57 @@ test("a part's tones: the paint in shade, on most of it and in light — the lig
   expect(value(p.tones("body", "#64695c", 1.5).light)).toBeGreaterThan(value(tones.light));
 });
 
-test("the paint a part has now sets its light: the photo's color there ÷ that paint, per channel, capped", () => {
+test("the paint a part has now sets its light: the brightness from its luminance, its color cast within ±18 %", () => {
   // a white wall photographed bluish-grey (overcast): 180/190/210
   const photo = new Uint8ClampedArray(W * H * 4);
   for (let i = 0; i < W * H; i++) photo.set([180, 190, 210, 255], i * 4);
   const p = createPainter({ rgba: photo, width: W, height: H });
   p.setMask("body", maskOf(() => true));
-  // without a paint now, a lit pixel is the chip; with white known, the gain is photo ÷ white
+  // without a paint now, a lit pixel is the chip; with white known, the light is the photo's luminance ÷ white's,
+  // its cast per channel kept within ±18 % of it (blue: ×1.26 → ×1.18)
   expect(p.gain("body", null)).toEqual([1, 1, 1]);
   const g = p.gain("body", "#ffffff");
-  expect(g[0]).toBeCloseTo(0.456, 2); // (180/255) in linear light
-  expect(g[2]).toBeGreaterThan(g[0]); // the blue cast kept
-  // a new paint shows as the camera would have taken it: white now → the photo itself; its ΔE is
-  // to the paint in that light, so the light itself doesn't count against it
+  expect(g[0]).toBeCloseTo(0.456, 2); // (180/255) in linear light: ×0.89 of the brightness, inside the bound
+  expect(g[1]).toBeCloseTo(0.515, 2);
+  expect(g[2]).toBeCloseTo(0.512 * 1.18, 2); // the blue cast kept, to its bound
+  // a new paint shows as the camera would have taken it, the cast to its bound; its ΔE is to the paint in that
+  // light, so the light itself doesn't count against it
   const { rgba: out, deltaE } = p.paint({ body: "#ffffff" }, ["body"], { current: { body: "#ffffff" } });
-  expect([out[0], out[1], out[2]]).toEqual([180, 190, 210]);
+  expect([out[0], out[1], out[2]]).toEqual([180, 190, 204]);
   expect(deltaE.body).toBeLessThan(0.5);
   // the tones follow the same light
-  expect(p.tones("body", "#ffffff", 1, "#ffffff").light).toBe("#b4bed2");
-  // a wrong pick (black, for a light wall) is capped, not wild
-  expect(p.gain("body", "#000000")).toEqual([1, 1, 1]); // no channel to divide by
-  expect(p.gain("body", "#101010").every((v) => v === 4)).toBe(true);
+  expect(p.tones("body", "#ffffff", 1, "#ffffff").light).toBe("#b4becc");
+  // a pick far too dark for the wall gives no reading at all (its glare, not the light, made what the camera saw)
+  expect(p.gain("body", "#000000")).toEqual([1, 1, 1]);
+  expect(p.gain("body", "#101010")).toEqual([1, 1, 1]);
+});
+
+test("a colorful paint now gives the brightness only — its weak channels no cast; the limits are the setting's", () => {
+  // a red door photographed a few codes off its brand's hex (ΔE 2.2 — a camera never matches a chip exactly)
+  const photo = new Uint8ClampedArray(W * H * 4);
+  for (let i = 0; i < W * H; i++) photo.set([0xa9, 0x30, 0x2f, 255], i * 4);
+  const p = createPainter({ rgba: photo, width: W, height: H });
+  p.setMask("door", maskOf(() => true));
+  const g = p.gain("door", "#ad2c34");
+  // one brightness for all three (read per channel it was [0.95, 1.17, 0.83] — Alabaster turned ΔE 14.2 green)
+  expect(g[0]).toBeCloseTo(0.985, 2);
+  expect(g[1]).toBe(g[0]);
+  expect(g[2]).toBe(g[0]);
+  const { rgba: out } = p.paint({ door: "#edeae0" }, ["door"], { current: { door: "#ad2c34" } });
+  const shown = [out[0], out[1], out[2]];
+  const chip = [0xed, 0xea, 0xe0];
+  expect(Math.max(...shown.map((v, c) => Math.abs(v - chip[c])))).toBeLessThanOrEqual(3);
+
+  // the limits are the setting aiphoto.compose's (services/lightLimits.js): no cast at all, or the first build's
+  // per-channel reading — read at each paint, the cached light worked out again when they change
+  let limits = { gainLimits: [0.25, 4], castLimit: 0, signalFloor: 0.05 };
+  const q = createPainter({ rgba: photo, width: W, height: H, limits: () => limits });
+  q.setMask("door", maskOf(() => true));
+  expect(new Set(q.gain("door", "#ad2c34")).size).toBe(1);
+  limits = { gainLimits: [0.25, 4], castLimit: 1, signalFloor: 0 };
+  const loose = q.gain("door", "#ad2c34");
+  expect(loose[1]).toBeGreaterThan(1.1);
+  expect(loose[2]).toBeLessThan(0.9);
 });
 
 test("a dark wall in a photo with nothing bright in it is calmed once its owner says the paint it has now", () => {
@@ -184,4 +214,27 @@ test("a dark wall's calmed lighting is kept through a Texture change and brush s
   p.paint({ body: "#f2f0ea" });
   expect(prepares[3].calmY).toBeNull(); // worked out again for the new outline
   expect(p.calmAgain("door")).toBe(false); // no such part: nothing to repaint
+});
+
+test("a color click paints only the part it changes; what is kept never changes the picture or its ΔE", () => {
+  const photo = new Uint8ClampedArray(W * H * 4);
+  for (let i = 0; i < W * H; i++) photo.set([150 + (i % 5) * 9, 140, 130, 255], i * 4);
+  const keys = ["body", "door", "trim"];
+  const masks = { body: maskOf((x) => x < 4), door: maskOf((x) => x >= 4 && x < 6), trim: maskOf((x) => x >= 6) };
+  const p = createPainter({ rgba: photo, width: W, height: H });
+  for (const k of keys) p.setMask(k, masks[k]);
+  const first = { body: "#3b6e8f", door: "#a33a2f", trim: "#f4f4f2" };
+  p.paint(first, keys, { current: { body: "#968c82" } });
+  // one part's paint changed: the same picture and numbers as a painter that never painted before
+  const second = { ...first, door: "#2f4a3a" };
+  const kept = p.paint(second, keys, { current: { body: "#968c82" } });
+  const fresh = createPainter({ rgba: photo, width: W, height: H });
+  for (const k of keys) fresh.setMask(k, masks[k]);
+  const once = fresh.paint(second, keys, { current: { body: "#968c82" } });
+  expect([...kept.rgba]).toEqual([...once.rgba]);
+  expect(kept.deltaE).toEqual(once.deltaE);
+  // an outline changed, or the paint now: that part painted again too
+  p.setMask("trim", maskOf((x) => x >= 7));
+  fresh.setMask("trim", maskOf((x) => x >= 7));
+  expect([...p.paint(second, keys, { current: {} }).rgba]).toEqual([...fresh.paint(second, keys, { current: {} }).rgba]);
 });

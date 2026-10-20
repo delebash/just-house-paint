@@ -10,13 +10,19 @@
 // their shape. A dark finish painted much lighter first loses its blotches and grain (calmFinish:
 // paint hides the old finish's own colors, not the boards' shadows — RESEARCH §13). `texture`
 // (0–1) blends each pixel's lighting toward a blurred copy of it inside the part: 1 keeps the
-// photo's texture whole; lower values calm what is left, at the cost of fine detail.
+// photo's texture whole; lower values calm what is left, at the cost of fine detail — the blend
+// divided by its own normally lit level, so the normally lit wall stays the chip at every Texture.
+// Each part is worked out inside the box around its outline (maskBox): a color click costs the
+// part, not the photo. Where outlines have soft edges (Save image scales them up), parts share a
+// pixel by coverage — two parts that meet fill it between them, the photo shows only in what
+// neither covers (tintPart).
 //
 // Pure functions over canvas pixel arrays (RGBA Uint8ClampedArray, as Canvas 2D's ImageData
 // gives them — developer.mozilla.org/docs/Web/API/ImageData), so the same code tints the display
 // copy live and the full-size photo for export.
 
 import { differenceCiede2000, parse } from "culori";
+import { LIGHT_DEFAULTS, lightFrom } from "just-house-paint-server/shared/light.js";
 
 // sRGB transfer functions (IEC 61966-2-1), as a 256-entry table one way and the formula the other.
 const TO_LINEAR = new Float32Array(256);
@@ -151,6 +157,19 @@ function insideValues(values, mask, width, box) {
   return inside;
 }
 
+/** The normally lit level (75th percentile inside the part) of the lighting blended toward its blur — `texture` ×
+ *  `values` + (1 − `texture`) × `blurred` (box-sized). The blur's level sits under the photo's own (it averages the
+ *  shadows in), so the blend is divided by this, not by the photo's level: at a lower Texture the wall stayed
+ *  darker than the chip ("In light" ΔE 1.1, the wall's median ΔE 2.2 → 4.8 at Texture 0 — the twenty-first review). */
+function blendLevel(values, blurred, mask, width, box, texture) {
+  const inside = [];
+  for (let y = box.y0; y < box.y0 + box.h; y++) {
+    const row = (y - box.y0) * box.w - box.x0;
+    for (let i = y * width + box.x0, end = i + box.w; i < end; i++) if (mask[i] >= 128) inside.push(texture * values[i] + (1 - texture) * blurred[row + (i - y * width)]);
+  }
+  return Math.max(1e-4, percentile(inside, 75));
+}
+
 /**
  * What one part needs, computed once per photo and part: its pixels, its normally lit level and
  * (when texture < 1) its blurred lighting — worked out in the box around the part (`box`: the mask's
@@ -167,7 +186,10 @@ export function preparePart({ Y, mask, width, height, texture = 1, blurRadius = 
   const inside = insideValues(Y, mask, width, box);
   const base = Math.max(1e-4, percentile(inside, 75));
   const blurred = texture < 1 && box ? boxBlur(Y, mask, width, box, radius) : null;
-  return { mask, base, texture, blurred, box, radius, pixels: inside.length, Y, width, height, calmY, exposure };
+  // the blended lighting's own normally lit level (blendLevel); the photo's own (`base`) still picks the normally
+  // lit pixels the light is read on (lightGain) and judges a dark finish (calmStrength)
+  const level = blurred ? blendLevel(Y, blurred, mask, width, box, texture) : base;
+  return { mask, base, level, texture, blurred, box, radius, pixels: inside.length, Y, width, height, calmY, exposure };
 }
 
 /** A box-sized array (`blurred`) read by the photo's pixel index. */
@@ -334,11 +356,9 @@ function calmed(part) {
     const { Y, mask, width, height, texture, radius, box } = part;
     const cY = part.calmY || calmFinish({ Y, mask, width, height });
     part.calmY = cY;
-    part.calm = {
-      Y: cY,
-      base: Math.max(1e-4, percentile(insideValues(cY, mask, width, box), 75)),
-      blurred: texture < 1 && box ? boxBlur(cY, mask, width, box, radius) : null,
-    };
+    const base = Math.max(1e-4, percentile(insideValues(cY, mask, width, box), 75));
+    const blurred = texture < 1 && box ? boxBlur(cY, mask, width, box, radius) : null;
+    part.calm = { Y: cY, base, blurred, level: blurred ? blendLevel(cY, blurred, mask, width, box, texture) : base };
   }
   return part.calm;
 }
@@ -346,63 +366,115 @@ function calmed(part) {
 /**
  * How lit each pixel of `part` is for paint `hex` (on a part whose paint now is `current`), as a function
  * of the pixel index: its lighting ÷ the part's normally lit level — the photo's own, through the
- * texture setting, with the old finish calmed by calmStrength.
+ * texture setting (the blend ÷ its own level), with the old finish calmed by calmStrength.
  */
 export function partLight(part, hex, current = null) {
   const { Y, base, texture, width, box } = part;
   const blurred = part.blurred && boxReader(part.blurred, width, box);
   const s = calmStrength(part, hex, current);
-  if (s <= 0) return blurred ? (i) => (texture * Y[i] + (1 - texture) * blurred(i)) / base : (i) => Y[i] / base;
+  if (s <= 0) return blurred ? (i) => (texture * Y[i] + (1 - texture) * blurred(i)) / part.level : (i) => Y[i] / base;
   const cal = calmed(part);
-  const level = base ** (1 - s) * cal.base ** s;
   const lit = s >= 1 ? (i) => cal.Y[i] : (i) => Y[i] ** (1 - s) * cal.Y[i] ** s;
-  if (!blurred) return (i) => lit(i) / level;
+  if (!blurred) {
+    const level = base ** (1 - s) * cal.base ** s;
+    return (i) => lit(i) / level;
+  }
+  const level = part.level ** (1 - s) * cal.level ** s;
   const calBlurred = boxReader(cal.blurred, width, box);
   return (i) => (texture * lit(i) + (1 - texture) * ((1 - s) * blurred(i) + s * calBlurred(i))) / level;
 }
 
+/** `fn(i)` for each photo index inside `box` (maskBox's) — a part's pixels are all in it. */
+function eachInBox(box, width, fn) {
+  if (!box) return;
+  for (let y = box.y0; y < box.y0 + box.h; y++) for (let i = y * width + box.x0, end = i + box.w; i < end; i++) fn(i);
+}
+
 /**
  * Paint one part into `out` (RGBA, the photo's size), reading the photo's own pixels from
- * `photo`. Pixels outside the mask are left as they are in `out`; the mask's soft edge blends.
+ * `photo`. Pixels outside the mask are left as they are in `out`. A soft edge shares its pixel by
+ * coverage: `cover` (0–255 per pixel, tintPhoto's) is how much of it the parts painted before cover —
+ * this part fills the room they leave and takes from them only what doesn't fit, the photo showing in
+ * what none covers (photo × (1 − Σa) + Σ aₖ·paintₖ). Blended with the photo alone, two parts meeting
+ * on a scaled outline's soft edge left a line of the old color between them (Save image, the twenty-first
+ * review). Without `cover` the edge blends with the photo. A full pixel is this part's.
  */
-export function tintPart({ photo, out, part, hex, gain = [1, 1, 1], current = null }) {
+export function tintPart({ photo, out, part, hex, gain = [1, 1, 1], current = null, cover = null, pixels = null }) {
+  const { mask, box, width } = part;
+  if (!box) return out;
+  const own = pixels || partPixels({ part, hex, gain, current });
+  eachInBox(box, width, (i) => {
+    const m = mask[i];
+    if (m === 0) return;
+    const p = i * 4;
+    const j = boxIndex(box, width, i) * 3;
+    const r = own[j];
+    const g = own[j + 1];
+    const b = own[j + 2];
+    if (m === 255) {
+      out[p] = r;
+      out[p + 1] = g;
+      out[p + 2] = b;
+      if (cover) cover[i] = 255;
+    } else {
+      const a = m / 255;
+      const c = cover ? cover[i] / 255 : 0;
+      // what doesn't fit beside the parts before it, it takes from them, in proportion
+      const over = Math.max(0, a + c - 1);
+      const keep = c > 0 ? (c - over) / c : 0;
+      const bare = 1 - c - a + over;
+      // out holds photo × (1 − c) + their paint
+      out[p] = photo[p] * bare + (out[p] - photo[p] * (1 - c)) * keep + a * r;
+      out[p + 1] = photo[p + 1] * bare + (out[p + 1] - photo[p + 1] * (1 - c)) * keep + a * g;
+      out[p + 2] = photo[p + 2] * bare + (out[p + 2] - photo[p + 2] * (1 - c)) * keep + a * b;
+      if (cover) cover[i] = Math.round(255 * (c - over + a));
+    }
+    out[p + 3] = 255;
+  });
+  return out;
+}
+
+/**
+ * Paint every assigned part, in order (later parts paint over earlier ones where masks overlap; soft
+ * edges share by coverage — tintPart). `assignments`: [{ part, hex, gain?, current?, pixels? }] — `pixels`:
+ * the part already painted on its own (partPixels; the painter keeps them, so a color click paints only the
+ * part it changes). Returns a new RGBA array; `photo` is not changed.
+ */
+export function tintPhoto({ photo, assignments }) {
+  const out = new Uint8ClampedArray(photo);
+  const cover = new Uint8Array(photo.length / 4);
+  for (const { part, hex, gain, current, pixels } of assignments) if (hex) tintPart({ photo, out, part, hex, gain, current, cover, pixels });
+  return out;
+}
+
+/** A photo index's place in `box` (maskBox's), row by row. */
+const boxIndex = (box, width, i) => (Math.floor(i / width) - box.y0) * box.w + (i % width) - box.x0;
+
+/**
+ * One part painted with `hex` on its own, in its light (the gain the paint on it now says, lightGain): its RGB,
+ * 3 bytes a pixel over its box (maskBox's), what tintPart lays into the photo — kept by the painter until the part's
+ * paint, light or outline changes (a color click cost every part: 15 parts 372 ms at 2048 px — the twenty-first
+ * review). Null for a part with no box.
+ */
+export function partPixels({ part, hex, gain = [1, 1, 1], current = null }) {
+  const { mask, box, width } = part;
+  if (!box) return null;
   const [pr0, pg0, pb0] = paintLinear(hex);
   // the light the paint on it now says falls there (lightGain): the photo's exposure and its color cast
   const pr = pr0 * gain[0];
   const pg = pg0 * gain[1];
   const pb = pb0 * gain[2];
-  const { mask } = part;
   const light = partLight(part, hex, current);
-  for (let i = 0, p = 0; i < mask.length; i++, p += 4) {
-    const m = mask[i];
-    if (m === 0) continue;
+  const own = new Uint8ClampedArray(box.w * box.h * 3);
+  eachInBox(box, width, (i) => {
+    if (mask[i] === 0) return;
+    const j = boxIndex(box, width, i) * 3;
     const ratio = light(i);
-    const r = 255 * toSrgb(pr * ratio);
-    const g = 255 * toSrgb(pg * ratio);
-    const b = 255 * toSrgb(pb * ratio);
-    if (m === 255) {
-      out[p] = r;
-      out[p + 1] = g;
-      out[p + 2] = b;
-    } else {
-      const a = m / 255;
-      out[p] = a * r + (1 - a) * photo[p];
-      out[p + 1] = a * g + (1 - a) * photo[p + 1];
-      out[p + 2] = a * b + (1 - a) * photo[p + 2];
-    }
-    out[p + 3] = 255;
-  }
-  return out;
-}
-
-/**
- * Paint every assigned part, in order (later parts paint over earlier ones where masks overlap).
- * `assignments`: [{ part, hex, gain?, current? }]. Returns a new RGBA array; `photo` is not changed.
- */
-export function tintPhoto({ photo, assignments }) {
-  const out = new Uint8ClampedArray(photo);
-  for (const { part, hex, gain, current } of assignments) if (hex) tintPart({ photo, out, part, hex, gain, current });
-  return out;
+    own[j] = 255 * toSrgb(pr * ratio);
+    own[j + 1] = 255 * toSrgb(pg * ratio);
+    own[j + 2] = 255 * toSrgb(pb * ratio);
+  });
+  return own;
 }
 
 /**
@@ -428,11 +500,6 @@ export function applyLight(rgba, k) {
   return rgba;
 }
 
-/** How far the light on a part may differ from the chip's, per channel, from the paint on it now:
- *  a wrong pick can't turn the picture to nonsense. The AI photo's lock uses the same cap
- *  (server/src/aiphoto/pixels.js DEFAULT_COMPOSE.gainLimits). */
-export const GAIN_LIMITS = Object.freeze([0.25, 4]);
-
 /** The paint `hex` in a part's light (`gain`, lightGain's) as #rrggbb — what its normally lit pixels
  *  show; the chip itself when the gain is [1, 1, 1]. */
 export function litHex(hex, gain = [1, 1, 1]) {
@@ -444,29 +511,32 @@ export function litHex(hex, gain = [1, 1, 1]) {
 /**
  * The light on a part, worked out from the paint it has NOW (`currentHex`, when its owner knows it):
  * on the part's normally lit pixels (lighting within ±10% of its base level) the camera recorded
- * that paint as the photo's color there, so per channel the light is (the photo's median there) ÷
- * (the paint's own color) — the photo's real exposure and its color cast (overcast and shade light
- * is bluish). A new paint × this gain shows as the camera would have recorded it. Linear light;
- * [1, 1, 1] without a current paint or lit pixels.
+ * that paint as the photo's color there (the median per channel) — read against the paint by the
+ * shared rule (server/src/shared/light.js, the AI photo's too): the photo's real exposure, and its
+ * color cast (overcast and shade light is bluish) from a paint with signal in every channel, within
+ * `limits` (the setting aiphoto.compose — gainLimits, castLimit, signalFloor). A new paint × this gain
+ * shows as the camera would have recorded it. Linear light; [1, 1, 1] without a current paint or lit
+ * pixels, or from a paint too dark to read a light from.
  */
-export function lightGain({ photo, Y, part, currentHex }) {
+export function lightGain({ photo, Y, part, currentHex, limits = LIGHT_DEFAULTS }) {
   if (!currentHex) return [1, 1, 1];
   const ch = [[], [], []];
-  for (let i = 0, p = 0; i < part.mask.length; i++, p += 4) {
-    if (part.mask[i] < 255) continue;
-    const ratio = Y[i] / part.base;
-    if (ratio < 0.9 || ratio > 1.1) continue;
+  const { mask, base, box, width } = part;
+  eachInBox(box, width, (i) => {
+    if (mask[i] < 255) return;
+    const ratio = Y[i] / base;
+    if (ratio < 0.9 || ratio > 1.1) return;
+    const p = i * 4;
     ch[0].push(TO_LINEAR[photo[p]]);
     ch[1].push(TO_LINEAR[photo[p + 1]]);
     ch[2].push(TO_LINEAR[photo[p + 2]]);
-  }
-  if (!ch[0].length) return [1, 1, 1];
-  const now = paintLinear(currentHex);
-  return ch.map((values, c) => {
-    const seen = percentile(values, 50);
-    const g = now[c] > 1e-4 ? seen / now[c] : 1;
-    return Math.min(GAIN_LIMITS[1], Math.max(GAIN_LIMITS[0], g));
   });
+  if (!ch[0].length) return [1, 1, 1];
+  return lightFrom(
+    ch.map((values) => percentile(values, 50)),
+    paintLinear(currentHex),
+    limits,
+  );
 }
 
 /** Where on a part the tones are read: the light that falls on its shaded quarter, its middle, and
@@ -481,7 +551,9 @@ export const TONE_PERCENTILES = Object.freeze({ shade: 20, middle: 50, light: 75
 export function partTones({ part, hex, k = 1, gain = [1, 1, 1], current = null }) {
   const ratios = [];
   const light = partLight(part, hex, current);
-  for (let i = 0; i < part.mask.length; i++) if (part.mask[i] === 255) ratios.push(light(i));
+  eachInBox(part.box, part.width, (i) => {
+    if (part.mask[i] === 255) ratios.push(light(i));
+  });
   const [pr, pg, pb] = paintLinear(hex).map((v, c) => v * gain[c]);
   const toHex = (ratio) =>
     `#${[pr, pg, pb].map((c) => Math.round(255 * toSrgb(c * ratio * k)).toString(16).padStart(2, "0")).join("")}`;
@@ -497,19 +569,21 @@ export function partTones({ part, hex, k = 1, gain = [1, 1, 1], current = null }
  * is `current`) in `tinted`.
  * Below 1 is not visible to most people; below 2 is a close match. null when no pixel is lit.
  */
-export function chipDeltaE({ tinted, part, hex, paint = hex, current = null }) {
+export function chipDeltaE({ tinted, part, hex, paint = hex, current = null, pixels = null }) {
   const rs = [];
   const gs = [];
   const bs = [];
   const light = partLight(part, paint, current);
-  for (let i = 0, p = 0; i < part.mask.length; i++, p += 4) {
-    if (part.mask[i] < 255) continue;
+  eachInBox(part.box, part.width, (i) => {
+    if (part.mask[i] < 255) return;
     const ratio = light(i);
-    if (ratio < 0.9 || ratio > 1.1) continue;
-    rs.push(tinted[p]);
-    gs.push(tinted[p + 1]);
-    bs.push(tinted[p + 2]);
-  }
+    if (ratio < 0.9 || ratio > 1.1) return;
+    // the part as painted on its own (partPixels — what a later part painted over it doesn't count), or the photo
+    const [src, p] = pixels ? [pixels, boxIndex(part.box, part.width, i) * 3] : [tinted, i * 4];
+    rs.push(src[p]);
+    gs.push(src[p + 1]);
+    bs.push(src[p + 2]);
+  });
   if (!rs.length) return null;
   const med = (a) => percentile(a, 50) / 255;
   return differenceCiede2000()(parse(hex), { mode: "rgb", r: med(rs), g: med(gs), b: med(bs) });

@@ -1084,6 +1084,30 @@ test("a part whose color its brand no longer has says so, instead of looking unp
   await click(byText(".q-tab", "Parts"));
   expect(byText(".parts__row", "Trim").querySelector(".parts__paint").textContent.trim()).toBe("Behr GONE-1 — not in the loaded colors");
   expect(byText(".parts__row", "Soffits").querySelector(".parts__paint").textContent.trim()).toBe("No color");
+  // the Designs tab counts what the house shows — the gone one apart, a part the house hasn't not at all — and
+  // Compare says why that part shows as photographed (the twenty-first review)
+  await click(byText(".q-tab", "Designs"));
+  const caption = byText(".designs__row", "AI scheme 1").querySelector(".q-item__label--caption").textContent;
+  expect(caption).toMatch(/1 color · 1 not in the loaded colors/);
+  wrapper.findAllComponents(UiSelect).find((c) => c.props("options").some((o) => o.value === "photo")).vm.$emit("update:modelValue", OLD_DESIGN.id);
+  await flushPromises();
+  expect(text()).toContain("1 of its colors isn't in the loaded colors — that part shows as photographed");
+});
+
+test("the schemes say whose paint they're built around, and why not the body's (the twenty-first review)", async () => {
+  await openOld({ ...OLD_DESIGN, colors: { body: "behr:GONE-1", trim: WHITE.id } });
+  const { useHouseStore } = await import("../stores/house.js");
+  useHouseStore().selectedPart = "trim";
+  await click(byText(".q-tab", "Schemes"));
+  await flushPromises();
+  expect(text()).toContain("Around Behr Chalk White W1 — the Trim's paint (the body has no color of this brand)");
+  expect(text()).toContain("The body's paint isn't in the loaded colors");
+  expect(text()).not.toContain("Give the body a color first");
+});
+
+test("Copy the color list is off when no paint on screen can be copied", async () => {
+  await openOld({ ...OLD_DESIGN, colors: { trim: "behr:GONE-1", chimneyCap: PAINT.id } });
+  expect(byText("button", "Copy the color list").getAttribute("aria-disabled") === "true" || byText("button", "Copy the color list").disabled).toBe(true);
 });
 
 test("a brand's colors removed while a house shows one: its part says the color is gone and isn't painted with it", async () => {

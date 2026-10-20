@@ -19,7 +19,7 @@ const TODAY = {
   "finder.parts": "f8ba077756a487ab",
   "finder.priority": "97688972545dc716",
   "schemes.roleParts": "9815d5ff99ae7e7a",
-  "aiphoto.compose": "2349559042b9098d",
+  "aiphoto.compose": "5afc0446d8b847fa",
   "schemes.harmony": "82fac382590bdac2",
 };
 

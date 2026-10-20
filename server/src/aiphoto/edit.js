@@ -192,7 +192,7 @@ export async function aiRepaint(opts) {
       const owned = Float32Array.from(hard[s]);
       for (let t = s + 1; t < list.length; t++) for (let i = 0; i < owned.length; i++) if (hard[t][i] >= c.insideAt) owned[i] = 0;
       const stats = surfaceStats(Y, owned, c);
-      const gain = list[s].currentHex ? lightGain(full.data, surfaceStats(photoY, hard[s], c).lit, list[s].currentHex, c.gainLimits) : [1, 1, 1];
+      const gain = list[s].currentHex ? lightGain(full.data, surfaceStats(photoY, hard[s], c).lit, list[s].currentHex, c) : [1, 1, 1];
       const target = litHexOf(list[s].colorHex, gain);
       let lockAlpha = soft[s];
       if (c.lockOnlyRepainted) {

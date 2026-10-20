@@ -4,7 +4,7 @@
 // answer to real paints, so the run is in-process (the kit's runAction), not the renderer's.
 
 import { existsSync, readFileSync } from "node:fs";
-import { aiRunHttpError } from "@delebash/core/llm";
+import { aiRunHttpError, isAbortError } from "@delebash/core/llm";
 import { Hono, input } from "@delebash/core/platform";
 import { ApiError, notFound } from "@delebash/core/platform/errors";
 import { houseNotFound } from "./refusals.js";
@@ -62,8 +62,12 @@ export function router(ctx = getState()) {
     const facts = await factsFor(ctx, house);
     if (!facts.length) throw new ApiError(409, "no-parts", "Find the parts first", "the AI reads the house's current colors from its parts");
     try {
-      return c.json(await suggestWithAi({ run: ctx.run, facts, paints, brand, mood, count }));
+      // the request's own signal: a Cancel in the window (its fetch aborted, the connection closed) stops the run, and
+      // the local-AI hold goes with it (the twenty-first review: the run went on and the AI photo was refused)
+      return c.json(await suggestWithAi({ run: ctx.run, facts, paints, brand, mood, count, signal: c.req.raw.signal }));
     } catch (e) {
+      // no one to answer — as the kit's /v1/ai/run (499, to a closed connection, not a failure)
+      if (isAbortError(e)) return c.body(null, 499);
       if (e?.name === "LLMNotConfiguredError" || e?.constructor?.name === "LLMNotConfiguredError") {
         throw new ApiError(501, "ai-not-set-up", "AI isn't set up", "choose an AI model in the AI area first");
       }

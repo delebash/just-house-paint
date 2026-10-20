@@ -427,6 +427,14 @@ async function refreshCompare() {
   version.value++;
 }
 watch(compareWith, refreshCompare);
+// the compared design's colors its brand no longer has: those parts show as photographed — said, not left to look
+// unpainted for no reason (the twenty-first review)
+const compareGone = computed(() => {
+  const d = house.designs.find((x) => x.id === compareWith.value);
+  if (!d) return 0;
+  const keys = new Set(house.paintableParts.map((p) => p.key));
+  return Object.entries(d.colors).filter(([key, id]) => keys.has(key) && paints.missing[id]).length;
+});
 watch(
   () => house.designs,
   () => {
@@ -920,6 +928,9 @@ const tabs = computed(() => [
 ]);
 const strokeColor = computed(() => paints.byId[house.colors[house.selectedPart]]?.hex || "#ffcc00");
 const hasColors = computed(() => Object.keys(house.colors).length > 0);
+// a paint on screen to copy (colors whose brand no longer has them, or on parts the house lost, copy nothing — the
+// twenty-first review: "Color list copied" for an empty list)
+const hasPainted = computed(() => paintedRows().length > 0);
 const whyNotShown = computed(() => !!house.house && !!aiPhotoWhyNot.value);
 const canRevert = computed(() => !!house.design && house.dirty);
 </script>
@@ -936,7 +947,7 @@ const canRevert = computed(() => !!house.design && house.dirty);
         intent="secondary" :disabled="!house.paintableParts.length || !hasColors" v-bind="waiting(busy.ai || !!photoTask)"
         :aria-describedby="whyNotShown ? 'house-ai-why' : undefined" :label="t('house.ai.button')" @click="aiPhoto"
       />
-      <UiButton intent="ghost" :disabled="!hasColors" :label="t('house.export.copyList')" @click="copyColorList" />
+      <UiButton intent="ghost" :disabled="!hasPainted" :label="t('house.export.copyList')" @click="copyColorList" />
       <UiButton intent="primary" :disabled="!painted" v-bind="waiting(busy.export)" :label="t('house.export.save')" @click="saveImage" />
       <span v-if="whyNotShown" id="house-ai-why" class="hint house__why">{{ t("house.ai.whyNot", { reason: aiPhotoWhyNot }) }}</span>
     </PaneHeader>
@@ -987,6 +998,7 @@ const canRevert = computed(() => !!house.design && house.dirty);
             <span>{{ t("house.compare.label") }}</span>
             <UiSelect v-model="compareWith" :options="compareOptions" width="fit" class="house__compare" :aria-label="t('house.compare.label')" />
           </span>
+          <span v-if="compareGone" class="house__tool muted" role="status">{{ t("house.compare.notLoaded", { n: compareGone }, compareGone) }}</span>
           <label v-if="compareWith !== 'off'" class="house__tool house__side">
             <UiToggle v-model="sideBySide" :aria-label="t('house.compare.sideBySide')" />
             <span>{{ t("house.compare.sideBySide") }}</span>

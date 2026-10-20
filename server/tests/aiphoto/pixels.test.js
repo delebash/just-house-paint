@@ -177,18 +177,25 @@ describe("the light from the paint on a part now", () => {
   const photo = image(4, 2, () => [180, 190, 210]);
   const all = [0, 1, 2, 3, 4, 5, 6, 7];
 
-  test("the photo there ÷ the paint now, per channel in linear light; none without a paint now", () => {
+  test("the brightness from the luminance, the cast per channel within ±18 % of it; none without a paint now", () => {
+    // the screen's rule too (shared/light.js — the twenty-first review)
     const g = lightGain(photo, all, "#ffffff");
     expect(g[0]).toBeCloseTo(0.456, 2);
-    expect(g[2]).toBeGreaterThan(g[0]); // the blue cast kept
+    expect(g[1]).toBeCloseTo(0.515, 2);
+    expect(g[2]).toBeCloseTo(0.512 * 1.18, 2); // the blue cast kept, to its bound
     expect(lightGain(photo, all, null)).toEqual([1, 1, 1]);
     expect(lightGain(photo, [], "#ffffff")).toEqual([1, 1, 1]);
+    // a colorful paint now: the brightness only (read per channel, a red door turned Alabaster green)
+    const door = image(4, 2, () => [0xa9, 0x30, 0x2f]);
+    const d = lightGain(door, all, "#ad2c34");
+    expect(d[1]).toBe(d[0]);
+    expect(d[2]).toBe(d[0]);
   });
 
-  test("a wrong pick is capped; the paint in that light, clipped at white", () => {
-    expect(lightGain(photo, all, "#101010")).toEqual([4, 4, 4]);
-    expect(lightGain(photo, all, "#000000")).toEqual([1, 1, 1]); // nothing to divide by
-    expect(litHexOf("#FFFFFF", lightGain(photo, all, "#ffffff"))).toBe("#b4bed2");
+  test("a pick far too dark gives no reading; the paint in that light, clipped at white", () => {
+    expect(lightGain(photo, all, "#101010")).toEqual([1, 1, 1]); // its glare, not the light, made what the camera saw
+    expect(lightGain(photo, all, "#000000")).toEqual([1, 1, 1]);
+    expect(litHexOf("#FFFFFF", lightGain(photo, all, "#ffffff"))).toBe("#b4becc");
     expect(litHexOf("#AD2C34", [1, 1, 1])).toBe("#ad2c34");
     expect(litHexOf("#ffffff", [4, 4, 4])).toBe("#ffffff");
   });
@@ -200,6 +207,6 @@ describe("the light from the paint on a part now", () => {
     const stats = surfaceStats(Y, mask, DEFAULT_COMPOSE);
     const gain = lightGain(photo, all, "#ffffff");
     const out = colorLock(photo, render, mask, "#ffffff", stats, Y, gain);
-    expect(px(out, 0)).toEqual([180, 190, 210]);
+    expect(px(out, 0)).toEqual([180, 190, 204]); // the blue cast to its bound
   });
 });

@@ -9,9 +9,11 @@ Advanced**.
 
 ## From a paint you chose
 
-Give the body a color first (the **Colors** tab); the schemes are built around it, in the brand chosen above them —
-when the body's paint is another brand's, the tab says so ("The body's paint is …'s — choose … above, or give the
-body a color of this brand") and builds them around the selected part's paint, if it is this brand's. The schemes:
+Give the body a color first (the **Colors** tab); the schemes are built around it, in the brand chosen above them
+("Around …"). When the body has no color of this brand — none yet, another brand's, or one whose brand isn't loaded —
+they are built around the selected part's paint, if it is this brand's ("Around … — the Trim's paint"), and the tab
+says why the body's isn't used ("The body's paint is …'s — choose … above, or give the body a color of this brand",
+"The body's paint isn't in the loaded colors"). The schemes:
 **Complementary**, **Analogous**, **Triadic**, **One color, three shades**, and **Classic** — light trim and a
 strong door on a mid-tone body: a light or dark body color becomes the brand's nearest mid-tone paint of its hue, so
 **Apply** changes the body too. Each color is the brand's nearest real paint, checked so the trim stands out from

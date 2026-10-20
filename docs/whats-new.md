@@ -124,6 +124,11 @@
   by why ("400 swatches skipped — CMYK needs a color profile"); a restore too big for the drive says so; the window
   that restores or resets says **Restored**, not "replaced in another window"; **Find the parts again** while the
   part finder installs, or where it can't run, says which.
+- **Truer paint**: **On it now** with a strong or dark paint (a red door, navy shutters) no longer tints every new
+  color — it reads the brightness from it, and the tint only from a light, soft paint; **Save image** no longer
+  draws a thin line of the old color where two painted parts meet; a lower **Texture** keeps the wall the chip's
+  color; a color click paints only the part it changes (about five times faster on a big photo). **Cancel** on
+  **Suggest schemes** stops the AI model too, and an answer given as a bare list is read.
 - **Names as they show**: characters that show nothing (a zero-width space, a soft hyphen) never make a second
   "Blue", and a name of only those is refused; a TAB pasted into a name or the color search is a space.
 - **Help for every screen**: each App Settings section ([App Settings](settings.md)), AI Settings, the tray, the

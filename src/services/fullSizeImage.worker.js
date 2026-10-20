@@ -4,6 +4,7 @@
 // painter as the screen's (./painter.js) and the JPEG — on OffscreenCanvas, Canvas 2D in a worker
 // (developer.mozilla.org/docs/Web/API/OffscreenCanvas). One message in, one answer out: { blob } or
 // { error: { message } }.
+import { lightLimitsOf } from "just-house-paint-server/shared/light.js";
 import { createPainter } from "./painter.js";
 
 /** The original (a Blob) at `width` × `height`: its RGBA pixels — decoded and scaled in one step
@@ -17,7 +18,9 @@ async function pixelsAt(photo, width, height) {
 }
 
 /** An outline (8-bit, `mw` × `mh`) scaled to `width` × `height` — drawn the way the screen's
- *  maskImage.js maskOf scales one (Canvas 2D's drawImage, smoothed edges). */
+ *  maskImage.js maskOf scales one (Canvas 2D's drawImage, smoothed edges). Two parts that meet then
+ *  share their edge pixels; the painter fills them by coverage (tint.js tintPart), so no line of the
+ *  photo shows between them. */
 function scaleMask(mask, mw, mh, width, height) {
   const grey = new ImageData(mw, mh);
   for (let i = 0, p = 0; i < mask.length; i++, p += 4) {
@@ -37,8 +40,10 @@ function scaleMask(mask, mw, mh, width, height) {
 }
 
 /** The painted image as a JPEG Blob — what fullSizeImage.js paintFullSize documents. */
-export async function paintImage({ photo, width, height, masks, maskWidth, maskHeight, colors, order, light = 1, current = {}, texture = 1, quality }) {
-  const painter = createPainter({ rgba: await pixelsAt(photo, width, height), width, height });
+export async function paintImage({ photo, width, height, masks, maskWidth, maskHeight, colors, order, light = 1, current = {}, texture = 1, limits, quality }) {
+  // the page's light limits (the setting aiphoto.compose), the worker having none of its own
+  const lim = lightLimitsOf(limits);
+  const painter = createPainter({ rgba: await pixelsAt(photo, width, height), width, height, limits: () => lim });
   for (const { key, mask } of masks) painter.setMask(key, scaleMask(mask, maskWidth, maskHeight, width, height), texture);
   const { rgba } = painter.paint(colors, order, { light, current });
   const canvas = new OffscreenCanvas(width, height);

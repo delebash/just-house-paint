@@ -27,12 +27,13 @@ import { AiSchemesIn } from "just-house-paint-server/schemas/paints.js";
 import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
+import { partName } from "../services/partNames.js";
 import { schemeReasons } from "../services/schemeNotes.js";
 import { useHouseStore } from "../stores/house.js";
 import { usePaintsStore } from "../stores/paints.js";
 import { useSettingsStore } from "../stores/settings.js";
 
-const { t } = useI18n();
+const { t, te } = useI18n();
 const router = useRouter();
 const house = useHouseStore();
 const paints = usePaintsStore();
@@ -55,14 +56,18 @@ const bodyBrand = computed(() => {
   const p = paints.byId[house.colors.body];
   return p && p.brand !== brand.value ? paints.brands.find((b) => b.key === p.brand)?.label || p.brand : "";
 });
-// the base: the body's paint when it has one of this brand, else the selected part's
-const base = computed(() => {
+// the body's paint isn't among the loaded colors (its brand removed or not loaded yet): said, not taken for "no color"
+const bodyNotLoaded = computed(() => !!house.colors.body && !paints.byId[house.colors.body]);
+// the base: the body's paint when it has one of this brand, else the selected part's — and whose it is, said beside it
+// (the body's other brand was said only when there was no base at all — the twenty-first review)
+const baseOf = computed(() => {
   for (const key of ["body", house.selectedPart]) {
     const p = paints.byId[house.colors[key]];
-    if (p && p.brand === brand.value) return p;
+    if (p && p.brand === brand.value) return { paint: p, part: key };
   }
   return null;
 });
+const base = computed(() => baseOf.value?.paint || null);
 
 const harmony = ref([]);
 const coordinating = ref([]);
@@ -142,9 +147,12 @@ const kindLabel = (s) => (s.kind === "ai" ? s.name : s.kind === "coordinating" ?
       </div>
 
       <h3 class="schemes__h">{{ t("schemes.harmony.title") }}</h3>
-      <p v-if="!base && bodyBrand" class="muted">{{ t("schemes.harmony.otherBrand", { brand: bodyBrand }) }}</p>
+      <p v-if="base && baseOf.part === 'body'" class="muted">{{ t("schemes.harmony.from", { paint: base.displayName }) }}</p>
+      <p v-else-if="base" class="muted">{{ t("schemes.harmony.fromPart", { paint: base.displayName, part: partName(baseOf.part, { t, te }) }) }}</p>
+      <!-- why not the body's paint: another brand's, not in the loaded colors, or none yet (with no base: the way on) -->
+      <p v-if="baseOf?.part !== 'body' && bodyBrand" class="muted">{{ t("schemes.harmony.otherBrand", { brand: bodyBrand }) }}</p>
+      <p v-else-if="baseOf?.part !== 'body' && bodyNotLoaded" class="muted">{{ t("schemes.harmony.bodyNotLoaded") }}</p>
       <p v-else-if="!base" class="muted">{{ t("schemes.harmony.needBase") }}</p>
-      <p v-else class="muted">{{ t("schemes.harmony.from", { paint: base.displayName }) }}</p>
 
       <ul class="schemes__list">
         <li v-for="(s, i) in [...coordinating, ...harmony]" :key="`h${i}`" class="scheme">

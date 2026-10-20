@@ -195,6 +195,26 @@ GenRoom, FacadeColorizer — vendors claim ~20–40 s a render, no exact color).
   github.com/hustvl/Matte-Anything · arxiv.org/pdf/2306.01567.
 - **Estimate:** a 12 MP recolor is ~144 MB of buffer traffic ≈ 0.3 ms at the card's 448 GB/s —
   real-time.
+- **The light read from a part's paint now, per channel, amplifies a colorful paint's weak channels**
+  (*measured*, 2026-10-20, a synthetic camera model — the scratchpad's neighbors21/tint_measure*.mjs): photo ÷
+  paint per channel, a red door #ad2c34 photographed #a9302f (ΔE 2.2) gave the light [0.95, 1.17, 0.83] and
+  Alabaster then showed #e8fbce (ΔE 14.2); a near-0 channel (#8b0505) ΔE 27.5; black shutters' 1.5 % flare a gain
+  of 1.54 that clipped white — while the ΔE badge, measured against the same arithmetic, stayed under 2. White
+  balance from a reference (von Kries) needs a near-neutral one. Now (server/src/shared/light.js, the screen and
+  the AI photo alike): brightness from luminance, the cast only from a paint whose every channel reaches 0.05
+  linear and within ±18 %, nothing from a paint darker than that — measured: red 14.2 → 1.6, the near-0 channel
+  27.5 → 2.5, olive 11.1 → 5.7, navy 6.0 → 5.7 (gain_fix.mjs).
+- **Two parts meeting on a scaled outline's soft edge left a 2 px line of the old color** (*measured* in Electron,
+  2026-10-20, seam_electron/): Save image scales the outlines smoothly, and each edge blended with the photo;
+  now edges share the pixel by coverage — photo × (1 − Σa) + Σ aₖ·paintₖ (src/services/tint.js tintPart).
+- **A lower Texture darkened the wall** (*measured*, texture_measure.mjs): the blend kept the photo's 75th-percentile
+  level while the blur averages lower (the wall's median ΔE to the chip 2.2 → 4.8 at Texture 0); now divided by
+  the blend's own level.
+- **A color click's cost was parts × photo** (*measured*, repaint_time.mjs, Node, 15 parts tiling the photo): 372 ms
+  at 2048 px, 1579 ms at 4096 — every part tinted and measured again over the whole photo. Each part's loops now stay
+  in its box (321 / 1312 ms — little, as these parts tile the photo) and the painter keeps each part's own painting
+  and ΔE until its paint, light or outline changes (tint.js partPixels, painter.js): a click 65 ms at 2048, 278 ms at
+  4096 (*measured*, 2026-10-21).
 
 ## 6 · Generative edits on this machine
 

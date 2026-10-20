@@ -17,9 +17,10 @@ rest, and the photo's tools sit across the top of the page.
 
 The app paints each part with the paint's exact color in the part's normal light, and keeps the
 photo's own shadows, texture and lap lines: a wall in shade is the same paint, darker. Beside each
-painted part the **Parts** tab says how close the painted wall comes to the paint chip — or, with
-**On it now** set, to the chip in that part's light — **ΔE** under 1 is a difference most people
-can't see, under 2 is a close match (its tag turns green).
+painted part the **Parts** tab says how close the painted wall comes to the paint in that part's light — the chip
+itself, or with **On it now** set the chip in the light that paint read — **ΔE** under 1 is a difference most
+people can't see, under 2 is a close match (its tag turns green). It measures the painting, not the light: how
+close the light **On it now** read is to the real one, it can't say.
 
 **On this wall** — under the chosen paint on the **Colors** tab, the same paint as it shows on the
 selected part: **In shade**, on **Most of it** and **In light**. The light one is the chip — in the
@@ -30,8 +31,12 @@ tree shows mostly the darker ones, as real paint would.
 **The new color** to **On it now** and click that paint (search for it, or type its color under the
 list); the switch then goes back to **The new color**. It doesn't paint anything: the app compares that paint
 with how your camera photographed it on the part's normally lit areas, which gives the photo's real light there —
-how bright, and its tint (shade and an overcast sky are bluish). Every new color on that part then shows in that
-light, as your camera would have taken it, and so does the **AI photo**. The line **On it now: …** shows the
+how bright, and from a light, soft paint (a white, a gray, a cream) its tint too (shade and an overcast sky are
+bluish), kept within a small range. A strong or dark paint (a red door, a navy shutter) gives the brightness only:
+its weak colors would turn a small difference between the camera and the chip into a strong tint on every new
+color. A paint far darker than what the camera saw there (black, for a light wall) gives no reading. Every new color
+on that part then shows in that light, and so does the **AI photo**; the limits are in **App Settings → Advanced**
+(the AI photo's compositing values). The line **On it now: …** shows the
 paint; **Clear** forgets it.
 It is kept with the house. Not sure what's on it? Leave it: the paint then shows at its chip color
 in the part's normal light.
@@ -50,7 +55,7 @@ photographed. In a photo taken against a bright sky, a light wall can read as da
 first after you change its outline, take a moment longer.
 
 **Texture** — how much of what's left of the photo's texture shows: lower it to calm it further; at 1
-it is kept whole. The photo changes when you let go of the slider (or leave its box after typing a
+it is kept whole. At any Texture the wall's normal light stays the chip (**In light**). The photo changes when you let go of the slider (or leave its box after typing a
 number), not while you drag it.
 
 **Light** and **Texture** are the app's, not the house's: they stay as you set them, for every house, until you

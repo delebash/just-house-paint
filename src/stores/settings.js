@@ -5,6 +5,7 @@
 // the caller's form (§15).
 import { get, patch as patchJson } from "@delebash/ui";
 import { defineStore } from "pinia";
+import { setLightLimits } from "../services/lightLimits.js";
 
 export const useSettingsStore = defineStore("settings", {
   state: () => ({
@@ -15,10 +16,13 @@ export const useSettingsStore = defineStore("settings", {
     async load() {
       this.values = await get("/v1/settings");
       this.loaded = true;
+      // the light limits the painter reads (services/lightLimits.js — the AI photo's, aiphoto.compose)
+      setLightLimits(this.values["aiphoto.compose"]);
       return this.values;
     },
     async save(changes) {
       this.values = await patchJson("/v1/settings", changes);
+      setLightLimits(this.values["aiphoto.compose"]);
       return this.values;
     },
   },

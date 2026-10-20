@@ -3,6 +3,7 @@
 // real paint, and the refusals (no paints, no parts, no AI set up, an unusable answer).
 import { afterEach, describe, expect, test } from "vitest";
 import { medianColor, parseSchemes, schemeVariables } from "../src/schemes_ai.js";
+import { assertGpuFree } from "../src/jobs.js";
 import { aiAnswer, jpeg, makeServer } from "./domain_helpers.js";
 import { syntheticPalette } from "./paints/fixtures/palette.js";
 
@@ -12,6 +13,8 @@ afterEach(() => {
   aiAnswer.text = "{}";
   aiAnswer.error = null;
   aiAnswer.calls.length = 0;
+  aiAnswer.hang = false;
+  aiAnswer.aborted = 0;
 });
 
 describe("the pieces", () => {
@@ -40,6 +43,14 @@ describe("the pieces", () => {
     const text = 'Sure!\n```json\n{"schemes":[{"name":"Sea Breeze","body":"#7fa3b5","trim":"#f4f1e8","accent":"#8b2e2e","why":"Calm."},{"name":"Bad","body":"blue"}]}\n```';
     expect(parseSchemes(text)).toEqual([{ name: "Sea Breeze", body: "#7fa3b5", trim: "#f4f1e8", accent: "#8b2e2e", why: "Calm." }]);
     expect(() => parseSchemes("no json here")).toThrow(/holds no JSON/);
+    // a bare list, prose with a "[" before it and a "}" after it (the twenty-first review: both failed)
+    const one = { name: "Dune", body: "#e8dcc8", trim: "#ffffff", accent: "#2f4a3a", why: "Warm." };
+    expect(parseSchemes(JSON.stringify([one]))).toEqual([one]);
+    expect(parseSchemes(`Here [as asked]:\n${JSON.stringify({ schemes: [one] })}\nEnjoy } these.`)).toEqual([one]);
+    expect(parseSchemes(`\`\`\`json\n${JSON.stringify([one])}\n\`\`\``)).toEqual([one]);
+    // a brace inside a string doesn't close it
+    expect(parseSchemes(JSON.stringify({ schemes: [{ ...one, why: "a } inside" }] }))[0].why).toBe("a } inside");
+    expect(() => parseSchemes("{ not json }")).toThrow(/isn't valid JSON/);
     expect(() => parseSchemes('{"schemes":[{"name":"x","body":"#123456"}]}')).toThrow(/no usable scheme/);
   });
 });
@@ -95,6 +106,28 @@ describe("POST /v1/schemes/ai", () => {
     expect(busy.status).toBe(409);
     expect((await busy.json()).type).toMatch(/gpu-busy$/);
     s.ctx.jobs.cancelAll();
+  });
+
+  test("Cancel in the window stops the model's run and frees the local AI for the AI photo (the twenty-first review)", async () => {
+    const house = await houseWithParts();
+    s.ctx.usesLocalAi = (feature) => feature === "schemes.suggest";
+    aiAnswer.hang = true;
+    const cancel = new AbortController();
+    const asked = s.app.request("/v1/schemes/ai", {
+      method: "POST",
+      headers: { "content-type": "application/json", host: "localhost" },
+      body: JSON.stringify({ houseId: house.id, brand: "behr" }),
+      signal: cancel.signal,
+    });
+    await new Promise((r) => setTimeout(r, 50));
+    // while it runs, the local AI is held: an AI photo waits
+    expect(() => assertGpuFree(s.ctx.jobs, "aiphoto")).toThrow(/AI color schemes are being made/);
+    cancel.abort();
+    const answer = await asked.catch((e) => e);
+    expect(aiAnswer.aborted).toBe(1);
+    expect(answer?.status ?? 499).toBe(499);
+    // let go: the AI photo can run
+    expect(() => assertGpuFree(s.ctx.jobs, "aiphoto")).not.toThrow();
   });
 
   test("it needs the brand's colors and the house's parts", async () => {
