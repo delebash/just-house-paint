@@ -345,6 +345,10 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
           Contents/MacOS/data before replacing the app, and proxy / other-name users to set ALLOWED_HOSTS; the
           window's minimum is clamped to the screen's work area (Electron's screen API); the release is created as
           a draft, its files attached, then published (gh release create --draft … edit --draft=false).
+        The twelfth (2026-10-20; started): today's fixes attacked (races, the restore's crash points, the snapshot,
+        regressions, the docs' words) and the app left open for hours or days (polls, timers, growth, a sleeping
+        laptop, a server restarted under a window) — two agents, read-only. Dry run 39385554498 (app 8c30158, kit
+        062d3ab) building.
 NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
         the installed 0.1.2 updating to it (the silent Restart now).
 
