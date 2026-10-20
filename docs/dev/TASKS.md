@@ -779,6 +779,62 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         (real links on macOS and Linux — this machine has no symlink right); JustWrite's template notes (a .deb's
         homepage, a universal Mac build's x64ArchFiles, the launcher's LF pinned). Dry run 39421285767 started. The
         sixteenth (2026-10-20): the fifteenth's code attacked, and the screens on the new build.
+        Dry run 39421285767: macOS green; Windows and Linux failed at "the window and the server on its own share one
+        data folder" — each start now runs its own temp copy, and their default folder is beside the executable, so
+        the two paths differ by the copy (being fixed: the folder said where it is in the build itself, the runner's
+        8.3 temp name resolved). Every other step green on all three: the packaged app and its server started from a
+        temp copy (no package the build left out), the kit's data-folder tests with real links on macOS and Linux.
+        The sixteenth's attack on the fifteenth's code (an agent's; scripts in the scratchpad's adv16): a second
+        launch during Change folder sweeps the copy under way (the sweep and the token's pickup run before the
+        single-instance lock — measured; narrowly the pointer committed to an emptied folder); Change folder from a
+        start on the old copy forgets the newer folder (measured); "used after the move" warned when Finder or
+        Explorer only wrote .DS_Store / Thumbs.db / desktop.ini (measured); an old copy on an unplugged drive
+        forgotten for good; the old-copy banner stays after "from now on" or the new folder deleted; a half copy on a
+        drive missing at the next start never removed; docgen's Change folder carries no token (it passes none);
+        crash windows around the commit (records written after it; a move to the default, crashed before its marker
+        went, swept as unfinished); a junction in the data folder fails every move ("not allowed to write there");
+        Node 24.21's fs.rmSync recursive follows NTFS junctions and empties their targets (measured —
+        fs.promises.rm doesn't; the kit's rmTree for Clear models and data_api unaudited); Move back offered while
+        the default holds the old copy; the variable's words while the start fell back to the default; Remove
+        doesn't name the apps sharing the models; the coarse-time lock per OS user. The UI and canvas: Enter in a
+        number field submits the old value (and past its max); a refused text ("1e3", "0x200") passes the form's
+        rules and Save sends null (422); a refused text with no rules has no error; ArrowUp on a refused text gives
+        0 + step, changes a readonly box; "-0" kept; one failed task announced twice, both assertive; announcements
+        outside an open dialog's aria-modal unheard; a keyboard Pick a color shows nothing (the panel at its top, the
+        matches below); the hex box's error stays after the hex is fixed; a box begun by a click and ended by Enter
+        ends at the pointer, not the crosshair; a half box survives a photo change; a two-tap box's 4 px slop under a
+        finger's 8 dp; Enter held picks on every repeat, a handled Escape bubbles; v-tooltip's own-name test misreads
+        aria-hidden text and a select's options; isolate() leaves a Latin name holding an override character
+        unwrapped; UiSegmented picks on Ctrl/Alt+arrows, its arrows not mirrored right-to-left; the canvas's
+        lostpointercapture never attached (mounted before the stage — the fourteenth's fix inert; measured). Right:
+        the kit's tests, fs.promises.rm leaves a junction's target, removing an old root that is a junction keeps
+        the user's files, the fork held, Quit held on every route, no reload loop, the variable read alike, Remove
+        only on recorded copies, the guard's peer check on the real tree, number parsing in en/de/es/fr/de-CH ("1,500"
+        is 1500), toasts carry no role, v-tooltip leaves aria-labelledby and <label for> names, the Tool control and
+        On it now by arrow, menus and tabs, the help's focus, the crosshair clamped.
+        Their fixes — decided (mine, argued): the single-instance lock first, then the sweep and the token, and the
+        sweep skips a move whose process is alive (its pid recorded); Change folder, Move back and the variable's
+        words off while a start runs on the default this time or on an old copy — "your data is in B: connect it and
+        restart, or Use the default folder from now on"; "used after the move" judged by the database's files alone
+        (*.db, *.sqlite and their -wal/-shm/-journal — a run always writes them), Thumbs.db never one; an old copy whose
+        drive isn't there listed as not connected, forgotten only when its drive is there and its entries gone;
+        "from now on" removes the default's moved-to record, the banner gone when the folder it names is; the sweep's
+        record kept while the target can't be reached; the shell reads the window's token itself in storageRelocate
+        (no app passes it — docgen too); the old-copy record and carried.json written into the target before the
+        commit (an undo removes them), the marker marked committed before the pointer; a link in the data folder
+        copied as a junction on Windows when it is a folder's (junctions need no symlink right), else named in the
+        refusal; every recursive remove in the kit on fs.promises.rm (a kit test proves a junction's target stays;
+        rmTree and data_api audited); Remove names the apps sharing the models; the lock per OS user kept, argued
+        (the fixed port refuses a second user's server anyway). UiNumber: Enter commits the text as blur does
+        (clamped), a refused text fails the field (its own rule first, aria-invalid) with or without rules, arrows do
+        nothing on a refused text or a readonly box, "-0" is 0; a failed task announced once; announcements inside
+        the top open dialog while one is; the keyboard Pick a color scrolls the exact color's matches into view and
+        says how many; the hex box's error cleared as it is typed into; keys take over a box a click began (its
+        corner the crosshair's); a photo change drops a half box and the crosshair; a touch's slop 10 px; Enter
+        repeats ignored, a handled Escape stopped; v-tooltip's own-name test by dom-accessibility-api's
+        computeAccessibleName (Testing Library's, already a dev dependency); isolate() wraps any name holding a bidi
+        control; UiSegmented ignores modified arrows and mirrors them right-to-left (APG); lostpointercapture heard
+        on the canvas's own host element, always there.
 NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
         the installed 0.1.2 updating to it (the silent Restart now).
 
