@@ -709,9 +709,9 @@ watch(finding, (on) => {
 });
 // the box asks the part finder: removed while Box is chosen, Box is let go of
 watch(
-  () => engines.finderInstalled,
-  (on) => {
-    if (!on && tool.value === "box") tool.value = "look";
+  () => engines.finderMissing,
+  (missing) => {
+    if (missing && tool.value === "box") tool.value = "look";
   },
 );
 
@@ -873,7 +873,9 @@ const failedReason = computed(() => {
 // which outlines what is inside it, isn't installed (it was offered, and its two corners gave an error — the
 // sixteenth review)
 const editTool = (tool) => (finding.value ? { ...tool, title: t("house.tools.offWhileFinding"), disabled: true } : tool);
-const boxTool = (tool) => (engines.finderInstalled ? editTool(tool) : { ...tool, title: t("house.tools.offNoFinder"), disabled: true });
+/** An off tool pressed: why it is off, said (its reason is its tooltip — a press on a touch screen shows none). */
+const toolBlocked = (opt) => pushToast({ message: opt.title, kind: "info" });
+const boxTool = (tool) => (engines.finderMissing ? { ...tool, title: t("house.tools.offNoFinder"), disabled: true } : editTool(tool));
 const tools = computed(() => [
   { value: "look", label: t("house.tools.look"), title: t("house.tools.lookHint") },
   editTool({ value: "brush", label: t("house.tools.brush"), title: t("house.tools.brushHint") }),
@@ -931,7 +933,7 @@ const canRevert = computed(() => !!house.design && house.dirty);
            narrow one (the styles' grid areas) -->
       <div class="house__toolbar">
         <div class="house__tools">
-          <UiSegmented v-model="tool" :options="tools" :aria-label="t('house.tools.label')" />
+          <UiSegmented v-model="tool" :options="tools" :aria-label="t('house.tools.label')" @blocked="toolBlocked" />
           <label v-if="tool === 'brush' || tool === 'eraser'" class="house__tool">
             <span>{{ t("house.tools.size") }}</span>
             <UiSlider v-model="brushSize" :min="2" :max="120" :step="1" width="short" :aria-label="t('house.tools.size')" />

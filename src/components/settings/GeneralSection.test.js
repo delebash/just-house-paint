@@ -127,6 +127,19 @@ test("General: every label is a word, Save sends only the change, a 422 lands un
   expect(text()).toContain("100"); // the field's message, worded from the 422's ctx
 });
 
+test("General: Save keeps the keyboard's focus when it turns off — nothing left to save (WCAG 2.4.3)", async () => {
+  await mountSection(GeneralSection);
+  await type(document.body.querySelector("#setting-designs-maxPerHouse"), "12");
+  const save = byText(".form__actions button", "Save");
+  save.focus();
+  await submit(save);
+  expect(server.patches).toEqual([{ "designs.maxPerHouse": 12 }]);
+  // off now (nothing to save), still focused and still a Tab stop: aria-disabled, not the native disabled
+  expect(save.getAttribute("aria-disabled")).toBe("true");
+  expect(save.hasAttribute("disabled")).toBe(false);
+  expect(document.activeElement).toBe(save);
+});
+
 test("Advanced: every label is a word, and text that isn't JSON is refused before it is sent", async () => {
   await mountSection(AdvancedSection);
   expect(text()).not.toMatch(/settings\.advanced/);

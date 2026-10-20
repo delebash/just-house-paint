@@ -35,7 +35,8 @@ export const PaintSearch = T.Object({
 
 /** GET /v1/paints/nearest — the real paints closest to a color. */
 export const NearestQuery = T.Object({
-  hex: T.String({ pattern: HEX }),
+  // the example is the form's own words for a hex that isn't one ("Write it like #a1b2c3" — JSON Schema's examples)
+  hex: T.String({ pattern: HEX, examples: ["#a1b2c3"] }),
   brand: opt(T.String({ maxLength: 40 })),
   k: opt(T.Integer({ minimum: 1, maximum: 50 }), 6),
   exterior: opt(T.Boolean(), true),

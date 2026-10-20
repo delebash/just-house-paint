@@ -435,3 +435,19 @@ test("a finger's tap is a click for a box: within 10 px, where a mouse's is 4", 
   fire("pointerup", { pointerType: "touch" });
   expect(wrapper.emitted("box")).toHaveLength(1);
 });
+
+test("another photo mid-stroke drops the stroke and the pointer: its lifting paints nothing on the new one", async () => {
+  // the seventeenth review: a house opened with the button still down got the old photo's stroke
+  mountCanvas({ tool: "brush" });
+  fire("pointerdown", { pointerId: 9 });
+  pointerAt = { x: 70, y: 50 };
+  fire("pointermove", { pointerId: 9 });
+  await wrapper.setProps({ photo: { width: 120, height: 90 } });
+  fire("pointermove", { pointerId: 9 });
+  fire("pointerup", { pointerId: 9 });
+  expect(wrapper.emitted("stroke")).toBeUndefined();
+  // the next press draws on the new photo
+  fire("pointerdown", { pointerId: 10 });
+  fire("pointerup", { pointerId: 10 });
+  expect(wrapper.emitted("stroke")).toHaveLength(1);
+});

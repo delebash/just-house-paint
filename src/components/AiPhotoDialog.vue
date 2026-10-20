@@ -47,10 +47,9 @@ async function save() {
 </script>
 
 <template>
-  <!-- As wide as what it holds: the install card's own width (--w-edit), the card filling it — an
-       1100 px dialog held an 880 px card (the screens-and-keyboard review, 2026-10-20); the AI photo
-       itself, the room a big picture needs. -->
-  <AppModal ref="modal" :title="t('aiPhoto.title')" :max-width="render ? '1100px' : 'var(--w-edit)'" @close="emit('close')">
+  <!-- As wide as what it holds: the install card at a prose width, the card filling it — an 880 px dialog held
+       512 px of the card's content (the seventeenth review); the AI photo itself, the room a big picture needs. -->
+  <AppModal ref="modal" :title="t('aiPhoto.title')" :max-width="render ? '1100px' : 'var(--w-prose)'" @close="emit('close')">
     <EngineInstallCard v-if="!render" kind="aiphoto" class="aiphoto__install" @installed="emit('installed')" />
     <template v-else>
       <p class="hint">{{ t("aiPhoto.note") }}</p>

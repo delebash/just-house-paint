@@ -140,7 +140,9 @@ folder, and never the folder the app uses; it names the apps that share this app
 the old copy after the move, Storage says when it was last changed — move what you need out of it first. An old
 copy on a drive that isn't plugged in is listed as **Not connected**. When the app runs on an old copy, or on the
 default folder this time because the data's folder can't be used, Storage says where your data is — connect it and
-restart, or **Use the default folder from now on…** — and **Change folder…** isn't shown. **Move back to the default folder…**
+restart, or **Use the default folder from now on…**; once that folder is there again, restart the app to use it; when
+the `JUST_HOUSE_PAINT_DATA_DIR` variable names the old copy, change the variable to the folder Storage names — and
+**Change folder…** isn't shown. **Move back to the default folder…**
 brings the data back where the app keeps it by default (once any old copy there is removed). When the folder is set
 by the `JUST_HOUSE_PAINT_DATA_DIR` variable, Storage says so and **Change folder…** isn't shown — change the variable
 instead. While the data is being copied the app can't be quit (it says so); if the computer stops midway, the

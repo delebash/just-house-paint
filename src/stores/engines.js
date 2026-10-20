@@ -26,6 +26,9 @@ export const useEnginesStore = defineStore("engines", {
   }),
   getters: {
     finderInstalled: (s) => !!s.finder?.installed,
+    // known not to be installed: the status has answered and says so (before it answers, or when asking failed,
+    // nothing is known — a tool that needs the finder stays on, and the server says why if it must)
+    finderMissing: (s) => s.finder != null && !s.finder.installed,
     aiphotoInstalled: (s) => !!(s.aiphoto?.engineInstalled && s.aiphoto?.modelsInstalled),
   },
   actions: {

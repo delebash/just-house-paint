@@ -237,7 +237,9 @@ test("without the part finder: its install is offered, runs as a task, and then 
   // Box asks the finder: off, saying why, until it is installed (the sixteenth review)
   const box = () => byText(".ui-seg button", "Box");
   expect(box().getAttribute("aria-disabled")).toBe("true");
-  expect(box().getAttribute("title")).toContain("Off until the part finder is installed");
+  // its reason is its description (the kit's tooltip shows it on hover and focus — no native title any more)
+  const reason = (el) => document.getElementById(el.getAttribute("aria-describedby"))?.textContent || "";
+  expect(reason(box())).toContain("Off until the part finder is installed");
   await click(byText("button", "Install ("));
   await settle();
   expect(server.calls).toContain("POST /v1/segment/install");
@@ -956,7 +958,7 @@ test("a page opened while its parts are being found follows the run: its progres
   // the brush, the eraser and the box are off, saying why; a stroke changes and saves nothing
   const brush = byText(".ui-seg button", "Brush");
   expect(brush.getAttribute("aria-disabled")).toBe("true");
-  expect(brush.getAttribute("title")).toContain("Off while the parts are being found");
+  expect(document.getElementById(brush.getAttribute("aria-describedby"))?.textContent || "").toContain("Off while the parts are being found");
   await click(brush);
   expect(canvas().props("tool")).toBe("look");
   canvas().vm.$emit("stroke", { points: [1, 1, 3, 1], radius: 2, mode: "add" });

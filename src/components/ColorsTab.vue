@@ -104,7 +104,12 @@ async function search(more = false) {
     if (seq === searchSeq) searching.value = false;
   }
 }
-onBeforeUnmount(() => clearTimeout(timer));
+// the tab left: a pick still answering says nothing any more
+let gone = false;
+onBeforeUnmount(() => {
+  gone = true;
+  clearTimeout(timer);
+});
 watch([brand, exterior, archived, order, colorFamily], () => search(), { immediate: true });
 // a family taken out of the setting is no longer a filter
 watch(familyOptions, (opts) => {
@@ -184,6 +189,8 @@ async function clearNow() {
 // "An exact color" (its heading, brought into view) and its form (its rule's error cleared as the hex is changed:
 // with lazy-rules "ondemand" it stayed after the hex was fixed — the sixteenth review)
 const exactHeading = ref(null);
+// the hex the matches shown are for (null before the first search)
+const matchedHex = ref(null);
 const exactForm = ref(null);
 function onHexInput() {
   picked.value = false;
@@ -201,19 +208,47 @@ watch(
     hex.value = got.hex;
     picked.value = true;
     if (await match()) {
-      await nextTick();
-      exactHeading.value?.scrollIntoView?.({ block: "start", behavior: "smooth" });
+      // once the color grid's first search has landed — it pushes the heading thousands of pixels down when it does
+      // (a pick from another tab opens this one with the grid still loading: the matches stayed out of view — the
+      // seventeenth review); no smooth scroll, which would aim at where the heading was
+      await gridSettled();
+      if (gone) return;
+      exactHeading.value?.scrollIntoView?.({ block: "start" });
       announce(t("colors.exact.found", { n: nearest.value.length, hex: hex.value }, nearest.value.length));
     }
   },
   { immediate: true },
 );
 
+/** A chip's name starts with what it shows — its name, then its number — and then says the brand (WCAG 2.5.3: the
+ *  name held "SW T-121 Shade 21" for a chip showing "Shade 21 T-121"). */
+const brandLabels = computed(() => Object.fromEntries(paints.brands.map((b) => [b.key, b.label])));
+const chipName = (p) => [p.name, p.code].filter(Boolean).join(" ") + (brandLabels.value[p.brand] ? ` — ${brandLabels.value[p.brand]}` : "");
+
+/** The color grid has its first page: the search the tab's opening started (it starts a tick after the brand is
+ *  set) has answered. */
+async function gridSettled() {
+  await nextTick();
+  await nextTick();
+  while (searching.value) {
+    await new Promise((resolve) => {
+      const stop = watch(searching, (on) => {
+        if (!on) {
+          stop();
+          resolve();
+        }
+      });
+    });
+  }
+  await nextTick();
+}
+
 /** The brand's nearest paints to the hex; true once they are shown. */
 async function match() {
   if (!/^#[0-9a-fA-F]{6}$/.test(hex.value)) return false;
   try {
     nearest.value = await paints.nearest(hex.value, { brand: brand.value, k: 6, exterior: exterior.value });
+    matchedHex.value = hex.value;
     paints.remember(nearest.value.map((n) => n.paint));
     return true;
   } catch (e) {
@@ -289,7 +324,7 @@ async function match() {
       <div ref="grid" class="colors__grid" role="group" :aria-label="t('colors.paints')" :aria-busy="searching" @keydown="onGridKey">
         <q-btn
           v-for="p in rows" :key="p.id" flat no-caps unelevated class="chip" :class="{ 'chip--on': chosenId === p.id }"
-          v-tooltip="p.displayName" :aria-label="p.displayName" :aria-pressed="chosenId === p.id ? 'true' : 'false'"
+          v-tooltip="p.displayName" :aria-label="chipName(p)" :aria-pressed="chosenId === p.id ? 'true' : 'false'"
           :tabindex="stopId === p.id ? 0 : -1" :disable="!house.selectedPart" @focus="focusedId = p.id" @click="choose(p)"
         >
           <span class="chip__body">
@@ -317,6 +352,8 @@ async function match() {
         </UiField>
       </q-form>
       <p v-if="picked" class="hint">{{ t("colors.exact.picked") }}</p>
+      <!-- a search that found nothing says so where its matches would be (it was said to a screen reader alone) -->
+      <p v-if="matchedHex && !nearest.length" class="muted">{{ t("colors.exact.none", { hex: matchedHex }) }}</p>
       <q-list v-if="nearest.length" class="colors__nearest" dense>
         <q-item v-for="n in nearest" :key="n.paint.id" clickable class="nearest" :disable="!house.selectedPart" @click="choose(n.paint)">
           <q-item-section avatar class="nearest__swatch"><span class="nearest__color" :style="{ background: n.paint.hex }" /></q-item-section>
@@ -400,9 +437,10 @@ async function match() {
   border-radius: 4px;
   border: 1px solid var(--border);
 }
+/* its edge 3:1 or more on the panel's ground (WCAG 1.4.11 — a white paint's chip on a white panel had none: 1.25:1) */
 .chip {
   padding: 4px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-field, var(--border));
   border-radius: 6px;
   font-size: var(--fs-small);
 }

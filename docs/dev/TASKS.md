@@ -1015,6 +1015,34 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         left, and says no match where it shows; Box off only once the finder's status says it isn't installed;
         start-packaged's realpath guarded, and its --default-data on macOS and Linux under a temp HOME (never the
         developer's real data); Reset's word trimmed.
+        The seventeenth's fixes made (two agents' and mine; not yet committed). The shell: an old copy counts only on its
+        recorded volume (on Windows the volume's serial and its root's file id — subst letters share a serial) and
+        when its own moved-to record names the folder in use, else "not connected", never removed (the reviewer's
+        subst stick: refused, its data kept); a deleted parent told from a missing drive; the window and the tray
+        first, then the sweep, then the server — one window (real Electron, a 60,000-file half copy); a "Use the
+        default folder" start clears a half copy in its own folder, a folder holding only Chromium's profile counts as
+        empty; committed judged by the pointer, the flag gone; the restore's undo puts every folder back in one
+        synchronous step (the backup's copy seen 0 ms, was 2126); Clear models and Delete empty a linked folder and keep
+        the link; "restart the app to use it" and "<VAR> names this old copy — change it to <B>"; the pid check gone;
+        every old-copy lookup async with a 3 s limit (an unreachable share: 3.0 s with the event loop running, was 21 s
+        blocked — realpathSync blocked too); the undo removes carried.json first and names what stays; absolute links
+        inside the data re-pointed on every platform. Kept, argued: the subst test rests on the root's file id (unique
+        per volume; no documented contract tells subst letters apart otherwise); a fresh database the app made in the
+        default folder while it ran there keeps Move back refused (it may be the user's work). The UI kit: the Logs'
+        warn ink (9.30 / 9.92); QBanner's flex basis back and its text at 34em; the units 0.8em; the kit's hints and
+        notes at 30em, ledes and the changelog 33em; an off segment's reason in the kit's tooltip on hover and focus,
+        kept its description, no native title; the dialogs' label in small capitals; Reset's word in any case and
+        trimmed, its box a token's width, the dialogs' × "Close"; Lucide's info icon on info banners (ISC/MIT, in the
+        notices); the AI tasks row without a title; the toast's close 24 × 24; UiButton focusableWhenDisabled (General's
+        Save keeps the focus, app and template); "Write it like #a1b2c3" from a schema's examples; after any close of
+        the AI tasks panel the focus back on its trigger, no page scroll under its backdrop; a failed task said in the
+        server's words; isolate() strips bidi controls first; announce() waits a tick; the nullable mark on each rule
+        (takesNull); aria-invalid only with its words; a detail's first word like "macOS" left as written. Mine: another
+        photo drops the active pointer and its work; the Colors tab silent once left and "No paint of this brand
+        near …" shown; chips named by their words and brand, edged in --border-field; the picker's button "Choose a
+        color"; Box off only once the finder is known missing, its refusal said when pressed; the AI photo dialog at
+        --w-prose; hints 30em, the lede 33em; start-packaged's realpath guarded and --default-data under a temp home off
+        Windows; the houses test waits for the sweep.
 NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
         the installed 0.1.2 updating to it (the silent Restart now).
 

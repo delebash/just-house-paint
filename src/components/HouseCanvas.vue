@@ -122,15 +122,17 @@ onBeforeUnmount(() => {
   stopFollowingRatio?.();
   host.value?.removeEventListener("lostpointercapture", onLost);
 });
-// another photo: fitted, and a box half drawn, a stroke and the crosshair on the old one go
+// another photo (another house, opened with the button still down, or a photo landing mid-press): fitted, and
+// whatever the pointer or the keys were doing on the old one goes — the pointer too, so its lifting paints nothing
+// (a stroke begun on one house was saved onto the next — the seventeenth review)
 watch(
   () => props.photo,
   () => {
     fitToStage();
-    if (active === null) {
-      boxing.value = null;
-      drawing.value = null;
-    }
+    active = null;
+    panFrom = null;
+    boxing.value = null;
+    drawing.value = null;
     aim.value = null;
   },
 );

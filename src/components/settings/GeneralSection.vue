@@ -8,7 +8,7 @@
 // scheme rules, the AI photo's prompts) are Settings → Advanced.
 import { fieldErrors, reportError, schemaRules, UiButton, UiField, UiNumber, UiToggle } from "@delebash/ui";
 import { SettingsPatch } from "just-house-paint-server/schemas/settings.js";
-import { computed, onMounted, reactive, ref } from "vue";
+import { computed, nextTick, onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useSettingsStore } from "../../stores/settings.js";
 
@@ -45,6 +45,9 @@ onMounted(async () => {
 });
 
 async function save() {
+  // where the keyboard was (a box Enter was pressed in, or Save): it stays there — Save turning off when nothing is
+  // left to save dropped the focus on <body> (WCAG 2.4.3 — the seventeenth review)
+  const back = document.activeElement;
   saving.value = true;
   serverErrors.value = {};
   try {
@@ -57,6 +60,8 @@ async function save() {
     if (!Object.keys(mine).length) reportError(e);
   } finally {
     saving.value = false;
+    await nextTick();
+    if ((!document.activeElement || document.activeElement === document.body) && back?.isConnected) back.focus();
   }
 }
 
@@ -87,7 +92,7 @@ function edited(key) {
       </div>
     </section>
     <div class="form__actions settings__save">
-      <UiButton type="submit" intent="primary" :disabled="saving || !Object.keys(changes).length" :label="saving ? t('kit.common.saving') : t('kit.common.save')" />
+      <UiButton type="submit" intent="primary" focusable-when-disabled :disabled="saving || !Object.keys(changes).length" :label="saving ? t('kit.common.saving') : t('kit.common.save')" />
     </div>
   </q-form>
 </template>

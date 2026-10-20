@@ -275,6 +275,27 @@ describe("Storage", () => {
     expect(button("Use the default folder from now on")).toBeUndefined();
   });
 
+  // the seventeenth review: "connect it and restart" said when the data's folder is connected and a restart won't help
+  test("the data's folder connected: restart to use it; the variable naming the old copy: change it to the data's folder", async () => {
+    shell.root = { root: "C:\\App\\data", default: "C:\\App\\data", portable: true, atDefault: true, folderName: "Just House Paint", defaultThisStart: { folder: "E:\\Just House Paint", connected: true } };
+    await mountSettings("storage");
+    expect(text()).toContain("Your data is in E:\\Just House Paint — restart the app to use it.");
+    wrapper.unmount();
+    shell.root = {
+      root: "C:\\App\\data",
+      default: "C:\\App\\data",
+      portable: true,
+      atDefault: true,
+      folderName: "Just House Paint",
+      defaultThisStart: null,
+      setBy: "JUST_HOUSE_PAINT_DATA_DIR",
+      oldCopyOf: { root: "E:\\Just House Paint", movedAt: 1, connected: true },
+    };
+    await mountSettings("storage");
+    expect(text()).toContain("JUST_HOUSE_PAINT_DATA_DIR names this old copy — change it to E:\\Just House Paint.");
+    expect(button("Change folder")).toBeUndefined();
+  });
+
   test("an old copy on a drive that isn't there: not connected, not removable; Move back said while the default holds one", async () => {
     shell.root = { root: "D:\\New\\Just House Paint", default: "C:\\App\\data", portable: false, atDefault: false, folderName: "Just House Paint", defaultThisStart: null };
     shell.oldCopies = [

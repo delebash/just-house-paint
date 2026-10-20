@@ -171,7 +171,9 @@ describe("houses", () => {
     utimesSync(work, hourAgo, hourAgo);
     await tidyAtStart(s.dataDir, s.db);
     expect(readdirSync(masks)).toEqual(["body.png"]);
-    expect(existsSync(work)).toBe(false);
+    // the kit's sweep removes its work folders with fs.promises.rm (never rmSync, which follows a junction), started
+    // at the tidy and finished soon after it: waited for, not raced (the seventeenth review)
+    await vi.waitFor(() => expect(existsSync(work)).toBe(false), { timeout: 10_000 });
   });
 
   test("a restore the kit couldn't finish yet: the start's tidy touches none of the houses' folders", async () => {
