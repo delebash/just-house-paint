@@ -43,7 +43,7 @@
 - **Easier to read and use**: the house cards in the dark theme, a switch that is off, the Parts tab's
   paint names, the Colors tab's swatches; **Remove the color**; a scheme that can't be made from a
   gray says why; the house page fits a 960 × 700 window with nothing to scroll; tabs that don't fit
-  scroll with arrows instead of taking a second row; a part with no color shows a "no color" swatch.
+  scroll with arrows instead of taking a second row; a part with no color shows a **No color** swatch.
 - **A dark wall painted light looks freshly painted.** Stained wood or a dark paint painted much
   lighter no longer shows the old finish's blotches and grain; the lines between the boards and the
   shadows stay. With **On it now** set, the app goes by that paint to tell a dark finish from a light

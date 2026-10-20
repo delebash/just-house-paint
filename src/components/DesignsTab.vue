@@ -110,10 +110,10 @@ function renderLabel(r) {
         </q-item-section>
         <q-item-section side class="row-side designs__side">
           <UiTag v-if="d.id === house.designId && house.dirty" intent="secondary" :value="t('designs.changed')" />
-          <UiButton intent="ghost" size="icon" :title="t('designs.rename', { name: isolate(d.name) })" :aria-label="t('designs.rename', { name: isolate(d.name) })" @click="naming = d">
+          <UiButton intent="ghost" size="icon" v-tooltip="t('designs.rename', { name: isolate(d.name) })" :aria-label="t('designs.rename', { name: isolate(d.name) })" @click="naming = d">
             <template #icon><Icon name="Pencil" :size="14" /></template>
           </UiButton>
-          <UiButton intent="ghost" size="icon" :title="t('designs.delete.action', { name: isolate(d.name) })" :aria-label="t('designs.delete.action', { name: isolate(d.name) })" @click="remove(d)">
+          <UiButton intent="ghost" size="icon" v-tooltip="t('designs.delete.action', { name: isolate(d.name) })" :aria-label="t('designs.delete.action', { name: isolate(d.name) })" @click="remove(d)">
             <template #icon><Icon name="Trash" :size="14" /></template>
           </UiButton>
         </q-item-section>
@@ -145,7 +145,7 @@ function renderLabel(r) {
           </q-btn>
         </q-item-section>
         <q-item-section side class="row-side">
-          <UiButton intent="ghost" size="icon" :title="t('designs.renders.delete')" :aria-label="t('designs.renders.delete')" @click="removeRender(r)">
+          <UiButton intent="ghost" size="icon" v-tooltip="t('designs.renders.delete')" :aria-label="t('designs.renders.delete')" @click="removeRender(r)">
             <template #icon><Icon name="Trash" :size="14" /></template>
           </UiButton>
         </q-item-section>

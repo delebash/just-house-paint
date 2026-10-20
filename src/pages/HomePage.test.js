@@ -107,7 +107,8 @@ async function mountPage() {
         router,
         { install: (app) => installLlmUi(app, { i18n, external: false }) },
       ],
-      directives: { tooltip: {} },
+      // the kit's v-tooltip stood in for: its words kept on the element, to be read back
+      directives: { tooltip: { mounted: (el, b) => (el.dataset.tooltip = b.value), updated: (el, b) => (el.dataset.tooltip = b.value) } },
     },
   });
   await flushPromises();
@@ -168,8 +169,10 @@ describe("the states", () => {
     await mountPage();
     const names = [...document.body.querySelectorAll(".houses__name")].map((el) => el.textContent.trim());
     expect(names).toEqual(["Lake house", "Main street"]);
-    // a name too long for its card is cut with an ellipsis: the whole of it shows on hover
-    expect([...document.body.querySelectorAll(".houses__name")].map((el) => el.title)).toEqual(["Lake house", "Main street"]);
+    // a name too long for its card is cut with an ellipsis: the whole of it shows on hover — a tooltip, not a title
+    // (a title equal to the text was read twice)
+    expect([...document.body.querySelectorAll(".houses__name")].map((el) => el.dataset.tooltip)).toEqual(["Lake house", "Main street"]);
+    expect(document.body.querySelector(".houses__name").hasAttribute("title")).toBe(false);
     expect(text()).toContain("3 designs");
     expect(text()).toContain("1 design");
   });

@@ -73,11 +73,12 @@ async function addPart() {
            as-photographed swatch beside it -->
       <q-item v-for="p in toPaint" :key="p.key" class="parts__row" :class="{ 'parts__row--on': house.selectedPart === p.key }">
         <q-item-section avatar class="parts__swatch">
-          <!-- no color: the "none" swatch, with its words — an empty box read as an unticked checkbox -->
+          <!-- no color: the "none" swatch (an empty box read as an unticked checkbox), its words a tooltip; hidden from
+               a screen reader, which reads them in the row's own caption — named here too, it heard them twice -->
           <span
             v-if="paintOf(p.key)" class="swatch" :style="{ background: paintOf(p.key).hex }" aria-hidden="true"
           />
-          <span v-else class="swatch swatch--none" role="img" :title="t('partsTab.unpainted')" :aria-label="t('partsTab.unpainted')" />
+          <span v-else v-tooltip="t('partsTab.unpainted')" class="swatch swatch--none" aria-hidden="true" />
         </q-item-section>
         <q-item-section class="parts__main">
           <q-btn
@@ -94,7 +95,7 @@ async function addPart() {
           <span class="row-side parts__facts">
             <q-btn
               v-if="photographed[p.key]" flat dense unelevated class="parts__now" :style="{ background: photographed[p.key] }"
-              :title="t('partsTab.photographed', { hex: photographed[p.key] })" :aria-label="t('partsTab.photographed', { hex: photographed[p.key] })"
+              v-tooltip="t('partsTab.photographed', { hex: photographed[p.key] })" :aria-label="t('partsTab.photographed', { hex: photographed[p.key] })"
               @click="emit('find-color', photographed[p.key])"
             />
             <span class="muted">{{ share(p) }}</span>

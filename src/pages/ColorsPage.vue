@@ -25,7 +25,7 @@ import {
   UiToggle,
   useAiTasksStore,
 } from "@delebash/ui";
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, onMounted, ref, useId, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { otherWindows } from "../services/otherWindows.js";
 import { usePaintsStore } from "../stores/paints.js";
@@ -33,6 +33,8 @@ import { useSettingsStore } from "../stores/settings.js";
 
 const { t, n, locale } = useI18n();
 const paints = usePaintsStore();
+// each brand's name an id, its Load automatically switch's description
+const brandIds = useId();
 const settings = useSettingsStore();
 
 const loadFailed = ref(null);
@@ -175,12 +177,13 @@ async function clear(brand) {
              row's other actions are in its ⋯ menu (the kit's UiMenu, the row-actions menu), the main one
              beside it -->
         <template #label="{ row }">
-          <strong class="paint-colors__nowrap">{{ row.label }}</strong>
+          <strong :id="`${brandIds}-${row.key}`" class="paint-colors__nowrap">{{ row.label }}</strong>
           <div v-if="row.lastError" class="paint-colors__error">{{ t("paintColors.lastError", { error: row.lastError }) }}</div>
           <label v-if="row.feed" class="paint-colors__auto">
+            <!-- named by its own words (WCAG 2.5.3, label in name), the brand its description -->
             <UiToggle
-              :model-value="autoLoad[row.key] !== false" :aria-label="t('paintColors.autoAria', { brand: row.label })"
-              @update:model-value="(on) => setAutoLoad(row, on)"
+              :model-value="autoLoad[row.key] !== false" :aria-label="t('paintColors.columns.auto')"
+              :aria-describedby="`${brandIds}-${row.key}`" @update:model-value="(on) => setAutoLoad(row, on)"
             />
             <span class="muted">{{ t("paintColors.columns.auto") }}</span>
           </label>
@@ -225,8 +228,11 @@ async function clear(brand) {
   position: relative;
   min-height: 160px;
 }
+/* the row's buttons at the cell's right edge: its ⌄ in one column whatever the main button says ("Load
+   again", "Load the colors" — the screens review, 2026-10-20) */
 .paint-colors__actions {
-  display: inline-flex;
+  display: flex;
+  justify-content: flex-end;
   align-items: center;
   gap: var(--sp-1);
   white-space: nowrap;

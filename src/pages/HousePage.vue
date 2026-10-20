@@ -73,6 +73,12 @@ const loadFailed = ref(null);
 // the house itself is gone (its own request answered 404) — not a file of it missing
 const houseGone = ref(false);
 const tab = ref("parts");
+// the side panel's scroller: another tab opens at its top (it kept the last tab's place — the Parts tab opened at its
+// end after a scroll down the Colors — the screens review, 2026-10-20)
+const panelScroller = ref(null);
+watch(tab, () => {
+  if (panelScroller.value) panelScroller.value.scrollTop = 0;
+});
 const tool = ref("look");
 const brushSize = ref(24);
 // "off", "photo" (the photo as taken) or a design's id — shown left of the split
@@ -949,7 +955,11 @@ const canRevert = computed(() => !!house.design && house.dirty);
             <UiToggle v-model="sideBySide" :aria-label="t('house.compare.sideBySide')" />
             <span>{{ t("house.compare.sideBySide") }}</span>
           </label>
-          <UiSlider v-if="compareWith !== 'off' && !sideBySide" v-model="split" :min="0" :max="1" :step="0.01" width="short" :show-number="false" :aria-label="t('house.tools.split')" />
+          <!-- its label shown (WCAG 3.3.2), short — the name starts with it (2.5.3) -->
+          <label v-if="compareWith !== 'off' && !sideBySide" class="house__tool">
+            <span>{{ t("house.tools.splitLabel") }}</span>
+            <UiSlider v-model="split" :min="0" :max="1" :step="0.01" width="short" :show-number="false" :aria-label="t('house.tools.split')" />
+          </label>
           <label class="house__tool">
             <span>{{ t("house.tools.texture") }}</span>
             <UiSlider
@@ -973,7 +983,7 @@ const canRevert = computed(() => !!house.design && house.dirty);
 
       <aside class="house__panel">
         <UiTabStrip v-model="tab" :tabs="tabs" :aria-label="t('house.tabs.label')" />
-        <div class="house__tab">
+        <div ref="panelScroller" class="house__tab">
           <template v-if="tab === 'parts'">
             <!-- the parts found stay listed (and paintable) when the finder was removed: it is needed only
                  to find them again or for a Box -->

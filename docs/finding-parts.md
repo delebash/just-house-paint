@@ -56,14 +56,16 @@ with the tools above the photo, on the part selected on the **Parts** tab:
 - **Outlines** draws the selected part's edge on the photo — or every part's, or none.
 - **Brush** adds to the selected part: drag over what belongs to it. **Eraser** takes it away.
   **Brush size** sits beside them.
-- **Box** — drag a box around something (a shutter, the fascia); the finder outlines what is inside
-  it and gives it to the selected part, taking it from any other part.
+- **Box** — drag a box around something (a shutter, the fascia), or click one corner and then the
+  other; the finder outlines what is inside it and gives it to the selected part, taking it from any
+  other part. **Escape** lets go of a box half drawn.
 - **Add the part** (under the list) — a part to paint that the finder knows but didn't find on this
   house: choose it, then draw it with the brush or a box.
 
-The brush, the eraser and the box draw on the photo, so they need a mouse, a pen or touch; with the
-keyboard, select the part on the **Parts** tab (Tab to it, **Enter**) — the rest is under **With the
-keyboard** in [Painting your house](painting.md).
+The brush and the eraser draw a path on the photo, so they need a mouse, a pen or touch — a pen's
+eraser end erases whichever is chosen, and only a mouse's left button (a finger, a pen's tip) draws. With
+the keyboard, select the part on the **Parts** tab (Tab to it, **Enter**) and draw a box with the arrow
+keys and **Enter** — under **With the keyboard** in [Painting your house](painting.md).
 
 A pixel belongs to one part only. Where two parts overlap, the more specific one keeps it (the
 garage door before the door, the gutters before the trim) — the order is in **App Settings →

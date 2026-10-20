@@ -7,9 +7,13 @@
 //   - look:   click a part to select it (`pick`), drag to pan;
 //   - brush / eraser: drag to paint into / out of the selected part (`stroke` when the drag ends —
 //     the page applies it to the mask, repaints and saves);
-//   - box:    drag a box; the part finder outlines what is inside (`box`).
-// Drawing stays pointer-only, as in every paint app; the keyboard reaches the photo itself (a Tab
-// stop with a name), whose arrow keys move it once zoomed — the zoom buttons zoom around its middle.
+//   - box:    drag a box — or click one corner, then the other; the part finder outlines what is
+//     inside (`box`).
+// The keyboard reaches the photo itself (a Tab stop with a name): its arrow keys move it once zoomed,
+// and with the box or Pick a color chosen they move a crosshair instead — Enter sets each corner of a
+// box (or reads the color there), Escape lets go (WCAG 2.1.1; a box's two clicks are the single-pointer
+// way WCAG 2.5.7 asks for a drag, the pan buttons a zoomed photo's). The brush and the eraser draw a
+// path, which needs a pointer (2.1.1's own exception). The zoom buttons zoom around the middle.
 // The mouse, a pen and touch are one thing here — Pointer Events (w3.org/TR/pointerevents3, through
 // Konva's pointer events): one pointer draws, boxes or pans at a time (a second finger never paints),
 // and a pointer the system takes back (pointercancel: a palm set down, an edge swipe) drops its stroke.
@@ -48,10 +52,14 @@ const stage = ref(null);
 const size = ref({ width: 300, height: 200 });
 const view = ref({ scale: 1, x: 0, y: 0 });
 const drawing = ref(null); // { points: [x, y, …] } while a stroke runs
-const boxing = ref(null); // { x0, y0, x1, y1 } while a box is drawn
+// { x0, y0, x1, y1 } while a box is drawn; `armed` once a click set its first corner (the next click
+// sets the other), `keys` while the keyboard draws it
+const boxing = ref(null);
 const pointer = ref(null);
+// the keyboard's crosshair (the box's and Pick a color's), in the photo's pixels; null until a key moves it
+const aim = ref(null);
 // the view is the fitted one (no zoom or pan since): a resize fits it again; a zoomed view stays
-let fitted = true;
+const fitted = ref(true);
 
 const imgW = computed(() => props.photo?.naturalWidth || props.photo?.width || 1);
 const imgH = computed(() => props.photo?.naturalHeight || props.photo?.height || 1);
@@ -63,7 +71,7 @@ const contentW = computed(() => offsetX.value + imgW.value);
 function fitToStage() {
   const s = Math.min(size.value.width / contentW.value, size.value.height / imgH.value) || 1;
   view.value = { scale: s, x: (size.value.width - contentW.value * s) / 2, y: (size.value.height - imgH.value * s) / 2 };
-  fitted = true;
+  fitted.value = true;
 }
 /** The zoom buttons: by a step around the middle of the view. */
 const zoomBy = (factor) => zoomAt(view.value.scale * factor, size.value.width / 2, size.value.height / 2);
@@ -99,7 +107,7 @@ onMounted(() => {
   observer = new ResizeObserver(([entry]) => {
     const r = entry.contentRect;
     size.value = { width: Math.max(1, Math.floor(r.width)), height: Math.max(1, Math.floor(r.height)) };
-    if (fitted) fitToStage();
+    if (fitted.value) fitToStage();
   });
   observer.observe(host.value);
   followPixelRatio();
@@ -114,6 +122,14 @@ onBeforeUnmount(() => {
 });
 watch(() => props.photo, fitToStage);
 watch(() => props.sideBySide, fitToStage);
+// another tool: a box half drawn and the crosshair go
+watch(
+  () => props.tool,
+  () => {
+    if (active === null) boxing.value = null;
+    aim.value = null;
+  },
+);
 watch(
   () => props.version,
   () => stage.value?.getNode()?.batchDraw(),
@@ -133,7 +149,7 @@ function zoomAt(newScale, px, py, absolute = false) {
   const ix = (px - old.x) / old.scale;
   const iy = (py - old.y) / old.scale;
   view.value = { scale: s, x: px - ix * s, y: py - iy * s };
-  fitted = false;
+  fitted.value = false;
 }
 
 function onWheel(e) {
@@ -155,10 +171,15 @@ function onDown(e) {
   const eraserEnd = e.evt.pointerType === "pen" && e.evt.button === 5;
   if (e.evt.button !== 0 && !eraserEnd) return;
   const pt = photoPoint();
+  // the pointer takes over from the keyboard: its crosshair and a box it was drawing go
+  aim.value = null;
+  if (boxing.value?.keys) boxing.value = null;
   if (props.tool === "brush" || props.tool === "eraser") {
     if (inside(pt)) drawing.value = { points: [pt.x, pt.y], erase: eraserEnd || props.tool === "eraser" };
   } else if (props.tool === "box") {
-    if (inside(pt)) boxing.value = { x0: pt.x, y0: pt.y, x1: pt.x, y1: pt.y };
+    // a click set the first corner: this press sets the other (where it is let go)
+    if (boxing.value?.armed && pt) boxing.value = { ...boxing.value, ...clamped(pt) };
+    else if (inside(pt)) boxing.value = { x0: pt.x, y0: pt.y, x1: pt.x, y1: pt.y };
   } else {
     panFrom = { x: e.evt.clientX, y: e.evt.clientY, view: { ...view.value }, moved: false };
   }
@@ -173,15 +194,18 @@ function onMove(e) {
   const pt = photoPoint();
   pointer.value = pt;
   if (drawing.value && pt) drawing.value = { ...drawing.value, points: [...drawing.value.points, pt.x, pt.y] };
-  else if (boxing.value && pt) boxing.value = { ...boxing.value, x1: Math.min(imgW.value, Math.max(0, pt.x)), y1: Math.min(imgH.value, Math.max(0, pt.y)) };
+  // the box follows the pointer while it is pressed, and after a first corner's click
+  else if (boxing.value && pt && (active !== null || boxing.value.armed)) boxing.value = { ...boxing.value, ...clamped(pt) };
   else if (panFrom) {
     const dx = e.evt.clientX - panFrom.x;
     const dy = e.evt.clientY - panFrom.y;
     if (Math.abs(dx) + Math.abs(dy) > 3) panFrom.moved = true;
     view.value = { ...panFrom.view, x: panFrom.view.x + dx, y: panFrom.view.y + dy };
-    if (panFrom.moved) fitted = false;
+    if (panFrom.moved) fitted.value = false;
   }
 }
+/** A point kept on the photo, as a box's second corner. */
+const clamped = (pt) => ({ x1: Math.min(imgW.value, Math.max(0, pt.x)), y1: Math.min(imgH.value, Math.max(0, pt.y)) });
 function onUp(e) {
   if (ours(e)) finish();
 }
@@ -209,9 +233,13 @@ function finish() {
     drawing.value = null;
   } else if (boxing.value) {
     const b = boxing.value;
-    const box = { x0: Math.min(b.x0, b.x1), y0: Math.min(b.y0, b.y1), x1: Math.max(b.x0, b.x1), y1: Math.max(b.y0, b.y1) };
-    boxing.value = null;
-    if (box.x1 - box.x0 >= 2 && box.y1 - box.y0 >= 2) emit("box", box);
+    // a click (let go within a few screen pixels of the press), not a drag: its corner waits for the next click
+    const s = view.value.scale;
+    if (!b.armed && Math.abs(b.x1 - b.x0) * s < CLICK_SLOP && Math.abs(b.y1 - b.y0) * s < CLICK_SLOP) {
+      boxing.value = { ...b, x1: b.x0, y1: b.y0, armed: true };
+      return;
+    }
+    endBox();
   } else if (panFrom) {
     const clicked = !panFrom.moved;
     panFrom = null;
@@ -229,16 +257,97 @@ function onLeave(e) {
   if (active !== null) finish();
 }
 
+// a press and its lifting this close (screen pixels) are a click, not a drag — the pan's own threshold
+const CLICK_SLOP = 4;
+/** The box drawn ends: one big enough (2 photo pixels each way) is asked for. */
+function endBox() {
+  const b = boxing.value;
+  boxing.value = null;
+  const box = { x0: Math.min(b.x0, b.x1), y0: Math.min(b.y0, b.y1), x1: Math.max(b.x0, b.x1), y1: Math.max(b.y0, b.y1) };
+  if (box.x1 - box.x0 >= 2 && box.y1 - box.y0 >= 2) emit("box", box);
+}
+
 // the arrow keys move a zoomed (or moved) photo by this many screen pixels — a map's step (Leaflet's
 // keyboardPanDelta); the photo fitted to the view has nowhere to go, and the keys scroll as usual
 const PAN_STEP = 80;
+// the crosshair's step (screen pixels), Shift's ten of them
+const AIM_STEP = 8;
 const PAN_KEYS = { ArrowLeft: [1, 0], ArrowRight: [-1, 0], ArrowUp: [0, 1], ArrowDown: [0, -1] };
-function onKey(e) {
-  const dir = PAN_KEYS[e.key];
-  if (!dir || fitted || e.target !== host.value || e.altKey || e.ctrlKey || e.metaKey) return;
-  e.preventDefault();
-  view.value = { ...view.value, x: view.value.x + dir[0] * PAN_STEP, y: view.value.y + dir[1] * PAN_STEP };
+const pans = computed(() => [
+  { key: "left", dir: PAN_KEYS.ArrowLeft, label: t("house.zoom.left"), hint: t("house.zoom.leftHint") },
+  { key: "up", dir: PAN_KEYS.ArrowUp, label: t("house.zoom.up"), hint: t("house.zoom.upHint") },
+  { key: "down", dir: PAN_KEYS.ArrowDown, label: t("house.zoom.down"), hint: t("house.zoom.downHint") },
+  { key: "right", dir: PAN_KEYS.ArrowRight, label: t("house.zoom.right"), hint: t("house.zoom.rightHint") },
+]);
+const aiming = computed(() => props.tool === "box" || props.tool === "pick");
+/** The pan buttons and the arrow keys: the photo moves a step — ← shows more of the left. */
+function panBy([dx, dy]) {
+  view.value = { ...view.value, x: view.value.x + dx * PAN_STEP, y: view.value.y + dy * PAN_STEP };
+  fitted.value = false;
 }
+function onKey(e) {
+  if (e.target !== host.value || e.altKey || e.ctrlKey || e.metaKey) return;
+  if (aiming.value) return aimKey(e);
+  const dir = PAN_KEYS[e.key];
+  if (!dir || fitted.value) return;
+  e.preventDefault();
+  panBy(dir);
+}
+/** The keyboard's crosshair: the arrows move it (Shift: further), Enter or Space sets a box's corner
+ *  (the second makes the box) or reads the color there, Escape lets go of a box, then of the crosshair. */
+function aimKey(e) {
+  const dir = PAN_KEYS[e.key];
+  if (e.key === "Escape") {
+    if (!boxing.value && !aim.value) return;
+    e.preventDefault();
+    if (boxing.value) boxing.value = null;
+    else aim.value = null;
+    return;
+  }
+  if (!dir && e.key !== "Enter" && e.key !== " ") return;
+  e.preventDefault();
+  if (!aim.value) {
+    // the first key shows the crosshair, in the middle of what is in view
+    const s = view.value.scale;
+    aim.value = clampAim({ x: (size.value.width / 2 - view.value.x) / s - offsetX.value, y: (size.value.height / 2 - view.value.y) / s });
+    return;
+  }
+  if (dir) {
+    const step = (e.shiftKey ? AIM_STEP * 10 : AIM_STEP) / view.value.scale;
+    aim.value = clampAim({ x: aim.value.x - dir[0] * step, y: aim.value.y - dir[1] * step });
+    if (boxing.value?.keys) boxing.value = { ...boxing.value, x1: aim.value.x, y1: aim.value.y };
+    keepAimInView();
+    return;
+  }
+  const { x, y } = aim.value;
+  if (props.tool === "pick") emit("pick", { x: Math.min(imgW.value - 1, Math.floor(x)), y: Math.min(imgH.value - 1, Math.floor(y)) });
+  else if (!boxing.value) boxing.value = { x0: x, y0: y, x1: x, y1: y, keys: true };
+  // the second corner: a box with no size yet waits for the crosshair to move
+  else if (Math.abs(boxing.value.x1 - boxing.value.x0) >= 2 && Math.abs(boxing.value.y1 - boxing.value.y0) >= 2) endBox();
+}
+const clampAim = (pt) => ({ x: Math.min(imgW.value, Math.max(0, pt.x)), y: Math.min(imgH.value, Math.max(0, pt.y)) });
+/** A zoomed photo moves with the crosshair once it would leave the view, bringing it back a little way in
+ *  (a fitted photo is all in view: it never moves). */
+function keepAimInView() {
+  const s = view.value.scale;
+  const sx = view.value.x + (offsetX.value + aim.value.x) * s;
+  const sy = view.value.y + aim.value.y * s;
+  const m = AIM_STEP * 4;
+  let { x, y } = view.value;
+  if (sx < 0) x += m - sx;
+  else if (sx > size.value.width) x -= sx - (size.value.width - m);
+  if (sy < 0) y += m - sy;
+  else if (sy > size.value.height) y -= sy - (size.value.height - m);
+  if (x !== view.value.x || y !== view.value.y) {
+    view.value = { ...view.value, x, y };
+    fitted.value = false;
+  }
+}
+const keysHint = computed(() => {
+  if (props.tool === "box") return t("house.canvas.keysBox");
+  if (props.tool === "pick") return t("house.canvas.keysPick");
+  return t("house.canvas.keys");
+});
 
 const imageConfig = computed(() => ({ image: props.painted || props.photo, width: imgW.value, height: imgH.value }));
 const beforeClip = computed(() => (props.split === null || props.sideBySide ? null : { x: 0, y: 0, width: imgW.value * props.split, height: imgH.value }));
@@ -275,6 +384,17 @@ const boxMarks = computed(() => {
     1,
   );
 });
+// the keyboard's crosshair: a plus, 24 screen pixels across, white over a black edge
+const aimMarks = computed(() => {
+  const a = aim.value;
+  if (!a || !aiming.value) return [];
+  const r = 12 / view.value.scale;
+  const w = 2 / view.value.scale;
+  const [hEdge, h] = twoTone({ points: [a.x - r, a.y, a.x + r, a.y], stroke: "#ffffff", strokeWidth: w }, 2);
+  const [vEdge, v] = twoTone({ points: [a.x, a.y - r, a.x, a.y + r], stroke: "#ffffff", strokeWidth: w }, 2);
+  // both edges under both strokes: the second edge never crosses the first stroke
+  return [hEdge, vEdge, h, v];
+});
 const splitMarks = computed(() =>
   twoTone(props.split === null || props.sideBySide ? null : { points: [imgW.value * props.split, 0, imgW.value * props.split, imgH.value], stroke: "#ffffff", strokeWidth: 2 / view.value.scale }, 2),
 );
@@ -285,7 +405,7 @@ const splitMarks = computed(() =>
     ref="host" class="house-canvas" :data-tool="tool" :tabindex="photo ? 0 : undefined" :role="photo ? 'region' : undefined"
     :aria-label="photo ? t('house.canvas.label') : undefined" :aria-describedby="photo ? keysId : undefined" @keydown="onKey"
   >
-    <span v-if="photo" :id="keysId" class="visually-hidden">{{ t("house.canvas.keys") }}</span>
+    <span v-if="photo" :id="keysId" class="visually-hidden">{{ keysHint }}</span>
     <v-stage
       v-if="photo" ref="stage" :config="{ width: size.width, height: size.height }"
       @wheel="onWheel" @pointerdown="onDown" @pointermove="onMove" @pointerup="onUp" @pointercancel="onCancel"
@@ -305,14 +425,22 @@ const splitMarks = computed(() =>
             <v-line v-for="(m, i) in lineMarks" :key="`line${i}`" :config="m" />
             <v-rect v-for="(m, i) in boxMarks" :key="`box${i}`" :config="m" />
             <v-circle v-for="(m, i) in cursorMarks" :key="`cursor${i}`" :config="m" />
+            <v-line v-for="(m, i) in aimMarks" :key="`aim${i}`" :config="m" />
           </v-group>
         </v-group>
       </v-layer>
     </v-stage>
     <div v-if="photo" class="house-canvas__zoom">
-      <UiButton intent="secondary" size="small" :label="t('house.zoom.out')" :title="t('house.zoom.outHint')" :aria-label="t('house.zoom.outHint')" @click="zoomBy(1 / 1.25)" />
-      <UiButton intent="secondary" size="small" :label="t('house.zoom.in')" :title="t('house.zoom.inHint')" :aria-label="t('house.zoom.inHint')" @click="zoomBy(1.25)" />
-      <UiButton intent="secondary" size="small" :label="t('house.zoom.fit')" :title="t('house.zoom.fitHint')" @click="fitToStage" />
+      <UiButton v-tooltip="t('house.zoom.outHint')" intent="secondary" size="small" :label="t('house.zoom.out')" :aria-label="t('house.zoom.outHint')" @click="zoomBy(1 / 1.25)" />
+      <UiButton v-tooltip="t('house.zoom.inHint')" intent="secondary" size="small" :label="t('house.zoom.in')" :aria-label="t('house.zoom.inHint')" @click="zoomBy(1.25)" />
+      <UiButton v-tooltip="t('house.zoom.fitHint')" intent="secondary" size="small" :label="t('house.zoom.fit')" @click="fitToStage" />
+      <!-- a moved or zoomed photo moves by a step with these too: the drag's single-pointer way (WCAG 2.5.7) -->
+      <template v-if="!fitted">
+        <UiButton
+          v-for="p in pans" :key="p.key" v-tooltip="p.hint" intent="secondary" size="small"
+          :label="p.label" :aria-label="p.hint" @click="panBy(p.dir)"
+        />
+      </template>
     </div>
   </div>
 </template>

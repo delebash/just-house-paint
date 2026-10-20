@@ -304,11 +304,15 @@ test("a color from the Colors tab paints the selected part, and the Parts tab sh
   // the paint as it shows on this wall: in shade, on most of it, in light — the light one is the chip
   const tones = document.body.querySelector(".colors__tones");
   expect(tones?.textContent).toContain("On this wall:");
-  expect([...tones.querySelectorAll(".swatch")].map((s) => s.title)).toContain("#3366aa");
-  // each swatch is a picture named by its color, for a screen reader too
+  expect([...tones.querySelectorAll(".swatch")].map((s) => s.getAttribute("aria-label"))).toContain("#3366aa");
+  // a group named by its words; each swatch a picture named by its color, for a screen reader too — no title
+  // beside the name (read twice)
+  expect(tones.getAttribute("role")).toBe("group");
+  expect(document.getElementById(tones.getAttribute("aria-labelledby")).textContent).toBe("On this wall:");
   for (const s of tones.querySelectorAll(".swatch")) {
     expect(s.getAttribute("role")).toBe("img");
-    expect(s.getAttribute("aria-label")).toBe(s.title);
+    expect(s.getAttribute("aria-label")).toMatch(/^#[0-9a-f]{6}$/);
+    expect(s.hasAttribute("title")).toBe(false);
   }
   await click(byText(".q-tab", "Parts"));
   expect(text()).toContain("Behr Sea Blue S1");
@@ -729,6 +733,17 @@ test("Reset takes every paint off, or goes back to the open design's colors", as
   expect(text()).toContain("Behr Sea Blue S1");
 });
 
+test("another tab opens the side panel at its top, not where the last one was scrolled to", async () => {
+  server.parts = PARTS;
+  await mountPage();
+  await click(byText(".q-tab", "Colors"));
+  const scroller = document.body.querySelector(".house__tab");
+  scroller.scrollTop = 400;
+  expect(scroller.scrollTop).toBe(400);
+  await click(byText(".q-tab", "Parts"));
+  expect(scroller.scrollTop).toBe(0);
+});
+
 test("a design's name inside the words is isolated: a right-to-left one leaves the quotes in place", async () => {
   server.parts = PARTS;
   server.designs = [{ ...DESIGN, name: "כחול" }];
@@ -1108,7 +1123,7 @@ test("the paint on a part now: picked with On it now (not painted), kept on the 
   expect(text()).not.toContain("Pick the paint this part has today");
   await click(byText(".chip", "Sea Blue"));
   // the photo's grey wall IS that white in this light: Sea Blue shows darker than its chip there
-  const light = () => [...document.body.querySelectorAll(".colors__tones .swatch")].at(-1).title;
+  const light = () => [...document.body.querySelectorAll(".colors__tones .swatch")].at(-1).getAttribute("aria-label");
   const value = (hex) => Number.parseInt(hex.slice(5, 7), 16);
   expect(light()).not.toBe("#3366aa");
   expect(value(light())).toBeLessThan(0xaa);
@@ -1119,14 +1134,15 @@ test("the paint on a part now: picked with On it now (not painted), kept on the 
   expect(light()).toBe("#3366aa");
 });
 
-test("a part with no color shows the “none” swatch, named for a screen reader; a painted part its paint", async () => {
+test("a part with no color shows the “none” swatch, its words in the row's caption; a painted part its paint", async () => {
   server.parts = PARTS;
   await mountPage();
   const swatchOf = (part) => byText(".parts__row", part).querySelector(".swatch");
   // an empty box read as an unticked checkbox (the visual review, 2026-10-20)
   expect(swatchOf("Body").classList.contains("swatch--none")).toBe(true);
-  expect(swatchOf("Body").getAttribute("role")).toBe("img");
-  expect(swatchOf("Body").getAttribute("aria-label")).toBe("No color");
+  // hidden from a screen reader, which reads "No color" once, in the row's caption (named too, it was read twice)
+  expect(swatchOf("Body").getAttribute("aria-hidden")).toBe("true");
+  expect(byText(".parts__row", "Body").querySelector(".parts__paint").textContent).toBe("No color");
   await click(byText(".q-tab", "Colors"));
   await click(byText(".chip", "Sea Blue"));
   // the chosen paint's button takes it off — an action, named as one

@@ -23,7 +23,7 @@ AI Settings is always there.
 The catalog offers three models from the family's tested list: **Gemma 4 26B-A4B (QAT)** (the
 all-rounder, for 8 GB graphics cards and up), **Gemma 4 12B (QAT)** (lighter and faster, for 10–12 GB
 cards) and **Gemma 4 E4B (QAT)** (for laptops with integrated graphics) — QAT: trained for the
-smaller quantized size they run at. **Add a model** takes any GGUF model on Hugging Face.
+smaller quantized size they run at. **Add model** takes any GGUF model on Hugging Face.
 
 ## Online providers
 

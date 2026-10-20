@@ -132,7 +132,11 @@ async function pickInMenu(label, words) {
   await click(moreIn(label));
   await click(menuItem(words));
 }
-const autoSwitch = (label) => document.querySelector(`[role="switch"][aria-label="Load the ${label} colors automatically"]`);
+// named by its visible words (label in name), the brand its description
+const autoSwitch = (label) =>
+  [...document.querySelectorAll('[role="switch"][aria-label="Load automatically"]')].find(
+    (s) => document.getElementById(s.getAttribute("aria-describedby"))?.textContent === label,
+  );
 /** A server job polls every 400 ms (services/jobs.js): let the clock run. */
 const settle = async () => {
   for (let i = 0; i < 6; i++) {

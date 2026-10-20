@@ -279,3 +279,98 @@ test("only the primary button draws; a pen's eraser end erases; a capture lost m
   fire("pointerup", { pointerId: 6, pointerType: "pen" });
   expect(wrapper.emitted("stroke").length).toBe(strokes);
 });
+
+const keyWith = (el, k, opts = {}) => el.dispatchEvent(new KeyboardEvent("keydown", { key: k, bubbles: true, cancelable: true, ...opts }));
+// the stand-in stage is 300 × 200 and the photo 100 × 80: fitted (its Fit) at 2.5×, 25 px in from the left
+const mountFitted = async (props) => {
+  mountCanvas(props);
+  wrapper.vm.fit();
+  await flushPromises();
+  return wrapper;
+};
+const toPhoto = ({ x, y }) => ({ x: (x - 25) / 2.5, y: y / 2.5 });
+
+test("a box is drawn with two clicks as well as a drag — one corner, then the other (WCAG 2.5.7)", async () => {
+  await mountFitted({ tool: "box" });
+  // a drag: one box
+  fire("pointerdown");
+  pointerAt = { x: 80, y: 60 };
+  fire("pointermove");
+  fire("pointerup");
+  expect(wrapper.emitted("box")).toHaveLength(1);
+  // a click: its corner waits; the box follows the pointer to the next click, which makes it
+  pointerAt = { x: 50, y: 40 };
+  fire("pointerdown");
+  fire("pointerup");
+  expect(wrapper.emitted("box")).toHaveLength(1);
+  pointerAt = { x: 100, y: 90 };
+  fire("pointermove");
+  await flushPromises();
+  expect(configs("v-rect").at(-1)).toMatchObject({ width: 20, height: 20 }); // the preview, in photo pixels
+  fire("pointerdown");
+  fire("pointerup");
+  const a = toPhoto({ x: 50, y: 40 });
+  const b = toPhoto({ x: 100, y: 90 });
+  expect(wrapper.emitted("box")[1][0]).toEqual({ x0: a.x, y0: a.y, x1: b.x, y1: b.y });
+  // Escape lets go of a first corner
+  fire("pointerdown");
+  fire("pointerup");
+  keyWith(wrapper.find(".house-canvas").element, "Escape");
+  await flushPromises();
+  expect(configs("v-rect")).toEqual([]);
+});
+
+test("with the box chosen the keyboard draws one: a crosshair, Enter at each corner, Escape to let go (WCAG 2.1.1)", async () => {
+  const host = (await mountFitted({ tool: "box" })).find(".house-canvas").element;
+  expect(document.getElementById(host.getAttribute("aria-describedby")).textContent).toContain("Enter sets one corner");
+  const fitted = { ...view() };
+  // the first key shows the crosshair in the middle of the view; the arrows move it, never the photo
+  expect(keyWith(host, "ArrowRight")).toBe(false);
+  await flushPromises();
+  expect(configs("v-line")).toHaveLength(4); // the plus: two edges under two strokes
+  keyWith(host, "Enter");
+  keyWith(host, "ArrowRight", { shiftKey: true });
+  keyWith(host, "ArrowDown", { shiftKey: true });
+  await flushPromises();
+  expect(view()).toEqual(fitted);
+  expect(configs("v-rect").at(-1)).toMatchObject({ x: 50, y: 40, width: 32, height: 32 });
+  keyWith(host, "Enter");
+  expect(wrapper.emitted("box")).toEqual([[{ x0: 50, y0: 40, x1: 82, y1: 72 }]]);
+  // a second box let go of with Escape; Escape again hides the crosshair
+  keyWith(host, "Enter");
+  keyWith(host, "ArrowLeft");
+  keyWith(host, "Escape");
+  await flushPromises();
+  expect(configs("v-rect")).toEqual([]);
+  expect(configs("v-line")).toHaveLength(4);
+  keyWith(host, "Escape");
+  await flushPromises();
+  expect(configs("v-line")).toEqual([]);
+  expect(wrapper.emitted("box")).toHaveLength(1);
+});
+
+test("with Pick a color chosen, Enter reads the color under the crosshair", async () => {
+  const host = (await mountFitted({ tool: "pick" })).find(".house-canvas").element;
+  keyWith(host, "ArrowUp");
+  keyWith(host, "ArrowUp");
+  keyWith(host, "Enter");
+  expect(wrapper.emitted("pick")).toEqual([[{ x: 50, y: Math.floor(40 - 8 / 2.5) }]]);
+  // another tool: the crosshair goes
+  await wrapper.setProps({ tool: "look" });
+  expect(configs("v-line")).toEqual([]);
+});
+
+test("a zoomed photo has pan buttons beside the zoom: a drag's single-pointer way (WCAG 2.5.7)", async () => {
+  mountCanvas();
+  const named = (name) => wrapper.findAll("button").find((b) => b.attributes("aria-label") === name);
+  expect(named("Move left")).toBeUndefined();
+  await named("Zoom in").trigger("click");
+  const zoomed = { ...view() };
+  await named("Move left").trigger("click");
+  expect(view().x).toBe(zoomed.x + 80);
+  await named("Move up").trigger("click");
+  expect(view().y).toBe(zoomed.y + 80);
+  // fitted again: they go
+  await wrapper.findAll("button").find((b) => b.text() === "Fit").trigger("click");
+  expect(named("Move left")).toBeUndefined();
+});

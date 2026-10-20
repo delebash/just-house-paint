@@ -8,7 +8,7 @@
 // page's (the app ships no brand data).
 import { EmptyState, reportError, schemaRules, UiButton, UiColorPicker, UiField, UiInput, UiSegmented, UiSelect, UiTag, UiToggle } from "@delebash/ui";
 import { NearestQuery } from "just-house-paint-server/schemas/paints.js";
-import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, useId, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import { partName } from "../services/partNames.js";
@@ -29,6 +29,8 @@ const house = useHouseStore();
 const paints = usePaintsStore();
 const settings = useSettingsStore();
 const ui = useUiStore();
+// the "On this wall" swatches' group is named by its words
+const tonesId = useId();
 
 const brand = ref(null);
 const q = ref("");
@@ -233,11 +235,12 @@ async function match() {
       </div>
       <!-- the same paint as it shows on this wall: in shade, on most of it, in light (the chip at the
            photo's own light) — why the painted wall looks darker than the chip -->
-      <div v-if="current && tones" class="colors__tones" :aria-label="t('colors.tones.label')">
-        <span class="hint">{{ t("colors.tones.label") }}</span>
+      <div v-if="current && tones" class="colors__tones" role="group" :aria-labelledby="tonesId">
+        <span :id="tonesId" class="hint">{{ t("colors.tones.label") }}</span>
         <span v-for="level in ['shade', 'middle', 'light']" :key="level" class="colors__tone">
-          <!-- a swatch is a picture of its colour: its hex is its name, for a screen reader too -->
-          <span class="swatch" role="img" :style="{ background: tones[level] }" :title="tones[level]" :aria-label="tones[level]" />
+          <!-- a swatch is a picture of its colour: its hex is its name, for a screen reader too (the tooltip
+               adds nothing to it — a title equal to the name was read twice) -->
+          <span v-tooltip="tones[level]" class="swatch" role="img" :style="{ background: tones[level] }" :aria-label="tones[level]" />
           <span class="hint">{{ t(`colors.tones.${level}`) }}</span>
         </span>
       </div>
@@ -268,7 +271,7 @@ async function match() {
       <div ref="grid" class="colors__grid" role="group" :aria-label="t('colors.paints')" :aria-busy="searching" @keydown="onGridKey">
         <q-btn
           v-for="p in rows" :key="p.id" flat no-caps unelevated class="chip" :class="{ 'chip--on': chosenId === p.id }"
-          :title="p.displayName" :aria-label="p.displayName" :aria-pressed="chosenId === p.id ? 'true' : 'false'"
+          v-tooltip="p.displayName" :aria-label="p.displayName" :aria-pressed="chosenId === p.id ? 'true' : 'false'"
           :tabindex="stopId === p.id ? 0 : -1" :disable="!house.selectedPart" @focus="focusedId = p.id" @click="choose(p)"
         >
           <span class="chip__body">
@@ -283,12 +286,17 @@ async function match() {
 
       <h3 class="colors__h">{{ t("colors.exact.title") }}</h3>
       <p class="hint">{{ t("colors.exact.hint") }}</p>
-      <q-form class="form__row" @submit="match">
+      <!-- the hex is checked when Find is pressed (Quasar's lazy-rules "ondemand"): Tab through an empty box
+           said "Required" (the screens review, 2026-10-20). The picker and Find sit in the field beside the box,
+           top-aligned with it, so the rule's words under the box never move them -->
+      <q-form @submit="match">
         <UiField :label="t('colors.exact.hex')" layout="block" for="exact-hex">
-          <UiInput id="exact-hex" v-model="hex" width="token" @update:model-value="picked = false" :placeholder="t('colors.exact.placeholder')" lazy-rules :rules="hexRule" />
+          <span class="colors__exact">
+            <UiInput id="exact-hex" v-model="hex" width="token" @update:model-value="picked = false" :placeholder="t('colors.exact.placeholder')" lazy-rules="ondemand" :rules="hexRule" />
+            <UiColorPicker v-model="hex" :aria-label="t('colors.exact.pick')" @update:model-value="picked = false" />
+            <UiButton type="submit" intent="secondary" :label="t('colors.exact.match')" />
+          </span>
         </UiField>
-        <UiColorPicker v-model="hex" :aria-label="t('colors.exact.pick')" @update:model-value="picked = false" />
-        <UiButton type="submit" intent="secondary" :label="t('colors.exact.match')" />
       </q-form>
       <p v-if="picked" class="hint">{{ t("colors.exact.picked") }}</p>
       <q-list v-if="nearest.length" class="colors__nearest" dense>
@@ -310,6 +318,14 @@ async function match() {
 <style scoped>
 .colors__target {
   margin: 0 0 var(--sp-2);
+}
+/* the hex box, the picker and Find on one row, their tops together: the box's rule message grows it
+   downward without moving them */
+.colors__exact {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
 }
 .colors__tones {
   display: flex;

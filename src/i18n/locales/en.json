@@ -1,4 +1,12 @@
 {
+  "kit": {
+    "dataManagement": {
+      "reset": {
+        "label": "Wipes ALL data — your houses with their photos and designs, the paint colors, the settings and the AI providers — and starts again as on the first start. The installed engines and AI models stay. Type {word} to confirm.",
+        "hint": "Wipes every house, design, paint color and setting, and starts again as on the first start; the installed engines and AI models stay. Take a backup first."
+      }
+    }
+  },
   "app": {
     "name": "Just House Paint",
     "mark": "HP",
@@ -218,11 +226,12 @@
       "eraser": "Eraser",
       "eraserHint": "Take some of the photo out of the selected part",
       "box": "Box",
-      "boxHint": "Draw a box around something the selected part should take in",
+      "boxHint": "Draw a box around something the selected part should take in — drag, or click one corner and then the other",
       "offWhileFinding": "Off while the parts are being found — their new outlines replace these when it's done",
       "size": "Brush size",
       "outlines": "Outlines",
-      "split": "Where the before ends",
+      "split": "Line — where the before ends",
+      "splitLabel": "Line",
       "texture": "Texture",
       "pick": "Pick a color",
       "pickHint": "Click the photo to read its color there and find the brand's nearest paints",
@@ -264,11 +273,21 @@
       "out": "−",
       "outHint": "Zoom out",
       "fit": "Fit",
-      "fitHint": "Fit the photo to the view"
+      "fitHint": "Fit the photo to the view",
+      "left": "←",
+      "leftHint": "Move left",
+      "up": "↑",
+      "upHint": "Move up",
+      "down": "↓",
+      "downHint": "Move down",
+      "right": "→",
+      "rightHint": "Move right"
     },
     "canvas": {
       "label": "The photo of the house",
-      "keys": "When it is zoomed in, the arrow keys move it. The brush, the eraser and the box need a mouse, a pen or touch."
+      "keys": "When it is zoomed in, the arrow keys move it. The brush and the eraser need a mouse, a pen or touch; to select a part, use the Parts tab.",
+      "keysBox": "The arrow keys move a crosshair, further with Shift. Enter sets one corner of the box, Enter again the other; Escape lets go.",
+      "keysPick": "The arrow keys move a crosshair, further with Shift; Enter reads the color there. Escape hides the crosshair."
     },
     "leave": {
       "message": "The colors on screen have changes that aren't saved in a design. Leaving the house drops them.",
@@ -529,7 +548,6 @@
     "designName": "“{design}” ({house})",
     "more": "{n} more",
     "note": "Colors on a screen are close to the paint, never the same: check a real paint chip before you buy. Brand names belong to their owners; this app isn't connected to any of them.",
-    "autoAria": "Load the {brand} colors automatically",
     "moreActions": "More actions for {brand}",
     "fileOnly": "From its palette file"
   },

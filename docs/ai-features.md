@@ -18,4 +18,4 @@ The AI photo isn't an AI feature in this sense: it runs its own image model on y
 
 Select the feature under **Routing by feature**. Its prompt — what the model is told — is shown and
 can be edited and saved in the Lab, and its preset can be pointed at another model or provider.
-**Reset** puts the original back.
+**Reset to default** puts the original back.

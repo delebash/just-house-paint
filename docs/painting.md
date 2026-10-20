@@ -2,7 +2,7 @@
 
 Select a part on the **Parts** tab (or click it on the photo with **Select**), then pick a color on
 the **Colors** tab. The paint shows at once. **Remove the color** under the chosen paint takes it off
-the part; **Show more** under the colors loads the brand's next ones.
+the part; **Show more** under the colors (it says how many are left) loads the brand's next ones.
 
 The **Parts** tab lists the parts to paint, each with its paint's swatch and name, and under it the part's
 color as photographed, its share of the house, how close the paint on screen is (**ΔE**) and **edited**
@@ -20,7 +20,7 @@ painted part the **Parts** tab says how close the painted wall comes to the pain
 can't see, under 2 is a close match (its tag turns green).
 
 **On this wall** — under the chosen paint on the **Colors** tab, the same paint as it shows on the
-selected part: **in shade**, on **most of it** and **in light**. The light one is the chip — in the
+selected part: **In shade**, on **Most of it** and **In light**. The light one is the chip — in the
 part's own light when **On it now** is set, and through **Light**; a wall in the shade of a roof or a
 tree shows mostly the darker ones, as real paint would.
 
@@ -57,11 +57,13 @@ number), not while you drag it.
 (before and after), or one of the house's saved designs — so two designs sit side by side (open one,
 compare with the other). The colors on screen stay on the right; the slider beside it moves the
 line. **Side by side** shows the two as pictures next to each other instead — one zoom, one pan; the
-brush, eraser, box and eyedropper work on the right one. **Nothing** takes the line away.
+brush, eraser, box and **Pick a color** work on the right one. **Nothing** takes the line away.
 
 **Outlines** draws the edge of the **Selected part** (the default), of **All parts**, or none
 (**Off**); the choice is kept. Zoom with the mouse wheel or the **+**, **−** and **Fit** buttons at
-the photo's top right; drag with **Select** to move the photo.
+the photo's top right; drag with **Select** to move the photo — or, once it is zoomed or moved, use the
+arrow buttons (**←**, **↑**, **↓**, **→**) beside them. While **Compare with** is on, **Line** sets where the
+left one ends.
 
 ## Undo and Reset
 
@@ -98,8 +100,12 @@ around it.
 - **A color of your own** — type its hex under **An exact color**; a part's color as photographed is
   the small round swatch on its row on the **Parts** tab.
 - **The photo** — Tab reaches it too; once you have zoomed in with **+**, the arrow keys move it.
-- **Drawing** — the **Brush**, the **Eraser**, the **Box** and **Pick a color** need a mouse, a pen or
-  touch.
+- **A box** — choose **Box**, Tab to the photo and press an arrow key: a crosshair shows. The arrow
+  keys move it (with **Shift**, further); **Enter** sets one corner, **Enter** again the other, and the
+  finder outlines what is inside. **Escape** lets go of the box, then hides the crosshair.
+- **A color off the photo** — choose **Pick a color**, Tab to the photo, move the crosshair the same
+  way and press **Enter**.
+- **Drawing** — the **Brush** and the **Eraser** draw a path, so they need a mouse, a pen or touch.
 
 ## Saving the picture
 

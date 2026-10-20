@@ -136,16 +136,16 @@ const thumb = (house) => imagePath(house.id, "thumb", house.updatedAt);
           />
           <q-card-section class="houses__meta">
             <!-- a long name is cut with an ellipsis: the whole of it on hover -->
-            <div class="houses__name" :title="house.name">{{ house.name }}</div>
+            <div v-tooltip="house.name" class="houses__name">{{ house.name }}</div>
             <div class="muted">
               {{ t("houses.designs", { n: house.designCount }, house.designCount) }} · {{ relativeTime(house.updatedAt) }}
             </div>
           </q-card-section>
           <q-card-actions class="houses__actions">
-            <UiButton intent="ghost" size="icon" :disabled="deleting.has(house.id)" :title="t('houses.rename.action', { name: isolate(house.name) })" :aria-label="t('houses.rename.action', { name: isolate(house.name) })" @click="renaming = house">
+            <UiButton intent="ghost" size="icon" :disabled="deleting.has(house.id)" v-tooltip="t('houses.rename.action', { name: isolate(house.name) })" :aria-label="t('houses.rename.action', { name: isolate(house.name) })" @click="renaming = house">
               <template #icon><Icon name="Pencil" :size="14" /></template>
             </UiButton>
-            <UiButton intent="ghost" size="icon" :disabled="deleting.has(house.id)" :title="t('houses.delete.action', { name: isolate(house.name) })" :aria-label="t('houses.delete.action', { name: isolate(house.name) })" @click="remove(house)">
+            <UiButton intent="ghost" size="icon" :disabled="deleting.has(house.id)" v-tooltip="t('houses.delete.action', { name: isolate(house.name) })" :aria-label="t('houses.delete.action', { name: isolate(house.name) })" @click="remove(house)">
               <template #icon><Icon name="Trash" :size="14" /></template>
             </UiButton>
           </q-card-actions>

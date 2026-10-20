@@ -10,7 +10,7 @@ Advanced**.
 ## From a paint you chose
 
 Give the body a color first (the **Colors** tab); the schemes are built around it:
-**complementary**, **analogous**, **triadic**, **one color, three shades**, and **classic** (light
+**Complementary**, **Analogous**, **Triadic**, **One color, three shades**, and **Classic** (light
 trim on a mid-tone body with a strong door). Each color is the brand's nearest real paint, checked
 so the trim stands out from the body and the door from both. The rules' thresholds are in
 **App Settings → Advanced**.
