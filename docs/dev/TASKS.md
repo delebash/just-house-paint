@@ -354,6 +354,30 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         dry run 39386374890 all green (Windows, macOS, Linux, the AppImage as a user opens it): the window and the
         server on its own share one folder on each — macOS ~/Library/Application Support/JustHousePaint, Windows and
         the unpacked Linux build data/ beside the executable.
+        Today's fixes attacked (an agent's, with scratch tests; being fixed): a design saved after another window's
+        change sends that window's parts back with their old values (the patch's base is the refreshed design, the
+        screen's colors the old draft — B's trim lost); a stroke drawn on old outlines can be saved with the new
+        version (the gap before reloadOutlines raises its busy flag, onStroke's await before scheduleSave, Undo/Redo
+        not blocked during a re-read, a version adopted though a mask failed to load); the restoring window reloads
+        itself mid-restore (teardown — beforeReplace — moves the epoch and the outline series before the swap): its
+        refusal never shows, and a refused restore still reloads every window, cancels their work and 412s their
+        next stroke; a failed interrupted-restore recovery (renameSync, no retries) then the app's start-up sweep
+        delete the user's own houses (it removes houses.replaced-*, or puts back the backup's .restoring- copy); a
+        failed undo at runtime leaves the backup's folders under the old tables with the gate open, and the next
+        restore deletes the copy the journal names; JustVoice (from code) got the swap-first restore without its gate
+        — its own open audio handles make every restore refuse; small/wrong: jobs signalled, not awaited, before the
+        swap; a drain timeout proceeds with a write running; the epoch compared only when rev moves (a server restart
+        that lands on the same count is never seen); the commit point is the journal's removal, not the DB COMMIT;
+        the backup DB checked only after the swap; rename(from, dir) not retried; a change during load() dropped;
+        strokes while busy dropped silently; a Box answered during a re-read can move the version back; a queued
+        save after another house opens has no If-Match; If-Match's W/ accepted (needs strong comparison); linkTree
+        ~0.33 ms a file on the event loop (10 000 files 3.3 s); the one-row tab strip and fit-content EmptyState in
+        the other apps not checked (JustWrite's modals: the empty box sits left). Docs: "other windows wait" — they
+        are refused; "nothing changed" isn't true on those paths; "keep both" false until the above; the 412 also
+        follows a server restart or a refused restore; the Mac note reads as "move into" (rename data to
+        JustHousePaint; Library via Go → Go to Folder). Right: the gate (503, shutdown exempt, refused writes not
+        counted), the journal's crash points inside the swap, the snapshot for this app's writers, no caller left on
+        PUT current-paints, the docs' refusal words and setting name, the draft release.
 NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
         the installed 0.1.2 updating to it (the silent Restart now).
 
