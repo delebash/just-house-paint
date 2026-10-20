@@ -931,6 +931,40 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         (4 Windows-only skipped); the packaged app and its server from temp copies, one data folder shared (Ubuntu
         beside the build, macOS in Application Support); engines: Ubuntu 22.04 the AI photo not offered (glibc 2.35 <
         2.38), macOS metal, Windows cpu; the finder's runtime on all.
+        The seventeenth's screens (an agent's, the build of 5a9c641 / f066ec9, 285 shots with a probe each, keyboard
+        traces, the accessibility tree; in the scratchpad's screens4): hard to use — a picked color's matches not
+        brought into view when the pick comes from another tab (the usual case: the smooth scroll runs before the
+        color grid's first search lands, which then pushes the heading ~4000 px down — measured); Save in Settings →
+        General drops the focus on <body> (Save disabled once nothing is left to save — WCAG 2.4.3); the Logs'
+        warning lines 2.82:1 in dark (they ask for --warning-ink, a token that doesn't exist — the contract's is
+        --warn-ink). Looks wrong — in the narrow side panel a banner's icon alone on a line above its text, and
+        Storage's banner action under the icon (the new flex: 1 1 auto overrode QBanner's .col; flex-basis 0 tested in
+        the page fixes both and keeps the fit-content width); 38em is 77–84 characters; the units ("(MB)") 38% taller
+        than the small-caps labels; the kit's own hints and notes uncapped (Backups 106 and 133 characters, Storage's
+        used-after note 104, AI Settings' lede 96 and Quick setup's line 91, Updates' What's new 137); hints at 33em
+        71–77, the lede at 35em 78. Small — Box's reason only a native title (nothing on screen on focus or touch);
+        the dialogs' label still uppercase (Reset's box named "TYPE RESET TO CONFIRM"); Reset off for "reset" with
+        nothing said, its box 376 px for five letters, its × also "Cancel"; the AI photo dialog 880 px around 512 px;
+        the info banner wears the warning triangle; the sidebar's AI tasks row title equal to its text; the toast's
+        close 20 × 20 (WCAG 2.5.8 asks 24); the hex error doesn't say the form (3.3.3); two controls named "Pick a
+        color"; the chips named "SW T-121 Shade 21" against "Shade 21 T-121" on screen (2.5.3); the chips' edges
+        1.25 / 1.44:1. Right — the AI tasks dialog (focus in, Tab kept, Escape back, aria-expanded, both triggers, its
+        live log), every select and slider box named, names in their case, banner roles, tabs, Storage's gap, the
+        error count 8.08 / 7.23, the toast 8.11 / 7.20 and dark in dark, the swatch edge 3.46 / 4.04, the hex row on
+        the middle and its errors clearing, Box off and its fall-back, two clicks / keys / click-then-keys one POST
+        each, number boxes (Enter, refused texts, Required, -0), Reset's prompt, no unnamed control on 17 pages, no
+        overflow, one scroller per area, the connection page, the help's words.
+        Their fixes — decided (mine, argued): the matches brought into view once the grid's first search has landed,
+        without the smooth animation; Save keeps the focus where it was (back to the box, or Save stays focusable
+        with aria-disabled — the APG's focusable-when-disabled) — in the template too; the Logs' warn ink from
+        --warn-ink; QBanner's .col back (flex-basis 0) under the text cap; banner text 34em; .ui-unit at 0.8em; the
+        kit's hints and notes at 30em, ledes and the changelog at 33em; the app's hints 30em and lede 33em (measured
+        worst lines 70 / 75); an off segment's reason shown on focus and hover through the kit's tooltip, and Box's
+        refusal said in a toast when pressed (UiSegmented's blocked); the dialogs' label in small capitals by
+        font-variant-caps; Reset's word matched in any case, its box a token's width, its × "Close"; the AI photo
+        dialog sized to its card; an info icon (Lucide's) on info banners; the AI tasks row without its title; the
+        toast's close 24 × 24; the hex error "# and six digits, like #a1b2c3"; the picker's button "Choose a color";
+        a chip's name starts with its visible words; the chips' edges in --border-field.
 NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
         the installed 0.1.2 updating to it (the silent Restart now).
 
