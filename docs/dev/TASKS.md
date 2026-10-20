@@ -835,6 +835,42 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         computeAccessibleName (Testing Library's, already a dev dependency); isolate() wraps any name holding a bidi
         control; UiSegmented ignores modified arrows and mirrors them right-to-left (APG); lostpointercapture heard
         on the canvas's own host element, always there.
+        The sixteenth's screens (an agent's, the build of 9692270 / 475ad42, 261 shots and 35 keyboard ones with a probe
+        each, the accessibility tree; scripts and shots in the scratchpad's screens3): hard to use — the AI tasks panel
+        from the keyboard (Enter opens it, the focus stays behind; its Run it again the 18th stop, four stops hidden
+        under it — WCAG 2.4.11; Escape drops the focus on <body>; no aria-expanded); five selects named only by their
+        value (Appearance's Theme, Interface size, UI font; Logs' two). Looks wrong — hints ~100 characters a line
+        (70ch is 580 px: a "0" is wider than the average letter); the AI photo dialog's banners 767 px wide; Storage's
+        two buttons touching (.card__actions no gap); the error toast 4.35:1 and light in the dark theme; the
+        sidebar's AI-tasks error count 4.23:1 in dark; Pick a color's swatch edge 1.26:1; the hex row top-aligned, not
+        on the box's middle; Reset's 35-word sentence as its field's label, in small capitals; at 960 the panel 242 px
+        (the header's two rows and the tools' three). Small — field names in capitals (Chromium takes the label's
+        text-transform into the name); the sliders' number boxes named "Texture 1"; every banner role=alert;
+        a keyboard Pick a color said nothing (fixed meanwhile); Box offered with the finder not installed, its toast
+        "…installed. download the part-finding model first"; an empty number box sent as null (the server's 422);
+        Backup & restore's hint the template's words; Settings' unselected tabs pointing at panels not in the page;
+        Advanced's JSON boxes at the 60vh cap (as decided); the fallback folder JustHousePaint\JustHousePaint.
+        Help — "Load the colors" in no page; color-schemes' lowercase names (lines 19–20); finding-parts' "keep";
+        getting-started's "Change folder is off" (it isn't shown). Right — every field built on UiField named, the
+        help's text by keys, the contrast everywhere else (261 probes), field edges, segments, icon buttons named,
+        the live logs (and in an open dialog), tabs, menus, one scroller each, number boxes, Box by clicks and keys,
+        the pan buttons, the panel's top, Line, Required only on Find, the ⌄ column, the cards' gap, the "?", names
+        once, isolate on Hebrew only, Storage's states, the connection reasons.
+        Their fixes — decided (mine, argued): the AI tasks panel on Quasar's QDialog position="right" (modal: the
+        focus in it, Tab kept in it, Escape gives it back to the trigger — Quasar's own), the trigger with
+        aria-expanded; every select named (UiField's for to the select, or its aria-label); hints at most 35em and the
+        lede and notes 38em (about 70 and 75 characters at their sizes — em, not ch), measured; a banner's text
+        capped the same; .card__actions a wrapping row with a gap; the toast themed (the danger ink on the danger
+        tint, dark in the dark theme); the error count in --danger-ink; Pick a color's swatch edged in
+        --border-field; the hex row centred on the box (the rule's words under the box, shown only after Find, move it
+        a little — kept); Reset's sentence as its prompt's message and the field "Type RESET to confirm"; field labels
+        in small capitals by font-variant-caps (the name keeps the words' own case); the sliders' boxes named by the
+        slider; info and warning banners role=status, danger alert; Box off with its reason while the finder isn't
+        installed, the server's words "Install the part finder first" (and the AI photo's alike); an empty required
+        number box says Required before anything is sent; Backup & restore's hint in this app's words; a tab's
+        aria-controls only to a panel in the page; the help's words as the screen. Kept, argued: the panel at 960 (the
+        window's smallest; the panel scrolls; moving the header's actions costs finding them); the JSON boxes' cap;
+        the fallback folder's name (platformdirs' Windows layout, author\app — moving it strands data).
 NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
         the installed 0.1.2 updating to it (the silent Restart now).
 
