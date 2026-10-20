@@ -5,15 +5,15 @@
 - **A dark wall painted light looks freshly painted.** Stained wood or a dark paint painted much
   lighter no longer shows the old finish's blotches and grain; the lines between the boards and the
   shadows stay.
-- **Decorations**: the finder finds the medallions, vents and other ornaments on the walls as their
+- **Decorations**: the finder finds the medallions and other ornaments on the walls as their
   own part — a garden statue in front isn't one. A scheme paints them the trim's color.
 - **Trim** now takes the casings around the front door and the garage door, and no longer a fence's
   end board beside the house.
 - **Only your house is painted**: the finder no longer finds windows, doors, soffits and trim on a
   neighbor's house in the photo.
 - **The AI photo says when other programs slowed it**: under its time, the programs that held the
-  graphics card while it drew, and how much.
-- **Linux**: the AppImage opens on Ubuntu 22.04 and 24.04 with nothing to install — before, its
+  graphics card when it started, and how much.
+- **Linux**: the AppImage starts on Ubuntu 24.04 with nothing to install — before, its
   server didn't start.
 - **The part finder's card says when it can't run** on the computer, before anything is downloaded.
 - **Deleting a house** right after finding its parts no longer stops halfway.

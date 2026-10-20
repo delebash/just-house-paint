@@ -64,7 +64,7 @@ export function router(ctx = getState()) {
       const facts = await ingestPhoto(Buffer.from(await file.arrayBuffer()), ctx.dataDir, id, limits);
       made = createHouse(ctx.db, { id, name, ...facts });
     } catch (e) {
-      await removeHouseDir(ctx.dataDir, id);
+      await (ctx.removeHouseDir ?? removeHouseDir)(ctx.dataDir, id);
       if (e instanceof NotAnImage) throw new ApiError(415, "not-a-photo", "Not a photo", e.message);
       throw e;
     }

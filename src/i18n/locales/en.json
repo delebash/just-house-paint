@@ -421,7 +421,7 @@
     "deltaE": "ΔE {n} from the chips",
     "seconds": "made in {n} s",
     "sharedGpuMore": "{n} more",
-    "sharedGpu": "Other programs held {size} of the graphics card while it drew ({programs}), which makes the AI photo slower. Close them for the fastest one.",
+    "sharedGpu": "Other programs held {size} of the graphics card when it started ({programs}), which makes the AI photo slower. Close them for the fastest one.",
     "save": "Save image",
     "suffix": "AI photo",
     "fallbackName": "House"

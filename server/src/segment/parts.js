@@ -56,8 +56,8 @@ export const DEFAULT_PARTS = Object.freeze(
     { key: "stone", labelKey: "parts.stone", prompts: ["stone wall"], threshold: 0.5, paintable: false, group: "masonry" },
     { key: "brick", labelKey: "parts.brick", prompts: ["brick wall"], threshold: 0.5, paintable: false, group: "masonry" },
     { key: "lamps", labelKey: "parts.lamps", prompts: ["lamp"], threshold: 0.5, paintable: false, group: "fixtures" },
-    // gable medallions, vents and other ornaments on the walls; "decoration" also finds garden statues and
-    // wreaths in front of the house — none of those lies on the house itself (RESEARCH §13)
+    // gable medallions and other ornaments on the walls; "decoration" also finds garden statues in front of
+    // the house, none of which lies on the house itself (RESEARCH §13) — an ornament hung on a wall can
     { key: "decor", labelKey: "parts.decor", prompts: ["decoration"], threshold: 0.4, paintable: true, group: "trim", onHouse: 0.5 },
   ].map((p) => Object.freeze({ ...p, prompts: Object.freeze([...p.prompts]) })),
 );
@@ -190,7 +190,8 @@ export async function findParts(
     n,
   );
   // the house: the main instance the "subtract" part's prompts found (as the body is) — never another
-  // instance: on all 31 photos of the obstruction set every other "house" instance, touching the main one
+  // instance: on the 26 photos of the obstruction set and the four app houses, every other "house" instance,
+  // touching the main one
   // or not, was a neighbor's house, whose windows, doors and soffits were painted, and the main instance
   // held the house's own wings and garages (RESEARCH §13) — grown by the margin
   const grow = Math.round(houseMargin * Math.max(width, height));

@@ -5,7 +5,8 @@
 // installing them (a job), and one render — which first frees the GPU (the part finder's image
 // session and the local AI model), because sd.cpp doesn't wait for memory (RESEARCH §10).
 
-import { existsSync, rmSync, statSync } from "node:fs";
+import { existsSync, statSync } from "node:fs";
+import { rm } from "node:fs/promises";
 import path from "node:path";
 import { ApiError } from "@delebash/core/platform/errors";
 import { getLogger } from "@delebash/core/platform/log";
@@ -17,7 +18,9 @@ const log = getLogger("just_house_paint.aiphoto");
 
 /** A part key in the English the model reads ("garageDoor" → "garage door") — prompts stay English
  * (RESEARCH §10: French labels barely changed the color). */
-export const surfaceWords = (key) => key.replace(/([a-z])([A-Z])/g, "$1 $2").toLowerCase();
+export const surfaceWords = (key) => WORDS[key] ?? key.replace(/([a-z])([A-Z])/g, "$1 $2").toLowerCase();
+// the parts whose key alone reads wrong to the model
+const WORDS = { decor: "wall decorations" };
 
 /**
  * `ctx`: { dataDir, engineDir, modelDir, finder (releaseGpu), stopLocalModel() → frees the kit's
@@ -63,7 +66,8 @@ export function createAiPhoto(ctx) {
 
     /** Remove the engine and the models (Settings → Storage); no render runs (the route checks). */
     async uninstall() {
-      for (const dir of [ctx.modelDir, ctx.engineDir]) rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+      // async, with Node's retries: a held file never stalls the server
+      for (const dir of [ctx.modelDir, ctx.engineDir]) await rm(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 });
     },
 
     /** Install the engine and the models (a job); `download` is the kit's streamDownload. */

@@ -20,6 +20,7 @@ import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { h } from "vue";
 import { createMemoryHistory, createRouter, RouterView } from "vue-router";
 import { i18n } from "../i18n/index.js";
+import { usePaintsStore } from "../stores/paints.js";
 
 const W = 8;
 const H = 6;
@@ -76,11 +77,14 @@ function fakeFetch(input, init = {}) {
     return Promise.resolve(json(d, 201));
   }
   if (p === "/v1/houses/h1/renders") return Promise.resolve(json([]));
+  if (p === "/v1/houses/h1/image" && server.photoMissing)
+    return Promise.resolve(json({ type: "about:blank", title: "Not Found", status: 404, detail: "the display copy of house h1 is missing" }, 404));
   if (p === "/v1/houses/h1/image") return Promise.resolve(new Response(new Blob(["jpeg"])));
   const mask = p.match(/^\/v1\/houses\/h1\/parts\/(\w+)\/mask$/);
   if (mask && method === "PUT") return Promise.resolve(json(server.parts.find((x) => x.key === mask[1])));
   if (mask) return Promise.resolve(new Response(new Blob([mask[1]])));
-  if (p === "/v1/brands") return Promise.resolve(json([{ key: "behr", label: "Behr", feed: true, enabled: true, paintCount: 1, source: "feed", loadedAt: null, lastError: null }]));
+  if (p === "/v1/brands")
+    return Promise.resolve(json([{ key: "behr", label: "Behr", feed: true, enabled: true, paintCount: server.noBrandYet ? 0 : 1, source: "feed", loadedAt: null, lastError: null }]));
   if (p === "/v1/settings") {
     return Promise.resolve(
       json({
@@ -92,7 +96,8 @@ function fakeFetch(input, init = {}) {
   }
   if (p === "/v1/segment/status")
     return Promise.resolve(json({ installed: server.finderInstalled, downloadBytes: 3_364_167_120, ...(server.finderInstalled ? {} : { runtime: server.runtime || { ok: true } }) }));
-  if (p === "/v1/aiphoto/status") return Promise.resolve(json({ engineInstalled: false, modelsInstalled: false, backend: "cuda12", slow: false, downloadBytes: 9e9 }));
+  if (p === "/v1/aiphoto/status")
+    return Promise.resolve(json(server.aiphotoStatus || { engineInstalled: false, modelsInstalled: false, backend: "cuda12", slow: false, downloadBytes: 9e9, available: true }));
   if (p === "/v1/segment/install") return Promise.resolve(json({ id: "j-install", state: "running", progress: 0 }, 202));
   if (p === "/v1/houses/h1/find-parts") {
     server.findBody = init.body ? JSON.parse(init.body) : null;
@@ -275,6 +280,57 @@ test("the colors on screen are saved as a named design", async () => {
   expect(server.calls).toContain("POST /v1/houses/h1/designs");
   expect(server.designs[0]).toMatchObject({ name: "Blue body", colors: { body: "behr:S1" } });
   expect(text()).toContain("Blue body");
+});
+
+test("the AI photo says why it's off; where no engine exists, nothing is offered to install", async () => {
+  server.parts = PARTS;
+  await mountPage();
+  expect(byText("button", "AI photo").disabled).toBe(true);
+  expect(byText("button", "AI photo").getAttribute("title")).toBe("Give a part a color first");
+  wrapper.unmount();
+  document.body.innerHTML = "";
+  server.aiphotoStatus = { engineInstalled: false, modelsInstalled: false, backend: null, slow: true, downloadBytes: 0, available: false };
+  await mountPage();
+  await click(byText(".q-tab", "Colors"));
+  await click(byText(".chip", "Sea Blue"));
+  await click(byText("button", "AI photo"));
+  expect(text()).toContain("has no build for this computer's system and processor");
+  expect(text()).not.toContain("one AI photo would take about ten minutes"); // not "slow": unavailable
+  expect(byText("button", "Install").disabled).toBe(true);
+  expect(text()).not.toContain("a one-time download of"); // no size where nothing installs
+});
+
+test("on the first start the Colors tab says the brands are loading, and takes the first one as it lands", async () => {
+  server.parts = PARTS;
+  server.noBrandYet = true;
+  await mountPage();
+  const paints = usePaintsStore();
+  paints.autoLoadingBrands = true; // the start-up loads running (App's autoLoadBrands)
+  await click(byText(".q-tab", "Colors"));
+  expect(text()).toContain("The brands' colors are loading");
+  expect(text()).not.toContain("Add a brand's colors first");
+  // Behr's colors land while the tab is open
+  server.noBrandYet = false;
+  await paints.loadBrands();
+  paints.autoLoadingBrands = false;
+  await flushPromises();
+  await new Promise((r) => setTimeout(r, 400)); // the search's debounce
+  await flushPromises();
+  expect(byText(".chip", "Sea Blue")).toBeTruthy();
+});
+
+test("a missing photo file isn't a deleted house; a part added and not drawn says empty", async () => {
+  server.parts = [...PARTS, { key: "shutters", paintable: true, area: 0, score: 0, source: "added", position: 2 }];
+  await mountPage();
+  expect(text()).toContain("Shutters");
+  expect(text()).toContain("empty");
+  wrapper.unmount();
+  document.body.innerHTML = "";
+  server.photoMissing = true;
+  await mountPage();
+  expect(text()).not.toContain("This house isn't here any more");
+  expect(text()).toContain("Couldn't open this house");
+  expect(text()).toContain("the display copy of house h1 is missing");
 });
 
 test("the AI photo offers its install first", async () => {

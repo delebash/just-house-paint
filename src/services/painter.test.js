@@ -1,8 +1,22 @@
 // SPDX-License-Identifier: MIT
 // The house page's painter: parts prepared once, repainted per color click, ΔE per part, the part
 // under a pixel, and a brush change re-prepared.
-import { expect, test } from "vitest";
-import { createPainter } from "./painter.js";
+import { expect, test, vi } from "vitest";
+
+// what the painter hands tint.js each time it prepares a part (the calmed lighting it carries)
+const prepares = vi.hoisted(() => []);
+vi.mock("./tint.js", async (importOriginal) => {
+  const real = await importOriginal();
+  return {
+    ...real,
+    preparePart(args) {
+      prepares.push({ calmY: args.calmY ?? null });
+      return real.preparePart(args);
+    },
+  };
+});
+
+const { createPainter } = await import("./painter.js");
 
 const W = 8;
 const H = 4;
@@ -114,4 +128,28 @@ test("the paint a part has now sets its light: the photo's color there ÷ that p
   // a wrong pick (black, for a light wall) is capped, not wild
   expect(p.gain("body", "#000000")).toEqual([1, 1, 1]); // no channel to divide by
   expect(p.gain("body", "#101010").every((v) => v === 4)).toBe(true);
+});
+
+test("a dark wall's calmed lighting is kept through a Texture change and worked out again after an outline edit", () => {
+  // a dark board wall under a bright sky band: the body is a dark finish, painted white it is calmed
+  const w = 200;
+  const h = 120;
+  const photo = new Uint8ClampedArray(w * h * 4);
+  for (let y = 0; y < h; y++)
+    for (let x = 0; x < w; x++) {
+      const v = y < 20 ? 235 : y % 10 >= 8 ? 15 : 50 + Math.round(20 * Math.sin(x / 5 + y));
+      photo.set([v, v, v, 255], (y * w + x) * 4);
+    }
+  const body = Uint8Array.from({ length: w * h }, (_, i) => (Math.floor(i / w) >= 20 ? 255 : 0));
+  const p = createPainter({ rgba: photo, width: w, height: h });
+  p.setMask("body", body);
+  prepares.length = 0;
+  p.paint({ body: "#f2f0ea" });
+  expect(prepares).toEqual([{ calmY: null }]); // the first time: nothing to carry, worked out
+  p.setTexture(0.5);
+  p.paint({ body: "#f2f0ea" });
+  expect(prepares[1].calmY).toBeInstanceOf(Float32Array); // the texture changed: the calming carried over
+  p.touched("body"); // a brush stroke changed the outline
+  p.paint({ body: "#f2f0ea" });
+  expect(prepares[2].calmY).toBeNull(); // worked out again for the new outline
 });

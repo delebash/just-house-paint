@@ -13,6 +13,7 @@ import {
   paintLinear,
   partLight,
   percentile,
+  photoExposure,
   preparePart,
   tintPhoto,
   toLinear8,
@@ -189,6 +190,38 @@ test("a texture change keeps the calmed lighting; the soft edge is calmed too", 
     }
   expect(percentile(ring, 99)).toBeLessThan(percentile(raw, 99) * 0.95);
 });
+
+test("a light wall photographed dark isn't a dark finish: darkness is judged against the photo's bright end", () => {
+  const w = 120;
+  const h = 80;
+  const dim = weatherboard(w, h, 0.035); // the stain's level — but nothing in the photo is brighter
+  const Y = luminance(dim.photo);
+  const part = preparePart({ Y, mask: maskOf(w, h, () => 255), width: w, height: h, exposure: photoExposure(Y) });
+  expect(calmStrength(part, "#f2f0ea")).toBe(0);
+  // the same wall under a bright sky (the photo's bright end far above it): a dark finish
+  expect(calmStrength({ ...part, exposure: 0.8 }, "#f2f0ea")).toBe(1);
+});
+
+test("a display-size dark wall (the calming's coarser grid) loses its blotches and keeps its board lines", () => {
+  // 1600 × 1200: the structure and the light worked out on a grid 3× coarser, as at 2048 × 1536
+  const w = 1600;
+  const h = 1200;
+  const board = 30;
+  const isLap = (y) => y % board >= board - 4;
+  const photo = photoOf(w, h, (x, y) => {
+    const k = Math.floor(y / board);
+    const blotch = Math.exp(0.35 * Math.sin(x / 11 + k * 1.7) * Math.cos(x / 27 + k));
+    const v = Math.round(255 * toSrgb(0.035 * blotch * (isLap(y) ? 1 / 3 : 1)));
+    return [v, v, v];
+  });
+  const Y = luminance(photo);
+  const part = preparePart({ Y, mask: maskOf(w, h, () => 255), width: w, height: h });
+  const paintY = luminance(photoOf(1, 1, () => [0xf2, 0xf0, 0xea]))[0];
+  const before = boardsLook((i) => Y[i] / part.base, w, h, isLap, paintY);
+  const after = boardsLook(partLight(part, "#f2f0ea"), w, h, isLap, paintY);
+  expect(after.faceSpread).toBeLessThan(before.faceSpread * 0.5);
+  expect(after.lapDepth).toBeGreaterThan(before.lapDepth * 0.85);
+}, 20000);
 
 test("a light finish, or a paint not much lighter than the finish, is painted as photographed", () => {
   const w = 120;

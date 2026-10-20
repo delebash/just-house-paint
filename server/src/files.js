@@ -61,6 +61,18 @@ export function houseAdded(dataDir, id) {
  * the server. Still held: false, and the folder is marked so the start-up sweep takes it — never a
  * half-deleted house left as one. `remove` is node:fs/promises' rm (a test passes one that fails).
  */
+/** One file a house no longer needs (an AI photo deleted, an outline not found again): removed with the
+ *  same retries as a folder; held, it is left (a stray file costs nothing) and false comes back. */
+export async function removeHouseFile(file) {
+  try {
+    await rm(file, { force: true, maxRetries: 10, retryDelay: 100 });
+    return true;
+  } catch (e) {
+    log.warning(`${path.basename(file)} is still held (${e.code || e.message}); left in place`);
+    return false;
+  }
+}
+
 export async function removeHouseDir(dataDir, id, { remove = rm } = {}) {
   const dir = houseDir(dataDir, id);
   try {
@@ -82,22 +94,18 @@ export async function removeHouseDir(dataDir, id, { remove = rm } = {}) {
  * gets a new one — then removed with the same retries as one house's. Held: each house's folder is
  * marked, and the next start's sweep finishes. Returns whether all of it went now.
  */
-export async function removeAllHouseDirs(dataDir) {
+export async function removeAllHouseDirs(dataDir, { rename = renameSync } = {}) {
   const root = housesRoot(dataDir);
   if (!existsSync(root)) return true;
   const aside = `${root}${ASIDE}${Date.now()}`;
   try {
-    renameSync(root, aside);
+    rename(root, aside);
   } catch (e) {
-    log.warning(`the houses folder is held (${e.code || e.message}); its folders are removed at the next start`);
-    for (const name of readdirSync(root)) {
-      try {
-        writeFileSync(path.join(root, name, GONE), "");
-      } catch {
-        // a file, or a folder held even for this: left as it is
-      }
-    }
-    return false;
+    // held as a whole: house by house instead, each with its retries (a held one is marked for the start)
+    log.warning(`the houses folder is held (${e.code || e.message}); removing its houses one by one`);
+    let all = true;
+    for (const name of readdirSync(root)) if (SAFE.test(name) && !(await removeHouseDir(dataDir, name))) all = false;
+    return all;
   }
   try {
     await rm(aside, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
@@ -113,9 +121,11 @@ export async function removeAllHouseDirs(dataDir) {
  * database lost or replaced must never take every house's photos with it. Returns how many went.
  */
 export async function sweepHouseDirs(dataDir, ids) {
-  // a reset's old houses folder, moved aside and still there
+  // a reset's old houses folder moved aside, a restore's replaced or staged copy (the kit's data_api),
+  // still there because Windows held a file
+  const leftover = (name) => [ASIDE, ".replaced-", ".restoring-"].some((tag) => name.startsWith(`houses${tag}`));
   for (const name of existsSync(dataDir) ? readdirSync(dataDir) : []) {
-    if (name.startsWith(`houses${ASIDE}`)) await rm(path.join(dataDir, name), { recursive: true, force: true, maxRetries: 10, retryDelay: 100 }).catch(() => {});
+    if (leftover(name)) await rm(path.join(dataDir, name), { recursive: true, force: true, maxRetries: 10, retryDelay: 100 }).catch(() => {});
   }
   let names = [];
   try {

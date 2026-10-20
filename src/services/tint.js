@@ -99,15 +99,24 @@ export function maskedBlur(values, mask, w, h, radius) {
  * What one part needs, computed once per photo and part: its pixels, its normally lit level and
  * (when texture < 1) its blurred lighting. `mask` is a Uint8Array (0–255) the photo's size.
  * `calmY`: the part's calmed lighting already worked out for this photo and mask (calmFinish doesn't
- * depend on the texture, so a texture change keeps it).
+ * depend on the texture, so a texture change keeps it). `exposure`: the photo's bright end (photoExposure)
+ * — how dark a finish is, is judged against it, so a light house photographed dark isn't taken for a dark one.
  */
-export function preparePart({ Y, mask, width, height, texture = 1, blurRadius = 0, calmY = null }) {
+export function preparePart({ Y, mask, width, height, texture = 1, blurRadius = 0, calmY = null, exposure = 1 }) {
   const inside = [];
   for (let i = 0; i < mask.length; i++) if (mask[i] >= 128) inside.push(Y[i]);
   const base = Math.max(1e-4, percentile(inside, 75));
   const radius = blurRadius || Math.max(2, Math.round(Math.min(width, height) / 150));
   const blurred = texture < 1 ? maskedBlur(Y, mask, width, height, radius) : null;
-  return { mask, base, texture, blurred, radius, pixels: inside.length, Y, width, height, calmY };
+  return { mask, base, texture, blurred, radius, pixels: inside.length, Y, width, height, calmY, exposure };
+}
+
+/** The photo's bright end: the 99th percentile of its luminance (a sample of it) — the sky, white trim. */
+export function photoExposure(Y) {
+  const step = Math.max(1, Math.floor(Y.length / 200_000));
+  const sample = [];
+  for (let i = 0; i < Y.length; i += step) sample.push(Y[i]);
+  return Math.max(1e-4, percentile(sample, 99));
 }
 
 /** CIE L* (0–100) of a relative luminance. */
@@ -118,8 +127,8 @@ const smoothstep = (e0, e1, v) => {
 };
 
 /** When and how much an old finish is calmed (RESEARCH §13, measured on the probe houses): a part
- *  whose normally lit level is darker than L* `dark[1]` (fully at `dark[0]`), painted lighter by more
- *  than `lighter[0]` L* (fully at `lighter[1]`). `keep` of the old detail stays; detail darker than
+ *  whose normally lit level — against the photo's bright end — is darker than L* `dark[1]` (fully at
+ *  `dark[0]`), painted lighter by more than `lighter[0]` L* (fully at `lighter[1]`). `keep` of the old detail stays; detail darker than
  *  e^−`shadow` of its line (shadows, knots) keeps what goes past that. The light houses (L* 52–79)
  *  are never calmed: there the same smoothing smeared real tree shadows and the trim's scallops. */
 export const CALM = Object.freeze({ dark: [30, 45], lighter: [15, 40], keep: 0.15, shadow: 0.5 });
@@ -248,7 +257,8 @@ function coarseBlur(fields, mask, w, h, f, radius) {
  *  paint not much lighter than it, up to 1 for a dark one painted light (CALM). */
 export function calmStrength(part, hex, gain = [1, 1, 1]) {
   const [r, g, b] = paintLinear(hex);
-  const finish = lstar(part.base);
+  // against the photo's own bright end: a light house photographed dark stays a light finish
+  const finish = lstar(Math.min(1, part.base / (part.exposure || 1)));
   const dark = 1 - smoothstep(CALM.dark[0], CALM.dark[1], finish);
   if (dark <= 0) return 0;
   return dark * smoothstep(CALM.lighter[0], CALM.lighter[1], lstar(lum(r * gain[0], g * gain[1], b * gain[2])) - finish);

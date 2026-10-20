@@ -900,7 +900,9 @@ at the app's display size, through the app's own code; scripts and overlays in s
   houses smeared house2's branch shadows and house1's scallops and board-and-batten, so it runs only on a
   **dark** finish (L* of its normally lit level under 45, fully under 30 — house3 22.6; house1 73.7, house2
   79.4, the user's 52.4) painted **lighter** by 15–40 L* and more; where the part has no direction
-  (coherence under 0.2–0.5: stucco, brick) its detail is kept. On a synthetic dark board wall the faces'
+  (coherence under 0.2–0.5: stucco) its detail is kept — not running-bond brick: its courses give it a direction,
+  so its head joints soften (the fifth review, a synthetic dark brick wall at 2048×1536: light-mortar head joints
+  0.66 → 0.11, dark ones −0.70 → −0.24, bed joints kept). On a synthetic dark board wall the faces'
   L* spread fell 16.9 → 7.2 and the lap lines kept 31.6 of 33.7 L*. The app's painter on house3: the first
   light paint 0.58 s at 2048×1536 (the structure and the light worked out on a grid 4× coarser; 1.6 s at full
   resolution), then 0.08 s; 2.5 s once for Save image at 4032×3024; ΔE to the chip 0.21.
@@ -936,7 +938,7 @@ at the app's display size, through the app's own code; scripts and overlays in s
   AppImage can't have there, is electron-builder's own launcher's to drop — it adds `--no-sandbox` when user
   namespaces are blocked (the kit's RESEARCH §2; a kit switch added for it was removed). The build runners' own start
   check: Windows 1.6 s, macOS 6.6 s, Linux 3.1 s, the part finder's runtime loading on all three.
-- **What else SAM 3 calls "house"** (2026-10-19, "house" at 0.5 on the 27 set photos and the four app houses, each
+- **What else SAM 3 calls "house"** (2026-10-19, "house" at 0.5 on the 26 set photos and the four app houses, each
   instance drawn: the main one — pickMainInstance, as the body uses — the ones touching it within the 2% margin, the
   rest): the main instance held the whole house every time, wings and garages included (house1's garage wing,
   house2's garage, the user's garage); **every other instance was a neighbor's house**, the touching ones included
@@ -967,3 +969,20 @@ at the app's display size, through the app's own code; scripts and overlays in s
   photos (the second review). Also seen: house3's dark fence panel lies inside its "house" outline and is painted
   with the walls; SAM 3's "fence" (0.5) doesn't outline it there and, on d06, outlines the iron fence over the front
   door — cutting fences out would cut the door, so not done (an Eraser fix, as the evergreen's edge).
+- **Darkness judged against the photo's bright end** (2026-10-19, the fifth review: a light house photographed dark
+  got 26–74% of the calming): each body's normally lit level against the photo's 99th-percentile luminance (the sky,
+  white trim), as taken and dimmed to 35%: house1 L* 73.8 → relative 78.7 (dimmed: absolute 26.7, relative 80.7),
+  house2 79.4 → 82.2 (dimmed 29.0 → 83.5), the user's 52.5 → 53.8 (dimmed 17.7 → 58.0), house3's stain 22.8 → 26.9
+  (dimmed 5.7 → 34.6). So `calmStrength` judges a finish's darkness relative to `photoExposure` (p99): the dimmed light
+  houses stay light (no calming), house3 stays dark. A photo with nothing bright in it reads every part as light —
+  the calming then misses (conservative).
+- **What the body loses to pieces the house rule drops** (2026-10-19, the fifth review): the body is the main "house"
+  instance minus every piece a text prompt found, before the house rule and `onHouse` drop some — so a dropped piece's
+  pixels on the house are left out of the body too. Kept on purpose: what a prompt finds and the rule drops is almost
+  always in front of the wall (a car's door, a garden statue, a lamp post), and painting it with the walls is the
+  worse mistake.
+- **Corrections to today's records:** commit 3245957's "measured on house3: the faces' spread halves, the laps keep
+  94%" — those are the synthetic wall's numbers (16.9 → 7.2, 33.7 → 31.6); on house3 the calming was seen, not
+  measured that way. c5125ff's "the AI photo started after an install waits for a busy card" — it is skipped then
+  (the user presses AI photo again). The AI photo's note on other programs is one reading as the render starts, not
+  "while it drew" (the words say so now).

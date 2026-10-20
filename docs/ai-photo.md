@@ -23,7 +23,7 @@ RTX 2070-class card; its progress shows under the house's name while it runs, wi
 graphics card — the part finder and a local AI model let go of it, and load again when next needed.
 The picture opens when it is done, with **Save image**, how far its painted parts are from the paint
 chips (**ΔE … from the chips**) and how long it took (**made in … s**) — and, when other programs held
-more than 1 GB of the graphics card while it drew, which ones (**App Settings → General → AI photo**
+more than 1 GB of the graphics card when it started, which ones (**App Settings → General → AI photo**
 sets that amount). Every AI photo is kept on the house's **Designs** tab: open one again, or delete it.
 
 The graphics card does one thing at a time — an 8 GB card holds the AI photo's model or the part

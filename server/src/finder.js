@@ -9,7 +9,8 @@
 // of GPU memory on DirectML, so the segmenter is released when it has been idle a while and
 // before the AI photo runs (releaseGpu).
 
-import { existsSync, rmSync, statSync } from "node:fs";
+import { existsSync, statSync } from "node:fs";
+import { rm } from "node:fs/promises";
 import { ApiError } from "@delebash/core/platform/errors";
 import { getLogger } from "@delebash/core/platform/log";
 import { displayPath } from "./files.js";
@@ -155,12 +156,16 @@ export function createFinder(ctx) {
   return {
     installed,
     /** Whether the finder's runtime (onnxruntime-node's native library) loads on this computer, checked
-     *  once: { ok: true } or { ok: false, error } — said before a 3.4 GB download that couldn't run (a
+     *  once: { ok: true } or { ok: false, error } — said before a 3.1 GB download that couldn't run (a
      *  Linux build once packed its library where it couldn't load, RESEARCH §13). */
     runtime() {
       runtimeCheck ??= (ctx.loadRuntime || (() => import("onnxruntime-node")))().then(
         () => ({ ok: true }),
-        (e) => ({ ok: false, error: String(e?.message || e).split("\n")[0] }),
+        (e) => {
+          const error = String(e?.message || e).split("\n")[0];
+          log.warning(`the part finder's engine (ONNX Runtime) didn't load: ${error}`); // Settings → Logs
+          return { ok: false, error };
+        },
       );
       return runtimeCheck;
     },
@@ -169,7 +174,8 @@ export function createFinder(ctx) {
     /** Remove the downloaded model (Settings → Storage): the GPU is let go first, then its folder. */
     async uninstall() {
       await releaseGpu();
-      rmSync(ctx.modelDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+      // async, with Node's retries: a held file never stalls the server
+      await rm(ctx.modelDir, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 });
     },
     /** Download the models (a job): `download` is the kit's streamDownload. */
     install: ({ download, onProgress, signal }) =>

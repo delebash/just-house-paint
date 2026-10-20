@@ -115,7 +115,7 @@ GO:     the user, verbatim: "fix we spots and anything else, do it all dont keep
         remove it" (the letter: dropped, above).
 DONE:   (each measured first, RESEARCH §13)
         - the dark-to-light grain: a dark finish (L* under 45) painted 15+ L* lighter loses its blotches and grain
-          along the boards, its board lines and shadows kept; stucco, brick and light walls unchanged (tint.js
+          along the boards, its board lines and shadows kept; stucco and light walls unchanged — running-bond brick's head joints soften (the fifth review) (tint.js
           calmFinish; tests; painting.md);
         - the gable medallions: a Decorations part ("decoration", only what lies on the house itself — no garden
           statue), painted the trim's color by a scheme;
@@ -123,9 +123,9 @@ DONE:   (each measured first, RESEARCH §13)
           fence's end board was painted as trim on house3); existing installs at the old defaults get the new
           parts list, priority and scheme roles (previous_defaults.js); a house found before needs Find the parts
           again (keeping hand changes) to gain them;
-        - the AI photo names the other programs that held the graphics card while it drew (over
+        - the AI photo names the other programs that held the graphics card when it started (over
           `aiphoto.sharedGpuNoteMb`, 1024 by default, in General) — was in IDEAS;
-        - parts stay on THIS house: the house rule uses the main house and what touches it, not every house in
+        - parts stay on THIS house: the house rule uses the main "house" instance alone, not every house in
           the photo (the obstruction set: a neighbor's windows, doors and soffits were painted — c02, c04, c07);
         - the packaged app is started on every release runner before anything is attached (the template's
           scripts/start-packaged.js and workflow step, the guard checks it).
@@ -145,7 +145,7 @@ FIXED (2026-10-19): sharp and onnxruntime-node unpacked (sharp's documented Elec
         blocked by AppArmor — fixed by the static AppImage runtime (toolsets.appimage 1.0.3); the sandbox is electron-builder's
         AppImage launcher's to drop (it adds --no-sandbox when user namespaces are blocked — a kit switch first added for
         it was removed, dry run 39350710161 green without it). The release now publishes only after every runner's start check
-        and the Ubuntu 24.04 check pass. Dry run 39342556107: all five jobs pass (Windows 3.6 s, macOS 8.1 s, Linux 3.5 s,
+        and the Ubuntu 24.04 check pass. Dry runs 39350710161, 39352939681, 39354783277 (no kit switch): all five jobs pass (Windows 3.6 s, macOS 8.1 s, Linux 3.5 s,
         the AppImage on 24.04 2.8 s; the part finder's runtime loads on all).
 REVIEWS (2026-10-19, independent agents, each finding checked and settled): the first — margin 0 dropped onHouse; a
         Texture step re-did the calming (~0.6 s); soft edges uncalmed; docs claiming more than the code; the note's
@@ -171,8 +171,8 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         HEIF brands taken for HEIC; the install card's size words where nothing installs; the photo started after an
         install while the card was busy; the tooltip naming the wrong reason; two screens missing from the help — all
         fixed, with tests.
-NEXT (mine, in this order): the obstruction test set's other 17 photos (paused for JustVoice's render) and what it shows;
-        the review's findings; then, only when nothing is open, the release.
+NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
+        the installed 0.1.2 updating to it (the silent Restart now).
 
 ## Wide-color photos — the most accurate colors [2026-10-18]
 ASKED:  the user, verbatim: "the orignal picture is different color from one uploaded in our current dev app, why";

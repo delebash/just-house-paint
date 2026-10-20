@@ -3,7 +3,7 @@
 // of the database and the houses' files, a restore puts both back, a reset returns the first-run
 // state — keeping the access tokens, so a reset never opens an exposed server.
 import { existsSync, readdirSync } from "node:fs";
-import { beforeEach, expect, test } from "vitest";
+import { beforeEach, expect, test, vi } from "vitest";
 import { createApp } from "../src/app.js";
 import { getDb, getState } from "../src/app_state.js";
 import { seedWorkspace } from "../src/database/seed.js";
@@ -13,6 +13,22 @@ import { jpeg } from "./domain_helpers.js";
 import { testClient, tmpDir, useHermeticKit } from "./helpers.js";
 
 useHermeticKit();
+
+// what the reset had put back when it began removing the houses' files (the slow, yielding part)
+const atRemoval = vi.hoisted(() => ({ auth: undefined, seeded: undefined }));
+vi.mock("../src/files.js", async (importOriginal) => {
+  const real = await importOriginal();
+  return {
+    ...real,
+    async removeAllHouseDirs(...args) {
+      const { getDb: db } = await import("../src/app_state.js");
+      const { getSetting: read } = await import("../src/database/settings.js");
+      atRemoval.auth = read(db(), "auth");
+      atRemoval.seeded = read(db(), "designs.maxPerHouse");
+      return real.removeAllHouseDirs(...args);
+    },
+  };
+});
 
 let client;
 beforeEach(async () => {
@@ -67,6 +83,9 @@ test("reset returns the first-run state but keeps the access tokens", async () =
   expect((await client.get("/v1/settings", auth)).json()["designs.maxPerHouse"]).toBe(30); // reseeded
   expect((await client.get("/v1/prefs", auth)).json()).toEqual({});
   expect(getSetting(getDb(), "auth").tokens).toEqual(["still-here"]);
+  // the tokens and the seed were back before the files' removal began (other requests run meanwhile)
+  expect(atRemoval.auth?.tokens).toEqual(["still-here"]);
+  expect(atRemoval.seeded).toBe(30);
   // the AI stack was reseeded too
   expect((await client.get("/v1/llm-providers", auth)).json().providers.length).toBeGreaterThan(0);
 });

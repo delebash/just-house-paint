@@ -9,7 +9,7 @@ import { Hono, input } from "@delebash/core/platform";
 import { ApiError, notFound } from "@delebash/core/platform/errors";
 import { addRender, deleteRender, getDesign, getHouse, getRender, listParts, listRenders } from "../database/houses.js";
 import { paintsById } from "../database/paints.js";
-import { renderPath } from "../files.js";
+import { removeHouseFile, renderPath } from "../files.js";
 import { AiPhotoIn, IdParams } from "../schemas/houses.js";
 import { getState } from "../app_state.js";
 
@@ -116,11 +116,12 @@ export function router(ctx = getState()) {
     return c.body(readFileSync(file), 200, { "Content-Type": "image/png", "Cache-Control": "no-cache" });
   });
 
-  app.delete("/v1/renders/:id", input({ params: IdParams }), (c) => {
+  app.delete("/v1/renders/:id", input({ params: IdParams }), async (c) => {
     const r = getRender(ctx.db, c.req.valid("param").id);
     if (!r) throw notFound(`no AI photo ${c.req.valid("param").id}`);
-    rmSync(renderPath(ctx.dataDir, r.houseId, r.file.replace(/\.png$/, "")), { force: true });
     deleteRender(ctx.db, r.id);
+    // the AI photo is gone; a file Windows still holds is left, never a row without its picture
+    await removeHouseFile(renderPath(ctx.dataDir, r.houseId, r.file.replace(/\.png$/, "")));
     return c.body(null, 204);
   });
 

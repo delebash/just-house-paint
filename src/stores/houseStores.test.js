@@ -90,6 +90,9 @@ describe("runServerJob", () => {
     });
     await expect(runServerJob({ start: async () => ({ id: "j3", state: "cancelled" }), feature: "x", label: "x" })).rejects.toMatchObject({ name: "AbortError" });
     expect(jobError({ error: null }).status).toBe(500);
+    // the server's title for what failed is the screen's heading; its words the detail
+    const err = jobError({ error: { message: "sd-cli failed (exit 3)", status: null, title: "The AI photo didn't finish" } });
+    expect(err.problem).toEqual({ title: "The AI photo didn't finish", detail: "sd-cli failed (exit 3)" });
   });
 });
 
@@ -108,6 +111,17 @@ describe("the houses store", () => {
     answer("DELETE /v1/houses/c", null);
     await s.remove("c");
     expect(s.items.map((h) => h.id)).toEqual(["b", "a"]);
+    // already gone (another window, a second click): what was asked, not an error
+    answer("DELETE /v1/houses/b", () => {
+      throw Object.assign(new Error("Not Found"), { status: 404 });
+    });
+    await s.remove("b");
+    expect(s.items.map((h) => h.id)).toEqual(["a"]);
+    answer("DELETE /v1/houses/a", () => {
+      throw Object.assign(new Error("the disk"), { status: 500 });
+    });
+    await expect(s.remove("a")).rejects.toMatchObject({ status: 500 });
+    expect(s.items.map((h) => h.id)).toEqual(["a"]);
   });
 });
 

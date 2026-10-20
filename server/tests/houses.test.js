@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 // /v1/houses, /v1/designs, /v1/jobs and the parts routes (app-structure §18: each route's happy
 // path, one 422 from its schema, one refusal).
-import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import sharp from "sharp";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { nameFromFile } from "../src/api/houses_api.js";
 import { isHeic } from "../src/images.js";
 import { createHouse } from "../src/database/houses.js";
-import { addingHouseDir, maskPath, removeHouseDir, sweepHouseDirs } from "../src/files.js";
+import { addingHouseDir, maskPath, removeAllHouseDirs, removeHouseDir, sweepHouseDirs } from "../src/files.js";
 import { fakeFinder, jpeg, makeServer } from "./domain_helpers.js";
 
 let s;
@@ -90,10 +90,10 @@ describe("houses", () => {
 
   test("a reset's old houses folder left beside the data (held) goes at the next start", async () => {
     s = makeServer();
-    const aside = path.join(s.dataDir, "houses.removed-1760000000000");
-    mkdirSync(path.join(aside, "some-house"), { recursive: true });
+    const left = ["houses.removed-1760000000000", "houses.replaced-1760000000001", "houses.restoring-1760000000002"];
+    for (const name of left) mkdirSync(path.join(s.dataDir, name, "some-house"), { recursive: true });
     await sweepHouseDirs(s.dataDir, []);
-    expect(existsSync(aside)).toBe(false);
+    for (const name of left) expect(existsSync(path.join(s.dataDir, name))).toBe(false);
   });
 
   test("a photo being added leaves no folder behind if its house never got written", async () => {
@@ -105,6 +105,27 @@ describe("houses", () => {
     expect(existsSync(path.join(s.dataDir, "houses", "half-added"))).toBe(false);
     // a house added in full carries no mark
     expect(existsSync(path.join(s.dataDir, "houses", house.id, ".adding"))).toBe(false);
+  });
+
+  test("the add route marks the folder before the photo: a refused add Windows holds leaves it marked", async () => {
+    s = makeServer({ removeHouseDir: async () => false }); // the cleanup held
+    const heic = Buffer.concat([Buffer.from([0, 0, 0, 24]), Buffer.from("ftypheic", "latin1"), Buffer.alloc(64)]);
+    expect((await s.upload(heic, "IMG_0002.HEIC")).status).toBe(415);
+    const left = readdirSync(path.join(s.dataDir, "houses"));
+    expect(left).toHaveLength(1);
+    expect(existsSync(path.join(s.dataDir, "houses", left[0], ".adding"))).toBe(true); // so the next start takes it
+    expect(await sweepHouseDirs(s.dataDir, [])).toBe(1);
+  });
+
+  test("a reset whose houses folder is held removes the houses one by one", async () => {
+    s = makeServer();
+    await s.upload(await jpeg(100, 80));
+    await s.upload(await jpeg(100, 80));
+    const held = () => {
+      throw Object.assign(new Error("operation not permitted"), { code: "EPERM" });
+    };
+    expect(await removeAllHouseDirs(s.dataDir, { rename: held })).toBe(true);
+    expect(readdirSync(path.join(s.dataDir, "houses"))).toEqual([]);
   });
 
   test("only a folder a held removal marked is swept at start, and only when its house is gone", async () => {

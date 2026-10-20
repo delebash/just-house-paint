@@ -2,11 +2,11 @@
 // /v1/houses/:id/parts — the parts the finder found (or the user drew): their masks, finding them
 // (a job), a box whose contents move into a part, a mask fixed by the brush, a part added by hand.
 
-import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { Hono, input, uploadLimit } from "@delebash/core/platform";
 import { conflict, notFound, RequestValidationError } from "@delebash/core/platform/errors";
 import { getHouse, getPart, listParts, replaceParts, updatePartMask } from "../database/houses.js";
-import { maskPath } from "../files.js";
+import { maskPath, removeHouseFile } from "../files.js";
 import { maskToPng, pngToMask } from "../images.js";
 import { BoxIn, FindPartsIn, IdParams, PartNew, PartParams } from "../schemas/houses.js";
 import { area, assignRegion, subtractRegion } from "../shared/masks.js";
@@ -71,7 +71,7 @@ export function router(ctx = getState()) {
       const parts = replaceParts(ctx.db, house.id, rows);
       // the outlines of parts not found this time go with their rows (a smaller folder and backup)
       const stays = new Set(rows.map((r) => r.key));
-      for (const p of before) if (!stays.has(p.key)) rmSync(maskPath(ctx.dataDir, house.id, p.key), { force: true });
+      for (const p of before) if (!stays.has(p.key)) await removeHouseFile(maskPath(ctx.dataDir, house.id, p.key));
       return { parts: parts.length, kept: kept.length };
     });
     return c.json(job, 202);

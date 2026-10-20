@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // The job registry's states, and the graphics card's one-at-a-time gate (jobs.js).
 import { expect, test } from "vitest";
+import { ApiError } from "@delebash/core/platform/errors";
 import { assertGpuFree, JobRegistry } from "../src/jobs.js";
 
 const settle = async (jobs, id) => {
@@ -15,6 +16,18 @@ const stopsOnSignal = ({ signal }) =>
     if (signal.aborted) stop();
     else signal.addEventListener("abort", stop);
   });
+
+test("a failed job names what failed: the refusal's own title, else the job's", async () => {
+  const jobs = new JobRegistry();
+  const raw = jobs.start({ kind: "aiphoto", key: "h1", failTitle: "The AI photo didn't finish" }, async () => {
+    throw new Error("sd-cli failed (exit 3)");
+  });
+  expect((await settle(jobs, raw.id)).error).toEqual({ message: "sd-cli failed (exit 3)", status: null, title: "The AI photo didn't finish" });
+  const refused = jobs.start({ kind: "aiphoto", key: "h2", failTitle: "The AI photo didn't finish" }, async () => {
+    throw new ApiError(409, "models-missing", "The AI photo isn't installed", "install it first");
+  });
+  expect((await settle(jobs, refused.id)).error).toMatchObject({ status: 409, title: "The AI photo isn't installed" });
+});
 
 test("work that returned is done — a Cancel that came while it was saving doesn't call it cancelled", async () => {
   const jobs = new JobRegistry();

@@ -4,7 +4,7 @@
 // so a color click repaints at once, and only a changed mask or texture is prepared again.
 // Pure over arrays: the page hands it ImageData pixels and masks, and draws what it returns.
 
-import { applyLight, chipDeltaE, lightGain, litHex, luminance, partTones, preparePart, tintPhoto } from "./tint.js";
+import { applyLight, chipDeltaE, lightGain, litHex, luminance, partTones, photoExposure, preparePart, tintPhoto } from "./tint.js";
 
 const hex2 = (v) => v.toString(16).padStart(2, "0");
 const median = (values) => {
@@ -30,12 +30,13 @@ const MEDIAN_SAMPLES = 20_000;
 
 export function createPainter({ rgba, width, height }) {
   const Y = luminance(rgba);
+  const exposure = photoExposure(Y);
   const parts = new Map(); // key → { mask, texture, prepared }
 
   const prepared = (key) => {
     const p = parts.get(key);
     if (!p) return null;
-    p.prepared ??= preparePart({ Y, mask: p.mask, width, height, texture: p.texture, calmY: p.calmY });
+    p.prepared ??= preparePart({ Y, mask: p.mask, width, height, texture: p.texture, calmY: p.calmY, exposure });
     return p.prepared;
   };
   // a part's light from the paint it has now, kept until its mask or that paint changes

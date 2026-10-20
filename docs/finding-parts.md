@@ -23,8 +23,9 @@ and takes its glass out. The glass is **Windows**, which stays as it is. A
 scheme paints it the trim's color; give it its own on the **Colors** tab — black window trim on a
 white house, say.
 
-**Decorations** are the medallions, vents and other ornaments on the walls — a round medallion in a
-gable, say. Only what lies on the house counts: a garden statue or a wreath in front of it doesn't.
+**Decorations** are the medallions and other ornaments on the walls — a round medallion in a gable,
+say. Only what lies on the house counts: a garden statue in front of it doesn't (an ornament hung on
+a wall or a door can).
 A scheme paints them the trim's color; give them their own on the **Colors** tab.
 
 ## The first time: installing the part finder
