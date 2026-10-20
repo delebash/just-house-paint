@@ -1393,6 +1393,44 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         given their own types; an unknown model refused for load or download (404); list-files and inspect check the
         repo as the catalog does and encode it; gpu-processes kept 5 s. Kept, argued: FastAPI's 404 shape; the
         adapter's empty 400s and its Range quirks (the library's, on loopback; no harm); no compression (loopback).
+        The twentieth's attack on the nineteenth's code (kit 7680aca, app 59c6afb; an agent's, the scratchpad's adv20):
+        1 security, 0 data lost, 0 breaks, 6 wrong, 12 small. Security — a page on any other loopback port still gets a
+        full backup: every http://127.0.0.1:<port> page is same-site to the server, and an <img> or no-cors fetch
+        arrives site=same-site with no Origin (measured in Electron 44), which csrf.js lets through. Wrong — a restore
+        too big for the drive shows "Failed to fetch" (the 413 is answered without reading the rest, the connection
+        reset; Electron's fetch rejects); the window that restores or resets reloads itself as "replaced in another
+        window" (the epoch changes before the answer and its own 3 s poll sees it — the "Restored" toast and the reset
+        settings' words lost); restored settings skip the Settings screen's meaning checks (kinds [], a 1e400, a minus
+        naming a missing part all restore); 422s whose words moved into errors[] lose them on screens that only toast
+        (the empty palette: "Request body failed validation"; the Server panel's token, the AI Lab catalog form); the
+        swatch readers' own warnings one per swatch (400 swatches: 21,091 characters); the catalog PUT refuses a repo
+        with a trailing space or a full URL the form's own listing takes, in the same opaque words. Small — 13 names of
+        only invisible characters accepted (U+3164, U+00AD, U+200E, U+FE0F, U+E0041, U+2800…), "Blue" duplicated with a
+        soft hyphen; NFC lengthening a name past its limit (60 × U+0958 stored as 120); a name stored before the rule
+        renamed to itself refused when a twin exists; "swatchs"; importers.js's doc comment on the wrong function;
+        en.json's logsHint indented wrong; prefs capped per patch only (three patches: GET 36.9 MB; a 5,000,000-character
+        key); a restored AI photo with an unsafe file name answers 500 to GET and DELETE; paints.autoLoad has no screen
+        label; a Find still answering after the hex box changed shows the old color's matches as "near" the new one; Find
+        again with Install off still says "install it" and moves no focus; the drive's room read once per upload. Held —
+        the desktop window's fetches, EventSource and fonts carry Origin app://; the main process's fetches pass; the
+        phone's origins allowed; every encoded /v1 form refused; earlier defaults all fit today's schemas; Clear models
+        through junctions removes only the rows' own files; the toast tokens; the 409/410/412 words.
+        Their fixes — decided (mine, argued): a same-site request is treated as cross-site (refused without an allowed
+        Origin, unless a navigation to the UI) — on loopback every port is one site, so same-site proves nothing (the app's
+        own fetches carry their Origin, the headless UI is same-origin; NOT STANDARD against web.dev's resource
+        isolation policy, which passes same-site — measured, kit RESEARCH); a restore past the room or the size limit
+        reads the rest of the upload and drops it (counted, not written — up to the upload limit), then answers 413 or
+        507 so the page shows the words, and a drive filling mid-upload the same; the restoring or resetting window
+        knows its own change (the epoch carries the id of the window that made it, and a window ignores its own); a
+        restored setting runs the same meaning checks as Settings, one that fails set back to its default and named;
+        the kit's errorMessage shows errors[]'s words when the detail is the generic sentence (every screen at once);
+        the swatch readers' warnings grouped as the import's left-out rows are; the catalog PUT trims the repo and
+        takes a Hugging Face URL as the listing does; names: Unicode's Default_Ignorable_Code_Point (with the braille
+        blank) ignored for comparison and refused alone, and the length checked after NFC; a rename to the record's
+        own name always allowed; prefs capped in total after the merge (64 KB, 200 keys) and a key at 200
+        characters; a backup's AI photo file names checked as its house ids are, and an unsafe one answered 404 and
+        removable; paints.autoLoad labelled; the hex box's typing starts a new match; Find again with Install off
+        says why (installing, not read yet, blocked) and focuses the card. The typos and the indent fixed.
 NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
         the installed 0.1.2 updating to it (the silent Restart now).
 
