@@ -28,7 +28,7 @@
     "devHint": "Development: `npm run dev` starts it, or run it yourself with `npm run server`, then retry.",
     "portTaken": "Another program is using port {port}. Close it, then press {retry}.",
     "portOtherUser": "Another person signed in to this computer has the app open, on port {port}. One copy runs at a time: they can quit theirs (its tray icon), then press {retry}.",
-    "portReserved": "Windows has reserved port {port} for another use (Hyper-V, WSL or Docker), so the app can't use it.",
+    "portReserved": "Windows has reserved port {port} for another use (Hyper-V, WSL or Docker), so the app can't use it. Restarting the computer usually frees it; Troubleshooting in the help says how to keep it free.",
     "serverError": "Its server stopped as it started: {error}"
   },
   "notFound": {
@@ -486,6 +486,11 @@
     "install": "Install ({size})",
     "installPlain": "Install",
     "installing": "Installing…",
+    "noRoom": {
+      "title": "Not enough room on the drive",
+      "detail": "This needs {need} on the drive of the app's data folder, which has {free} free — make room, or move the data folder to a bigger drive (Settings → Storage).",
+      "nothing": "nothing"
+    },
     "finder": {
       "title": "Install the part finder",
       "body": "The part finder outlines the body, the trim, the doors and the rest of the house on your photo. It runs on this computer: a one-time download of {size}.",
@@ -506,6 +511,7 @@
       "unavailable": "The AI photo's engine has no build for this computer's system and processor, so it can't be installed here.",
       "needs": {
         "macos": "The AI photo's engine needs macOS {need} or later, and this Mac has macOS {have}: update macOS to use it. Nothing was downloaded.",
+        "macosUnknown": "The AI photo's engine needs macOS {need} or later: update macOS to use it. Nothing was downloaded.",
         "glibc": "The AI photo's engine needs a Linux with glibc {need} or later (Ubuntu 24.04 and newer), and this one has glibc {have}. Nothing was downloaded.",
         "glibcNone": "The AI photo's engine needs a Linux with glibc {need} or later (Ubuntu 24.04 and newer), and this one has none. Nothing was downloaded."
       }

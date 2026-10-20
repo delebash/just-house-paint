@@ -30,12 +30,17 @@
   network, and one that ended while the computer slept shows its result when it wakes; a token removed in
   **App Settings → Server** brings the window to the token page.
 - **On a small screen** the window is never taller or wider than the screen.
+- **Change folder…** (**App Settings → Storage**) copies the data into a new folder for the app inside the one you
+  pick, checks the copy and only then switches — your old folder is left whole. Storage shows the old copy and its
+  size, with **Remove the old copy** (it says so first if the old copy was used after the move). Quitting waits
+  while the data copies; a folder inside the app's own folder, which an update replaces, is refused; **Move back
+  to the default folder** returns it; an access token you use on this computer comes along. When
+  `JUST_HOUSE_PAINT_DATA_DIR` names the folder, Storage says to change it there.
 - **On more computers**: the part finder and the AI photo say what a computer lacks before anything downloads —
   Microsoft's Visual C++ runtime (with its link), macOS 26 or a newer Linux for the AI photo, room on the drive,
-  enough memory — and an engine an antivirus damaged says so instead of failing; **Change folder…** works on
-  Windows (it moves the data into a new folder for the app inside the one you pick, one move at a time, without
-  freezing the window); a data folder on a USB stick or a network drive that isn't there is said at start, with
-  **Use the default folder** for that time only; behind most company
+  enough memory — and an engine an antivirus damaged says so instead of failing; a data folder on a USB stick or
+  a network drive that isn't there is said at start, with **Use the default folder** for that time only (and
+  **Use the default folder from now on** in **App Settings → Storage**); behind most company
   networks' proxies and certificates, downloads and brand lists work; two people signed in to one computer no longer
   stop each other's app; the photo stays sharp moved to another screen; a pen or a finger draws one stroke at a
   time; a comma works as the decimal point; paint search ignores accents; a saved picture's file name never holds
@@ -65,9 +70,19 @@
   and pick one as it lands; a design name the house already has is shown under the name; an iPhone's
   HEIC photo gets words that say what to do; a failed AI photo, download or search says which.
 - **By keyboard**: a ring shows where you are; the paint colors are one stop for Tab (the arrow
-  keys move between them); the arrow keys move a zoomed photo; what is selected is said to a screen
-  reader; why **AI photo** is off shows beside it; the outlines and the brush show on a white house
-  too; hints and muted text are easier to read.
+  keys move between them); the arrow keys move a zoomed photo; with **Box** or **Pick a color** chosen they
+  move a crosshair on the photo and **Enter** sets a box's corners or reads the color; the arrow keys pick in
+  a row of choices (**Tool**, **Outlines**); **Tab** closes a menu; the help's text scrolls with the keys;
+  what is selected is said to a screen reader, and so are messages and finished work; every field and icon
+  button has its name; why **AI photo** is off shows beside it; the outlines and the brush show on a white
+  house too; hints and muted text are easier to read.
+- **A box with two clicks** — one corner, then the other — as well as a drag; once the photo is zoomed, arrow
+  buttons beside **+**, **−** and **Fit** move it.
+- **Easier to see**: in the dark theme, the text on buttons and on warnings; the edges of fields; which choice is
+  chosen in a row of choices (**The new color | On it now**); slow-computer notes as warnings, not errors; a long
+  path wraps; the Compare slider has its label (**Line**); the side panel opens each tab at its top.
+- **Number boxes** take what you type as you type it — ".7", "15.", "1 500", a comma as the decimal point — and a
+  number that isn't allowed stays in the box with what's wrong, never erased.
 - **Safer on your network**: a web page open in your browser can't read or change the app's server
   any more; a backup no longer holds the access tokens, and a restore keeps this computer's own (and
   its engines' settings). See [On another computer, or without a window](getting-started.md#on-another-computer-or-without-a-window)

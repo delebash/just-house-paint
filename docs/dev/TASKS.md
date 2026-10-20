@@ -722,6 +722,52 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         unit (the kit's one formatter); macOS's version said only when known; every help word as on screen,
         troubleshooting with each connection reason and its remedy, Reset Just House Paint and Load the colors in the
         help.
+        The shell's fixes made (an agent's; not yet committed): the old folder stays whole — the move copies (sizes
+        checked, each file fsynced), commits the pointer (fsync, renameHeldSync, the folder fsynced off Windows) or
+        removes its copy and says why; the old copies recorded in the new root, Storage's Remove the old copy takes
+        only what the move copied, never a folder in use; the next start's cleanup gone; the app's own folder (a Mac
+        bundle) refused, the default allowed (the pointer dropped), moving back onto a default still holding its old
+        copy refused by name; a start under way checked again before its fork, the move waiting up to 60 s for it (the
+        reviewer's race: 1 fork, not 2); verbatimSymlinks (asserted; a real link unverified here — no symlink right);
+        Quit held while copying (window, tray, before-quit, Restart now), a half copy removed at the next start only
+        when the pointer doesn't name it; the token carried (`<new>/electron/carried.json`, read once at the relaunch,
+        the first page opened with ?token=); `sameFileTime` (2 s) in the finder's and the AI photo's file checks; a
+        lost lock reloads the window to its reason; loopback never proxied (platform/no_proxy.js — the reviewer's
+        script now "status 200: direct"); partBytes by allocated blocks and only the install's downloads; the move's
+        question names the apps sharing the models and the folder it makes; "Use the default folder from now on";
+        on a coarse-time drive the lock in `<temp>/just-locks/` (70 s on FAT-like times: 0 lost — the reviewer's 3);
+        EFBIG and the rest in words. The guard: launchers' # / rem / :: comments stripped, NODE_USE_SYSTEM_CA=1
+        required; JustWrite's three false positives gone (publish's list form, git-ignored files, a clock tick); a new
+        check that the server's required peers are installed (a peer counts when any package of the server's packed
+        tree declares it — strict, it failed on hono, which the kit declares beside @hono/node-server). Kit core 1349,
+        ui 51, template 48 + 54, app server 435. Open from it: JustWrite, JustVoice and docgen have no Remove the old
+        copy (their sessions told); a data folder set by the variable or --data-dir still lets Change folder write a
+        pointer the next start ignores — to fix: Change folder off there, saying where the folder is set.
+        The kit's screen fixes made (an agent's; not yet committed): UiField names its input (a mounted test with
+        dom-accessibility-api); the help's text a named region focused on open; dark --on-accent #1a1a1a (5.61 on the
+        accent, 5.24 on the danger at the worst hue; the appearance engine moves only the hue — light white stays,
+        4.89 / 4.86), solid danger/success/info buttons on --on-accent, dark hover lightening (6.18+); --danger-ink
+        (5.83 light, 5.53 dark on its banner), --info-ink (6.94 / 7.71); --border-field #8a867f / #787c78 (3.21+ /
+        3.25+); the chosen segment shown (6.29 / 6.70, edge 4.69 / 5.24) and picked on arrows; v-tooltip names a
+        nameless control, link, image or role-bearing element (never a plain div) and adds no description equal to
+        the name — the AI page's radiogroup, provider icons, warm-start switch, Back, Forward and the AI status
+        button named; @react-aria/live-announcer NOT used — since 3.5 it needs React (3.4.4 the last React-free) — the
+        same pattern in the kit (common/services/announce.js: one polite and one assertive log made at start), each
+        toast announced and carrying no role, the task strip's bar a progressbar, a task's start and end announced
+        once from the task store; AiTaskStack's region always there but not live (its seconds tick every half
+        second — the announcer says start and end): kept, argued; UiBanner wraps, its links in its ink, a warning
+        intent (the install card's slow and low-memory notes use it); the tabs' ring inset; isolate() only for a name
+        of the other direction (Google Closure's goog.i18n.bidi ranges, Apache notice in the file and NOTICE.md);
+        Settings' and the AI page's tabs real tabs wired to their panels; UiMenu closes on Tab (ids from useId — every
+        menu had ui-menu-1); the AI area one scroller, Logs and Updates none of their own, Advanced's JSON autogrow
+        (60vh cap); UiNumber on @internationalized/number's NumberParser 3.6.9 (".7", "5.", "15.", "+15", "1 500",
+        ",5", Unicode minus, Arabic digits; "1,5" in an English whole-number field still refused; a refused text kept
+        with its error); SyncPanel saves no empty box as 0; the disk-full words with the Install button's unit; macOS's
+        version only when known; the AI photo dialog's install card at --w-edit; PaneHeader's "?" with its actions;
+        the AI tasks' buttons named ("Run it again", "Dismiss"). Kit ui 52, template 50; the app's 10 tests that
+        expected the old marks and the stack's v-if to be updated (mine). Left to me: RESEARCH facts, the app's
+        NOTICE (Closure), the dedupe lists, a darker light --info (4.43 at hue 192), the peers' tests (the AI page's
+        tabs no longer links — docgen's smoke, JustWrite's headless smoke and probes) and tokens.
 NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
         the installed 0.1.2 updating to it (the silent Restart now).
 

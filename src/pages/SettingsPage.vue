@@ -42,7 +42,17 @@ import AdvancedSection from "../components/settings/AdvancedSection.vue";
 import GeneralSection from "../components/settings/GeneralSection.vue";
 import { LOCALE_CODES } from "../i18n/index.js";
 import { loadDoc } from "../services/helpDocs.js";
-import { desktopUpdater, pickDirectory, setKeepRunning, shellVersion, storageGetRoot, storageRelocate } from "../services/native.js";
+import {
+  desktopUpdater,
+  pickDirectory,
+  setKeepRunning,
+  shellVersion,
+  storageGetRoot,
+  storageOldCopies,
+  storageRelocate,
+  storageRemoveOldCopy,
+  storageUseDefault,
+} from "../services/native.js";
 import { SETTINGS_SECTION_IDS } from "../services/settingsSections.js";
 import { useUiStore } from "../stores/ui.js";
 
@@ -81,7 +91,14 @@ async function keepRunning(v) {
 }
 // Storage: the shell's folder calls (each answers null outside the desktop app), and this app's own
 // rows' action — Remove an engine (the part finder or the AI photo); Install brings it back.
-const storageShell = { getRoot: storageGetRoot, pickDirectory, relocate: storageRelocate };
+const storageShell = {
+  getRoot: storageGetRoot,
+  pickDirectory,
+  relocate: storageRelocate,
+  oldCopies: storageOldCopies,
+  removeOldCopy: storageRemoveOldCopy,
+  useDefault: storageUseDefault,
+};
 async function removeEngine(kind, usage, run) {
   const size = fmtBytes(usage?.extras?.[kind]) || "0 MB";
   const yes = await confirmDialog({

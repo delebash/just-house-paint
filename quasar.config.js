@@ -60,7 +60,7 @@ export default defineConfig(() => {
         viteConf.resolve.dedupe = [
           ...(viteConf.resolve.dedupe || []),
           'vue', 'quasar', '@floating-ui/dom', 'pinia', 'vue-router', 'vue-i18n', 'marked',
-          '@vueuse/core'
+          '@vueuse/core', '@internationalized/number'
         ]
         viteConf.server = viteConf.server || {}
         // Never watched: the server, the development data folder (Chromium keeps its files
@@ -178,13 +178,18 @@ export default defineConfig(() => {
           onlyLoadAppFromAsar: true,
           grantFileProtocolExtraPrivileges: false
         },
+        // one architecture per Mac runner (arm64 on macos-latest). An app that ships `arch: ['universal']`
+        // also names in `mac.x64ArchFiles` the native binaries that are the same in both halves, which
+        // @electron/universal refuses otherwise — koffi's and better-sqlite3's prebuilds ship every CPU's:
+        // '**/node_modules/{@koromix/koffi-darwin-*,better-sqlite3/prebuilds}/**' (JustWrite, 2026-10-20)
         mac: {
           category: 'public.app-category.productivity',
           extraResources: [ { from: path.join(root, 'build', 'launcher'), to: '.', filter: [ '!*.cmd' ] } ],
           files: [ '!**/node_modules/onnxruntime-node/bin/napi-v6/{linux,win32}/**' ]
         },
         // the AppImage; a .deb also needs `linux.maintainer` ("name <email>", published in the package)
-        // — add it, and 'deb' to the targets, with the address the app's owner wants public
+        // and `homepage` in package.json (electron-builder stops on "Please specify project homepage" —
+        // JustWrite, 2026-10-20) — add both, and 'deb' to the targets, with what the app's owner wants public
         linux: {
           target: [ 'AppImage' ],
           category: 'Office',

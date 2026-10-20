@@ -1,8 +1,21 @@
 # Troubleshooting
 
-**"Can't reach the Just House Paint server".** The app's server isn't running, or its port (17499) is taken by
-another program — the screen says which when it knows. The desktop app starts the server itself:
-the tray's **Restart server** starts it again and **Open log file** shows why it stopped.
+**"Can't reach the Just House Paint server".** The app's server isn't running, or its port (17499) is taken —
+the screen says which when it knows:
+
+- **Another program is using port 17499** — close that program, then press **Retry**.
+- **Another person signed in to this computer has the app open** — one copy runs at a time on a computer: they
+  quit theirs (its tray icon, **Quit**), then press **Retry**.
+- **Windows has reserved port 17499** (Hyper-V, WSL or Docker reserve ranges of ports at start) — restarting
+  the computer usually frees it. `netsh int ipv4 show excludedportrange protocol=tcp` lists the reserved
+  ranges. To keep the port free for the app, open a Command Prompt as administrator and run `net stop winnat`,
+  then `netsh int ipv4 add excludedportrange protocol=tcp startport=17499 numberofports=1 store=persistent`,
+  then `net start winnat`, and restart the computer.
+- **Its server stopped as it started** — the words after it say why; **Open log file** in the tray shows the
+  rest.
+
+The desktop app starts the server itself: the tray's **Restart server** starts it again and **Open log file**
+shows why it stopped.
 Started on its own, the command is `just-house-paint-server serve` — where it is on each system:
 [On another computer, or without a window](getting-started.md#on-another-computer-or-without-a-window)
 (`npm run server` from a source checkout).
@@ -16,12 +29,14 @@ this computer too** is on and its window has none (the window that turns it on k
 
 **Another copy is already running.** One server per data folder: a second one says that another
 Just House Paint server is using this data folder. Quit the other copy (the tray's **Quit Just House Paint**), or
-give the second one its own `--data-dir`. The desktop app is the exception: opening it stops a server
-started on its own on its usual port (17499) and takes over — what that server was doing stops.
+give the second one its own `--data-dir` (a folder that already exists — one that isn't there is refused, never
+made). The desktop app is the exception: opening it stops a server started on its own on its usual port (17499)
+and takes over — what that server was doing stops. If another server takes over the desktop app's folder while
+it runs, the window reloads and says so.
 
 **"Suggest schemes" fails.** No AI is set up yet: open **AI Settings** and run Quick Setup, or add
 an online provider and make it the default. The **AI tasks** panel keeps the failed request with
-its reason and **Retry**. "Find the parts first" means the house has no parts yet: the AI reads
+its reason and **Run it again**. "Find the parts first" means the house has no parts yet: the AI reads
 the house's colors from them.
 
 **"The graphics card is busy".** An AI photo is being drawn, a house's parts are being found, or AI
@@ -80,11 +95,21 @@ Change folder…**).
 **"The data folder … can't be used".** The folder the app keeps its data in isn't there (a USB drive unplugged, a
 network folder offline, the folder renamed) or can't be written. Plug it back in and press **Try again**. **Use the
 default folder** opens the app on its default folder this time only — your data stays where it is, and the app
-asks again at its next start. When choosing a folder (**Change folder…**), one whose path would be over 180
-characters, or whose name ends in a dot or a space, is refused.
+asks again at its next start. If that folder is gone for good, **App Settings → Storage → Use the default folder
+from now on…** stops the question (nothing in the old folder is touched). When choosing a folder (**Change
+folder…**), one whose path would be over 180 characters, or whose name ends in a dot or a space, is refused, and
+so is a folder inside the app's own folder.
 
-**"The data folder is already being moved".** A **Change folder…** is still copying: wait for it to finish (the
-app restarts on the new folder). Until then the app's server stays stopped.
+**"The data folder is already being moved"** or **"The data is being moved — quit when it's done".** A **Change
+folder…** is still copying: wait for it to finish (the app restarts on the new folder). Until then the app's server
+stays stopped, and the app can't be quit.
+
+**"The data couldn't be copied to …".** The move stopped and said why — "a file is bigger than its drive can hold"
+is a FAT32 drive (a USB stick, often), which takes no file over 4 GB: format it exFAT or NTFS, or pick another
+drive. Nothing changed: the app goes on with the data where it was.
+
+**"The old copy of the data is still in …".** **Move back to the default folder…** found the copy the earlier move
+left there: remove it first (**App Settings → Storage → Remove the old copy…**), then move back.
 
 **"Not a photo" for an iPhone's HEIC photo.** The app reads JPEG, PNG and WebP. Send or
 save the photo as JPEG, or set the iPhone to take JPEGs (**Settings → Camera → Formats → Most

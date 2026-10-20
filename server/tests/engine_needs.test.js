@@ -134,6 +134,33 @@ describe("the AI photo says what this computer lacks, before the download", () =
     expect((await s.app.request("/v1/segment/install", { method: "POST" })).status).toBe(202);
   });
 
+  // the fifteenth review (2026-10-20): partBytes credited a sparse .part's full size (macOS, Linux) and any leftover
+  test("only the install's own unfinished downloads count, at the room they take", async () => {
+    const { partBytes, partRoom } = await import("../src/api/engines_api.js");
+    const dir = mkdtempSync(path.join(os.tmpdir(), "hp-parts-"));
+    try {
+      writeFileSync(path.join(dir, "a.gguf.part"), Buffer.alloc(1000));
+      writeFileSync(path.join(dir, "old-build.zip.part"), Buffer.alloc(5000)); // a leftover: not fetched now
+      expect(partBytes([path.join(dir, "a.gguf"), path.join(dir, "b.gguf")])).toBe(1000); // written whole: its size
+      // a sparse 4 GiB file with 1 MiB written: what it takes on macOS/Linux, its size on Windows (allocated whole)
+      const sparse = { size: 4 * GiB, blocks: 2048 };
+      expect(partRoom(sparse, "linux")).toBe(1024 * 1024);
+      expect(partRoom(sparse, "darwin")).toBe(1024 * 1024);
+      expect(partRoom(sparse, "win32")).toBe(4 * GiB);
+      expect(partRoom({ size: 100, blocks: 8 }, "linux")).toBe(100); // never more than its size
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test("the AI photo's downloads are its models and this computer's engine zips", async () => {
+    const svc = aiphoto()();
+    const paths = await svc.downloadPaths();
+    for (const m of Object.values(SD_FILES)) expect(paths.some((p) => p.endsWith(`${path.sep}${m.file}`))).toBe(true);
+    const row = selectEngineAsset(ENGINE_RELEASES.pinned, { platform: process.platform, arch: process.arch, gpu: {} });
+    if (row) expect(paths.some((p) => p.endsWith(`${path.sep}.downloads${path.sep}${row.asset.name}`))).toBe(true);
+  });
+
   test("the finder's runtime not loading refuses its install too", async () => {
     s = makeServer({ aiphoto: aiphoto() });
     const real = s.ctx.finder.runtimeAnswer;

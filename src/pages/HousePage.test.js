@@ -550,7 +550,7 @@ test("an AI photo's row is named by what tells it apart: its design, when, and i
   await mountPage();
   await click(byText(".q-tab", "Designs"));
   const names = [...document.body.querySelectorAll(".designs__view")].map((r) => r.getAttribute("aria-label"));
-  expect(names[0]).toMatch(/^Open the AI photo: \u2068Blue body\u2069, .+, ΔE 1\.4$/);
+  expect(names[0]).toMatch(/^Open the AI photo: Blue body, .+, ΔE 1\.4$/);
   expect(names[1]).toMatch(/^Open the AI photo: Colors on screen, .+$/);
   expect(names[1]).not.toContain("ΔE");
   // no control inside another: a row's main action and its Delete are side by side
@@ -577,7 +577,7 @@ test("a row's buttons are never inside another button: the part's swatch, a desi
   expect(nestedControls()).toEqual([]);
   expect(byText(".designs__row", "Blue body").getAttribute("role")).toBe("listitem");
   // Rename opens its dialog and leaves the open design as it was
-  await click(byText(".designs__row", "Blue body").querySelector('[aria-label="Rename “\u2068Blue body\u2069”"]'));
+  await click(byText(".designs__row", "Blue body").querySelector('[aria-label="Rename “Blue body”"]'));
   expect(document.body.querySelector("#name-dialog-input")).not.toBeNull();
   expect(byText(".designs__open", "Blue body").hasAttribute("aria-current")).toBe(false);
 });
@@ -879,11 +879,11 @@ test("finding the parts shows its progress on the page — not twice in the glob
   await new Promise((r) => setTimeout(r, 450));
   await flushPromises();
   const strip = document.querySelector(".q-page .sts");
-  expect(strip?.textContent).toContain("Finding the parts of \u2068Main street\u2069");
+  expect(strip?.textContent).toContain("Finding the parts of Main street");
   // which part it is looking for now, as the percent goes up
   expect(strip?.textContent).toContain("Trim · 40%");
   expect(strip.querySelector(".sts-fill").style.width).toBe("40%");
-  expect(document.querySelector(".ai-task-stack")).toBeNull();
+  expect(document.querySelector(".ai-task-stack .sts")).toBeNull();
   // the button waits — off (aria-disabled, the kit's off look) but not `disabled`, which would drop
   // keyboard focus to the page's body while the job runs; a press meanwhile starts nothing
   const find = byText("button", "Find the parts again");
@@ -913,7 +913,7 @@ test("a page opened while its parts are being found follows the run: its progres
   await new Promise((r) => setTimeout(r, 450));
   await flushPromises();
   const strip = document.querySelector(".q-page .sts");
-  expect(strip?.textContent).toContain("Finding the parts of \u2068Main street\u2069");
+  expect(strip?.textContent).toContain("Finding the parts of Main street");
   expect(strip?.textContent).toContain("Trim · 40%");
   expect(server.calls).not.toContain("POST /v1/houses/h1/find-parts");
   expect(byText("button", "Find the parts again").getAttribute("aria-disabled")).toBe("true");
@@ -981,7 +981,7 @@ test("a page opened while its AI photo is being made follows it, and shows the p
   await mountPage();
   await new Promise((r) => setTimeout(r, 450));
   await flushPromises();
-  expect(document.querySelector(".q-page .sts")?.textContent).toContain("AI photo of \u2068Main street\u2069");
+  expect(document.querySelector(".q-page .sts")?.textContent).toContain("AI photo of Main street");
   expect(server.calls).not.toContain("POST /v1/houses/h1/aiphoto");
   server.holdAi = false;
   await settle();

@@ -47,8 +47,11 @@ async function save() {
 </script>
 
 <template>
-  <AppModal ref="modal" :title="t('aiPhoto.title')" max-width="1100px" @close="emit('close')">
-    <EngineInstallCard v-if="!render" kind="aiphoto" @installed="emit('installed')" />
+  <!-- As wide as what it holds: the install card's own width (--w-edit), the card filling it — an
+       1100 px dialog held an 880 px card (the screens-and-keyboard review, 2026-10-20); the AI photo
+       itself, the room a big picture needs. -->
+  <AppModal ref="modal" :title="t('aiPhoto.title')" :max-width="render ? '1100px' : 'var(--w-edit)'" @close="emit('close')">
+    <EngineInstallCard v-if="!render" kind="aiphoto" class="aiphoto__install" @installed="emit('installed')" />
     <template v-else>
       <p class="hint">{{ t("aiPhoto.note") }}</p>
       <img v-if="src" class="aiphoto__img" :src="src" :alt="t('aiPhoto.alt', { name: isolate(houseName) })" />
@@ -68,6 +71,10 @@ async function save() {
 </template>
 
 <style scoped>
+.aiphoto__install {
+  max-width: none;
+  margin-bottom: 0;
+}
 .aiphoto__shared {
   max-width: 60ch;
 }

@@ -2,7 +2,7 @@
 // Release-asset selection per platform (on GitHub API JSON) and the one-time installs, with a
 // fake download writing real zips (made by the kit's ZipWriter, unpacked by its extractZip).
 import { createHash } from "node:crypto";
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, utimesSync, writeFileSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, dirname, join } from "node:path";
@@ -324,6 +324,25 @@ describe("MODEL_FILES / ensureModels", () => {
     await ensureModels(dir, { download: serve(log), files });
     expect(log).toEqual(["llm", "vae"]);
     expect(readFileSync(join(dir, "llm.bin"))).toEqual(body.llm);
+  });
+
+  // the fifteenth review (2026-10-20): Change folder's copy keeps a file's time to the millisecond, NTFS to 100 ns —
+  // compared exactly, 9 GB were hashed again after every move; now within 2 s (the kit's sameFileTime)
+  test("a model whose time a copy moved by less than 2 s is known without hashing it again", async () => {
+    const dir = tmp();
+    await ensureModels(dir, { download: serve([]), files });
+    const manifest = JSON.parse(readFileSync(join(dir, ".aiphoto-models.json"), "utf8"));
+    const p = join(dir, "vae.bin");
+    writeFileSync(p, Buffer.alloc(body.vae.length, 7)); // the same size, other bytes: a hash would refuse them
+    const near = (manifest["vae.bin"].mtimeMs + 0.6) / 1000;
+    utimesSync(p, near, near);
+    const log = [];
+    await ensureModels(dir, { download: serve(log), files });
+    expect(log).toEqual([]);
+    const far = (manifest["vae.bin"].mtimeMs + 5000) / 1000;
+    utimesSync(p, far, far);
+    await ensureModels(dir, { download: serve(log), files });
+    expect(log).toEqual(["vae"]); // hashed, refused, fetched again
   });
 
   test("a download that never matches is refused", async () => {

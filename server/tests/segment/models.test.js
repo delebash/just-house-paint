@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 import { createHash } from "node:crypto";
 import { existsSync } from "node:fs";
-import { mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm, stat, utimes, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -111,6 +111,25 @@ describe("ensureModels with a fake downloader", () => {
     const r = await ensureModels(dir, { files, download: fakeDownload({}, calls) });
     expect(calls).toEqual([]);
     expect(r.files.every((f) => f.status === "present")).toBe(true);
+  });
+
+  // the fifteenth review (2026-10-20): Change folder's copy keeps a file's time to the millisecond, NTFS to 100 ns —
+  // compared exactly, 3.4 GB were hashed again after every move; now within 2 s (the kit's sameFileTime)
+  it("a file whose time a copy moved by less than 2 s is still trusted — no hash again after Change folder", async () => {
+    await ensureModels(dir, { files, download: fakeDownload() });
+    const stamps = JSON.parse(await readFile(path.join(dir, STAMP_FILE), "utf8"));
+    const p = path.join(dir, "a.onnx");
+    await writeFile(p, Buffer.alloc(payload["a.onnx"].length, 7)); // the same size, other bytes: a hash would refuse them
+    const near = (stamps["a.onnx"].mtimeMs + 0.6) / 1000;
+    await utimes(p, near, near);
+    const calls = [];
+    const r = await ensureModels(dir, { files, download: fakeDownload({}, calls) });
+    expect(r.files[0].status).toBe("present");
+    expect(calls).toEqual([]);
+    const far = (stamps["a.onnx"].mtimeMs + 5000) / 1000;
+    await utimes(p, far, far);
+    await ensureModels(dir, { files, download: fakeDownload({}, calls) });
+    expect(calls.map((c) => c.name)).toEqual(["a.onnx"]); // hashed, refused, fetched again
   });
 
   it("hashes a present file once when there is no stamp, then trusts it", async () => {

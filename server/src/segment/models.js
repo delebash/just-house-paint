@@ -11,6 +11,7 @@ import { createHash } from "node:crypto";
 import { createReadStream } from "node:fs";
 import { mkdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { sameFileTime } from "@delebash/core/platform/file_time";
 import { renameHeld } from "@delebash/core/platform/rename_held";
 
 export const SAM3_REPO = "nrl-ai/samexporter-onnx-models";
@@ -81,7 +82,8 @@ async function writeStamps(dir, stamps) {
 }
 
 /** Is `file` on disk with the right size and hash? Hashes once, then trusts the stamp while the
- * size and mtime are unchanged. */
+ * size is unchanged and the mtime within 2 s (the kit's sameFileTime, rsync's --modify-window: a copy — Change
+ * folder's, onto NTFS or FAT — moves a file's time by less; it re-hashed 3.4 GB after every move). */
 async function isValid(dir, f, stamps, cancelCheck = null) {
   let st;
   try {
@@ -91,7 +93,7 @@ async function isValid(dir, f, stamps, cancelCheck = null) {
   }
   if (!st.isFile() || st.size !== f.size) return false;
   const s = stamps[f.name];
-  if (s && s.size === st.size && s.mtimeMs === st.mtimeMs && s.sha256 === f.sha256) return true;
+  if (s && s.size === st.size && sameFileTime(s.mtimeMs, st.mtimeMs) && s.sha256 === f.sha256) return true;
   const sha = await sha256File(path.join(dir, f.name), cancelCheck);
   if (sha !== f.sha256) return false;
   stamps[f.name] = { size: st.size, mtimeMs: st.mtimeMs, sha256: sha };

@@ -201,7 +201,7 @@ test("a rename checks the route's own rule, and a server 422 lands under the fie
   };
   server.houses = [houseRow("h1", "Main street")];
   await mountPage();
-  await click(document.body.querySelector('[aria-label="Rename “\u2068Main street\u2069”"]'));
+  await click(document.body.querySelector('[aria-label="Rename “Main street”"]'));
   const input = document.body.querySelector("#name-dialog-input");
   expect(input.value).toBe("Main street");
 
@@ -227,7 +227,7 @@ test("a rename checks the route's own rule, and a server 422 lands under the fie
 test("a delete asks first, naming the house", async () => {
   server.houses = [houseRow("h1", "Main street")];
   await mountPage();
-  await click(document.body.querySelector('[aria-label="Delete “\u2068Main street\u2069”"]'));
+  await click(document.body.querySelector('[aria-label="Delete “Main street”"]'));
   expect(dialogState.open).toBe(true);
   expect(dialogState.options.message).toContain("Main street");
   expect(server.calls).not.toContain("DELETE /v1/houses/h1");

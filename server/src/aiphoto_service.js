@@ -185,6 +185,15 @@ export function createAiPhoto(ctx) {
       };
     },
 
+    /** Where Install's downloads land — each as `<file>.part` until whole, kept for resume: the models, and this
+     *  computer's engine zips (aiphoto/engine.js `ensureEngine`'s `.downloads`) while the engine isn't here. The
+     *  free-space check counts what they already hold (engines_api.js partBytes) — only these, never a leftover. */
+    async downloadPaths() {
+      const row = engineRow(await ctx.detectGpu());
+      const zips = row && !engineState(row).installed ? [row.asset, row.runtime].filter(Boolean).map((f) => path.join(ctx.engineDir, ".downloads", f.name)) : [];
+      return [...Object.values(MODEL_FILES).map((m) => path.join(ctx.modelDir, m.file)), ...zips];
+    },
+
     /** Remove the engine and the models (Settings → Storage); no render runs (the route checks). */
     async uninstall() {
       // async, with Node's retries: a held file never stalls the server

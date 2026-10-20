@@ -33,6 +33,7 @@
   },
   "dependencies": {
     "@floating-ui/dom": "^1.8.0",
+    "@internationalized/number": "^3.6.9",
     "@quasar/extras": "^2.1.0",
     "@vueuse/core": "^15.0.0",
     "culori": "^4.0.2",

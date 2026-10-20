@@ -63,8 +63,9 @@ async function save(key) {
     <div class="form">
       <UiField v-for="key in KEYS" :key="key" :label="t(`settings.advanced.fields.${key}`)" layout="block" :for="idOf(key)">
         <p class="hint">{{ t(`settings.advanced.hints.${key}`) }}</p>
+        <!-- as tall as its text (Quasar's autogrow), up to a cap — a 171 px box held 3542 px of JSON -->
         <UiTextarea
-          :id="idOf(key)" v-model="draft[key]" width="edit" :rows="8" class="mono" :disabled="!loaded"
+          :id="idOf(key)" v-model="draft[key]" width="edit" :rows="8" autogrow class="mono advanced__json" :disabled="!loaded"
           :error="!!errors[key]" :error-message="errors[key]" @update:model-value="errors = { ...errors, [key]: undefined }"
         />
         <div class="form__actions">
@@ -77,3 +78,10 @@ async function save(key) {
     </div>
   </section>
 </template>
+
+<style scoped>
+/* The cap: past it the box scrolls (Quasar's autogrow turns its overflow on at the max-height). */
+.advanced__json :deep(.q-field__native) {
+  max-height: 60vh;
+}
+</style>

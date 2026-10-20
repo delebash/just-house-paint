@@ -119,21 +119,34 @@ password: the keys are in it. The access tokens are not, and a restore keeps thi
 restore is all or nothing: while it runs, other windows' changes are refused (try them again after), and then
 they show the restored houses; if it can't finish, your data is as it was — work that was running (finding
 parts, an AI photo) stops. In the rare case it can't even put your data back while it runs, it asks you to
-restart the app, which puts it back as it starts.
+restart the app, which puts it back as it starts. **Export backup…** makes the file, **Import backup…** restores
+one.
+
+**Reset…** (under **Reset Just House Paint**, below the backups) wipes every house, design, paint color and setting, and starts
+again as on the first start — the installed engines and AI models stay. It asks you to type a word first; make a
+backup before it.
 
 ## Everything stays on your computer
 
 Your photos, designs and colors stay in the app's data folder (App Settings → Storage). Nothing is
 uploaded unless you choose an online AI provider in AI Settings.
 
-**Where to keep the data folder.** **Change folder…** moves it into a new folder named **Just House Paint**
-inside the folder you pick (what else is in that folder is never touched), after checking the drive has room;
-the app restarts on it, and the old folder's copy is removed at the next start. Best on a drive
+**Where to keep the data folder.** **Change folder…** copies it into a new folder named **Just House Paint**
+inside the folder you pick (what else is in that folder is never touched; the question names the new folder),
+after checking the drive has room, and the app restarts on it. A folder inside the app's own folder is refused
+— an update or an uninstall replaces that folder. The old folder keeps its copy: **App Settings → Storage**
+shows it with its size, and **Remove the old copy…** deletes what the move copied there (nothing else in that
+folder, and never the folder the app uses); if the app ran on the old copy after the move, Storage says when it
+was last changed — move what you need out of it first. When the app runs on an old copy (its new folder's drive
+unplugged), Storage says so and names the folder the data moved to. **Move back to the default folder…** brings
+the data back where the app keeps it by default. When the folder is set by the `JUST_HOUSE_PAINT_DATA_DIR`
+variable, Storage says so and Change folder is off — change the variable instead. While the data is being copied the app can't be quit (it says so); if the computer
+stops midway, the half-made copy is removed at the next start and the data is where it was. Best on a drive
 inside the computer: a folder synced by OneDrive, Dropbox or another sync service can hold the app's files
 while they are written, and OneDrive's "files on demand" leaves the 12 GB of models online-only, so the
 engines fail without the network; a network drive or a USB stick works only while it is there. A FAT32 USB
-stick can't hold the AI photo's model (over 4 GB). Pick a folder with a short path (the app's folder in it must
-stay under 180 characters) — some parts of the engines can't open longer ones.
+stick can't hold the AI photo's model (over 4 GB) — the move stops and says so. Pick a folder with a short path
+(the app's folder in it can be at most 180 characters long) — some parts of the engines can't open longer ones.
 
 > Colors on a screen are never exactly the paint. Check a real paint sample on your house before
 > you buy.

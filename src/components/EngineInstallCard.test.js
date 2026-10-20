@@ -78,6 +78,29 @@ test("an old macOS or glibc, and the app's own onnxruntime.dll quarantined, are 
   expect(install().disabled).toBe(true);
 });
 
+// The screens-and-keyboard review (2026-10-20): "macOS ." when the server didn't know this Mac's version;
+// the install size in the kit's units and "Not enough room" in the server's decimal GB.
+test("macOS's version is said only when the server knows it", async () => {
+  await mountCard("aiphoto", { ...AIPHOTO, available: false, need: { reason: "macos", need: "26.0", have: "" } });
+  expect(text()).toContain("The AI photo's engine needs macOS 26.0 or later: update macOS to use it.");
+  expect(text()).not.toContain("macOS .");
+});
+
+test("not enough room is said in the unit the Install button's size is in (the kit's one formatter)", async () => {
+  await mountCard("aiphoto", AIPHOTO);
+  const engines = useEnginesStore();
+  const problem = { type: "https://example.test/errors/disk-full", title: "Not enough room on the drive", detail: "needs 10.8 GB", needBytes: 10.8e9, freeBytes: 2.15e9 };
+  engines.install = vi.fn(async () => {
+    throw Object.assign(new Error("Not enough room on the drive"), { status: 507, problem });
+  });
+  expect(install().textContent).toContain("Install (8.9 GB)"); // 9.6e9 bytes, the kit's fmtBytes
+  install().click();
+  for (let i = 0; i < 3; i++) await flushPromises();
+  const said = document.querySelector('[data-live-announcer] [aria-live="assertive"]')?.textContent || "";
+  expect(said).toContain("Not enough room on the drive");
+  expect(said).toContain("This needs 10.1 GB on the drive of the app's data folder, which has 2.0 GB free");
+});
+
 test("the AI photo's notes: slow on a graphics card that isn't NVIDIA's, too little memory, its files gone", async () => {
   await mountCard("aiphoto", { ...AIPHOTO, backend: "vulkan", slow: true, lowMemory: { needGb: 16, haveGb: 8 }, engineMissing: ["stable-diffusion.dll"] });
   expect(text()).toContain("The AI photo is quickest on an NVIDIA graphics card (about 20 seconds); on this computer's graphics card one AI photo may take several minutes.");

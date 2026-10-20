@@ -40,7 +40,8 @@ const needWords = computed(() => {
     if (n.reason === "files-missing") return ["engines.finder.filesMissing", { files: (n.files || []).join(", ") }];
     return ["engines.finder.cantRun", { error: n.error || "" }];
   }
-  if (n.reason === "macos") return ["engines.aiphoto.needs.macos", { need: n.need, have: n.have || "" }];
+  // this Mac's version only when the server knows it ("macOS ." when it didn't)
+  if (n.reason === "macos") return n.have ? ["engines.aiphoto.needs.macos", { need: n.need, have: n.have }] : ["engines.aiphoto.needs.macosUnknown", { need: n.need }];
   if (n.reason === "glibc") return [n.have ? "engines.aiphoto.needs.glibc" : "engines.aiphoto.needs.glibcNone", { need: n.need, have: n.have || "" }];
   return ["engines.aiphoto.unavailable", {}];
 });
@@ -53,12 +54,23 @@ const finderInstall = useSurfaceTask("finder.install");
 const aiphotoInstall = useSurfaceTask("aiphoto.install");
 const installTask = computed(() => (props.kind === "finder" ? finderInstall.value : aiphotoInstall.value));
 
+// Not enough room on the drive (the server's 507 "disk-full", with the bytes it needs and has): said
+// with the kit's one byte formatter, the one the Install button's size is in — the server's own
+// words give decimal GB, and "Install (8.9 GB)" beside "needs 9.9 GB" read as two units.
+function noRoom(e) {
+  const p = e?.problem;
+  if (!/(^|\/)disk-full$/.test(p?.type || "") || !Number.isFinite(p.needBytes)) return null;
+  const free = p.freeBytes > 0 ? fmtBytes(p.freeBytes) : t("engines.noRoom.nothing");
+  const detail = t("engines.noRoom.detail", { need: fmtBytes(p.needBytes), free });
+  return { status: e.status, requestId: e.requestId, problem: { ...p, title: t("engines.noRoom.title"), detail } };
+}
+
 async function install() {
   try {
     await engines.install(props.kind, t(`engines.${props.kind}.task`));
     emit("installed");
   } catch (e) {
-    if (e?.name !== "AbortError") reportError(e);
+    if (e?.name !== "AbortError") reportError(noRoom(e) || e);
   }
 }
 </script>
@@ -76,8 +88,9 @@ async function install() {
       </component>
     </UiBanner>
     <UiBanner v-if="filesGone" intent="danger" class="engine__note">{{ t("engines.aiphoto.filesGone", { files: filesGone }) }}</UiBanner>
-    <UiBanner v-if="slow" intent="danger" class="engine__note">{{ t(`engines.aiphoto.${slow}`) }}</UiBanner>
-    <UiBanner v-if="lowMemory" intent="danger" class="engine__note">{{ t("engines.aiphoto.lowMemory", { have: lowMemory.haveGb, need: lowMemory.needGb }) }}</UiBanner>
+    <!-- true here, not a failure: the warning look (UiBanner's warning intent) -->
+    <UiBanner v-if="slow" intent="warning" class="engine__note">{{ t(`engines.aiphoto.${slow}`) }}</UiBanner>
+    <UiBanner v-if="lowMemory" intent="warning" class="engine__note">{{ t("engines.aiphoto.lowMemory", { have: lowMemory.haveGb, need: lowMemory.needGb }) }}</UiBanner>
     <UiButton
       intent="primary" :disabled="engines.installing[kind] || !!installTask || !status || blocked"
       :label="engines.installing[kind] ? t('engines.installing') : size ? t('engines.install', { size }) : t('engines.installPlain')" @click="install"

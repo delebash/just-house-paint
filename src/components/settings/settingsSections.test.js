@@ -6,7 +6,7 @@
 // stand-in desktop shell: what each shows, what each asks the server and the shell, that Storage's
 // moves and clears ask first, that a token's address is what a browser elsewhere opens — and this
 // app's own Storage rows: its houses, and Remove for an installed engine (asks first).
-import { _resolveDialog, installLlmUi, LlmUiHosts } from "@delebash/ui";
+import { _resolveDialog, installLlmUi, LlmUiHosts, setServerToken } from "@delebash/ui";
 import { QUASAR_TEST_OPTIONS } from "@delebash/ui/quasar/install.js";
 import { flushPromises, mount } from "@vue/test-utils";
 import { createPinia } from "pinia";
@@ -16,13 +16,23 @@ import { h } from "vue";
 import { createMemoryHistory, createRouter, RouterView } from "vue-router";
 
 // the desktop shell as native.js reaches it (null fields: a browser, no shell)
-const shell = { version: "", root: null, picked: null, relocated: [], keepRunning: [] };
+const shell = { version: "", root: null, picked: null, relocated: [], keepRunning: [], oldCopies: [], removed: [], usedDefault: 0 };
 vi.mock("../../services/native.js", () => ({
   shellVersion: () => shell.version,
   setKeepRunning: async (v) => shell.keepRunning.push(v),
   storageGetRoot: async () => shell.root,
   pickDirectory: async () => shell.picked,
-  storageRelocate: async (to) => shell.relocated.push(to),
+  storageRelocate: async (to, options) => shell.relocated.push(options?.token ? [to, options.token] : to),
+  storageOldCopies: async () => shell.oldCopies,
+  storageRemoveOldCopy: async (root) => {
+    shell.removed.push(root);
+    shell.oldCopies = shell.oldCopies.filter((c) => c.root !== root);
+    return shell.oldCopies;
+  },
+  storageUseDefault: async () => {
+    shell.usedDefault++;
+    shell.root = { ...shell.root, defaultThisStart: null };
+  },
   desktopUpdater: () => null,
 }));
 
@@ -83,7 +93,8 @@ const button = (words) => [...document.body.querySelectorAll("button")].find((b)
 
 beforeEach(() => {
   server = { calls: [], auth: { tokens: [], requireForLoopback: false }, disk: { modelsCache: 2e9, spawnLogs: 1e6, total: 3e9, diskFree: 5e10 } };
-  Object.assign(shell, { version: "", root: null, picked: null, relocated: [], keepRunning: [] });
+  Object.assign(shell, { version: "", root: null, picked: null, relocated: [], keepRunning: [], oldCopies: [], removed: [], usedDefault: 0 });
+  setServerToken(""); // a token a test's window kept (the Server panel) isn't the next test's
   vi.stubGlobal("fetch", vi.fn(fakeFetch));
   vi.stubGlobal("ResizeObserver", class { observe() {} unobserve() {} disconnect() {} });
   vi.stubGlobal("matchMedia", vi.fn(() => ({ matches: false, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {} })));
@@ -173,6 +184,113 @@ describe("Storage", () => {
     _resolveDialog(true);
     await flushPromises();
     expect(shell.relocated).toEqual(["D:/new"]);
+  });
+
+  // the fifteenth review (2026-10-20): the question names the folder the move makes and the apps sharing this
+  // app's models; the window's token goes with the data; the old copy is shown and removed only when asked
+  test("Change folder's question names the folder it makes and the apps sharing the models; the token goes along", async () => {
+    shell.root = { root: "C:\\Data\\Old", default: "C:\\App\\data", portable: false, atDefault: false, folderName: "Just House Paint", defaultThisStart: null };
+    shell.picked = "D:\\Folders\\";
+    server.disk = { ...server.disk, sharedWith: ["JustWrite"] };
+    setServerToken("s3cr3t");
+    vi.stubGlobal("location", { ...window.location, reload: vi.fn() });
+    await mountSettings("storage");
+    button("Change folder").click();
+    await flushPromises();
+    expect(text()).toContain("is copied to D:\\Folders\\Just House Paint, and the app restarts on it");
+    expect(text()).toContain("JustWrite use this app's AI models: they keep using the old copy until you remove it");
+    _resolveDialog(true);
+    await flushPromises();
+    expect(shell.relocated).toEqual([["D:\\Folders\\", "s3cr3t"]]);
+  });
+
+  test("Move back to the default folder: offered while the data is elsewhere, the default itself the target", async () => {
+    shell.root = { root: "D:\\Folders\\Just House Paint", default: "C:\\App\\data", portable: false, atDefault: false, folderName: "Just House Paint", defaultThisStart: null };
+    vi.stubGlobal("location", { ...window.location, reload: vi.fn() });
+    await mountSettings("storage");
+    button("Move back to the default folder").click();
+    await flushPromises();
+    expect(text()).toContain("is copied to C:\\App\\data, and the app restarts on it");
+    _resolveDialog(true);
+    await flushPromises();
+    expect(shell.relocated).toEqual(["C:\\App\\data"]);
+    // at the default, nothing to move back to
+    wrapper.unmount();
+    shell.root = { ...shell.root, root: "C:\\App\\data", atDefault: true };
+    await mountSettings("storage");
+    expect(button("Move back to the default folder")).toBeUndefined();
+  });
+
+  test("the old copy a move left: its folder and size, removed only after asking", async () => {
+    shell.root = { root: "D:\\New\\Just House Paint", default: "C:\\App\\data", portable: false, atDefault: false, folderName: "Just House Paint", defaultThisStart: null };
+    shell.oldCopies = [{ root: "C:\\App\\data", bytes: 12e9 }];
+    // the row's own button (the confirm's says the same)
+    const removeOld = () => [...document.body.querySelectorAll(".ui-formgrid button")].find((b) => b.textContent.includes("Remove the old copy"));
+    await mountSettings("storage");
+    expect(text()).toContain("Old copy");
+    expect(text()).toContain("C:\\App\\data");
+    expect(text()).toMatch(/1[12](\.\d)? GB/);
+    removeOld().click();
+    await flushPromises();
+    expect(text()).toContain("This deletes the copy of the data that stayed in C:\\App\\data");
+    _resolveDialog(false);
+    await flushPromises();
+    expect(shell.removed).toEqual([]);
+    removeOld().click();
+    await flushPromises();
+    _resolveDialog(true);
+    await flushPromises();
+    expect(shell.removed).toEqual(["C:\\App\\data"]);
+    expect(removeOld()).toBeUndefined();
+  });
+
+  test("a start on the default folder because the moved-to one can't be used: Use the default folder from now on", async () => {
+    shell.root = { root: "C:\\App\\data", default: "C:\\App\\data", portable: true, atDefault: true, folderName: "Just House Paint", defaultThisStart: { folder: "E:\\Just House Paint" } };
+    await mountSettings("storage");
+    expect(text()).toContain("This start uses the default folder: E:\\Just House Paint can't be used now.");
+    expect(button("Move back to the default folder")).toBeUndefined();
+    button("Use the default folder from now on").click();
+    await flushPromises();
+    expect(text()).toContain("The app stops looking for E:\\Just House Paint and opens on C:\\App\\data from now on.");
+    _resolveDialog(true);
+    await flushPromises();
+    expect(shell.usedDefault).toBe(1);
+    expect(text()).not.toContain("This start uses the default folder");
+  });
+
+  test("the data-dir variable names the folder: no Change folder or Move back, the variable named", async () => {
+    shell.root = { root: "D:\\e2e-data", default: "C:\\App\\data", portable: false, atDefault: false, folderName: "Just House Paint", defaultThisStart: null, setBy: "JUST_HOUSE_PAINT_DATA_DIR" };
+    await mountSettings("storage");
+    expect(text()).toContain("This data folder is set by JUST_HOUSE_PAINT_DATA_DIR — change it there.");
+    expect(button("Change folder")).toBeUndefined();
+    expect(button("Move back to the default folder")).toBeUndefined();
+  });
+
+  test("an old copy used after the move says when, beside its button and in the question; a start on an old copy is told", async () => {
+    const changedAt = new Date(2026, 9, 21, 14, 30).getTime();
+    shell.root = {
+      root: "C:\\App\\data",
+      default: "C:\\App\\data",
+      portable: true,
+      atDefault: true,
+      folderName: "Just House Paint",
+      defaultThisStart: null,
+      oldCopyOf: { root: "E:\\Just House Paint", movedAt: changedAt - 86_400_000 },
+    };
+    shell.oldCopies = [{ root: "F:\\Older", bytes: 1e9, movedAt: changedAt - 3_600_000, changedAt }];
+    await mountSettings("storage");
+    expect(text()).toContain("This folder holds the old copy of the data, left here when the data moved to E:\\Just House Paint");
+    const said = "The old copy was used after the move — last changed";
+    const times = () => text().split(said).length - 1;
+    expect(times()).toBe(1); // beside its button
+    expect(text()).toContain("Removing it removes that work too; move what you need first.");
+    const removeOld = () => [...document.body.querySelectorAll(".ui-formgrid button")].find((b) => b.textContent.includes("Remove the old copy"));
+    removeOld().click();
+    await flushPromises();
+    expect(times()).toBe(2); // and in the question
+    _resolveDialog(false);
+    await flushPromises();
+    expect(shell.removed).toEqual([]);
   });
 
   test("clearing the models asks first, then clears and reads the sizes again", async () => {

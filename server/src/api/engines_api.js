@@ -3,7 +3,7 @@
 // each is installed, installing it (a job: ~3.4 GB / ~9 GB of downloads), the AI photo of a house
 // (a job), and the AI photos kept.
 
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
 import { statfs } from "node:fs/promises";
 import path from "node:path";
 import { assertGpuFree } from "../jobs.js";
@@ -15,7 +15,8 @@ import { paintsById } from "../database/paints.js";
 import { removeHouseFile, renderPath } from "../files.js";
 import { AiPhotoIn, IdParams } from "../schemas/houses.js";
 import { getState } from "../app_state.js";
-import { aiphotoEngineDir, aiphotoModelDir, finderModelDir } from "../services.js";
+import { MODEL_FILES as FINDER_FILES } from "../segment/models.js";
+import { finderModelDir } from "../services.js";
 
 /** Room a drive keeps beyond what an install puts on it (the database, the logs) — as the kit's restore keeps. */
 const ROOM_MARGIN = 256 * 1024 * 1024;
@@ -39,25 +40,23 @@ export async function freeBytes(dir) {
 
 const gb = (n) => `${(n / 1e9).toFixed(1)} GB`;
 
-/** The bytes the unfinished downloads (`*.part`, the kit's streamDownload preallocates each at its full size and
- *  keeps it for resume) already hold under `dirs` — they need no more room (a resumed install was refused 507 —
- *  the fourteenth review). */
-export function partBytes(dirs, depth = 3) {
+/** The room an unfinished download already takes on the drive: the kit's streamDownload preallocates `<file>.part` at
+ *  its full size (fh.truncate) and keeps it for resume. Windows allocates that whole (measured 2026-10-20: a 2 GiB
+ *  truncate took 2.000 GiB of free space), so its size; macOS and Linux leave it sparse, so only the blocks written
+ *  (stat(2)'s st_blocks, 512-byte units — the fifteenth review: the size counted room a sparse file never took). */
+export function partRoom(st, platform = process.platform) {
+  return platform === "win32" ? st.size : Math.min(st.size, (st.blocks ?? 0) * 512);
+}
+
+/** The bytes the install's own unfinished downloads already hold — `<file>.part` beside each of `files`, the files
+ *  it fetches (never a leftover of another file or build) — they need no more room (a resumed install was refused
+ *  507 — the fourteenth review). */
+export function partBytes(files, platform = process.platform) {
   let n = 0;
-  const walk = (d, left) => {
-    let entries = [];
-    try {
-      entries = readdirSync(d, { withFileTypes: true });
-    } catch {
-      return; // not made yet
-    }
-    for (const e of entries) {
-      const p = path.join(d, e.name);
-      if (e.isDirectory() && left > 0) walk(p, left - 1);
-      else if (e.isFile() && e.name.endsWith(".part")) n += statSync(p, { throwIfNoEntry: false })?.size ?? 0;
-    }
-  };
-  for (const d of dirs) walk(d, depth);
+  for (const f of files) {
+    const st = statSync(`${f}.part`, { throwIfNoEntry: false });
+    if (st?.isFile()) n += partRoom(st, platform);
+  }
   return n;
 }
 
@@ -73,9 +72,9 @@ export function router(ctx = getState()) {
   };
   /** An install that wouldn't fit the drive of the data folder is refused before anything downloads (a full
    *  disk mid-download left a cut-off file and a raw ENOSPC — 3.3 GB / 9.6 GB, the thirteenth review). */
-  const mustFit = async (name, bytes, dirs = []) => {
+  const mustFit = async (name, bytes, files = []) => {
     // what an unfinished download already holds on the drive needs no more room
-    bytes = Math.max(0, bytes - partBytes(dirs));
+    bytes = Math.max(0, bytes - partBytes(files));
     if (!bytes) return;
     const free = await (ctx.freeBytes || freeBytes)(ctx.dataDir);
     if (bytes + ROOM_MARGIN > free) {
@@ -104,7 +103,11 @@ export function router(ctx = getState()) {
     // nothing downloads that couldn't run here, or wouldn't fit
     const runtime = await ctx.finder.runtime();
     if (!runtime.ok) throw new ApiError(409, "runtime-missing", "The part finder can't run on this computer", runtime.error, runtime.reason ? { reason: runtime.reason } : null);
-    await mustFit("The part finder", ctx.finder.downloadBytes(), [finderModelDir(ctx.dataDir)]);
+    await mustFit(
+      "The part finder",
+      ctx.finder.downloadBytes(),
+      FINDER_FILES.map((f) => path.join(finderModelDir(ctx.dataDir), f.name)),
+    );
     const job = ctx.jobs.start({ kind: "install-finder", key: "", failTitle: "The part finder didn't install" }, ({ signal, progress }) =>
       ctx.finder.install({
         download: ctx.download,
@@ -152,7 +155,7 @@ export function router(ctx = getState()) {
     if (st.available === false) {
       throw new ApiError(409, "cant-run-here", "The AI photo can't run on this computer", st.need?.detail || "this computer can't run its engine", { reason: st.need?.reason ?? null });
     }
-    await mustFit("The AI photo", st.diskBytes ?? st.downloadBytes, [aiphotoModelDir(ctx.dataDir), aiphotoEngineDir(ctx.dataDir)]);
+    await mustFit("The AI photo", st.diskBytes ?? st.downloadBytes, (await ctx.aiphoto.downloadPaths?.()) ?? []);
     const job = ctx.jobs.start({ kind: "install-aiphoto", key: "", failTitle: "The AI photo didn't install" }, ({ signal, progress }) => ctx.aiphoto.install({ download: ctx.download, signal, progress }));
     return c.json(job, 202);
   });

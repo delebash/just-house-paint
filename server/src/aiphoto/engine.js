@@ -19,6 +19,7 @@ import { createHash } from "node:crypto";
 import { createReadStream, existsSync, readFileSync } from "node:fs";
 import { chmod, mkdir, readdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { dirname, join, relative, sep } from "node:path";
+import { sameFileTime } from "@delebash/core/platform/file_time";
 import { renameHeld } from "@delebash/core/platform/rename_held";
 import { extractZip } from "@delebash/core/platform/zip";
 
@@ -482,12 +483,14 @@ export async function ensureModels(dir, { download, onProgress = null, cancelChe
       manifest = {};
     }
     const entries = Object.entries(files);
+    // the size, and the time within 2 s (the kit's sameFileTime, rsync's --modify-window): Change folder's copy moves
+    // a file's time by less — compared exactly, 9 GB were hashed again after every move (the fifteenth review)
     const known = async (m) => {
       const p = join(dir, m.file);
       if (!existsSync(p)) return false;
       const st = await stat(p);
       const seen = manifest[m.file];
-      return st.size === m.size && seen?.sha256 === m.sha256 && seen.size === st.size && seen.mtimeMs === st.mtimeMs;
+      return st.size === m.size && seen?.sha256 === m.sha256 && seen.size === st.size && sameFileTime(seen.mtimeMs, st.mtimeMs);
     };
     const todo = [];
     for (const [, m] of entries) if (!(await known(m))) todo.push(m);

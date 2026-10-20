@@ -236,7 +236,7 @@ test("a brand's load shows its progress above the table — not again in the glo
   expect(strip.querySelector(".sts-fill").style.width).toBe("40%");
   // above the table
   expect(strip.compareDocumentPosition(document.querySelector(".paint-colors table")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-  expect(document.querySelector(".ai-task-stack")).toBeNull();
+  expect(document.querySelector(".ai-task-stack .sts")).toBeNull();
   // the brand's own buttons wait; another brand's don't
   expect(buttonIn("Behr", "Load the colors").disabled).toBe(true);
   expect(moreIn("Behr").disabled).toBe(true);
@@ -245,7 +245,7 @@ test("a brand's load shows its progress above the table — not again in the glo
   await settle();
   // nothing of it runs now; its strip may linger a moment as done (the kit's dwell)
   expect(document.querySelector('.q-page .sts:not([data-status="done"])')).toBeNull();
-  expect(document.querySelector(".ai-task-stack")).toBeNull();
+  expect(document.querySelector(".ai-task-stack .sts")).toBeNull();
   expect(buttonIn("Behr", "Load again").disabled).toBe(false);
   expect(moreIn("Behr").disabled).toBe(false);
   expect(cells("Behr")[1]).toBe("1,212");
@@ -276,7 +276,7 @@ test("a new list without colors some designs use names those designs", async () 
   await click(buttonIn("Valspar", "Load again"));
   await settle();
   expect(toasts).toEqual([
-    expect.objectContaining({ kind: "warning", title: "Designs lost a color", description: "“\u2068Navy trim\u2069” (\u2068Main street\u2069) use colors that Valspar no longer has. Those parts show no color until you pick new ones." }),
+    expect.objectContaining({ kind: "warning", title: "Designs lost a color", description: "“Navy trim” (Main street) use colors that Valspar no longer has. Those parts show no color until you pick new ones." }),
   ]);
   server.lost = [];
   await click(buttonIn("Valspar", "Load again"));
@@ -290,7 +290,7 @@ test("Remove names the designs that use the brand's colors — the first three, 
   await pickInMenu("Valspar", "Remove");
   expect(server.calls).toContain("GET /v1/brands/valspar/designs");
   expect(dialogState.options.message).toBe(
-    "The 1,596 Valspar colors will be removed from this computer. “\u2068A\u2069” (\u2068Main street\u2069), “\u2068B\u2069” (\u2068Main street\u2069), “\u2068C\u2069” (\u2068Oak lane\u2069), and 1 more use them — those parts show no color until the colors are added again.",
+    "The 1,596 Valspar colors will be removed from this computer. “A” (Main street), “B” (Main street), “C” (Oak lane), and 1 more use them — those parts show no color until the colors are added again.",
   );
   _resolveDialog(false);
   await flushPromises();
