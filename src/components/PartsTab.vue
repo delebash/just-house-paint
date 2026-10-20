@@ -34,7 +34,12 @@ function paintLabel(key) {
   if (id && paints.missing[id]) return t("partsTab.notLoaded", paints.idParts(id));
   return t("partsTab.unpainted");
 }
-const share = (p) => Math.max(1, Math.round((100 * (p.area || 0)) / total.value));
+// a part's share of the house: a part just added and not drawn yet is empty, a sliver is "<1%"
+const share = (p) => {
+  if (!p.area) return t("partsTab.empty");
+  const n = (100 * p.area) / total.value;
+  return n < 1 ? t("partsTab.sliver") : t("partsTab.share", { n: Math.round(n) });
+};
 const toPaint = computed(() => house.parts.filter((p) => p.paintable));
 const staying = computed(() => house.parts.filter((p) => !p.paintable));
 const nameOf = (key) => partName(key, { t, te });
@@ -78,7 +83,7 @@ async function addPart() {
             :title="t('partsTab.photographed', { hex: photographed[p.key] })" :aria-label="t('partsTab.photographed', { hex: photographed[p.key] })"
             @click.stop="emit('find-color', photographed[p.key])"
           />
-          <span class="muted">{{ t("partsTab.share", { n: share(p) }) }}</span>
+          <span class="muted">{{ share(p) }}</span>
           <UiTag
             v-if="deltaE[p.key] != null" :intent="deltaE[p.key] <= 2 ? 'success' : 'secondary'"
             :title="t('partsTab.deltaEHint')" :value="t('partsTab.deltaE', { n: deltaE[p.key].toFixed(1) })"
@@ -92,7 +97,7 @@ async function addPart() {
       <q-item v-for="p in staying" :key="p.key" class="parts__row">
         <q-item-section avatar class="parts__swatch"><Icon name="Check" :size="14" class="muted" /></q-item-section>
         <q-item-section class="parts__name">{{ nameOf(p.key) }}</q-item-section>
-        <q-item-section side class="muted">{{ t("partsTab.share", { n: share(p) }) }}</q-item-section>
+        <q-item-section side class="muted">{{ share(p) }}</q-item-section>
       </q-item>
     </q-list>
     <div v-if="missing.length" class="parts__add">

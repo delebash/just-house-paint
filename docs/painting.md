@@ -74,8 +74,8 @@ shows **changed** and **Save** keeps the change. Opening another design, or leav
 there are unsaved changes asks first. Each design's buttons rename it and delete it (its AI photos
 stay). A house keeps up to 30 designs (**App Settings → General → Designs and paint files**).
 
-A design saved before the house had some of its trim parts (soffits and fascia, window trim) leaves
-them unpainted. Opening it says which parts have no color, and **Paint them the trim's color** paints
+A design saved before the house had some of its trim parts (soffits and fascia, window trim,
+decorations) leaves them unpainted. Opening it says which parts have no color, and **Paint them the trim's color** paints
 them the design's trim color — nothing changes until you press it, and **Undo** takes it back.
 
 ## Saving the picture

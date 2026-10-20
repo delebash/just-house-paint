@@ -38,7 +38,7 @@ export class JobRegistry {
    * and key). `progress(fraction 0–1, message?)` reports along the way; the returned value is the
    * job's result. Returns the job's snapshot.
    */
-  start({ kind, key = "", label = "" }, fn) {
+  start({ kind, key = "", label = "", failTitle = "" }, fn) {
     this.sweep();
     const existing = this.running(kind, key);
     if (existing) return snapshot(existing);
@@ -74,7 +74,9 @@ export class JobRegistry {
         (err) => {
           if (controller.signal.aborted || isAbort(err)) return finish("cancelled", {});
           log.error(`${kind} ${key}: ${err?.message || err}`, err);
-          finish("error", { error: { message: String(err?.message || err), status: err?.statusCode ?? null } });
+          // the refusal's own title (an ApiError's), else what the job was doing — the screen's heading
+          const title = (typeof err?.title === "string" && err.title) || failTitle || null;
+          finish("error", { error: { message: String(err?.message || err), status: err?.statusCode ?? null, title } });
         },
       );
     return snapshot(job);

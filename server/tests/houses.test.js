@@ -4,9 +4,10 @@
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import sharp from "sharp";
-import { afterEach, describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { nameFromFile } from "../src/api/houses_api.js";
-import { maskPath, removeHouseDir, sweepHouseDirs } from "../src/files.js";
+import { createHouse } from "../src/database/houses.js";
+import { addingHouseDir, maskPath, removeHouseDir, sweepHouseDirs } from "../src/files.js";
 import { fakeFinder, jpeg, makeServer } from "./domain_helpers.js";
 
 let s;
@@ -60,6 +61,41 @@ describe("houses", () => {
     expect((await s.app.request(`/v1/houses/${house.id}`, { method: "DELETE" })).status).toBe(204);
     expect(existsSync(path.join(s.dataDir, "houses", house.id))).toBe(false);
     expect((await s.app.request(`/v1/houses/${house.id}`)).status).toBe(404);
+  });
+
+  test("a delete Windows holds still answers 204; its folder goes 30 s later — unless the house came back", async () => {
+    let calls = 0;
+    s = makeServer({
+      removeHouseDir: async () => {
+        calls++;
+        return false; // held every time
+      },
+    });
+    const gone = await (await s.upload(await jpeg(100, 80))).json();
+    const back = await (await s.upload(await jpeg(100, 80))).json();
+    vi.useFakeTimers({ toFake: ["setTimeout"] });
+    try {
+      expect((await s.app.request(`/v1/houses/${gone.id}`, { method: "DELETE" })).status).toBe(204);
+      expect((await s.app.request(`/v1/houses/${back.id}`, { method: "DELETE" })).status).toBe(204);
+      expect(calls).toBe(2);
+      // a backup restored meanwhile brings the second house back: its folder must stay
+      createHouse(s.db, { id: back.id, name: back.name, originalFile: back.originalFile, width: back.width, height: back.height, displayWidth: back.displayWidth, displayHeight: back.displayHeight });
+      vi.advanceTimersByTime(30_000);
+      expect(calls).toBe(3); // only the house still gone was tried again
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test("a photo being added leaves no folder behind if its house never got written", async () => {
+    s = makeServer();
+    const house = await (await s.upload(await jpeg(100, 80))).json();
+    // the server stopped between the photo's files and its house row: the folder is marked "adding"
+    addingHouseDir(s.dataDir, "half-added");
+    expect(await sweepHouseDirs(s.dataDir, [house.id])).toBe(1);
+    expect(existsSync(path.join(s.dataDir, "houses", "half-added"))).toBe(false);
+    // a house added in full carries no mark
+    expect(existsSync(path.join(s.dataDir, "houses", house.id, ".adding"))).toBe(false);
   });
 
   test("only a folder a held removal marked is swept at start, and only when its house is gone", async () => {
@@ -237,7 +273,10 @@ describe("designs", () => {
     expect(made.status).toBe(201);
     const d = await made.json();
     expect(d).toMatchObject({ name: "Classic", colors: { body: "sw:7008" } });
-    expect((await s.json("POST", url, { name: "classic" })).status).toBe(409);
+    // a name another design has: the name field's own error (§15), worded for the person
+    const taken = await s.json("POST", url, { name: "classic" });
+    expect(taken.status).toBe(422);
+    expect((await taken.json()).errors[0]).toMatchObject({ loc: ["body", "name"], msg: "This house already has a design named “classic”." });
     expect((await s.json("POST", url, { name: "" })).status).toBe(422);
     // a key that isn't a part name is refused (the record's pattern, additionalProperties: false)
     expect((await s.json("POST", url, { name: "x", colors: { "Bad Key": "a" } })).status).toBe(422);
@@ -246,7 +285,9 @@ describe("designs", () => {
     expect(patched.name).toBe("Classic");
     await s.json("POST", url, { name: "Two" });
     await s.json("POST", url, { name: "Three" });
-    expect((await s.json("POST", url, { name: "Four" })).status).toBe(409); // the limit is a setting: 3 here
+    const full = await s.json("POST", url, { name: "Four" }); // the limit is a setting: 3 here
+    expect(full.status).toBe(409);
+    expect(await full.json()).toMatchObject({ title: "This house has all the designs it can keep" });
     expect((await s.app.request(`/v1/designs/${d.id}`, { method: "DELETE" })).status).toBe(204);
     expect((await s.json("PATCH", `/v1/designs/${d.id}`, { name: "x" })).status).toBe(404);
     expect((await (await s.app.request(url)).json()).map((x) => x.name)).toEqual(["Two", "Three"]);
@@ -270,6 +311,11 @@ test("a name of only spaces is refused; a photo whose pixels can't be read is a 
   const blank = await s.json("PATCH", `/v1/houses/${house.id}`, { name: "   " });
   expect(blank.status).toBe(422);
   expect((await s.json("POST", `/v1/houses/${house.id}/designs`, { name: "  " })).status).toBe(422);
+  // an iPhone's HEIC photo (an ftyp box naming an HEVC brand): its own words, not "not an image"
+  const heic = Buffer.concat([Buffer.from([0, 0, 0, 24]), Buffer.from("ftypheic", "latin1"), Buffer.alloc(64)]);
+  const refused = await s.upload(heic, "IMG_0001.HEIC");
+  expect(refused.status).toBe(415);
+  expect((await refused.json()).detail).toMatch(/HEIC photo can't be read here .* JPEG/);
   // a JPEG cut off part-way: its header reads, its pixels don't
   const whole = await jpeg(640, 480);
   const cut = await s.upload(whole.subarray(0, Math.floor(whole.length / 3)));

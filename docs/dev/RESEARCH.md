@@ -961,7 +961,9 @@ at the app's display size, through the app's own code; scripts and overlays in s
   error. Found on the way: **deleting the copy right after its parts were found failed — 500, EPERM — halfway** (the
   row gone, two masks and the photos left in the folder; the same folder removed fine seconds later; sharp doesn't
   hold a file it read by path, tested): Windows holds a just-written file for a moment. The removal now retries
-  (Node's rmSync maxRetries), the delete answers 204 whatever the folder does (a later retry), and the server removes
-  leftover house folders at start. Also seen: house3's dark fence panel lies inside its "house" outline and is painted
+  (Node's async rm with maxRetries, the server never held up), the delete answers 204 whatever the folder does (a
+  retry 30 s later, if the house is still gone), and the server removes at start only the folders a held removal or an
+  unfinished photo add marked (`.removed`, `.adding`) — never an unmarked one, so a lost database can't take the
+  photos (the second review). Also seen: house3's dark fence panel lies inside its "house" outline and is painted
   with the walls; SAM 3's "fence" (0.5) doesn't outline it there and, on d06, outlines the iron fence over the front
   door — cutting fences out would cut the door, so not done (an Eraser fix, as the evergreen's edge).

@@ -23,6 +23,8 @@ export const usePaintsStore = defineStore("paints", {
     byId: {},
     // ids the server has no paint for (its brand's new list dropped it, or the brand was removed)
     missing: {},
+    // the start-up loads are running (the Colors and Schemes tabs say "loading", not "add a brand")
+    autoLoadingBrands: false,
   }),
   getters: {
     /** Brands that have colors on this computer. */
@@ -67,6 +69,7 @@ export const usePaintsStore = defineStore("paints", {
      */
     autoLoadBrands({ autoLoad = {}, label }) {
       autoLoading ??= (async () => {
+        this.autoLoadingBrands = true;
         if (!this.brandsLoaded) await this.loadBrands();
         for (const b of this.brands) {
           if (!b.feed || b.paintCount || autoLoad[b.key] === false) continue;
@@ -78,6 +81,7 @@ export const usePaintsStore = defineStore("paints", {
         }
       })().finally(() => {
         autoLoading = null;
+        this.autoLoadingBrands = false;
       });
       return autoLoading;
     },

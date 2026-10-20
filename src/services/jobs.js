@@ -23,11 +23,12 @@ const wait = (ms, signal) =>
     signal?.addEventListener?.("abort", onAbort, { once: true });
   });
 
-/** The Error a failed job becomes — shaped like the kit transport's (§15), so reportError reads it. */
+/** The Error a failed job becomes — shaped like the kit transport's (§15), so reportError reads it:
+ *  the server's title for what failed ("The AI photo didn't finish"), its words as the detail. */
 export function jobError(job) {
   const message = job.error?.message || i18n.global.t("jobs.failed");
   const status = job.error?.status || 500;
-  return Object.assign(new Error(message), { status, problem: { title: "", detail: message }, errors: [], requestId: null });
+  return Object.assign(new Error(message), { status, problem: { title: job.error?.title || "", detail: message }, errors: [], requestId: null });
 }
 
 /**

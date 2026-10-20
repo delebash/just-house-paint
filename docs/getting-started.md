@@ -30,7 +30,7 @@ Mac, Updates offers **Open the release page**, to download it from there.
    in daylight, with the whole house in the frame works best. See [Your houses](your-houses.md).
 2. **Install the part finder.** The house opens on its **Parts** tab, which offers the part finder:
    press **Install** — a download of about 3.1 GB, once. See [Finding the parts](finding-parts.md).
-3. **Find the parts.** Press **Find the parts**. It takes about half a minute.
+3. **Find the parts.** Press **Find the parts**. It takes under a minute.
 4. **Paint colors load by themselves.** The first time the app starts, it loads seven brands'
    colors from their sites (about 17,000 colors, a few seconds each — the stack at the bottom right
    shows them). **Paint colors** in the sidebar lists them and turns a brand off. See

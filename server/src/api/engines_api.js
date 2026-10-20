@@ -32,7 +32,7 @@ export function router(ctx = getState()) {
   });
 
   app.post("/v1/segment/install", (c) => {
-    const job = ctx.jobs.start({ kind: "install-finder", key: "" }, ({ signal, progress }) =>
+    const job = ctx.jobs.start({ kind: "install-finder", key: "", failTitle: "The part finder didn't install" }, ({ signal, progress }) =>
       ctx.finder.install({
         download: ctx.download,
         signal,
@@ -63,7 +63,7 @@ export function router(ctx = getState()) {
   });
 
   app.post("/v1/aiphoto/install", (c) => {
-    const job = ctx.jobs.start({ kind: "install-aiphoto", key: "" }, ({ signal, progress }) => ctx.aiphoto.install({ download: ctx.download, signal, progress }));
+    const job = ctx.jobs.start({ kind: "install-aiphoto", key: "", failTitle: "The AI photo didn't install" }, ({ signal, progress }) => ctx.aiphoto.install({ download: ctx.download, signal, progress }));
     return c.json(job, 202);
   });
 
@@ -85,7 +85,7 @@ export function router(ctx = getState()) {
       .filter(([key, id]) => id && paintable.has(key) && paints[id])
       .map(([key, id]) => ({ key, hex: paints[id].hex, name: paints[id].name, currentHex: paints[now[key]]?.hex ?? null }));
     assertGpuFree(ctx.jobs, "aiphoto", house.id);
-    const job = ctx.jobs.start({ kind: "aiphoto", key: house.id, label: house.name }, async ({ signal, progress }) => {
+    const job = ctx.jobs.start({ kind: "aiphoto", key: house.id, label: house.name, failTitle: "The AI photo didn't finish" }, async ({ signal, progress }) => {
       const renderId = crypto.randomUUID();
       // what else holds the graphics card, measured beside the render (about a second on Windows)
       const shared = (ctx.sharedGpu?.() ?? Promise.resolve(null)).catch(() => null);

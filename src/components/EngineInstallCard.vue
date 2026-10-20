@@ -19,7 +19,9 @@ const engines = useEnginesStore();
 
 const status = computed(() => (props.kind === "finder" ? engines.finder : engines.aiphoto));
 const size = computed(() => fmtBytes(status.value?.downloadBytes || 0));
-const slow = computed(() => props.kind === "aiphoto" && status.value?.slow);
+const slow = computed(() => props.kind === "aiphoto" && status.value?.slow && status.value?.available !== false);
+// no stable-diffusion.cpp build for this computer's system and processor: nothing to install
+const unavailable = computed(() => props.kind === "aiphoto" && status.value?.available === false);
 // the finder's runtime doesn't load on this computer: say so, and download nothing that couldn't run
 const cantRun = computed(() => (props.kind === "finder" && status.value?.runtime?.ok === false ? status.value.runtime.error || "" : null));
 // this engine's download while it runs (the features are literal for the family guard's check 17)
@@ -43,9 +45,10 @@ async function install() {
     <p class="hint">{{ t(`engines.${kind}.body`, { size }) }}</p>
     <UiBanner v-if="slow" intent="danger" class="engine__slow">{{ t("engines.aiphoto.slow") }}</UiBanner>
     <UiBanner v-if="cantRun != null" intent="danger" class="engine__slow">{{ t("engines.finder.cantRun", { error: cantRun }) }}</UiBanner>
+    <UiBanner v-if="unavailable" intent="danger" class="engine__slow">{{ t("engines.aiphoto.unavailable") }}</UiBanner>
     <UiButton
-      intent="primary" :disabled="engines.installing[kind] || !!installTask || !status || cantRun != null"
-      :label="engines.installing[kind] ? t('engines.installing') : t('engines.install', { size })" @click="install"
+      intent="primary" :disabled="engines.installing[kind] || !!installTask || !status || cantRun != null || unavailable"
+      :label="engines.installing[kind] ? t('engines.installing') : size ? t('engines.install', { size }) : t('engines.installPlain')" @click="install"
     />
     <AiTaskStrip :task="installTask" />
   </section>

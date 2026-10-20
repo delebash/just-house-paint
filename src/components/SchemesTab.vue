@@ -40,7 +40,19 @@ const ROLES = ["body", "trim", "accent"];
 const rules = schemaRules(AiSchemesIn);
 
 const brand = ref(paints.byId[house.colors.body]?.brand || paints.ready[0]?.key || null);
+// the first brand's colors land while the tab is open (the first start): it is chosen then
+watch(
+  () => paints.ready.length,
+  () => {
+    if (!brand.value) brand.value = paints.byId[house.colors.body]?.brand || paints.ready[0]?.key || null;
+  },
+);
 const brandOptions = computed(() => paints.ready.map((b) => ({ value: b.key, label: b.label })));
+// the body's paint is another brand's: which one (the schemes are built in the brand chosen above)
+const bodyBrand = computed(() => {
+  const p = paints.byId[house.colors.body];
+  return p && p.brand !== brand.value ? paints.brands.find((b) => b.key === p.brand)?.label || p.brand : "";
+});
 // the base: the body's paint when it has one of this brand, else the selected part's
 const base = computed(() => {
   for (const key of ["body", house.selectedPart]) {
@@ -108,8 +120,9 @@ const kindLabel = (s) => (s.kind === "ai" ? s.name : s.kind === "coordinating" ?
 <template>
   <div class="schemes">
     <!-- no paint colors yet: the one way forward, as the Colors tab (was a dead end — the template audit) -->
+    <EmptyState v-if="!paints.ready.length && paints.autoLoadingBrands" icon="Palette" compact :message="t('colors.loadingBrands')" />
     <EmptyState
-      v-if="!paints.ready.length" icon="Palette" compact :message="t('colors.none')" :action-label="t('colors.addBrand')"
+      v-else-if="!paints.ready.length" icon="Palette" compact :message="t('colors.none')" :action-label="t('colors.addBrand')"
       @action="router.push('/colors')"
     />
     <template v-else>
@@ -119,7 +132,8 @@ const kindLabel = (s) => (s.kind === "ai" ? s.name : s.kind === "coordinating" ?
       </div>
 
       <h3 class="schemes__h">{{ t("schemes.harmony.title") }}</h3>
-      <p v-if="!base" class="muted">{{ t("schemes.harmony.needBase") }}</p>
+      <p v-if="!base && bodyBrand" class="muted">{{ t("schemes.harmony.otherBrand", { brand: bodyBrand }) }}</p>
+      <p v-else-if="!base" class="muted">{{ t("schemes.harmony.needBase") }}</p>
       <p v-else class="muted">{{ t("schemes.harmony.from", { paint: base.displayName }) }}</p>
 
       <ul class="schemes__list">

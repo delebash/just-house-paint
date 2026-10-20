@@ -87,7 +87,7 @@ export function router(ctx = getState()) {
     if (!fetchable(brand)) {
       throw new ApiError(409, "no-public-list", "No public list", `${BRANDS[brand].label} has no color list the app can fetch — import its palette file instead`);
     }
-    const job = ctx.jobs.start({ kind: "load-brand", key: brand, label: BRANDS[brand].label }, async ({ signal, progress }) => {
+    const job = ctx.jobs.start({ kind: "load-brand", key: brand, label: BRANDS[brand].label, failTitle: `${BRANDS[brand].label}'s colors didn't load` }, async ({ signal, progress }) => {
       progress(0.05, "downloading");
       try {
         const rows = BRAND_FEEDS.some((f) => f.brand === brand)

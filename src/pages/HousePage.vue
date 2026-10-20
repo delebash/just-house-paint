@@ -579,6 +579,18 @@ async function saveColorCard() {
   }
 }
 
+// why the AI photo can't run yet (its button's tooltip)
+const aiPhotoWhyNot = computed(() => {
+  if (!house.paintableParts.length) return t("house.ai.needParts");
+  if (!hasColors.value) return t("house.ai.needColors");
+  return "";
+});
+/** The AI photo installed from its dialog: the photo the user asked for is made at once. */
+function onAiPhotoInstalled() {
+  aiDialog.value = null;
+  if (house.paintableParts.length && hasColors.value) aiPhoto();
+}
+
 const failedReason = computed(() => {
   if (!loadFailed.value) return "";
   const { title, detail } = errorMessage(loadFailed.value);
@@ -615,14 +627,21 @@ const canRevert = computed(() => !!house.design && house.dirty);
         intent="secondary" :disabled="!house.house || busy.find || !!findTask"
         :label="house.parts.length ? t('house.find.again') : t('house.find.button')" @click="findParts"
       />
-      <UiButton intent="secondary" :disabled="!house.paintableParts.length || busy.ai || !!photoTask || !hasColors" :label="t('house.ai.button')" @click="aiPhoto" />
+      <UiButton
+        intent="secondary" :disabled="!house.paintableParts.length || busy.ai || !!photoTask || !hasColors"
+        :title="aiPhotoWhyNot" :label="t('house.ai.button')" @click="aiPhoto"
+      />
       <UiButton intent="ghost" :disabled="!hasColors" :label="t('house.export.copyList')" @click="copyColorList" />
       <UiButton intent="primary" :disabled="!painted || busy.export" :label="t('house.export.save')" @click="saveImage" />
     </PaneHeader>
     <AiTaskStrip :task="findTask" />
     <AiTaskStrip :task="photoTask" />
 
-    <UiBanner v-if="loadFailed" class="page__banner">
+    <EmptyState
+      v-if="loadFailed && loadFailed.status === 404" icon="Home" :title="t('house.gone.title')" :message="t('house.gone.message')"
+      :action-label="t('house.back')" @action="router.push('/')"
+    />
+    <UiBanner v-else-if="loadFailed" class="page__banner">
       {{ t("house.loadFailed", { reason: failedReason }) }}
       <template #action><UiButton intent="secondary" size="small" :label="t('kit.common.retry')" @click="load" /></template>
     </UiBanner>
@@ -686,12 +705,18 @@ const canRevert = computed(() => !!house.design && house.dirty);
         <UiTabStrip v-model="tab" :tabs="tabs" :aria-label="t('house.tabs.label')" />
         <div class="house__tab">
           <template v-if="tab === 'parts'">
+            <!-- the parts found stay listed (and paintable) when the finder was removed: it is needed only
+                 to find them again or for a Box -->
+            <PartsTab v-if="house.parts.length" :delta-e="deltaE" :photographed="photographed" @find-color="findColor" />
             <EngineInstallCard v-if="!engines.finderInstalled" kind="finder" />
             <EmptyState
-              v-else-if="!house.parts.length" icon="Sparkle" :title="t('house.find.emptyTitle')" :message="t('house.find.emptyMessage')"
-              :action-label="t('house.find.button')" @action="findParts"
+              v-else-if="!house.parts.length && house.house.partsFoundAt" icon="Sparkle" :title="t('house.find.noneTitle')"
+              :message="t('house.find.noneMessage')" :action-label="busy.find || findTask ? '' : t('house.find.again')" @action="findParts"
             />
-            <PartsTab v-else :delta-e="deltaE" :photographed="photographed" @find-color="findColor" />
+            <EmptyState
+              v-else-if="!house.parts.length" icon="Sparkle" :title="t('house.find.emptyTitle')" :message="t('house.find.emptyMessage')"
+              :action-label="busy.find || findTask ? '' : t('house.find.button')" @action="findParts"
+            />
           </template>
           <ColorsTab v-else-if="tab === 'colors'" :tones="tones" />
           <SchemesTab v-else-if="tab === 'schemes'" />
@@ -703,7 +728,7 @@ const canRevert = computed(() => !!house.design && house.dirty);
 
     <AiPhotoDialog
       v-if="aiDialog" :render="aiDialog.render" :house-name="house.house?.name || ''"
-      @installed="aiDialog = null" @close="aiDialog = null"
+      @installed="onAiPhotoInstalled" @close="aiDialog = null"
     />
   </q-page>
 </template>

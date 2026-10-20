@@ -67,6 +67,13 @@ const current = computed(() => paints.byId[house.colors[house.selectedPart]] || 
 onMounted(() => {
   if (!brand.value) brand.value = current.value?.brand || paints.ready[0]?.key || null;
 });
+// the first brand's colors land while the tab is open (the first start): it is chosen then
+watch(
+  () => paints.ready.length,
+  () => {
+    if (!brand.value) brand.value = current.value?.brand || paints.ready[0]?.key || null;
+  },
+);
 
 let timer = null;
 // the latest search — an earlier one that answers later is dropped (a filter changed under it)
@@ -165,8 +172,9 @@ async function match() {
 
 <template>
   <div class="colors">
+    <EmptyState v-if="!paints.ready.length && paints.autoLoadingBrands" icon="Palette" compact :message="t('colors.loadingBrands')" />
     <EmptyState
-      v-if="!paints.ready.length" icon="Palette" compact :message="t('colors.none')" :action-label="t('colors.addBrand')"
+      v-else-if="!paints.ready.length" icon="Palette" compact :message="t('colors.none')" :action-label="t('colors.addBrand')"
       @action="router.push('/colors')"
     />
     <template v-else>

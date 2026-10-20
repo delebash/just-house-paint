@@ -12,8 +12,18 @@ export const ACCEPTED_FORMATS = { jpeg: "jpg", png: "png", webp: "webp" };
 
 export class NotAnImage extends Error {}
 
+/** An HEIC/HEIF photo (an iPhone's default): an ISO-BMFF `ftyp` box naming an HEVC brand. sharp's
+ *  prebuilt libvips reads AVIF but not HEVC (patents), so these get their own words. */
+export function isHeic(buffer) {
+  if (buffer.length < 12 || buffer.toString("latin1", 4, 8) !== "ftyp") return false;
+  return ["heic", "heix", "hevc", "hevx", "heim", "heis", "mif1", "msf1"].includes(buffer.toString("latin1", 8, 12));
+}
+
 /** The photo's format and upright size, or a NotAnImage refusal. */
 export async function inspectPhoto(buffer) {
+  if (isHeic(buffer)) {
+    throw new NotAnImage("an iPhone's HEIC photo can't be read here — send or save it as JPEG (on the iPhone: Settings → Camera → Formats → Most Compatible)");
+  }
   let meta;
   try {
     meta = await sharp(buffer).metadata();

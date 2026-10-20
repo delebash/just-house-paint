@@ -53,6 +53,8 @@ export function createAiPhoto(ctx) {
         engineInstalled: engineHere(row),
         modelsInstalled: modelsHere(),
         backend: row?.backend ?? null,
+        // a stable-diffusion.cpp build exists for this system and processor
+        available: !!row,
         // a CPU-only edit takes ~10 minutes (RESEARCH §9) — the screen says so before installing
         slow: !row || row.backend === "cpu",
         downloadBytes,

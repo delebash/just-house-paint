@@ -142,10 +142,28 @@ FOUND by the dry run (39339201987, the new start check): the Linux AppImage neve
 FIXED (2026-10-19): sharp and onnxruntime-node unpacked (sharp's documented Electron setting), each installer
         with its own platform's runtime only; then the AppImage opened as a Linux user does on Ubuntu 24.04 (a new
         release job) showed two more faults — no libfuse.so.2 ("AppImages require FUSE to run"), and Chromium's sandbox
-        blocked by AppArmor — fixed by the static AppImage runtime (toolsets.appimage 1.0.3) and the kit's shell running
-        without the sandbox only there (linuxSandbox.js). The release now publishes only after every runner's start check
+        blocked by AppArmor — fixed by the static AppImage runtime (toolsets.appimage 1.0.3); the sandbox is electron-builder's
+        AppImage launcher's to drop (it adds --no-sandbox when user namespaces are blocked — a kit switch first added for
+        it was removed, dry run 39350710161 green without it). The release now publishes only after every runner's start check
         and the Ubuntu 24.04 check pass. Dry run 39342556107: all five jobs pass (Windows 3.6 s, macOS 8.1 s, Linux 3.5 s,
         the AppImage on 24.04 2.8 s; the part finder's runtime loads on all).
+REVIEWS (2026-10-19, independent agents, each finding checked and settled): the first — margin 0 dropped onHouse; a
+        Texture step re-did the calming (~0.6 s); soft edges uncalmed; docs claiming more than the code; the note's
+        unnamed programs; the first build's fingerprints — all fixed; a wing's walls vs its doors and a split house
+        settled by the data (the main instance holds wings; every other instance is a neighbor). The second — the
+        delete's later retry could undo a restore (now checks the house is gone); the start-up sweep would take every
+        house's photos with a lost database (now only folders a held removal marked); a held folder stalled the
+        server ~5 s (async now); the kit's AppImage sandbox switch duplicated electron-builder's launcher (removed);
+        .deb missing from the kept files, publish on a moving image (fixed). Its other angles found nothing.
+        The third (the help against the app; a user's first hour): the help named old wait/queue behaviour, GPUs, times
+        and trim lists, and What's new missed the Linux, delete and can't-run changes (all corrected); Reset and the kit's
+        restore had no retries, a photo half-added left a folder (fixed; marked `.adding`); a failed task lost its title
+        (each job names what failed; the kit shows a server's own title); the parts list vanished with the finder
+        removed, a search that found nothing looked untried, first-start Colors/Schemes said "add a brand" while loading
+        and picked none as one landed, a taken design name was a "Conflict" toast, a deleted house's page read "no house
+        <uuid>", a second Find could start, an empty part showed 1%, the schemes' "give the body a color" when it had
+        another brand's, the AI photo's disabled button gave no reason, its install didn't make the photo, "Install ()"
+        where no engine exists, an iPhone HEIC read as "not an image" — all fixed, with tests.
 NEXT (mine, in this order): the obstruction test set's other 17 photos (paused for JustVoice's render) and what it shows;
         the review's findings; then, only when nothing is open, the release.
 

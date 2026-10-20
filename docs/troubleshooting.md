@@ -28,6 +28,14 @@ the card does one at a time (an 8 GB card holds one of their models). Wait for i
 trim and fascia boards are its weak spot. Select the part it belongs to and draw a **Box** around
 it, or use the **Brush**. See [Finding the parts](finding-parts.md).
 
+**"The part finder can't run on this computer".** Its engine (ONNX Runtime) didn't load here, so
+**Install** is off and nothing is downloaded. The words after it say why; **App Settings → Logs** has
+the same line. Restart the app after fixing what it names.
+
+**"Not a photo" for an iPhone's HEIC photo.** The app reads JPEG, PNG and WebP. Send or
+save the photo as JPEG, or set the iPhone to take JPEGs (**Settings → Camera → Formats → Most
+Compatible**).
+
 **The part finder or the AI photo won't install.** The **AI tasks** panel (the sidebar) keeps the failed
 download with its reason; a cancelled or broken download resumes where it stopped the next time you press
 **Install**. A file that doesn't match its checksum is deleted and downloaded again.

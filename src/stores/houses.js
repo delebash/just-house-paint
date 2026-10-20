@@ -41,7 +41,11 @@ export const useHousesStore = defineStore("houses", {
       return house;
     },
     async remove(id) {
-      await del(path(id));
+      try {
+        await del(path(id));
+      } catch (e) {
+        if (e?.status !== 404) throw e; // already gone (another window, a second click): it's what was asked
+      }
       this.items = this.items.filter((h) => h.id !== id);
     },
   },

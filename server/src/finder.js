@@ -105,7 +105,7 @@ export function createFinder(ctx) {
 
   async function segmenter() {
     if (!installed()) {
-      throw new ApiError(409, "models-missing", "The part finder isn't installed", "download the part-finding model first (about 3.4 GB)");
+      throw new ApiError(409, "models-missing", "The part finder isn't installed", "download the part-finding model first (about 3.1 GB)");
     }
     if (seg) return seg;
     // onnxruntime-node loads on the first use, not when the server starts: a machine that never

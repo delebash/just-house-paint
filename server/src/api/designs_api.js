@@ -2,7 +2,10 @@
 // /v1/houses/:id/designs and /v1/designs/:id — a house's saved color choices ({ part: paint }).
 
 import { Hono, input } from "@delebash/core/platform";
-import { conflict, notFound } from "@delebash/core/platform/errors";
+import { ApiError, notFound, RequestValidationError } from "@delebash/core/platform/errors";
+
+// a name another design of the house has: the name field's own error (a 422 lands under its field, §15)
+const nameTaken = (name) => new RequestValidationError([{ loc: ["body", "name"], msg: `This house already has a design named “${name}”.`, type: "value_error.taken" }]);
 import { createDesign, deleteDesign, getDesign, getHouse, listDesigns, updateDesign } from "../database/houses.js";
 import { DesignIn, DesignPatch, IdParams } from "../schemas/houses.js";
 import { getState } from "../app_state.js";
@@ -31,9 +34,10 @@ export function router(ctx = getState()) {
     mustHouse(houseId);
     const { name, colors } = c.req.valid("json");
     const clean = name.trim();
-    if (sameName(houseId, clean)) throw conflict(`this house already has a design named "${clean}"`);
+    if (sameName(houseId, clean)) throw nameTaken(clean);
     if (listDesigns(ctx.db, houseId).length >= ctx.maxDesignsPerHouse()) {
-      throw conflict(`a house keeps at most ${ctx.maxDesignsPerHouse()} designs — delete one first`);
+      const n = ctx.maxDesignsPerHouse();
+      throw new ApiError(409, "too-many-designs", "This house has all the designs it can keep", `a house keeps ${n} designs — delete one first, or raise the number in App Settings → General`);
     }
     return c.json(createDesign(ctx.db, houseId, { name: clean, colors }), 201);
   });
@@ -42,7 +46,7 @@ export function router(ctx = getState()) {
     const current = mustDesign(c.req.valid("param").id);
     const { name, colors } = c.req.valid("json");
     const clean = name?.trim();
-    if (clean !== undefined && sameName(current.houseId, clean, current.id)) throw conflict(`this house already has a design named "${clean}"`);
+    if (clean !== undefined && sameName(current.houseId, clean, current.id)) throw nameTaken(clean);
     return c.json(updateDesign(ctx.db, current.id, { name: clean, colors }));
   });
 

@@ -13,7 +13,7 @@
 // restore replaces the rows and the houses under the running app, so the same teardown runs after
 // it (the clean-slate rule, JustWrite 2026-07-11).
 
-import { rmSync } from "node:fs";
+import { rm } from "node:fs/promises";
 import { LLM_TABLES } from "@delebash/core/llm";
 import * as llmDb from "@delebash/core/llm/db";
 import { makeDataRouter } from "@delebash/core/platform";
@@ -57,7 +57,8 @@ export async function resetWorkspace() {
   });
   llmDb.createAll(db);
   recreateAppTables(db, APP_TABLES);
-  rmSync(housesRoot(getState().dataDir), { recursive: true, force: true });
+  // Windows holds a just-written file a moment: retried, as a house's delete is (files.js)
+  await rm(housesRoot(getState().dataDir), { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
   if (auth !== undefined) setSetting(db, "auth", auth);
   seedWorkspace(db);
   log.info("workspace reset to its first-run state");

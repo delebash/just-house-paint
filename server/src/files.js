@@ -8,7 +8,7 @@
 //   <dataDir>/houses/<id>/masks/<part>.png one 8-bit mask per part, display size
 //   <dataDir>/houses/<id>/renders/<id>.png AI photos
 
-import { existsSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { rm } from "node:fs/promises";
 import path from "node:path";
 import { getLogger } from "@delebash/core/platform/log";
@@ -36,8 +36,21 @@ export function ensureHouseDirs(dataDir, id) {
   mkdirSync(path.join(houseDir(dataDir, id), "renders"), { recursive: true });
 }
 
-/** The mark a removal that Windows held leaves in the folder: only a marked folder is ever swept. */
+/** The marks the start-up sweep goes by — only a marked folder of a house that doesn't exist is ever
+ *  swept: a removal Windows held, and a photo being added (its house row not written yet). */
 const GONE = ".removed";
+const ADDING = ".adding";
+
+/** A house's folder made for a photo being added, marked until its row exists (houseAdded). */
+export function addingHouseDir(dataDir, id) {
+  ensureHouseDirs(dataDir, id);
+  writeFileSync(path.join(houseDir(dataDir, id), ADDING), "");
+}
+
+/** The photo's house row is written: its folder is a house's like any other. */
+export function houseAdded(dataDir, id) {
+  rmSync(path.join(houseDir(dataDir, id), ADDING), { force: true });
+}
 
 /**
  * Remove a house's folder. Windows holds a file just written for a moment (a scanner, the indexer:
@@ -56,7 +69,7 @@ export async function removeHouseDir(dataDir, id, { remove = rm } = {}) {
     try {
       writeFileSync(path.join(dir, GONE), "");
     } catch {
-      // not even a mark: the folder stays, as it was before the delete
+      // not even a mark: the delete route's later retry is the one left
     }
     return false;
   }
@@ -76,7 +89,8 @@ export async function sweepHouseDirs(dataDir, ids) {
   const keep = new Set(ids);
   let gone = 0;
   for (const name of names) {
-    if (!SAFE.test(name) || keep.has(name) || !existsSync(path.join(dataDir, "houses", name, GONE))) continue;
+    const dir = path.join(dataDir, "houses", name);
+    if (!SAFE.test(name) || keep.has(name) || !(existsSync(path.join(dir, GONE)) || existsSync(path.join(dir, ADDING)))) continue;
     if (await removeHouseDir(dataDir, name)) gone++;
   }
   if (gone) log.info(`removed ${gone} folder(s) of deleted houses`);

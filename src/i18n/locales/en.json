@@ -164,6 +164,10 @@
   "house": {
     "back": "Your houses",
     "loadFailed": "Couldn't open this house: {reason}",
+    "gone": {
+      "title": "This house isn't here any more",
+      "message": "It was deleted. Your other houses are on Your houses."
+    },
     "find": {
       "button": "Find the parts",
       "again": "Find the parts again",
@@ -174,11 +178,15 @@
       "loading": "Loading the part finder · {n}%",
       "progress": "{part} · {n}%",
       "emptyTitle": "Find the parts first",
-      "emptyMessage": "The part finder outlines the body, the trim, the doors and the rest, so each can be painted on its own."
+      "emptyMessage": "The part finder outlines the body, the trim, the doors and the rest, so each can be painted on its own.",
+      "noneTitle": "No parts found on this photo",
+      "noneMessage": "The finder didn't recognize a house here. A photo with the house in full view, from the front, works best — or try again."
     },
     "ai": {
       "button": "AI photo",
-      "task": "AI photo of {name}"
+      "task": "AI photo of {name}",
+      "needParts": "Find the parts first",
+      "needColors": "Give a part a color first"
     },
     "export": {
       "save": "Save image",
@@ -272,6 +280,8 @@
     "unpainted": "No color",
     "notLoaded": "{brand} {code} — not in the loaded colors",
     "share": "{n}%",
+    "sliver": "<1%",
+    "empty": "empty",
     "deltaE": "ΔE {n}",
     "deltaEHint": "How far the paint on the screen is from the paint chip (ΔE2000). Under 2 is hard to tell apart.",
     "edited": "edited",
@@ -281,6 +291,7 @@
   },
   "colors": {
     "none": "No paint colors on this computer yet. Add a brand's colors first.",
+    "loadingBrands": "The brands' colors are loading — a few seconds, this first time.",
     "addBrand": "Add paint colors",
     "forPart": "Colors for the {part}",
     "pickPart": "Select a part (Parts tab, or click it on the photo) to paint it.",
@@ -340,6 +351,7 @@
     "harmony": {
       "title": "From a paint you chose",
       "needBase": "Give the body a color first (Colors tab) — the schemes are built around it.",
+      "otherBrand": "The body's paint is {brand}'s — choose {brand} above, or give the body a color of this brand.",
       "from": "Around {paint}"
     },
     "kinds": {
@@ -415,6 +427,7 @@
   },
   "engines": {
     "install": "Install ({size})",
+    "installPlain": "Install",
     "installing": "Installing…",
     "finder": {
       "title": "Install the part finder",
@@ -426,7 +439,8 @@
       "title": "Install the AI photo",
       "body": "The AI photo redraws your photo with the colors you chose, with real light and shadow. It runs on this computer: a one-time download of {size}.",
       "task": "Installing the AI photo",
-      "slow": "This computer has no graphics card the AI photo can use: one AI photo would take about ten minutes."
+      "slow": "This computer has no graphics card the AI photo can use: one AI photo would take about ten minutes.",
+      "unavailable": "The AI photo's engine has no build for this computer's system and processor, so it can't be installed here."
     }
   },
   "paintColors": {

@@ -61,7 +61,8 @@ function fakeFetch(input, init = {}) {
   const method = (init.method || "GET").toUpperCase();
   const p = url.pathname;
   server.calls.push(`${method} ${p}`);
-  if (p === "/v1/houses/h1") return Promise.resolve(json({ ...HOUSE, currentPaints: server.currentPaints }));
+  if (p === "/v1/houses/h1" && server.gone) return Promise.resolve(json({ type: "about:blank", title: "Not Found", status: 404, detail: "no house h1" }, 404));
+  if (p === "/v1/houses/h1") return Promise.resolve(json({ ...HOUSE, partsFoundAt: server.partsFoundAt ?? null, currentPaints: server.currentPaints }));
   if (p === "/v1/houses/h1/current-paints" && method === "PUT") {
     server.currentPaints = JSON.parse(init.body);
     return Promise.resolve(json({ ...HOUSE, currentPaints: server.currentPaints }));
@@ -185,6 +186,27 @@ test("without the part finder: its install is offered, runs as a task, and then 
   expect(text()).toContain("Body");
   expect(text()).toContain("Trim");
 }, 20000);
+
+test("with the part finder removed, the house's parts stay listed and paintable, the install beside them", async () => {
+  server.finderInstalled = false;
+  server.parts = PARTS;
+  await mountPage();
+  expect(text()).toContain("To paint");
+  expect(text()).toContain("Body");
+  expect(text()).toContain("Install the part finder");
+});
+
+test("a search that found nothing says so; a deleted house says it's gone, with the way back", async () => {
+  server.partsFoundAt = "2026-10-19T10:00:00.000Z";
+  await mountPage();
+  expect(text()).toContain("No parts found on this photo");
+  wrapper.unmount();
+  document.body.innerHTML = "";
+  server.gone = true;
+  await mountPage();
+  expect(text()).toContain("This house isn't here any more");
+  expect(text()).not.toContain("no house h1");
+});
 
 test("when the part finder's engine can't load here, the card says so and downloads nothing", async () => {
   server.finderInstalled = false;

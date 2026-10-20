@@ -43,7 +43,7 @@ export function router(ctx = getState()) {
     const house = mustHouse(c.req.valid("param").id);
     const keepEdited = c.req.valid("json")?.keepEdited === true;
     assertGpuFree(ctx.jobs, "find-parts", house.id);
-    const job = ctx.jobs.start({ kind: "find-parts", key: house.id, label: house.name }, async ({ signal, progress }) => {
+    const job = ctx.jobs.start({ kind: "find-parts", key: house.id, label: house.name, failTitle: "Finding the parts didn't finish" }, async ({ signal, progress }) => {
       const found = await ctx.finder.find(house, { signal, progress });
       signal.throwIfAborted();
       // the parts changed by hand, read as the run ends (a stroke made while it ran counts too)

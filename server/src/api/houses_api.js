@@ -8,7 +8,7 @@ import path from "node:path";
 import { Hono, input, uploadLimit } from "@delebash/core/platform";
 import { ApiError, notFound, RequestValidationError } from "@delebash/core/platform/errors";
 import { createHouse, deleteHouse, getHouse, listHouses, renameHouse, setCurrentPaints } from "../database/houses.js";
-import { displayPath, originalPath, removeHouseDir, thumbPath } from "../files.js";
+import { addingHouseDir, displayPath, houseAdded, originalPath, removeHouseDir, thumbPath } from "../files.js";
 import { ingestPhoto, NotAnImage } from "../images.js";
 import { CurrentPaintsIn, HousePatch, IdParams, ImageQuery } from "../schemas/houses.js";
 import { getState } from "../app_state.js";
@@ -57,15 +57,19 @@ export function router(ctx = getState()) {
     }
     const name = typeof body.name === "string" && body.name.trim() ? body.name.trim().slice(0, 80) : nameFromFile(file.name);
     const id = crypto.randomUUID();
-    let facts;
+    // the folder is marked until the house's row exists: a crash in between leaves nothing for good
+    addingHouseDir(ctx.dataDir, id);
+    let made;
     try {
-      facts = await ingestPhoto(Buffer.from(await file.arrayBuffer()), ctx.dataDir, id, limits);
+      const facts = await ingestPhoto(Buffer.from(await file.arrayBuffer()), ctx.dataDir, id, limits);
+      made = createHouse(ctx.db, { id, name, ...facts });
     } catch (e) {
       await removeHouseDir(ctx.dataDir, id);
       if (e instanceof NotAnImage) throw new ApiError(415, "not-a-photo", "Not a photo", e.message);
       throw e;
     }
-    return c.json(createHouse(ctx.db, { id, name, ...facts }), 201);
+    houseAdded(ctx.dataDir, id);
+    return c.json(made, 201);
   });
 
   app.get("/v1/houses/:id", input({ params: IdParams }), (c) => c.json(must(c.req.valid("param").id)));
@@ -92,9 +96,10 @@ export function router(ctx = getState()) {
     deleteHouse(ctx.db, id);
     // the house is gone; a folder Windows still holds goes a little later (or at the next start) —
     // unless the house came back meanwhile (a backup restored)
-    if (!(await removeHouseDir(ctx.dataDir, id))) {
+    const remove = ctx.removeHouseDir ?? removeHouseDir; // a test passes one Windows holds
+    if (!(await remove(ctx.dataDir, id))) {
       const later = setTimeout(() => {
-        if (!getHouse(ctx.db, id)) removeHouseDir(ctx.dataDir, id);
+        if (!getHouse(ctx.db, id)) remove(ctx.dataDir, id);
       }, 30_000);
       later.unref?.();
     }

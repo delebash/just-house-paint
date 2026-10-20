@@ -13,6 +13,14 @@
   neighbor's house in the photo.
 - **The AI photo says when other programs slowed it**: under its time, the programs that held the
   graphics card while it drew, and how much.
+- **Linux**: the AppImage opens on Ubuntu 22.04 and 24.04 with nothing to install — before, its
+  server didn't start.
+- **The part finder's card says when it can't run** on the computer, before anything is downloaded.
+- **Deleting a house** right after finding its parts no longer stops halfway.
+- **Clearer at every step**: the parts stay listed when the part finder is removed; a search that
+  finds nothing says so; on the first start the Colors and Schemes tabs say the brands are loading
+  and pick one as it lands; a design name the house already has is shown under the name; an iPhone's
+  HEIC photo gets words that say what to do; a failed AI photo, download or search says which.
 - A house whose parts were found before keeps them: **Find the parts again** (with **Keep the parts
   you changed by hand** ticked) gives it the new ones.
 
