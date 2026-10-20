@@ -286,6 +286,34 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         The eleventh (2026-10-20; started): a 0.1.2 user updating (the database, a 0.1.2 backup, the data folder's
         place on each platform, the updater's feed, the first start after) and several clients on one server at once
         (lost updates, deletes under a running job, a restore while another client saves) — two agents, read-only.
+        Several clients (an agent's, two windows by fetch on the real server and on createApp with a fake finder;
+        being fixed): nothing checks versions and an open page never reads again (HousePage load() only). Saving a
+        design sends the whole colors map and the server rewrites it — A's body lost to B's trim save; "paint it has
+        now" the same; a stroke, Undo or Redo PUTs the page's whole stale outline — another window's Box undone,
+        60000 px in two parts at once; a Find started elsewhere is unseen (the brush stays on, the stroke made during
+        it gone, the next stroke writes the pre-find outline over the found one); Box reads every outline then saves
+        while a fresh PUT lands between (3 of 12 rounds lost, 200 answered); a restore has no write gate (a save
+        during it answered 200 and vanished; the stale window's next save lands over the restored data) and jobs are
+        cancelled only after; a restore with a held file answers 500 after the tables committed (houses/ half old, a
+        houses.restoring-* left) or, held share-all, prunes a house added meanwhile; a backup while another window
+        deletes a house — 500 ENOENT, or a zip whose database lists a house with no files; a brand reloaded or
+        removed in one window keeps its old colors in the others (their AI photo "Pick colors first", or parts
+        silently missing); AI color schemes on the local model killed by another window's AI photo (from code); a
+        design deleted elsewhere — a raw "Not Found — no design <uuid>" toast; small: a second Find joining the
+        first ignores its keep-hand-edits choice; prefs follow the last device (by design, §14). Right: delete
+        during a stroke or a job, reset during a stroke or upload, the GPU one job at a time and re-attach, the
+        single-step writes, the General form's changed-keys-only save, engine remove vs Box; no crash.
+        The 0.1.2 user updating (an agent's, a real 0.1.2 server on a temp folder with houses, parts, designs, a
+        brand, a token and backups, then main on the same folder): Mac users of 0.1.2 lose their houses on update —
+        0.1.2 kept data in Just House Paint.app/Contents/MacOS/data, a Mac update replaces the .app by hand first, and
+        0.1.3's adopt looks only inside the new app (from code; What's new says the data "stays outside the app");
+        a proxy or another name for this computer now gets 403 host-not-allowed (What's new says only "safer");
+        the 960 × 700 minimum is taller than a 1280 × 720 usable screen (150 % on 1080p) — the window hangs under the
+        taskbar (measured); the release is "Latest" before its latest*.yml is attached (an update check then errors).
+        Right: no migration since 0.1.2, every row kept, the new settings added, changed values and the token kept;
+        the start-up tidy keeps all of a 0.1.2 folder; a 0.1.2 backup restores (own token kept, runner rows
+        unchanged); Windows' data folder and installer.nsh unchanged; the updater's file names, appId and feeds; the
+        engines found again without download; the AI offer and prefs kept; Linux's folder the same.
 NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
         the installed 0.1.2 updating to it (the silent Restart now).
 
