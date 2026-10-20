@@ -1072,4 +1072,12 @@ at the app's display size, through the app's own code; scripts and overlays in s
   602 (660); so the minimum is 960 × 700 outer (half a 1920 screen snaps with no scroll at full height; the very
   smallest height scrolls the widest toolbars a little); the side panel clamp(300px, 40%, 380px), rows wrap.
   Real data checked against the new sweep rule: the dev folder keeps its four houses and its one whole orphan;
-  the installed 0.1.2's has no houses folder yet — nothing removed.
+  the installed 0.1.2's has no houses folder yet — nothing removed. Dry run 39370907295 (app 436915f, kit
+  c01d769): every runner's window drew and every launcher served the page (windows 2.6–9.5 s, headless 1.0–1.6 s).
+- **The ninth review** (2026-10-20, two agents: the help's every claim against the code; failure paths and real size,
+  measured with the app's own modules). The help: the data folder off Windows (a Mac app's bundle, an extracted
+  AppImage), "Require a token on this computer too", and a proxy's HTTPS origin — fixed in the kit (its RESEARCH
+  §2); What's new said the window grew narrower (its minimum grew: 800 → 960); labels as they read (**Quit Just
+  House Paint**, **Install (3.1 GB)**, the models' "(QAT)"); the help now says where the Windows app's folder is,
+  Windows' firewall question, how to find the network address, and that an unpacked AppImage doesn't update.
+  Failure paths and size: being fixed (TASKS).

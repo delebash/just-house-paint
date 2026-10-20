@@ -11,10 +11,11 @@ The app won't open without its server: there is no offline mode to lose work in.
 **"Just House Paint needs an access token".** The server has access tokens on (**App Settings →
 Server** on the computer it runs on) and this browser has none, or a wrong one. Paste one of those
 tokens and press **Connect** — or open the address **Copy the address with this token** gives. The
-browser keeps it; the desktop app on the server's own computer never asks.
+browser keeps it. The desktop app on the server's own computer asks only when **Require a token on
+this computer too** is on and its window has none (the window that turns it on keeps one).
 
 **Another copy is already running.** One server per data folder: a second one says that another
-Just House Paint server is using this data folder. Quit the other copy (the tray's **Quit**), or
+Just House Paint server is using this data folder. Quit the other copy (the tray's **Quit Just House Paint**), or
 give the second one its own `--data-dir`. The desktop app is the exception: opening it stops a server
 started on its own on its usual port (17499) and takes over — what that server was doing stops.
 

@@ -31,7 +31,11 @@
   its engines' settings). See [On another computer, or without a window](getting-started.md#on-another-computer-or-without-a-window)
   and [Backups](getting-started.md#backups).
 - **The server on its own on macOS and Linux** too, and **Copy** works in a browser on another computer.
-- **The window** can be as narrow as half a 1920 px screen, and the house page fits it.
+- **The window's smallest size is 960 × 700** — half a 1920 px screen, where the house page fits
+  with nothing to scroll (it was 800 × 600, which left the photo a thumbnail).
+- **Your data stays outside the app on macOS and Linux**: on a Mac in Library/Application Support
+  (never inside the app, which an update replaces), and the AppImage and its server on its own share one
+  folder. **Require a token on this computer too** no longer leaves the window unable to do anything.
 - A backup restored from an older version gets this one's settings at once, and a restored house's
   first **Find the parts** or **AI photo** no longer fails.
 - A house whose parts were found before keeps them: **Find the parts again** (with **Keep the parts

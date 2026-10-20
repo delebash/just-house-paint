@@ -226,6 +226,27 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         put-back that fails at start, then any write making a new houses folder, lets the next start delete the
         only copy; the shell's did-fail-load counts a failed iframe. Clean: the sweep on live houses, saveMasks,
         using()/releaseGpu, keepAuth, afterTables, the gone-state handler, calmAgain, replaceAssetDir, the launcher.
+        The ninth (2026-10-20; the help's claims, failure paths and real size). The help (an agent's, read-only,
+        to verify): on Linux the extracted AppImage's server uses a new data/ beside it, not the desktop app's
+        folder (no houses, no token — open on 0.0.0.0); behind an HTTPS proxy every save is a CSRF 403 (the scheme
+        and Host the server sees aren't the browser's Origin); What's new calls the window narrower though its
+        minimum grew (800 → 960); with "Require a token on this computer too" the desktop window gets 401s;
+        suspected: on macOS the data folder could land inside the app (beside Contents/MacOS) and go with an
+        update; small: the tray item is "Quit Just House Paint", Install shows its size, models carry "(QAT)";
+        gaps: Windows' firewall prompt, finding the network address, where the app's folder is.
+        Failure paths and real size (an agent's, measured with the app's own modules at 2048×1536, 15 parts): each
+        Texture slider step re-prepares every part — 2.2 s (2.7 with a calmed body) per step, arrays 69 → ~280 MB;
+        Save image paints the full original on the main thread (12 MP: 2.3 s, 268 MB; 0.5 texture + dark body 11 s,
+        1.06 GB; 48 MP 47 s, 4.2 GB; a 192 MP photo is accepted); the AI photo composes at the original's size in the
+        server (10 surfaces: 12 MP 1.7 GB, 48 MP 6.1 GB peak); a backup is held whole in memory (server 1×, renderer
+        ~2×, main ~2× — 30 houses with AI photos ≈ 0.9–1.7 GB); the paint cache keeps a removed or reloaded brand's
+        colors (the house still paints them; the AI photo drops them silently); outlines are written in place (a full
+        disk truncates one; an unreadable outline then fails every Box, Keep and the AI photo); a transparent PNG
+        shows black on screen but its hidden colors in the AI photo; a photo past sharp's pixel limit reads "not an
+        image"; a window that reloads during Find the parts never re-attaches to the job (its old outlines then
+        overwrite the new); small: a backup saved onto a full disk leaves a partial file, a killed AI photo leaves
+        temp files and maybe a half PNG, Cancel waits out the finder's hash check. Clean: downloads resume, no
+        network at first start, SQLite busy, jobs after a restart, memory over house switches, SAM encodings.
 NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
         the installed 0.1.2 updating to it (the silent Restart now).
 

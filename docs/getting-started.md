@@ -29,7 +29,7 @@ Mac, Updates offers **Open the release page**, to download it from there.
 1. **Add a photo of your house** on **Your houses**: press **Add a photo**. A photo from the front,
    in daylight, with the whole house in the frame works best. See [Your houses](your-houses.md).
 2. **Install the part finder.** The house opens on its **Parts** tab, which offers the part finder:
-   press **Install** — a download of about 3.1 GB, once. See [Finding the parts](finding-parts.md).
+   press **Install (3.1 GB)** — a download, once. See [Finding the parts](finding-parts.md).
 3. **Find the parts.** Press **Find the parts**. It takes under a minute.
 4. **Paint colors load by themselves.** The first time the app starts, it loads seven brands'
    colors from their sites (about 17,000 colors, a few seconds each — the stack at the bottom right
@@ -62,15 +62,19 @@ listening on your network:
 1. In the desktop app, add an access token (**App Settings → Server**): without one, anyone on your
    network can open it. **Copy the address with this token** copies `http://127.0.0.1:17499/…` —
    keep it; you'll put the computer's network address in place of `127.0.0.1`.
-2. Quit the desktop app (the tray's **Quit**): one server at a time can use your data.
+2. Quit the desktop app (the tray's **Quit Just House Paint**): one server at a time can use your data.
 3. Start the server on its own, in a terminal:
-   - **Windows** — in the app's folder (where `justhousepaint.exe` is):
-     `.\just-house-paint-server serve --host 0.0.0.0`
+   - **Windows** — in the app's folder (where `justhousepaint.exe` is; unless you chose another, in
+     PowerShell `cd "$env:LOCALAPPDATA\Programs\justhousepaint"`):
+     `.\just-house-paint-server serve --host 0.0.0.0`. The first time, Windows asks whether the app may use
+     the network: allow it on private networks, or other computers can't reach it.
    - **macOS** — `"/Applications/Just House Paint.app/Contents/Resources/just-house-paint-server" serve --host 0.0.0.0`
    - **Linux** — unpack the AppImage once (`./just-house-paint-*.AppImage --appimage-extract`), then
-     `squashfs-root/just-house-paint-server serve --host 0.0.0.0`
+     `squashfs-root/just-house-paint-server serve --host 0.0.0.0`. The unpacked copy doesn't update itself:
+     after an update, unpack the new AppImage again.
 4. On the other computer, open the address from step 1 with this computer's network address in it
-   (`http://<its address>:17499/…`).
+   (`http://<its address>:17499/…`). The address: Windows `ipconfig` ("IPv4 Address"), macOS
+   `ipconfig getifaddr en0`, Linux `hostname -I`.
 
 The server started on its own uses the same data folder as the desktop app. Opening the desktop app
 stops it and takes over (what it was doing stops too). Updates come through the desktop app — in a

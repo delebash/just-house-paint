@@ -30,8 +30,8 @@ A scheme paints them the trim's color; give them their own on the **Colors** tab
 
 ## The first time: installing the part finder
 
-Until it is installed, a house's **Parts** tab offers the part finder: **Install** downloads about
-3.1 GB, once. Its progress shows on the card while it downloads; **Cancel** there stops it. If the
+Until it is installed, a house's **Parts** tab offers the part finder: **Install (3.1 GB)** downloads
+it, once. Its progress shows on the card while it downloads; **Cancel** there stops it. If the
 finder's engine can't run on the computer, the card says so instead, and nothing is downloaded. On a
 computer with a graphics card the finder uses the card; finding the parts of one photo takes under a
 minute (a little longer the first time, while the model loads); its progress shows under the
