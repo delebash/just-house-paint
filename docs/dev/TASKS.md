@@ -314,6 +314,36 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         the start-up tidy keeps all of a 0.1.2 folder; a 0.1.2 backup restores (own token kept, runner rows
         unchanged); Windows' data folder and installer.nsh unchanged; the updater's file names, appId and feeds; the
         engines found again without download; the AI offer and prefs kept; Linux's folder the same.
+        The eleventh's fixes — decided (mine, argued, under the finish-everything go; each names its standard):
+        · Other windows' changes: the kit's watchSync (its GET /v1/sync/rev contract — family code, JustWrite and
+          JustVoice use it) on a server counter of the changes OTHER windows made: each window sends an id
+          (X-Client-Id, the kit's serverApi, opt-in), the server counts writes by anyone else; the open page
+          re-reads in place (house, parts, outlines, designs, jobs; brands' paints forgotten when they changed),
+          never under a stroke or save in flight. (Attack: a counter that moves on the window's own saves would
+          re-read after every stroke — hence per window; a whole-window reload would lose zoom and undo each time
+          the other person paints — hence in place.)
+        · Colors: a design's colors and the paint each part has now saved as JSON Merge Patch (RFC 7396 — only the
+          parts changed; null removes), so two windows painting different parts both keep theirs.
+        · Outlines: an ETag per house's outlines (RFC 9110 conditional requests — If-Match, 412): a stroke, Undo,
+          Redo and Find the parts carry the version they were made on; a stale one is refused, the page re-reads
+          the outlines and says so. The version lives in the server's memory (opaque, a new series at each start
+          and restore — no migration, so a 0.1.3 backup still restores into 0.1.2 where it did). Box, a stroke's
+          save, a part added and the find's commit run one at a time per house (the kit's Mutex).
+        · Restore and reset: the kit's maintenance gate — writes answered 503 with Retry-After (RFC 9110 §15.6.4)
+          while one runs, the writes in flight finished first, the jobs cancelled before anything is replaced;
+          the folders swapped first and all-or-nothing (a file held past the retries refuses the restore with
+          nothing changed — no copy-over half state), then the tables, the folders put back if the tables fail.
+        · Backup: a point-in-time copy — the database (VACUUM INTO) and hard links to every file made in one
+          synchronous step (nothing else runs between them), zipped after; where links can't be made (FAT/exFAT),
+          the live folders with a vanished file skipped.
+        · Small: a design deleted elsewhere gets words and the list re-read; the AI photo names the parts whose
+          paint is gone (422) instead of dropping them; the AI photo waits for AI color schemes on the local model
+          (gpu-busy); a second Find with another keep-hand-edits choice is refused, not silently joined; prefs
+          following the last device stay (the family's §14).
+        · The 0.1.2 update: What's new (the release notes) tells Mac users of 0.1.2 to back up or move
+          Contents/MacOS/data before replacing the app, and proxy / other-name users to set ALLOWED_HOSTS; the
+          window's minimum is clamped to the screen's work area (Electron's screen API); the release is created as
+          a draft, its files attached, then published (gh release create --draft … edit --draft=false).
 NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
         the installed 0.1.2 updating to it (the silent Restart now).
 
