@@ -8,8 +8,13 @@
 //   - brush / eraser: drag to paint into / out of the selected part (`stroke` when the drag ends —
 //     the page applies it to the mask, repaints and saves);
 //   - box:    drag a box; the part finder outlines what is inside (`box`).
+// Drawing stays pointer-only, as in every paint app; the keyboard reaches the photo itself (a Tab
+// stop with a name), whose arrow keys move it once zoomed — the zoom buttons zoom around its middle.
+// Every light mark (the brush's ring, the box, the split line) has a dark copy drawn under it, the
+// two-tone edge selection tools use, so it shows on a white wall as on a dark one.
 import { UiButton } from "@delebash/ui";
-import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { parse, wcagLuminance } from "culori";
+import { computed, onBeforeUnmount, onMounted, ref, useId, watch } from "vue";
 import { useI18n } from "vue-i18n";
 
 const props = defineProps({
@@ -32,6 +37,8 @@ const props = defineProps({
 });
 const emit = defineEmits(["pick", "stroke", "box"]);
 const { t } = useI18n();
+// the photo's keyboard hint, read with its name
+const keysId = useId();
 
 const host = ref(null);
 const stage = ref(null);
@@ -155,37 +162,63 @@ function onLeave() {
   if (drawing.value || boxing.value || panFrom) onUp();
 }
 
+// the arrow keys move a zoomed (or moved) photo by this many screen pixels — a map's step (Leaflet's
+// keyboardPanDelta); the photo fitted to the view has nowhere to go, and the keys scroll as usual
+const PAN_STEP = 80;
+const PAN_KEYS = { ArrowLeft: [1, 0], ArrowRight: [-1, 0], ArrowUp: [0, 1], ArrowDown: [0, -1] };
+function onKey(e) {
+  const dir = PAN_KEYS[e.key];
+  if (!dir || fitted || e.target !== host.value || e.altKey || e.ctrlKey || e.metaKey) return;
+  e.preventDefault();
+  view.value = { ...view.value, x: view.value.x + dir[0] * PAN_STEP, y: view.value.y + dir[1] * PAN_STEP };
+}
+
 const imageConfig = computed(() => ({ image: props.painted || props.photo, width: imgW.value, height: imgH.value }));
 const beforeClip = computed(() => (props.split === null || props.sideBySide ? null : { x: 0, y: 0, width: imgW.value * props.split, height: imgH.value }));
 const groupConfig = computed(() => ({ x: view.value.x, y: view.value.y, scaleX: view.value.scale, scaleY: view.value.scale }));
-const cursorConfig = computed(() =>
-  pointer.value && (props.tool === "brush" || props.tool === "eraser") && inside(pointer.value)
-    ? { x: pointer.value.x, y: pointer.value.y, radius: props.brushSize / 2, stroke: "#ffffff", strokeWidth: 1.5 / view.value.scale, dash: [4 / view.value.scale, 3 / view.value.scale] }
-    : null,
+/** A mark and the edge drawn under it: the same shape, solid (a dashed mark's gaps show it — the
+ *  two-tone "marching ants"), `widen` screen pixels wider, in `edge` — black under a light mark. */
+const twoTone = (mark, widen, edge = "#000000") =>
+  mark ? [{ ...mark, stroke: edge, dash: undefined, strokeWidth: mark.strokeWidth + widen / view.value.scale }, mark] : [];
+// the brush's preview is the paint (or the eraser's black): its edge is black under a light paint,
+// white under a dark one (0.18: the luminance black and white contrast equally with), so the stroke
+// shows on any wall
+const edgeOf = (hex) => (wcagLuminance(parse(hex) || "#000000") > 0.18 ? "#000000" : "#ffffff");
+
+const cursorMarks = computed(() =>
+  twoTone(
+    pointer.value && (props.tool === "brush" || props.tool === "eraser") && inside(pointer.value)
+      ? { x: pointer.value.x, y: pointer.value.y, radius: props.brushSize / 2, stroke: "#ffffff", strokeWidth: 1.5 / view.value.scale, dash: [4 / view.value.scale, 3 / view.value.scale] }
+      : null,
+    1,
+  ),
 );
-const lineConfig = computed(() =>
-  drawing.value
-    ? {
-        points: drawing.value.points,
-        stroke: props.tool === "eraser" ? "#000000" : props.strokeColor,
-        strokeWidth: props.brushSize,
-        lineCap: "round",
-        lineJoin: "round",
-        opacity: 0.55,
-      }
-    : null,
-);
-const boxConfig = computed(() => {
-  const b = boxing.value;
-  return b
-    ? { x: Math.min(b.x0, b.x1), y: Math.min(b.y0, b.y1), width: Math.abs(b.x1 - b.x0), height: Math.abs(b.y1 - b.y0), stroke: "#ffffff", strokeWidth: 2 / view.value.scale, dash: [6 / view.value.scale, 4 / view.value.scale] }
-    : null;
+const lineMarks = computed(() => {
+  if (!drawing.value) return [];
+  const stroke = props.tool === "eraser" ? "#000000" : props.strokeColor;
+  const line = { points: drawing.value.points, stroke, strokeWidth: props.brushSize, lineCap: "round", lineJoin: "round", opacity: 0.55 };
+  return twoTone(line, 2, edgeOf(stroke));
 });
-const splitLine = computed(() => (props.split === null || props.sideBySide ? null : { points: [imgW.value * props.split, 0, imgW.value * props.split, imgH.value], stroke: "#ffffff", strokeWidth: 2 / view.value.scale }));
+const boxMarks = computed(() => {
+  const b = boxing.value;
+  return twoTone(
+    b
+      ? { x: Math.min(b.x0, b.x1), y: Math.min(b.y0, b.y1), width: Math.abs(b.x1 - b.x0), height: Math.abs(b.y1 - b.y0), stroke: "#ffffff", strokeWidth: 2 / view.value.scale, dash: [6 / view.value.scale, 4 / view.value.scale] }
+      : null,
+    1,
+  );
+});
+const splitMarks = computed(() =>
+  twoTone(props.split === null || props.sideBySide ? null : { points: [imgW.value * props.split, 0, imgW.value * props.split, imgH.value], stroke: "#ffffff", strokeWidth: 2 / view.value.scale }, 2),
+);
 </script>
 
 <template>
-  <div ref="host" class="house-canvas" :data-tool="tool">
+  <div
+    ref="host" class="house-canvas" :data-tool="tool" :tabindex="photo ? 0 : undefined" :role="photo ? 'region' : undefined"
+    :aria-label="photo ? t('house.canvas.label') : undefined" :aria-describedby="photo ? keysId : undefined" @keydown="onKey"
+  >
+    <span v-if="photo" :id="keysId" class="visually-hidden">{{ t("house.canvas.keys") }}</span>
     <v-stage
       v-if="photo" ref="stage" :config="{ width: size.width, height: size.height }"
       @wheel="onWheel" @mousedown="onDown" @touchstart="onDown" @mousemove="onMove" @touchmove="onMove"
@@ -201,10 +234,10 @@ const splitLine = computed(() => (props.split === null || props.sideBySide ? nul
               <v-image :config="{ image: before || photo, width: imgW, height: imgH }" />
             </v-group>
             <v-image v-if="overlay" :config="{ image: overlay, width: imgW, height: imgH, listening: false }" />
-            <v-line v-if="splitLine" :config="splitLine" />
-            <v-line v-if="lineConfig" :config="lineConfig" />
-            <v-rect v-if="boxConfig" :config="boxConfig" />
-            <v-circle v-if="cursorConfig" :config="cursorConfig" />
+            <v-line v-for="(m, i) in splitMarks" :key="`split${i}`" :config="m" />
+            <v-line v-for="(m, i) in lineMarks" :key="`line${i}`" :config="m" />
+            <v-rect v-for="(m, i) in boxMarks" :key="`box${i}`" :config="m" />
+            <v-circle v-for="(m, i) in cursorMarks" :key="`cursor${i}`" :config="m" />
           </v-group>
         </v-group>
       </v-layer>

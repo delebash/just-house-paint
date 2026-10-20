@@ -124,6 +124,39 @@ const nowPaint = computed(() => paints.byId[house.house?.currentPaints?.[house.s
 // the chip lit as chosen: the part's color, or (picking the paint on it now) that paint
 const chosenId = computed(() => (target.value === "now" ? nowPaint.value?.id : house.colors[house.selectedPart]));
 
+// The paints are ONE Tab stop — WAI-ARIA's roving tabindex (APG, "Keyboard navigation inside
+// components"): the chosen paint's chip, else the first, and then the chip last focused; the arrow
+// keys move along the chips (up and down a row of the grid as it is laid out), Home and End to the
+// ends; Enter or Space picks (the chip is a button). Tab goes on to Show more and what follows.
+const grid = ref(null);
+const focusedId = ref(null);
+const stopId = computed(() => {
+  const ids = rows.value.map((p) => p.id);
+  if (ids.includes(focusedId.value)) return focusedId.value;
+  if (ids.includes(chosenId.value)) return chosenId.value;
+  return ids[0] ?? null;
+});
+// the chosen paint changed (a pick, the target switched): the stop follows it, unless a chip has focus
+watch(chosenId, () => {
+  if (!grid.value?.contains(document.activeElement)) focusedId.value = null;
+});
+/** How many chips one row of the grid holds: the chips that share the first one's top. */
+function perRow(chips) {
+  const n = chips.findIndex((c) => c.offsetTop !== chips[0].offsetTop);
+  return n > 0 ? n : chips.length;
+}
+function onGridKey(e) {
+  const chips = [...grid.value.querySelectorAll(".chip")];
+  const i = chips.indexOf(e.target.closest?.(".chip"));
+  if (i < 0) return;
+  const step = { ArrowRight: 1, ArrowLeft: -1, ArrowDown: perRow(chips), ArrowUp: -perRow(chips) }[e.key];
+  const to = e.key === "Home" ? 0 : e.key === "End" ? chips.length - 1 : step !== undefined ? i + step : null;
+  if (to === null) return;
+  e.preventDefault();
+  // past either end (or a row with no chip below) focus stays where it is, as in APG's grid
+  if (to >= 0 && to < chips.length) chips[to].focus();
+}
+
 async function choose(paint) {
   if (!house.selectedPart) return;
   paints.remember([paint]);
@@ -202,7 +235,8 @@ async function match() {
       <div v-if="current && tones" class="colors__tones" :aria-label="t('colors.tones.label')">
         <span class="hint">{{ t("colors.tones.label") }}</span>
         <span v-for="level in ['shade', 'middle', 'light']" :key="level" class="colors__tone">
-          <span class="swatch" :style="{ background: tones[level] }" :title="tones[level]" />
+          <!-- a swatch is a picture of its colour: its hex is its name, for a screen reader too -->
+          <span class="swatch" role="img" :style="{ background: tones[level] }" :title="tones[level]" :aria-label="tones[level]" />
           <span class="hint">{{ t(`colors.tones.${level}`) }}</span>
         </span>
       </div>
@@ -230,10 +264,11 @@ async function match() {
           <span>{{ t("colors.archived") }}</span>
         </label>
       </div>
-      <div class="colors__grid" :aria-busy="searching">
+      <div ref="grid" class="colors__grid" role="group" :aria-label="t('colors.paints')" :aria-busy="searching" @keydown="onGridKey">
         <q-btn
           v-for="p in rows" :key="p.id" flat no-caps unelevated class="chip" :class="{ 'chip--on': chosenId === p.id }"
-          :title="p.displayName" :aria-label="p.displayName" :disable="!house.selectedPart" @click="choose(p)"
+          :title="p.displayName" :aria-label="p.displayName" :aria-pressed="chosenId === p.id ? 'true' : 'false'"
+          :tabindex="stopId === p.id ? 0 : -1" :disable="!house.selectedPart" @focus="focusedId = p.id" @click="choose(p)"
         >
           <span class="chip__body">
             <span class="chip__color" :style="{ background: p.hex }" />
@@ -260,7 +295,10 @@ async function match() {
           <q-item-section avatar class="nearest__swatch"><span class="nearest__color" :style="{ background: n.paint.hex }" /></q-item-section>
           <q-item-section>{{ n.paint.displayName }}</q-item-section>
           <q-item-section side>
-            <UiTag :intent="n.deltaE <= 2 ? 'success' : 'secondary'" :value="t('partsTab.deltaE', { n: n.deltaE.toFixed(1) })" />
+            <!-- green is a close match to the color: the words say it too, for a screen reader -->
+            <UiTag :intent="n.deltaE <= 2 ? 'success' : 'secondary'" :title="t('colors.exact.deltaEHint')">
+              {{ t("partsTab.deltaE", { n: n.deltaE.toFixed(1) }) }}<span class="visually-hidden"> {{ n.deltaE <= 2 ? t("colors.exact.deltaEClose") : t("colors.exact.deltaEFar") }}</span>
+            </UiTag>
           </q-item-section>
         </q-item>
       </q-list>
@@ -333,9 +371,11 @@ async function match() {
   border-radius: 6px;
   font-size: var(--fs-small);
 }
+/* chosen: a 2 px accent edge (a border, not a box-shadow — the focus ring is the box-shadow, and the
+   chosen chip is where Tab lands); the padding gives back the pixel the border takes */
 .chip--on {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 1px var(--accent);
+  border: 2px solid var(--accent);
+  padding: 3px;
 }
 .chip__body {
   display: flex;

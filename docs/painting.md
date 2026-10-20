@@ -14,7 +14,7 @@ The app paints each part with the paint's exact color in the part's normal light
 photo's own shadows, texture and lap lines: a wall in shade is the same paint, darker. Beside each
 painted part the **Parts** tab says how close the painted wall comes to the paint chip — or, with
 **On it now** set, to the chip in that part's light — **ΔE** under 1 is a difference most people
-can't see, under 2 is a close match.
+can't see, under 2 is a close match (its tag turns green).
 
 **On this wall** — under the chosen paint on the **Colors** tab, the same paint as it shows on the
 selected part: **in shade**, on **most of it** and **in light**. The light one is the chip — in the
@@ -64,7 +64,8 @@ the photo's top right; drag with **Select** to move the photo.
 **Undo** and **Redo** (Ctrl+Z, and Ctrl+Y or Ctrl+Shift+Z) take back a color, or a change to a part's outline made
 with the brush, the eraser or a box, and put it back again. They remember the last 50 steps while
 the house is open; **Find the parts again** starts them over. Undo also puts back which design was
-open.
+open. The keys work anywhere on the page except while you type in a field (there they undo your
+typing) or while a dialog is open.
 
 **Reset** offers **Remove all colors** — the photo as taken — and, when you changed the colors of
 an open design, **Back to** that design's saved colors. Undo brings back what a Reset took away.
@@ -80,6 +81,21 @@ stay). A house keeps up to 30 designs (**App Settings → General → Designs an
 A design saved before the house had some of its trim parts (soffits and fascia, window trim,
 decorations) leaves them unpainted. Opening it says which parts have no color, and **Paint them the trim's color** paints
 them the design's trim color — nothing changes until you press it, and **Undo** takes it back.
+
+## With the keyboard
+
+**Tab** goes through the buttons, lists and fields; whatever has the keyboard's focus has a ring
+around it.
+
+- **A part** — on the **Parts** tab, Tab to it and press **Enter**.
+- **A paint** — the colors on the **Colors** tab are one Tab stop (the chosen one, or the first): the
+  arrow keys move between them, up and down a row too, **Home** and **End** go to the first and the
+  last, and **Enter** or **Space** picks one. Tab goes on to **Show more** and what follows.
+- **A color of your own** — type its hex under **An exact color**; a part's color as photographed is
+  the small round swatch on its row on the **Parts** tab.
+- **The photo** — Tab reaches it too; once you have zoomed in with **+**, the arrow keys move it.
+- **Drawing** — the **Brush**, the **Eraser**, the **Box** and **Pick a color** need a mouse, a pen or
+  touch.
 
 ## Saving the picture
 

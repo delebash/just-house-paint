@@ -192,7 +192,19 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         template, with tests (RESEARCH §13; the kit's §2): CORS only for the app's own origins, the Host guard
         against DNS rebinding (<APP>_ALLOWED_HOSTS for a proxy), proxied requests never loopback, a restore keeps
         the engine tables, backups without tokens, zip sizes checked. The seventh's fixes' findings — FIXED, with
-        tests. Accessibility — being fixed. The findings as reported (an agent's, its probes reproduced 1–3): any web page can read the desktop server's data, keys and tokens (CORS `*` and
+        tests. Accessibility — all FIXED, the follow-ups below too (the window's minimum 960 × 700 — half a 1920
+        screen, my call over the agent's 1180 — RESEARCH §13; the template's tokens the same). The twelve: a kit
+        :focus-visible ring (box-shadow: QBtn's .no-outline beats any outline) with --focus-ring ≥6:1; aria-pressed /
+        aria-current; the photo a Tab stop, arrows pan when zoomed (drawing stays pointer-only, the help says so);
+        the paint grid one Tab stop (roving tabindex); AI photo rows named apart; the AI photo's reason as visible
+        text; Ctrl+Z/Y not under a dialog, yes from a read-only input; contrast --muted 5.1:1 (4.56 on the selected
+        tint), --success-ink 6.3:1, --warn-ink 8.8:1; two-tone outlines and tool marks; the side panel
+        clamp(300px, 40%, 380px) and wrapping rows; aria-disabled keeps focus while a job runs; swatches named,
+        24 px, house names titled. Found next by it: at 800×600 the photo starts below the fold (the page scrolls
+        228 px); the kit's UiSlider sets its minimum when focus leaves its number box (Texture went 1 → 0 by Tab);
+        Quasar item captions 3.6:1 light; the kit's non-default ink palettes keep muted text under 4.5:1; the
+        nearest-paint ΔE tag by color alone; buttons nested in clickable rows; the kit contract's --muted #888.
+        The findings as reported (an agent's, its probes reproduced 1–3): any web page can read the desktop server's data, keys and tokens (CORS `*` and
         loopback skipping auth); DNS rebinding passes the CSRF check (Origin compared to an unchecked Host) — writes,
         and an engine-config binary URL with no hash runs at the next install; a malicious backup restores
         runner_binary/runner_setting rows (code at the next engine install); a reverse proxy on the machine makes

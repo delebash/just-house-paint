@@ -66,6 +66,13 @@ body {
 .hint { color: var(--muted); font-size: var(--fs-small); margin: 0 0 var(--sp-3); }
 .muted { color: var(--muted); }
 .mono { font-family: var(--font-mono); font-size: var(--fs-small); }
+/* Words for a screen reader only (what a colour or a shape says to the eye) — the common
+   visually-hidden pattern (Bootstrap's .visually-hidden); neither Quasar nor the kit ships one. */
+.visually-hidden {
+  position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important;
+  margin: -1px !important; overflow: hidden !important; clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important; border: 0 !important;
+}
 /* Not on Quasar's own elements: Quasar names a flex row `row` too, and this rule would outrank
    Quasar's inside them. :where() keeps it one class. */
 :where(:not([class*="q-"])).row { display: flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap; }
@@ -74,6 +81,24 @@ body {
   padding: 6px 10px; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-sm);
 }
 .token-list { list-style: none; margin: 0 0 var(--sp-3); padding: 0; display: flex; flex-direction: column; gap: 6px; }
+
+/* ── a list row with a main action and buttons of its own (a part, a design, an AI photo) ───────
+   The row isn't the button — a button inside a button is lost to the keyboard and to screen readers
+   (WAI-ARIA: no interactive content inside a button). Its main action is a button of its own,
+   stretched over the whole row by a pseudo-element (the stretched-link pattern: Bootstrap's
+   .stretched-link, Inclusive Components' "Cards"), so a click anywhere on the row still does it;
+   the row's other buttons sit above it (.row-side), and a click on the side's words goes through.
+   The keyboard ring goes round the row, on the stretched part. The row (a QItem) is positioned. */
+.row-action {
+  position: static; width: 100%; min-height: 0; padding: 0;
+  font: inherit; color: inherit; text-align: left;
+}
+.row-action::after { content: ""; position: absolute; inset: 0; border-radius: var(--r-sm); }
+.row-action:focus-visible { box-shadow: none; }
+.row-action:focus-visible::after { box-shadow: var(--focus-ring); }
+.row-action__body { display: flex; flex-direction: column; align-items: stretch; gap: 2px; width: 100%; min-width: 0; text-align: left; }
+.row-side { position: relative; z-index: 1; pointer-events: none; }
+.row-side :is(button, [title]) { pointer-events: auto; }
 
 /* ── forms (app-structure §15, §17): fields as wide as what they hold, the button row on the
    right, a button on a row of labelled fields aligned with the inputs ─────────────────────── */

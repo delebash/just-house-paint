@@ -58,6 +58,10 @@ with the tools above the photo, on the part selected on the **Parts** tab:
 - **Add the part** (under the list) — a part to paint that the finder knows but didn't find on this
   house: choose it, then draw it with the brush or a box.
 
+The brush, the eraser and the box draw on the photo, so they need a mouse, a pen or touch; with the
+keyboard, select the part on the **Parts** tab (Tab to it, **Enter**) — the rest is under **With the
+keyboard** in [Painting your house](painting.md).
+
 A pixel belongs to one part only. Where two parts overlap, the more specific one keeps it (the
 garage door before the door, the gutters before the trim) — the order is in **App Settings →
 Advanced**.

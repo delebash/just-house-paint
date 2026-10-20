@@ -66,28 +66,35 @@ async function addPart() {
     <p class="hint">{{ t("partsTab.hint") }}</p>
     <h3 class="parts__group">{{ t("partsTab.toPaint") }}</h3>
     <q-list class="parts__list" dense>
-      <q-item
-        v-for="p in toPaint" :key="p.key" clickable class="parts__row" :active="house.selectedPart === p.key"
-        active-class="parts__row--on" @click="house.selectedPart = p.key"
-      >
+      <!-- the row isn't a button (its own buttons would be inside one): its main action is — selecting
+           the part, pressed while selected — stretched over the row (app.scss .row-action), the
+           as-photographed swatch beside it -->
+      <q-item v-for="p in toPaint" :key="p.key" class="parts__row" :class="{ 'parts__row--on': house.selectedPart === p.key }">
         <q-item-section avatar class="parts__swatch">
           <span class="swatch" :style="{ background: paints.byId[house.colors[p.key]]?.hex || 'transparent' }" />
         </q-item-section>
         <q-item-section>
-          <q-item-label class="parts__name">{{ nameOf(p.key) }}</q-item-label>
-          <q-item-label caption class="parts__paint">{{ paintLabel(p.key) }}</q-item-label>
+          <q-btn
+            flat no-caps unelevated align="left" class="row-action parts__pick" :aria-pressed="house.selectedPart === p.key ? 'true' : 'false'"
+            @click="house.selectedPart = p.key"
+          >
+            <span class="row-action__body">
+              <q-item-label class="parts__name">{{ nameOf(p.key) }}</q-item-label>
+              <q-item-label caption class="parts__paint">{{ paintLabel(p.key) }}</q-item-label>
+            </span>
+          </q-btn>
         </q-item-section>
-        <q-item-section side class="parts__side">
+        <q-item-section side class="row-side parts__side">
           <q-btn
             v-if="photographed[p.key]" flat dense unelevated class="parts__now" :style="{ background: photographed[p.key] }"
             :title="t('partsTab.photographed', { hex: photographed[p.key] })" :aria-label="t('partsTab.photographed', { hex: photographed[p.key] })"
-            @click.stop="emit('find-color', photographed[p.key])"
+            @click="emit('find-color', photographed[p.key])"
           />
           <span class="muted">{{ share(p) }}</span>
-          <UiTag
-            v-if="deltaE[p.key] != null" :intent="deltaE[p.key] <= 2 ? 'success' : 'secondary'"
-            :title="t('partsTab.deltaEHint')" :value="t('partsTab.deltaE', { n: deltaE[p.key].toFixed(1) })"
-          />
+          <!-- green is a close match: the words say it too, for a screen reader (the colour alone doesn't) -->
+          <UiTag v-if="deltaE[p.key] != null" :intent="deltaE[p.key] <= 2 ? 'success' : 'secondary'" :title="t('partsTab.deltaEHint')">
+            {{ t("partsTab.deltaE", { n: deltaE[p.key].toFixed(1) }) }}<span class="visually-hidden"> {{ deltaE[p.key] <= 2 ? t("partsTab.deltaEClose") : t("partsTab.deltaEFar") }}</span>
+          </UiTag>
           <UiTag v-if="p.source !== 'auto'" intent="ghost" :value="t('partsTab.edited')" />
         </q-item-section>
       </q-item>
@@ -120,7 +127,6 @@ async function addPart() {
 .parts__row--on {
   border-color: var(--accent);
   background: var(--accent-soft);
-  color: inherit;
 }
 .parts__swatch {
   min-width: 0;
@@ -134,17 +140,21 @@ async function addPart() {
   align-items: center;
   gap: var(--sp-2);
 }
+/* 24 × 24: the smallest target WCAG 2.2 allows (2.5.8) */
 .parts__now {
-  min-width: 18px;
-  min-height: 18px;
-  width: 18px;
-  height: 18px;
+  min-width: 24px;
+  min-height: 24px;
+  width: 24px;
+  height: 24px;
   padding: 0;
   border: 1px solid var(--border);
   border-radius: 50%;
 }
+/* the button drops under the list in a narrow panel: on one line they held the side panel at 333 px,
+   past its 300 px floor (measured) */
 .parts__add {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--sp-2);
   margin-top: var(--sp-3);

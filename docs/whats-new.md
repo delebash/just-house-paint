@@ -22,6 +22,18 @@
   finds nothing says so; on the first start the Colors and Schemes tabs say the brands are loading
   and pick one as it lands; a design name the house already has is shown under the name; an iPhone's
   HEIC photo gets words that say what to do; a failed AI photo, download or search says which.
+- **By keyboard**: a ring shows where you are; the paint colors are one stop for Tab (the arrow
+  keys move between them); the arrow keys move a zoomed photo; what is selected is said to a screen
+  reader; why **AI photo** is off shows beside it; the outlines and the brush show on a white house
+  too; hints and muted text are easier to read.
+- **Safer on your network**: a web page open in your browser can't read or change the app's server
+  any more; a backup no longer holds the access tokens, and a restore keeps this computer's own (and
+  its engines' settings). See [On another computer, or without a window](getting-started.md#on-another-computer-or-without-a-window)
+  and [Backups](getting-started.md#backups).
+- **The server on its own on macOS and Linux** too, and **Copy** works in a browser on another computer.
+- **The window** can be as narrow as half a 1920 px screen, and the house page fits it.
+- A backup restored from an older version gets this one's settings at once, and a restored house's
+  first **Find the parts** or **AI photo** no longer fails.
 - A house whose parts were found before keeps them: **Find the parts again** (with **Keep the parts
   you changed by hand** ticked) gives it the new ones. A part you changed by hand stays as you drew
   it — if that is **Trim**, the door casings go with the walls: untick **Keep**, or add them to Trim

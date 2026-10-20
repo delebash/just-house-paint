@@ -1056,4 +1056,20 @@ at the app's display size, through the app's own code; scripts and overlays in s
   `.houses-put-back`, never removed as a leftover), the Linux help names the real lower-case AppImage, the Windows
   command is `.\…` (PowerShell) and the help says to quit the desktop app first, a new app gets its launcher
   executable (`new-app.js` stages it +x; the guard checks the git mode), the shell's failed-load line counts the
-  page itself only. Accessibility: being fixed (TASKS).
+  page itself only. Accessibility (fixed by an implementing agent, checked on the built app with the e2e
+  driver; contrast computed with culori, worst case over every accent hue): a kit `:focus-visible` ring — a
+  box-shadow, as QBtn's `.no-outline` (`outline: 0 !important`) beats any outline — of `--focus-ring` (2 px
+  `--accent-ink`, ≥6.25:1; was undefined, ~1.16:1); `--muted` light #888 → #6b6b6b (3.39 → 5.10:1 on the
+  background, 3.06 → 4.56 on the selected tint), dark #8a8780 → #a09d96 (≥4.77:1); `--success-ink` 4.22 → 6.29:1;
+  `--warn-ink` 2.43 → 8.76:1; Quasar's captions at 75% of the ink (3.61 → 7.03:1 here; the kit's five ink palettes'
+  muted text now ≥4.55:1 light, ≥4.56:1 dark, with a test); aria-pressed / aria-current on the main buttons of rows
+  that are no longer buttons themselves (the stretched-link pattern — no control inside another); the paint grid
+  one Tab stop (roving tabindex, arrows by laid-out row, Home/End); the photo a Tab stop panning by arrows when
+  zoomed (drawing stays pointer-only); two-tone outlines and tool marks; Ctrl+Z/Y never under a dialog, yes from a
+  read-only input; aria-disabled keeps focus on a busy button; the kit's UiSlider no longer sets its minimum when
+  focus leaves an untouched number box (Tab moved Texture 1 → 0). The window: content needed per width (with the
+  AI photo's longest reason) — 960 wide: 696 high (769 with Brush and Compare), photo 400; 1080: 653 (702); 1160:
+  602 (660); so the minimum is 960 × 700 outer (half a 1920 screen snaps with no scroll at full height; the very
+  smallest height scrolls the widest toolbars a little); the side panel clamp(300px, 40%, 380px), rows wrap.
+  Real data checked against the new sweep rule: the dev folder keeps its four houses and its one whole orphan;
+  the installed 0.1.2's has no houses folder yet — nothing removed.

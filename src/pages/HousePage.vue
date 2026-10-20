@@ -47,6 +47,7 @@ import SchemesTab from "../components/SchemesTab.vue";
 import { drawColorCard } from "../services/colorCard.js";
 import { useHouseHistory } from "../services/houseHistory.js";
 import { drawPixels, maskOf, pixelsOf, pngOf } from "../services/maskImage.js";
+import { outlinePixels } from "../services/outlines.js";
 import { createPainter } from "../services/painter.js";
 import { partName } from "../services/partNames.js";
 import { useEnginesStore } from "../stores/engines.js";
@@ -315,24 +316,9 @@ function drawOverlay() {
   }
   const w = painter.width;
   const h = painter.height;
-  const rgba = new Uint8ClampedArray(w * h * 4);
   const keys = outlines.value === "all" ? order.value : house.selectedPart ? [house.selectedPart] : [];
-  for (const key of keys) {
-    const mask = painter.mask(key);
-    if (!mask) continue;
-    const strong = key === house.selectedPart;
-    for (let y = 1; y < h - 1; y++)
-      for (let x = 1; x < w - 1; x++) {
-        const i = y * w + x;
-        if (mask[i] < 128) continue;
-        if (mask[i - 1] >= 128 && mask[i + 1] >= 128 && mask[i - w] >= 128 && mask[i + w] >= 128) continue;
-        const p = i * 4;
-        rgba[p] = 255;
-        rgba[p + 1] = strong ? 204 : 255;
-        rgba[p + 2] = strong ? 0 : 255;
-        rgba[p + 3] = strong ? 255 : 150;
-      }
-  }
+  // each edge light with a dark line beside it, so it shows on a white house too (services/outlines.js)
+  const rgba = outlinePixels((key) => painter.mask(key), keys, house.selectedPart, w, h);
   overlay.value = drawPixels(rgba, w, h, overlay.value?.width === w ? overlay.value : null);
 }
 watch([outlines, () => house.selectedPart], () => {
@@ -484,11 +470,13 @@ async function applyRecord(rec, prev) {
   for (const key of changed) queueSave(key, blobs[key], houseId);
 }
 
-// Ctrl+Z / Ctrl+Y (and Ctrl+Shift+Z) — never while typing in a field
+// Ctrl+Z / Ctrl+Y (and Ctrl+Shift+Z) — never while typing in a field (its own undo is the browser's),
+// never under a dialog (Quasar's QDialog — the kit's confirm, prompt and modals — or any modal one);
+// a read-only input isn't typing: QSelect's keyboard focus is one (the Compare with list)
+const typing = (el) => el?.isContentEditable || el?.tagName === "SELECT" || (["INPUT", "TEXTAREA"].includes(el?.tagName) && !el.readOnly);
 onKeyStroke(["z", "Z", "y", "Y"], (e) => {
   if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
-  const el = e.target;
-  if (el?.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(el?.tagName)) return;
+  if (typing(e.target) || document.querySelector('.q-dialog, [aria-modal="true"]')) return;
   e.preventDefault();
   if (e.key.toLowerCase() === "z" && !e.shiftKey) history.undo();
   else history.redo();
@@ -502,7 +490,14 @@ function findProgress(job, n) {
   return "";
 }
 
+// While its work runs, a button is off but keeps keyboard focus: aria-disabled and the kit's
+// .is-disabled look instead of `disabled`, which drops the focus to the page's body (WAI-ARIA APG,
+// "Focusability of disabled controls"; Quasar's own `loading` keeps focus the same way, and UiButton
+// turns `loading` into `disabled`). The work's function ignores a press meanwhile.
+const waiting = (on) => (on ? { "aria-disabled": "true", class: "is-disabled" } : {});
+
 async function findParts() {
+  if (busy.value.find || findTask.value) return;
   if (!engines.finderInstalled) {
     tab.value = "parts";
     return;
@@ -531,6 +526,7 @@ async function findParts() {
 }
 
 async function aiPhoto() {
+  if (busy.value.ai || photoTask.value) return;
   if (!engines.aiphotoInstalled) {
     aiDialog.value = { render: null };
     return;
@@ -548,6 +544,7 @@ async function aiPhoto() {
 
 /** The painted photo at full size: the original, the masks scaled up, the same paint. */
 async function saveImage() {
+  if (busy.value.export) return;
   busy.value.export = true;
   try {
     const { width: W, height: H, name } = house.house;
@@ -607,7 +604,8 @@ async function saveColorCard() {
   }
 }
 
-// why the AI photo can't run yet (its button's tooltip)
+// why the AI photo can't run yet — shown beside the buttons (a disabled button can't take focus, so a
+// tooltip on it never reaches the keyboard), and the button's description
 const aiPhotoWhyNot = computed(() => {
   if (!house.parts.length) return t("house.ai.needParts");
   if (!house.paintableParts.length) return t("house.ai.needOutline");
@@ -647,6 +645,7 @@ const tabs = computed(() => [
 ]);
 const strokeColor = computed(() => paints.byId[house.colors[house.selectedPart]]?.hex || "#ffcc00");
 const hasColors = computed(() => Object.keys(house.colors).length > 0);
+const whyNotShown = computed(() => !!house.house && !!aiPhotoWhyNot.value);
 const canRevert = computed(() => !!house.design && house.dirty);
 </script>
 
@@ -655,15 +654,16 @@ const canRevert = computed(() => !!house.design && house.dirty);
     <PaneHeader :eyebrow="t('houses.title')" :title="house.house?.name || ''" help-key="painting">
       <UiButton intent="ghost" :label="t('house.back')" @click="router.push('/')" />
       <UiButton
-        intent="secondary" :disabled="!house.house || busy.find || !!findTask"
+        intent="secondary" :disabled="!house.house" v-bind="waiting(busy.find || !!findTask)"
         :label="house.parts.length ? t('house.find.again') : t('house.find.button')" @click="findParts"
       />
       <UiButton
-        intent="secondary" :disabled="!house.paintableParts.length || busy.ai || !!photoTask || !hasColors"
-        :title="aiPhotoWhyNot" :label="t('house.ai.button')" @click="aiPhoto"
+        intent="secondary" :disabled="!house.paintableParts.length || !hasColors" v-bind="waiting(busy.ai || !!photoTask)"
+        :aria-describedby="whyNotShown ? 'house-ai-why' : undefined" :label="t('house.ai.button')" @click="aiPhoto"
       />
       <UiButton intent="ghost" :disabled="!hasColors" :label="t('house.export.copyList')" @click="copyColorList" />
-      <UiButton intent="primary" :disabled="!painted || busy.export" :label="t('house.export.save')" @click="saveImage" />
+      <UiButton intent="primary" :disabled="!painted" v-bind="waiting(busy.export)" :label="t('house.export.save')" @click="saveImage" />
+      <span v-if="whyNotShown" id="house-ai-why" class="hint house__why">{{ t("house.ai.whyNot", { reason: aiPhotoWhyNot }) }}</span>
     </PaneHeader>
     <AiTaskStrip :task="findTask" />
     <AiTaskStrip :task="photoTask" />
@@ -783,9 +783,14 @@ const canRevert = computed(() => !!house.design && house.dirty);
   gap: var(--sp-2);
   min-height: 0;
 }
+/* the photo never shrinks to nothing: in a narrow window (a browser on the headless server — the
+   desktop window's minimum, src-electron/electron-main.js, keeps the page whole) the wrapped tool
+   rows took ~440 px of an 800 × 600 window's 225 px-wide column; the page's scroller takes the rest.
+   A zero basis: sized by the room left, never by its own content — the canvas the ResizeObserver
+   sizes is that content, and at the floor the two fed each other ("ResizeObserver loop", measured) */
 .house__canvas {
-  flex: 1 1 auto;
-  min-height: 0;
+  flex: 1 1 0;
+  min-height: 160px;
 }
 .house__tools {
   display: flex;
@@ -793,28 +798,44 @@ const canRevert = computed(() => !!house.design && house.dirty);
   align-items: center;
   gap: var(--sp-3);
 }
+/* in a narrow window a control drops under its label, as wide as the row lets it */
 .house__tool {
   display: inline-flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--sp-2);
+  max-width: 100%;
 }
 /* a control's label stays on one line ("Compare with" wrapped under the row's squeeze) */
 .house__tool > span:first-child {
   white-space: nowrap;
   flex-shrink: 0;
 }
+/* the five tools wrap onto a second line rather than run past a narrow photo */
+.house__tools .ui-seg {
+  flex-wrap: wrap;
+  max-width: 100%;
+}
+/* the AI photo's reason, beside the header's buttons while it is off */
+.house__why {
+  margin: 0;
+  max-width: 32ch;
+}
+/* 380 px on a wide window, down to 300 px as the page narrows (40 % of it): in an 800 px window the
+   photo is 225 px wide instead of 160 (measured on the built app) */
 .house__panel {
-  flex: 0 0 380px;
+  flex: 0 0 clamp(300px, 40%, 380px);
   display: flex;
   flex-direction: column;
   min-height: 0;
   border-left: 1px solid var(--border);
-  padding-left: var(--sp-3);
+  padding-left: calc(var(--sp-3) - 2px);
 }
+/* 2 px each side: a focused row's or chip's ring (the kit's --focus-ring) isn't cut by the scroller */
 .house__tab {
   flex: 1 1 auto;
   overflow: auto;
   min-height: 0;
-  padding-top: var(--sp-3);
+  padding: var(--sp-3) 2px 2px;
 }
 </style>

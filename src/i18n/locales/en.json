@@ -187,7 +187,8 @@
       "task": "AI photo of {name}",
       "needParts": "Find the parts first",
       "needOutline": "No part to paint has an outline yet — draw one with the brush or a box",
-      "needColors": "Give a part a color first"
+      "needColors": "Give a part a color first",
+      "whyNot": "AI photo: {reason}"
     },
     "export": {
       "save": "Save image",
@@ -250,6 +251,10 @@
       "fit": "Fit",
       "fitHint": "Fit the photo to the view"
     },
+    "canvas": {
+      "label": "The photo of the house",
+      "keys": "When it is zoomed in, the arrow keys move it. The brush, the eraser and the box need a mouse, a pen or touch."
+    },
     "leave": {
       "message": "The colors on screen have changes that aren't saved in a design. Leaving the house drops them.",
       "confirm": "Leave"
@@ -285,6 +290,8 @@
     "empty": "empty",
     "deltaE": "ΔE {n}",
     "deltaEHint": "How far the paint on the screen is from the paint chip (ΔE2000). Under 2 is hard to tell apart.",
+    "deltaEClose": "— a close match to the paint chip: under 2 is hard to tell apart",
+    "deltaEFar": "— not a close match to the paint chip: under 2 is hard to tell apart",
     "edited": "edited",
     "add": "Add the part",
     "addPlaceholder": "A part the finder missed",
@@ -296,6 +303,7 @@
     "addBrand": "Add paint colors",
     "forPart": "Colors for the {part}",
     "pickPart": "Select a part (Parts tab, or click it on the photo) to paint it.",
+    "paints": "Paints",
     "brand": "Brand",
     "brandCount": "{brand} ({n})",
     "search": "Search by name or number",
@@ -325,6 +333,9 @@
       "hex": "Color",
       "pick": "Pick a color",
       "match": "Find the closest paints",
+      "deltaEHint": "How far the paint is from this color (ΔE2000). Under 2 is hard to tell apart.",
+      "deltaEClose": "— a close match to this color: under 2 is hard to tell apart",
+      "deltaEFar": "— not a close match to this color: under 2 is hard to tell apart",
       "placeholder": "#a1b2c3",
       "picked": "From the photo — its light and shadow are in this color, so the nearest paint is close, not exact."
     },
@@ -404,7 +415,8 @@
     "renders": {
       "title": "AI photos",
       "none": "No AI photos yet — the AI photo button makes one from the colors on screen.",
-      "open": "Open the AI photo",
+      "open": "Open the AI photo: {design}, {when}",
+      "openDeltaE": "Open the AI photo: {design}, {when}, ΔE {n}",
       "onScreen": "Colors on screen",
       "delete": "Delete the AI photo",
       "deleteTitle": "Delete this AI photo?",

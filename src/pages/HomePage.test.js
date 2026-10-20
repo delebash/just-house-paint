@@ -168,6 +168,8 @@ describe("the states", () => {
     await mountPage();
     const names = [...document.body.querySelectorAll(".houses__name")].map((el) => el.textContent.trim());
     expect(names).toEqual(["Lake house", "Main street"]);
+    // a name too long for its card is cut with an ellipsis: the whole of it shows on hover
+    expect([...document.body.querySelectorAll(".houses__name")].map((el) => el.title)).toEqual(["Lake house", "Main street"]);
     expect(text()).toContain("3 designs");
     expect(text()).toContain("1 design");
   });

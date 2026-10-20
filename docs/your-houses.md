@@ -1,7 +1,8 @@
 # Your houses
 
 **Your houses** holds every photo you added. Each card shows the photo, how many designs you saved
-for it and when it last changed. Click the photo to open the house.
+for it and when it last changed (a name too long for the card shows whole when you point at it).
+Click the photo to open the house.
 
 ## Adding a photo
 

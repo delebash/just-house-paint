@@ -76,7 +76,7 @@ function fakeFetch(input, init = {}) {
     server.designs.push(d);
     return Promise.resolve(json(d, 201));
   }
-  if (p === "/v1/houses/h1/renders") return Promise.resolve(json([]));
+  if (p === "/v1/houses/h1/renders") return Promise.resolve(json(server.renders || []));
   if (p === "/v1/houses/h1/image" && server.photoMissing)
     return Promise.resolve(json({ type: "about:blank", title: "Not Found", status: 404, detail: "the display copy of house h1 is missing" }, 404));
   if (p === "/v1/houses/h1/image") return Promise.resolve(new Response(new Blob(["jpeg"])));
@@ -126,7 +126,8 @@ function fakeFetch(input, init = {}) {
   if (p === "/v1/paints/nearest") return Promise.resolve(json([{ paint: PAINT, deltaE: 3.2 }]));
   if (p === "/v1/paints") {
     server.searches.push(Object.fromEntries(url.searchParams));
-    return Promise.resolve(json({ total: 2, rows: [PAINT, WHITE] }));
+    // `paintTotal`: the brand has more than the two shown (Show more)
+    return Promise.resolve(json({ total: server.paintTotal || 2, rows: [PAINT, WHITE] }));
   }
   return Promise.resolve(json({}));
 }
@@ -160,6 +161,15 @@ const click = async (el) => {
   el.click();
   await flushPromises();
 };
+/** In the side panel's rows (parts, designs, AI photos): any control inside another control (a button
+ *  in a button, a button in a role=button row) — none is allowed. */
+const CONTROL = 'button, a[href], input, select, textarea, [role="button"], [tabindex]:not([tabindex="-1"])';
+const nestedControls = () =>
+  [...document.querySelectorAll(".parts__row, .designs__row, .designs__render")].flatMap((row) =>
+    [...row.querySelectorAll(CONTROL)]
+      .filter((el) => el.parentElement.closest(CONTROL) && row.contains(el.parentElement.closest(CONTROL)))
+      .map((el) => `${el.className} in ${el.parentElement.closest(CONTROL).className}`),
+  );
 /** A server job polls every 400 ms (services/jobs.js): let the clock run. */
 const settle = async () => {
   for (let i = 0; i < 6; i++) {
@@ -256,9 +266,187 @@ test("a color from the Colors tab paints the selected part, and the Parts tab sh
   const tones = document.body.querySelector(".colors__tones");
   expect(tones?.textContent).toContain("On this wall:");
   expect([...tones.querySelectorAll(".swatch")].map((s) => s.title)).toContain("#3366aa");
+  // each swatch is a picture named by its color, for a screen reader too
+  for (const s of tones.querySelectorAll(".swatch")) {
+    expect(s.getAttribute("role")).toBe("img");
+    expect(s.getAttribute("aria-label")).toBe(s.title);
+  }
   await click(byText(".q-tab", "Parts"));
   expect(text()).toContain("Behr Sea Blue S1");
   expect(text()).toMatch(/ΔE \d+\.\d/);
+  // the ΔE tag's green says "close" in words as well (screen-reader text), and the grey "not close"
+  const tag = byText(".parts__row", "Body").querySelector(".ui-tag");
+  const words = tag.querySelector(".visually-hidden").textContent;
+  expect(words).toContain(tag.classList.contains("ui-tag--success") ? "— a close match to the paint chip" : "— not a close match to the paint chip");
+  expect(tag.getAttribute("title")).toContain("ΔE2000");
+});
+
+test("the selection is announced: the selected part's row and the chosen paint's chip are pressed, the open design current", async () => {
+  server.parts = PARTS;
+  server.designs = [DESIGN];
+  await mountPage();
+  const pressed = (sel, words) => byText(sel, words).getAttribute("aria-pressed");
+  expect(pressed(".parts__pick", "Body")).toBe("true");
+  expect(pressed(".parts__pick", "Trim")).toBe("false");
+  await click(byText(".parts__pick", "Trim"));
+  expect(pressed(".parts__pick", "Trim")).toBe("true");
+  expect(pressed(".parts__pick", "Body")).toBe("false");
+  await click(byText(".parts__pick", "Body"));
+  await click(byText(".q-tab", "Designs"));
+  expect(byText(".designs__open", "Blue body").hasAttribute("aria-current")).toBe(false);
+  await click(byText(".designs__open", "Blue body"));
+  expect(byText(".designs__open", "Blue body").getAttribute("aria-current")).toBe("true");
+  // the design paints the body Sea Blue: its chip is the pressed one
+  await click(byText(".q-tab", "Colors"));
+  expect(pressed(".chip", "Sea Blue")).toBe("true");
+  expect(pressed(".chip", "Chalk White")).toBe("false");
+});
+
+test("the paints are one Tab stop: the arrows, Home and End move along them, Enter picks, Show more stays on Tab", async () => {
+  server.parts = PARTS;
+  server.paintTotal = 5;
+  await mountPage();
+  await click(byText(".q-tab", "Colors"));
+  const chips = () => [...document.body.querySelectorAll(".colors__grid .chip")];
+  const stops = () => chips().map((c) => c.getAttribute("tabindex"));
+  const press = (el, key, keyCode) => {
+    el.dispatchEvent(new KeyboardEvent("keydown", { key, keyCode, bubbles: true, cancelable: true }));
+    el.dispatchEvent(new KeyboardEvent("keyup", { key, keyCode, bubbles: true, cancelable: true }));
+  };
+  expect(byText(".colors__grid", "Sea Blue").getAttribute("role")).toBe("group");
+  // nothing chosen yet: the first chip is the stop
+  expect(stops()).toEqual(["0", "-1"]);
+  chips()[0].focus();
+  press(chips()[0], "ArrowRight");
+  await flushPromises();
+  expect(document.activeElement).toBe(chips()[1]);
+  expect(stops()).toEqual(["-1", "0"]);
+  // past the end, focus stays
+  press(chips()[1], "ArrowRight");
+  expect(document.activeElement).toBe(chips()[1]);
+  press(chips()[1], "Home");
+  expect(document.activeElement).toBe(chips()[0]);
+  press(chips()[0], "End");
+  expect(document.activeElement).toBe(chips()[1]);
+  // up and down go by the grid's rows as laid out: here one chip a row
+  Object.defineProperty(chips()[1], "offsetTop", { configurable: true, value: 50 });
+  press(chips()[1], "ArrowUp");
+  expect(document.activeElement).toBe(chips()[0]);
+  press(chips()[0], "ArrowDown");
+  expect(document.activeElement).toBe(chips()[1]);
+  // Enter picks the focused chip (Chalk White), which is then the stop and pressed
+  press(chips()[1], "Enter", 13);
+  await flushPromises();
+  expect(text()).toContain("Behr Chalk White W1");
+  expect(chips()[1].getAttribute("aria-pressed")).toBe("true");
+  await flushPromises();
+  expect(stops()).toEqual(["-1", "0"]);
+  // what follows the chips is still on Tab
+  expect(byText("button", "Show more").getAttribute("tabindex")).not.toBe("-1");
+});
+
+test("Ctrl+Z: never under a dialog, nor while typing in a field — but from a read-only input (a list's focus)", async () => {
+  server.parts = PARTS;
+  await mountPage();
+  await paintBody();
+  const ctrlZ = (el) => el.dispatchEvent(new KeyboardEvent("keydown", { key: "z", ctrlKey: true, bubbles: true, cancelable: true }));
+  // a dialog open (Find the parts again asks first): the house's Undo stays out of it
+  await click(byText("button", "Find the parts again"));
+  expect(document.querySelector(".q-dialog")).not.toBeNull();
+  ctrlZ(document.activeElement || document.body);
+  await flushPromises();
+  expect(byText(".parts__row", "Body").textContent).toContain("Behr Sea Blue S1");
+  await click(byText(".q-dialog button", "Cancel"));
+  await vi.waitFor(() => expect(document.querySelector(".q-dialog")).toBeNull(), { timeout: 3000 });
+  // typing in a field (the exact color's hex): the field's own undo, not the house's
+  await click(byText(".q-tab", "Colors"));
+  ctrlZ(document.body.querySelector("#exact-hex"));
+  await flushPromises();
+  expect(document.body.querySelector(".colors__current")?.textContent).toContain("Behr Sea Blue S1");
+  // the Compare with list focused — QSelect's focus is a read-only input: Undo works there
+  const listFocus = document.body.querySelector(".house__tools .q-select__focus-target");
+  expect(listFocus.readOnly).toBe(true);
+  ctrlZ(listFocus);
+  await flushPromises();
+  expect(document.body.querySelector(".colors__current")).toBeNull();
+});
+
+test("passing through a slider's number box by Tab leaves its value: Texture stays at 1 (an emptied box too)", async () => {
+  server.parts = PARTS;
+  await mountPage();
+  const box = byText("label.house__tool", "Texture").querySelector("input");
+  const type = async (words) => {
+    box.value = words;
+    box.dispatchEvent(new Event("input"));
+    await flushPromises();
+  };
+  const leave = async () => {
+    box.blur();
+    await flushPromises();
+  };
+  expect(box.value).toBe("1");
+  // Tab in, Tab out, nothing typed (it used to go to the minimum, 0)
+  box.focus();
+  await leave();
+  expect(box.value).toBe("1");
+  expect(readPref("texture", 1)).toBe(1);
+  // emptied, then left: the value comes back
+  box.focus();
+  await type("");
+  await leave();
+  expect(box.value).toBe("1");
+  // a number typed still sets it
+  box.focus();
+  await type("0.5");
+  await leave();
+  expect(readPref("texture")).toBe(0.5);
+  // back to the default, for the tests after this one (the kit's prefs are one document per app)
+  box.focus();
+  await type("1");
+  await leave();
+  expect(readPref("texture")).toBe(1);
+});
+
+test("an AI photo's row is named by what tells it apart: its design, when, and its ΔE", async () => {
+  server.parts = PARTS;
+  server.designs = [DESIGN];
+  server.renders = [
+    { id: "r1", houseId: "h1", designId: "d1", deltaE: 1.42, createdAt: HOUSE.createdAt },
+    { id: "r2", houseId: "h1", designId: null, deltaE: null, createdAt: HOUSE.createdAt },
+  ];
+  await mountPage();
+  await click(byText(".q-tab", "Designs"));
+  const names = [...document.body.querySelectorAll(".designs__view")].map((r) => r.getAttribute("aria-label"));
+  expect(names[0]).toMatch(/^Open the AI photo: Blue body, .+, ΔE 1\.4$/);
+  expect(names[1]).toMatch(/^Open the AI photo: Colors on screen, .+$/);
+  expect(names[1]).not.toContain("ΔE");
+  // no control inside another: a row's main action and its Delete are side by side
+  expect(nestedControls()).toEqual([]);
+  await click(byText(".designs__view", "Blue body"));
+  expect(text()).toContain("ΔE"); // the AI photo's dialog
+});
+
+test("a row's buttons are never inside another button: the part's swatch, a design's rename and delete", async () => {
+  server.parts = PARTS;
+  server.designs = [DESIGN];
+  await mountPage();
+  expect(document.body.querySelector(".parts__now")).not.toBeNull();
+  expect(nestedControls()).toEqual([]);
+  // the row itself is a list item, not a button; its main action selects, the swatch finds the color
+  const row = byText(".parts__row", "Trim");
+  expect(row.getAttribute("role")).toBe("listitem");
+  expect(row.hasAttribute("tabindex")).toBe(false);
+  await click(row.querySelector(".parts__now"));
+  expect(text()).toContain("From the photo");
+  await click(byText(".q-tab", "Parts"));
+  expect(byText(".parts__pick", "Body").getAttribute("aria-pressed")).toBe("true");
+  await click(byText(".q-tab", "Designs"));
+  expect(nestedControls()).toEqual([]);
+  expect(byText(".designs__row", "Blue body").getAttribute("role")).toBe("listitem");
+  // Rename opens its dialog and leaves the open design as it was
+  await click(byText(".designs__row", "Blue body").querySelector('[aria-label="Rename “Blue body”"]'));
+  expect(document.body.querySelector("#name-dialog-input")).not.toBeNull();
+  expect(byText(".designs__open", "Blue body").hasAttribute("aria-current")).toBe(false);
 });
 
 test("finding the parts again asks first", async () => {
@@ -307,8 +495,15 @@ test("the colors on screen are saved as a named design", async () => {
 test("the AI photo says why it's off; where no engine exists, nothing is offered to install", async () => {
   server.parts = PARTS;
   await mountPage();
-  expect(byText("button", "AI photo").disabled).toBe(true);
-  expect(byText("button", "AI photo").getAttribute("title")).toBe("Give a part a color first");
+  // why, in words beside the buttons (a disabled button takes no focus: a tooltip never reaches the
+  // keyboard) — and as the button's description
+  const ai = byText("button", "AI photo");
+  expect(ai.disabled).toBe(true);
+  expect(ai.hasAttribute("title")).toBe(false);
+  expect(document.getElementById(ai.getAttribute("aria-describedby")).textContent).toBe("AI photo: Give a part a color first");
+  await paintBody();
+  expect(document.getElementById("house-ai-why")).toBeNull();
+  expect(byText("button", "AI photo").hasAttribute("aria-describedby")).toBe(false);
   wrapper.unmount();
   document.body.innerHTML = "";
   server.aiphotoStatus = { engineInstalled: false, modelsInstalled: false, backend: null, slow: true, downloadBytes: 0, available: false };
@@ -392,7 +587,7 @@ test("Reset takes every paint off, or goes back to the open design's colors", as
   server.designs = [DESIGN];
   await mountPage();
   await click(byText(".q-tab", "Designs"));
-  await click(byText(".designs__row", "Blue body"));
+  await click(byText(".designs__open", "Blue body"));
   await click(byText(".q-tab", "Parts"));
   expect(text()).toContain("Behr Sea Blue S1");
   // nothing changed yet: only "Remove all colors"
@@ -413,6 +608,11 @@ test("the eyedropper and a part's color as photographed find the nearest paints"
   expect(text()).toContain("From the photo");
   expect(document.body.querySelector("#exact-hex").value).toBe("#c8c8c8");
   expect(server.calls).toContain("GET /v1/paints/nearest");
+  // the nearest paint's ΔE (3.2 here: grey, not green) says what its colour says, in words too
+  const nearTag = document.body.querySelector(".colors__nearest .ui-tag");
+  expect(nearTag.classList.contains("ui-tag--success")).toBe(false);
+  expect(nearTag.querySelector(".visually-hidden").textContent).toContain("— not a close match to this color");
+  expect(nearTag.getAttribute("title")).toContain("ΔE2000");
   await click(byText(".q-tab", "Parts"));
   server.calls.length = 0;
   await click(byText(".ui-seg button", "Pick a color"));
@@ -509,8 +709,9 @@ test("finding the parts shows its progress on the page — not twice in the glob
   server.holdFind = true;
   await mountPage();
   await click(byText("button", "Find the parts again"));
-  _resolveDialog(true);
-  await flushPromises();
+  // answered with the dialog's own button, so it closes as it does in the app (its focus trap goes with it)
+  await click(byText(".q-dialog button", "Find the parts again"));
+  await vi.waitFor(() => expect(document.querySelector(".q-dialog")).toBeNull(), { timeout: 3000 });
   await new Promise((r) => setTimeout(r, 450));
   await flushPromises();
   const strip = document.querySelector(".q-page .sts");
@@ -519,11 +720,22 @@ test("finding the parts shows its progress on the page — not twice in the glob
   expect(strip?.textContent).toContain("Trim · 40%");
   expect(strip.querySelector(".sts-fill").style.width).toBe("40%");
   expect(document.querySelector(".ai-task-stack")).toBeNull();
-  expect(byText("button", "Find the parts again").disabled).toBe(true);
+  // the button waits — off (aria-disabled, the kit's off look) but not `disabled`, which would drop
+  // keyboard focus to the page's body while the job runs; a press meanwhile starts nothing
+  const find = byText("button", "Find the parts again");
+  expect(find.getAttribute("aria-disabled")).toBe("true");
+  expect(find.classList.contains("is-disabled")).toBe(true);
+  expect(find.disabled).toBe(false);
+  find.focus();
+  await click(find);
+  expect(dialogState.open).toBe(false);
+  expect(server.calls.filter((c) => c === "POST /v1/houses/h1/find-parts")).toHaveLength(1);
   server.holdFind = false;
   await settle();
   expect(document.querySelector(".q-page .sts")).toBeNull();
-  expect(byText("button", "Find the parts again").disabled).toBe(false);
+  expect(find.hasAttribute("aria-disabled")).toBe(false);
+  expect(find.disabled).toBe(false);
+  expect(document.activeElement).toBe(find);
 }, 20000);
 
 // ── a design saved before the house had some trim-group parts ───────────────
@@ -539,7 +751,7 @@ const openOld = async (design = OLD_DESIGN, others = []) => {
   server.designs = [design, ...others];
   await mountPage();
   await click(byText(".q-tab", "Designs"));
-  await click(byText(".designs__row", design.name));
+  await click(byText(".designs__open", design.name));
 };
 const offer = () => document.body.querySelector(".designs__offer");
 /** The Parts tab's parts painted the trim's white, by name. */
@@ -592,9 +804,9 @@ test("dismissing the offer hides it and paints nothing; opening another design t
   expect(offer()).toBeNull();
   expect(await whiteParts()).toEqual(["Trim"]);
   // opened again: offered again; another design opened: gone
-  await click(byText(".designs__row", "AI scheme 1"));
+  await click(byText(".designs__open", "AI scheme 1"));
   expect(offer()).not.toBeNull();
-  await click(byText(".designs__row", "Blue body"));
+  await click(byText(".designs__open", "Blue body"));
   expect(offer()).toBeNull();
 });
 

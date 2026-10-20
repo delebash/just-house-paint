@@ -131,7 +131,8 @@ const thumb = (house) => imagePath(house.id, "thumb", house.updatedAt);
             :aria-label="t('houses.open', { name: house.name })" @click="open(house)" @keydown.enter="open(house)"
           />
           <q-card-section class="houses__meta">
-            <div class="houses__name">{{ house.name }}</div>
+            <!-- a long name is cut with an ellipsis: the whole of it on hover -->
+            <div class="houses__name" :title="house.name">{{ house.name }}</div>
             <div class="muted">
               {{ t("houses.designs", { n: house.designCount }, house.designCount) }} · {{ relativeTime(house.updatedAt) }}
             </div>

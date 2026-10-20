@@ -31,7 +31,13 @@ runDesktopApp({
   distDir: here, // Quasar puts the built renderer beside this file
   devUrl: import.meta.env.QUASAR_APP_URL,
   preload: path.join(here, "electron-preload.cjs"),
-  window: { title: "Just House Paint", width: 1200, height: 800, minWidth: 800, minHeight: 600, backgroundColor: "#fafaf7" },
+  // The smallest window (outer size, frame included): half of a 1920 px screen, so the app snaps beside
+  // another window (a paint brand's site) — there, ~960 × 1040, the house page needs no page scroll and
+  // the photo is ~400 px wide (it needs 696 px of content height, 769 with Brush and Compare on; measured
+  // on the built app, 2026-10-20). At the very smallest height the widest toolbars scroll the page a
+  // little. 800 × 600 left the photo 225 px wide under ~440 px of wrapped toolbars; 1180 wide (no scroll
+  // at any height that fits a 1366 × 768 screen) would refuse the half-screen snap.
+  window: { title: "Just House Paint", width: 1200, height: 800, minWidth: 960, minHeight: 700, backgroundColor: "#fafaf7" },
   icon: resolveElectronAssetsPath(process.platform === "win32" ? "icons/icon.ico" : "icons/icon.png"),
   trayIcon: resolveElectronAssetsPath("icons/tray.png"),
   // the server's live log, relative to the data root (the tray's "Open log file")

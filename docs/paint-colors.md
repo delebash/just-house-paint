@@ -54,7 +54,8 @@ light to dark — or by **Name**; the app keeps your choice. **Color family** sh
 and where each begins are in **App Settings → Advanced** ("How colors are ordered by color").
 **Exterior colors only** hides the colors a brand marks for inside use (colors
 it doesn't mark either way stay). **An exact color** — a hex color, or one from the picker — finds
-the brand's nearest paints, closest first, each with its ΔE.
+the brand's nearest paints, closest first, each with its ΔE: green, under 2, is a close match — hard
+to tell apart from your color.
 
 **A color from the photo**: choose **Pick a color** above the photo and click it — the color there
 goes into **An exact color**, with the brand's nearest paints. On the **Parts** tab, the small round

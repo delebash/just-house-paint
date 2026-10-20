@@ -76,6 +76,11 @@ async function removeRender(render) {
 const saveName = (name) => (naming.value?.id ? house.renameDesign(naming.value.id, name) : house.saveDesignAs(name));
 const renderPath = (r) => `/v1/renders/${encodeURIComponent(r.id)}/image`;
 const designName = (id) => house.designs.find((d) => d.id === id)?.name;
+// an AI photo's row is named by what tells it from the others: its design, when, and its ΔE
+function renderLabel(r) {
+  const words = { design: designName(r.designId) || t("designs.renders.onScreen"), when: relativeTime(r.createdAt) };
+  return r.deltaE != null ? t("designs.renders.openDeltaE", { ...words, n: r.deltaE.toFixed(1) }) : t("designs.renders.open", words);
+}
 </script>
 
 <template>
@@ -88,15 +93,21 @@ const designName = (id) => house.designs.find((d) => d.id === id)?.name;
     </div>
     <EmptyState v-if="!house.designs.length" icon="Palette" compact :message="t('designs.none')" />
     <q-list v-else class="designs__list" dense>
-      <q-item
-        v-for="d in house.designs" :key="d.id" clickable class="designs__row" :active="d.id === house.designId"
-        active-class="designs__row--on" @click="open(d)"
-      >
+      <!-- the row isn't a button (rename and delete would be inside one): opening the design is —
+           stretched over the row (app.scss .row-action), the open one aria-current — its buttons beside it -->
+      <q-item v-for="d in house.designs" :key="d.id" class="designs__row" :class="{ 'designs__row--on': d.id === house.designId }">
         <q-item-section>
-          <q-item-label class="designs__name">{{ d.name }}</q-item-label>
-          <q-item-label caption>{{ t("designs.colors", { n: Object.keys(d.colors).length }, Object.keys(d.colors).length) }} · {{ relativeTime(d.updatedAt) }}</q-item-label>
+          <q-btn
+            flat no-caps unelevated align="left" class="row-action designs__open" :aria-current="d.id === house.designId ? 'true' : undefined"
+            @click="open(d)"
+          >
+            <span class="row-action__body">
+              <q-item-label class="designs__name">{{ d.name }}</q-item-label>
+              <q-item-label caption>{{ t("designs.colors", { n: Object.keys(d.colors).length }, Object.keys(d.colors).length) }} · {{ relativeTime(d.updatedAt) }}</q-item-label>
+            </span>
+          </q-btn>
         </q-item-section>
-        <q-item-section side class="designs__side" @click.stop>
+        <q-item-section side class="row-side designs__side">
           <UiTag v-if="d.id === house.designId && house.dirty" intent="secondary" :value="t('designs.changed')" />
           <UiButton intent="ghost" size="icon" :title="t('designs.rename', { name: d.name })" :aria-label="t('designs.rename', { name: d.name })" @click="naming = d">
             <template #icon><Icon name="Pencil" :size="14" /></template>
@@ -119,15 +130,20 @@ const designName = (id) => house.designs.find((d) => d.id === id)?.name;
     <h3 class="designs__h">{{ t("designs.renders.title") }}</h3>
     <EmptyState v-if="!house.renders.length" icon="Image" compact :message="t('designs.renders.none')" />
     <q-list v-else class="designs__renders" dense>
-      <q-item v-for="r in house.renders" :key="r.id" clickable class="designs__render" :aria-label="t('designs.renders.open')" @click="emit('show-render', r)">
+      <!-- as a design's row: opening the AI photo is the row's own button, Delete beside it -->
+      <q-item v-for="r in house.renders" :key="r.id" class="designs__render">
         <q-item-section avatar class="designs__thumb">
           <UiServerImage :path="renderPath(r)" :ratio="4 / 3" fit="cover" alt="" />
         </q-item-section>
         <q-item-section>
-          <q-item-label>{{ designName(r.designId) || t("designs.renders.onScreen") }}</q-item-label>
-          <q-item-label caption>{{ relativeTime(r.createdAt) }}<template v-if="r.deltaE != null"> · {{ t("partsTab.deltaE", { n: r.deltaE.toFixed(1) }) }}</template></q-item-label>
+          <q-btn flat no-caps unelevated align="left" class="row-action designs__view" :aria-label="renderLabel(r)" @click="emit('show-render', r)">
+            <span class="row-action__body">
+              <q-item-label>{{ designName(r.designId) || t("designs.renders.onScreen") }}</q-item-label>
+              <q-item-label caption>{{ relativeTime(r.createdAt) }}<template v-if="r.deltaE != null"> · {{ t("partsTab.deltaE", { n: r.deltaE.toFixed(1) }) }}</template></q-item-label>
+            </span>
+          </q-btn>
         </q-item-section>
-        <q-item-section side @click.stop>
+        <q-item-section side class="row-side">
           <UiButton intent="ghost" size="icon" :title="t('designs.renders.delete')" :aria-label="t('designs.renders.delete')" @click="removeRender(r)">
             <template #icon><Icon name="Trash" :size="14" /></template>
           </UiButton>
@@ -156,7 +172,6 @@ const designName = (id) => house.designs.find((d) => d.id === id)?.name;
 .designs__row--on {
   border-color: var(--accent);
   background: var(--accent-soft);
-  color: inherit;
 }
 .designs__name {
   font-weight: 600;
