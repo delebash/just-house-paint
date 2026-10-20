@@ -603,6 +603,10 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         folder borrowed dirSize from disk_api.js, whose lazy imports of the AI runner split the Electron main into
         chunks Rolldown refuses with `output.file`; dirSize is its own module (platform/dir_size.js, disk_api
         re-exports it) and a kit test walks the shell's imports for any lazy one (fails on the faulty import).
+        The fourteenth's fixes committed (app f4850c0, kit 609bbb9: server 431, unit 162, e2e 16; kit core 1327, ui
+        43; JustWrite 173 + 741, JustVoice 260 + 8, docgen 165 + 5). The fifteenth (2026-10-20; started): the
+        fourteenth's shell code attacked, and the screens and keyboard again after the tenth-to-fourteenth's interface
+        changes — two agents, read-only. Dry run 39410206013 building.
 NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
         the installed 0.1.2 updating to it (the silent Restart now).
 
