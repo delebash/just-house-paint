@@ -1049,6 +1049,9 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         as the next lands, its words after Vue's nextTick). Dry run started. The eighteenth (2026-10-20): the
         seventeenth's code attacked, the screens on its build, and a fresh angle — every claim the help and What's
         new make, checked against the code.
+        Dry run 39438246634 green on every runner, linux-user too: the default-data starts on macOS and the AppImage
+        now run under a temp home ("~/Library/Application Support/JustHousePaint", "~/.local/share/JustHousePaint" —
+        the window's and the server's the same), Windows' and the unpacked Linux build's beside the build.
 NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
         the installed 0.1.2 updating to it (the silent Restart now).
 
