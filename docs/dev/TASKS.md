@@ -965,6 +965,56 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         dialog sized to its card; an info icon (Lucide's) on info banners; the AI tasks row without its title; the
         toast's close 24 × 24; the hex error "# and six digits, like #a1b2c3"; the picker's button "Choose a color";
         a chip's name starts with its visible words; the chips' edges in --border-field.
+        The seventeenth's attack on the sixteenth's code (an agent's and its fork's; scripts in the scratchpad's
+        adv17): loses data, rare — Remove the old copy can delete another stick's data put in the same drive letter
+        (connected meant only "its parent exists" — measured with subst), and an empty stick there forgets the real
+        old copy; a house switched mid-stroke or mid-box gets the old photo's drag (the photo watch kept the active
+        pointer — measured). Breaks — a second launch during the start's sweep makes two windows, one never loading
+        (the sweep now awaited before the window — measured in real Electron with a 60k-file half copy); the AI tasks
+        modal's see-through backdrop takes the page's first click and drops the focus on <body>. Wrong — a "Use the
+        default folder" start orphans a half copy in the default and Move back is refused for good; a stop inside
+        the pointer's write leaves a full copy judged committed (never swept, its token in plain text, its record
+        naming the live folder as an old copy); an interrupted restore's undo leaves 2 s where the folders and the
+        tables disagree (an awaited rm between the folders' renames); Clear models and a model's Delete through a
+        junction report bytes freed and free nothing, then replace the link with an empty folder; a failed task said
+        with the HTTP status line; isolate() escaped by a stray PDI; "connect it and restart" said when the data's
+        folder is connected and a restart won't help; the banner's icon alone above its words (being fixed); a
+        deleted parent folder read as a missing drive for good. Small — a dead move's pid reused reads alive (the
+        check is redundant with the single-instance lock); oldCopyOf's existsSync on an offline share blocks the main
+        process 21 s; the undo's leftovers ignored (a held electron/ keeps the token); POSIX absolute links inside the
+        data still point into the old copy; houses.test.js:172 passes by timing; the units' size; a message said in
+        the tick a dialog opens or closes is lost; the wheel over the modal's backdrop scrolls the page; the nullable
+        flag lost on a copied rules array; UiNumber's aria-invalid before its words; sentence() capitalises "sd-cli"
+        and "macOS"; the Colors tab's count said after the tab is left, and zero matches said while nothing shows; Box
+        "off until installed" before the status has loaded or when it failed; start-packaged's realpath on a missing
+        folder, and its --default-data on macOS using the real Application Support folder; Reset's "RESET " with a
+        space. Right — the move and relaunch in real Electron (B's lock, the token carried and taken, carried.json
+        gone), junctions of every shape, the guard's peer check on all five trees, "used after" never set by the
+        app's own close, UiNumber's Enter order and IME, the tooltip's cost (120 chips 34–46 ms against 35–42),
+        dialogs' announcements nested, the AI tasks panel's focus, selects and tabs, UiSegmented, the small-caps
+        labels at 960, the canvas's keys and edges, the plurals, the Box watch, the dry run.
+        Their fixes — decided (mine, argued): an old copy known by its volume (recorded at the move —
+        statSync().dev, the volume serial on Windows) and by its own moved-to record naming this root — anything else
+        reads as not connected, never removed; another photo drops the active pointer, its stroke, box and pan;
+        the window and the tray made first, then the sweep, then the server — a second launch only shows a window
+        that exists; the AI tasks modal kept with its see-through backdrop (the family's no-dim ruling of
+        2026-07-19, and the kit's menus close the same way on an outside click), the focus back to its trigger after
+        any close; a "Use the default folder" start clears an uncommitted half copy into its own folder before the
+        server starts; committed judged by the pointer (it names the target, or there is none and the target is the
+        default) — the flag gone; the restore's undo renames a folder aside synchronously and removes it after; Clear
+        models and Delete empty a linked folder and keep the link; a failed task said in the server's words;
+        isolate() strips the bidi controls from a name before marking it; the words when the data's folder is
+        connected: "restart the app to use it" — or, on the variable's old copy, "change the variable to <B>"; a
+        missing drive told from a deleted folder by the volume's root; the pid check dropped (the single-instance
+        lock covers it); oldCopyOf off the main thread's sync calls (async, with a timeout); the undo says what it
+        couldn't remove, the token's file removed first; POSIX absolute links inside the data re-pointed into the
+        copy as on Windows; houses.test.js awaits the removal it checks; the units at 0.8em; a message said while a
+        dialog opens or closes waits a tick for the right regions; the wheel over the modal's backdrop doesn't
+        scroll the page; the nullable mark kept on a copied rules array; aria-invalid only with its words;
+        sentence() leaves a first word with a capital or code characters as it is; the Colors tab says nothing once
+        left, and says no match where it shows; Box off only once the finder's status says it isn't installed;
+        start-packaged's realpath guarded, and its --default-data on macOS and Linux under a temp HOME (never the
+        developer's real data); Reset's word trimmed.
 NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
         the installed 0.1.2 updating to it (the silent Restart now).
 
