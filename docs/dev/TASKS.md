@@ -427,7 +427,7 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         epoch row, the commit record, the three-way rebase, the generation logic, the legacy restore for the other
         apps, the docs' words) and an unusual user's computer (odd and long paths, OneDrive, FAT/exFAT, network
         drives, a non-English locale, no NVIDIA card, high DPI, touch, antivirus, a proxy) — two agents, read-only.
-        Dry run 39390758821 (app 290c777, kit 54b1e8b) building.
+        Dry run 39390758821 (app 290c777, kit 54b1e8b) all green on every runner and the AppImage as a user opens it.
 NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
         the installed 0.1.2 updating to it (the silent Restart now).
 
