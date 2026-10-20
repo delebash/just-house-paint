@@ -512,6 +512,15 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         reserved port said; help entries for Smart App Control, OneDrive and network folders, a slow disk, the
         minimum systems. Kept, argued: HF_ENDPOINT mirrors (no user asked; the downloads honour a proxy); the Linux
         keyring prompt (unverified, no secrets kept there); Windows on ARM's AI photo on the CPU (said in the help).
+        The renderer's part — DONE by an agent, each with a test that fails on the old code (unit 158; kit ui 41):
+        saved file names through the kit's safeTitle (a name with nothing left is "House"); a decimal comma accepted
+        where it can only be one (a comma shaped like a thousands group stays one where the field groups); the
+        canvas follows the screen's pixel ratio (matchMedia resolution, each layer's setPixelRatio); Konva's pointer
+        events with pointer capture, one pointer at a time, a cancelled pointer drops its stroke (touch-action: none);
+        paint search folds accents and case (a deterministic fold() SQL function in the store — 34 ms on 20k rows);
+        names cut by grapheme (Intl.Segmenter) on the server and the color card; names inside sentences isolated
+        (FSI/PDI, <bdi>); the log download named by the local date. Left by it: isolate.js belongs in the kit; the AI
+        schemes cut their names by UTF-16 units (schemes_ai.js); the kit's SyncPanel names a backup by the UTC date.
 NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
         the installed 0.1.2 updating to it (the silent Restart now).
 
