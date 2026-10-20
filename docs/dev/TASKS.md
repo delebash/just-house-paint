@@ -908,6 +908,13 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         repeats ignored, a handled Escape stopped; lostpointercapture on the host; Backup & restore's hint in this
         app's words; the help ("Load the colors", the schemes' names, Keep the parts you changed by hand, Change
         folder… isn't shown); the e2e's AI-tasks toggle on the modal panel (its backdrop, Escape, the focus back).
+        The sixteenth's fixes committed (app 5a9c641, kit f066ec9: server 435, unit 182, e2e 16; kit core 1369, ui 54;
+        template 70 + 54, e2e 12; JustVoice 261 + 1364, docgen 5 + 165; JustWrite 740 of 745 + 180 — its tests pinned to
+        the backdrop rule's old selector and to AiStatusPanel's dismiss composable (now QDialog's), and its boot smoke
+        timing out under load (alone 1/1): sent to its session). Found while checking: two kit tests held a move and
+        failed under load without letting it go, so every later move in the file was refused — they wait 15 s and
+        always end it now. The app's server removes only with fs.promises.rm (checked). Dry run started; the
+        seventeenth (2026-10-20): the sixteenth's code attacked, and the screens on its build.
 NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
         the installed 0.1.2 updating to it (the silent Restart now).
 
