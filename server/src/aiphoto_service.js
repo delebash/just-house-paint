@@ -5,7 +5,7 @@
 // installing them (a job), and one render — which first frees the GPU (the part finder's image
 // session and the local AI model), because sd.cpp doesn't wait for memory (RESEARCH §10).
 
-import { existsSync, statSync } from "node:fs";
+import { existsSync, mkdirSync, statSync } from "node:fs";
 import { rm } from "node:fs/promises";
 import path from "node:path";
 import { ApiError } from "@delebash/core/platform/errors";
@@ -103,6 +103,8 @@ export function createAiPhoto(ctx) {
       signal?.throwIfAborted();
       const t0 = Date.now();
       const out = renderPath(ctx.dataDir, house.id, renderId);
+      // a backup keeps no empty folder: a house restored before its first AI photo has no renders folder
+      mkdirSync(path.dirname(out), { recursive: true });
       const result = await aiRepaint({
         engine,
         models,

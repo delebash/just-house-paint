@@ -48,10 +48,32 @@ Mac, Updates offers **Open the release page**, to download it from there.
 - **App Settings** — **General** (photos, designs, the part finder, the AI photo), **Advanced**
   (the same settings' structured parts), then **Appearance** (theme, font, size, language),
   **Backups**, **Storage** (the space each part takes, and **Change folder…** to move the data),
-  **Server** (its address for a browser on another device, keeping it running in the tray when the
-  window closes, access tokens — **Copy the address with this token** gives an address that signs a
-  browser in), **Logs**, **Updates** and **About**.
+  **Server** (its address and the command that starts it on its own, keeping it running in the tray
+  when the window closes, access tokens — **Copy the address with this token** gives an address that
+  signs a browser in), **Logs**, **Updates** and **About**.
 - The button at the top right of the title bar switches the theme: light, dark, or the system's.
+
+## On another computer, or without a window
+
+The desktop app's server answers only on its own computer. To use Just House Paint from a browser
+on another computer or a tablet, start the server on its own on the computer that has your houses,
+listening on your network:
+
+- **Windows** — in the app's folder (where `justhousepaint.exe` is):
+  `just-house-paint-server serve --host 0.0.0.0`
+- **macOS** — `"/Applications/Just House Paint.app/Contents/Resources/just-house-paint-server" serve --host 0.0.0.0`
+- **Linux** — unpack the AppImage once (`./Just-House-Paint-*.AppImage --appimage-extract`), then
+  `squashfs-root/just-house-paint-server serve --host 0.0.0.0`
+
+Then open `http://<that computer's address>:17499` in the other browser. Add an access token first
+(**App Settings → Server**): without one, anyone on your network can open it. **Copy the address
+with this token** copies the address the page was opened at — from the desktop window that is
+`127.0.0.1`; put the server computer's network address in its place.
+
+The server started on its own uses the same data folder as the desktop app, and one server at a
+time can: opening the desktop app stops a server started on its own on the same computer (what it
+was doing stops too). Updates come through the desktop app — in a browser, **App Settings →
+Updates** shows the version and what's new.
 
 ## Everything stays on your computer
 

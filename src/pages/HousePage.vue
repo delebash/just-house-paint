@@ -8,6 +8,7 @@
 // Undo / Redo (Ctrl+Z, Ctrl+Y) cover the colors and the outline edits (services/houseHistory.js);
 // Reset takes every paint off, or goes back to the open design. The page fills its area
 // (pageFill): the canvas and the panel each scroll on their own.
+import { copyToClipboard } from "quasar";
 import {
   AiTaskStrip,
   confirmDialog,
@@ -110,6 +111,23 @@ const outlines = computed({
 });
 
 const history = useHouseHistory({ apply: applyRecord });
+
+// a change to this house answered that the house itself is gone (deleted in another window or tab, or by a
+// reset): the page says so, as when it opens a deleted house — instead of a toast for each later stroke
+house.$onAction(({ name, onError }) => {
+  if (name === "open") return; // load() handles its own answer
+  onError((e) => {
+    const p = e?.problem;
+    if (e?.status !== 404 || !/\/house-not-found$/.test(p?.type || "") || p.houseId !== house.house?.id) return;
+    houseGone.value = true;
+    loadFailed.value = e;
+    try {
+      e.cancelled = true; // the page shows it: the caller's reportError shows nothing more
+    } catch {
+      // a frozen error: its toast shows too
+    }
+  });
+});
 
 // this house's long work, shown here while it runs (app-structure §8): finding the parts, the AI photo
 const houseMeta = () => ({ houseId: house.house?.id });
@@ -391,14 +409,17 @@ function queueSave(key, blob, houseId) {
 }
 
 // an outline's change is saved a moment after the last stroke on it — one timer per part, to the
-// house it was drawn on
+// house it was drawn on; then a dark part's calming follows the new outline (kept as it was while the
+// strokes went on: working it out takes too long for each one)
 const saveTimers = new Map(); // key → { timer, run }
 function scheduleSave(key, blob) {
   cancelSave(key);
   const houseId = house.house.id;
-  const run = () => {
+  const drawnOn = painter;
+  const run = (leaving = false) => {
     saveTimers.delete(key);
     queueSave(key, blob, houseId);
+    if (!leaving && drawnOn === painter && painter?.calmAgain(key)) repaint();
   };
   saveTimers.set(key, { timer: setTimeout(run, 600), run });
 }
@@ -410,7 +431,7 @@ function cancelSave(key) {
 onBeforeUnmount(() => {
   for (const { timer, run } of [...saveTimers.values()]) {
     clearTimeout(timer);
-    run();
+    run(true);
   }
 });
 
@@ -558,7 +579,7 @@ function paintedRows() {
 
 async function copyColorList() {
   try {
-    await navigator.clipboard.writeText(
+    await copyToClipboard(
       paintedRows()
         .map((r) => `${r.part}: ${r.paint}`)
         .join("\n"),

@@ -81,6 +81,11 @@ function fakeFetch(input, init = {}) {
     return Promise.resolve(json({ type: "about:blank", title: "Not Found", status: 404, detail: "the display copy of house h1 is missing" }, 404));
   if (p === "/v1/houses/h1/image") return Promise.resolve(new Response(new Blob(["jpeg"])));
   const mask = p.match(/^\/v1\/houses\/h1\/parts\/(\w+)\/mask$/);
+  // the house deleted meanwhile (the server's houseNotFound, naming the house it means)
+  if (mask && method === "PUT" && server.goneNow) {
+    const problem = { type: "https://just-house-paint.local/errors/house-not-found", title: "This house isn't here any more", status: 404, detail: "it was deleted — in another window, or by a reset" };
+    return Promise.resolve(json({ ...problem, houseId: server.goneNow }, 404));
+  }
   if (mask && method === "PUT") return Promise.resolve(json(server.parts.find((x) => x.key === mask[1])));
   if (mask) return Promise.resolve(new Response(new Blob([mask[1]])));
   if (p === "/v1/brands")
@@ -211,6 +216,23 @@ test("a search that found nothing says so; a deleted house says it's gone, with 
   await mountPage();
   expect(text()).toContain("This house isn't here any more");
   expect(text()).not.toContain("no house h1");
+});
+
+test("a change to a house deleted meanwhile (another window, a reset) shows it's gone — no toast for it", async () => {
+  server.parts = PARTS;
+  await mountPage();
+  expect(text()).toContain("To paint");
+  const { useHouseStore } = await import("../stores/house.js");
+  // another house's answer (a save that ran after the page left it) isn't this one's
+  server.goneNow = "h2";
+  await expect(useHouseStore().saveMask("body", new Blob(["png"]), "h1")).rejects.toMatchObject({ status: 404 });
+  await flushPromises();
+  expect(text()).toContain("To paint");
+  // this house's: the page says it's gone, and the error is a cancel to reportError (no toast)
+  server.goneNow = "h1";
+  await expect(useHouseStore().saveMask("body", new Blob(["png"]))).rejects.toMatchObject({ status: 404, cancelled: true });
+  await flushPromises();
+  expect(text()).toContain("This house isn't here any more");
 });
 
 test("when the part finder's engine can't load here, the card says so and downloads nothing", async () => {

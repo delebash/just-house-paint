@@ -65,10 +65,20 @@ export function createPainter({ rgba, width, height }) {
       }
     },
     mask: (key) => parts.get(key)?.mask || null,
-    /** A brush stroke changed a mask in place: prepare it again. */
+    /** A brush stroke changed a mask in place: prepare it again — its calmed lighting kept for now (working
+     *  it out again takes ~0.6 s at 2048 px, too long for every stroke, and the outline barely changed; a
+     *  pixel just painted in shows the photo's own light until then) — until calmAgain(key). */
     touched(key) {
       const p = parts.get(key);
+      if (p) Object.assign(p, { calmY: p.prepared?.calmY ?? p.calmY ?? null, prepared: null });
+    },
+    /** The strokes on part `key` paused: its calmed lighting is worked out again for the new outline, on
+     *  the next paint. True when it had one (a repaint shows the change). */
+    calmAgain(key) {
+      const p = parts.get(key);
+      const had = !!(p?.prepared?.calmY || p?.calmY);
       if (p) Object.assign(p, { prepared: null, calmY: null });
+      return had;
     },
     keys: () => [...parts.keys()],
     /**

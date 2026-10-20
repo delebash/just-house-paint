@@ -1019,3 +1019,28 @@ at the app's display size, through the app's own code; scripts and overlays in s
   L* is the finish and the new paint's chip L* is compared with it (0.069 → 0.035); without one, the chip against the
   photo's reading, as before. ΔE's "normally lit" pixels are picked in the same light the part was painted with
   (they were picked with the lit chip's own calming).
+- **The seventh review** (2026-10-19, three agents — the upgrade from 0.1.2, the headless server in a browser,
+  regressions since 0.1.2 — and my own pass on the untouched neighbors; each finding checked against the code, most
+  reproduced by a test that fails on the old code). Fixed: a restore replaced the access tokens with the backup's or
+  none (a headless server opened to the network — family-wide: the template's `keepAuth`, the guard checks it); a
+  restore ran no seed or settings upgrade (an older backup's settings stayed old until the next start); a backup
+  keeps no empty folder, so a house restored before its first parts or AI photo had no masks/renders folder and both
+  failed (each writer makes its folder); outline saves raced a delete or reset (one step now: the house checked, the
+  files and rows written, else a 404 — and the box's several outlines no longer half saved); a deleted house's 404
+  read "no house <uuid>" (`houseNotFound`: its own words and id, and the page shows its gone state for any change);
+  a Reset after a restore whose leftovers Windows held could bring the old photos back at the next start (the Reset
+  takes the leftovers and leaves an empty houses folder — reproduced by an agent, then tested); v0.1.2's
+  half-deleted folders stayed forever (an unmarked orphan folder missing part of its photo's copies goes; a whole
+  one still stays); Find the parts again keeping a Trim drawn by hand left the doors' casings in no part (what the
+  finder gave a kept part, and no part has, goes to the body); each brush stroke on a dark part painted light redid
+  the calming, ~0.6 s at 2048 px (kept while strokes go on, redone 600 ms after the last); Copy failed in a browser
+  on plain http (no Clipboard API there — Quasar's copyToClipboard, kit included, a guard rule); the help said the
+  window's address works from another device (the server listens on 127.0.0.1 — a section on starting it on its own
+  with `--host 0.0.0.0`), that a second copy always says the folder is in use (the desktop app takes over a server
+  on its port, a kit design: said so), and named a headless command only Windows had (a shell launcher for macOS
+  and Linux, the release starts it on every runner without a display). Settled, not changed: with the server on its
+  own, a browser showing the app on that computer counts among the AI photo's "other programs" — it does hold the
+  card, and the note shows only past 1 GB (the words now say "the computer that draws it"); the finder's release
+  can't wait forever (`running` drops in `finally`, a cancelled find stops at its next prompt). Left as it is: a
+  0.1.3 backup restored into 0.1.2 — 0.1.2's Advanced refuses the parts list's `onHouse` (a downgrade; 0.1.2 can't
+  change).

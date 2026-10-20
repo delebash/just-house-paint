@@ -23,7 +23,9 @@
   and pick one as it lands; a design name the house already has is shown under the name; an iPhone's
   HEIC photo gets words that say what to do; a failed AI photo, download or search says which.
 - A house whose parts were found before keeps them: **Find the parts again** (with **Keep the parts
-  you changed by hand** ticked) gives it the new ones.
+  you changed by hand** ticked) gives it the new ones. A part you changed by hand stays as you drew
+  it — if that is **Trim**, the door casings go with the walls: untick **Keep**, or add them to Trim
+  with a **Box**.
 
 ## v0.1.2
 

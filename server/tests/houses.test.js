@@ -7,7 +7,7 @@ import sharp from "sharp";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { nameFromFile } from "../src/api/houses_api.js";
 import { ingestPhoto, isHeic } from "../src/images.js";
-import { createHouse } from "../src/database/houses.js";
+import { createHouse, deleteHouse } from "../src/database/houses.js";
 import { addingHouseDir, displayPath, housesRoot, maskPath, removeAllHouseDirs, removeHouseDir, sweepHouseDirs } from "../src/files.js";
 import { fakeFinder, jpeg, LIMITS, makeServer } from "./domain_helpers.js";
 
@@ -135,6 +135,31 @@ describe("houses", () => {
     expect(existsSync(path.join(s.dataDir, "houses.replaced-1760000000001"))).toBe(false);
   });
 
+  test("a reset takes a restore's leftovers too, and the next start never puts one back as the houses", async () => {
+    s = makeServer();
+    await s.upload(await jpeg(100, 80));
+    mkdirSync(path.join(s.dataDir, "houses.replaced-1000", "old-house"), { recursive: true });
+    expect(await removeAllHouseDirs(s.dataDir)).toBe(true);
+    expect(readdirSync(s.dataDir).filter((n) => n.startsWith("houses"))).toEqual(["houses"]);
+    expect(readdirSync(housesRoot(s.dataDir))).toEqual([]);
+  });
+
+  test.skipIf(process.platform !== "win32")("a restore's leftover Windows holds through a reset goes at the next start, never back in place", async () => {
+    s = makeServer();
+    await s.upload(await jpeg(100, 80));
+    mkdirSync(path.join(s.dataDir, "houses.replaced-1000", "old-house"), { recursive: true });
+    const fd = openSync(path.join(s.dataDir, "houses.replaced-1000", "old-house", "display.jpg"), "w");
+    try {
+      await removeAllHouseDirs(s.dataDir);
+    } finally {
+      closeSync(fd);
+    }
+    // the next start, no photo added since: the reset's empty houses folder stays; the leftover goes
+    await sweepHouseDirs(s.dataDir, []);
+    expect(readdirSync(s.dataDir).filter((n) => n.startsWith("houses"))).toEqual(["houses"]);
+    expect(readdirSync(housesRoot(s.dataDir))).toEqual([]);
+  });
+
   test("a reset while a photo is read: its files still land, in the new houses folder", async () => {
     s = makeServer();
     addingHouseDir(s.dataDir, "racing");
@@ -198,12 +223,16 @@ describe("houses", () => {
     mkdirSync(path.join(dir("gone-house"), "masks"), { recursive: true });
     writeFileSync(path.join(dir("gone-house"), ".removed"), "");
     mkdirSync(dir("unmarked-house"), { recursive: true });
-    writeFileSync(path.join(dir("unmarked-house"), "display.jpg"), "x");
+    for (const f of ["original.jpg", "display.jpg", "thumb.jpg"]) writeFileSync(path.join(dir("unmarked-house"), f), "x");
+    // v0.1.2's delete that Windows stopped halfway: no mark, part of its photo's copies gone
+    mkdirSync(path.join(dir("half-removed"), "masks"), { recursive: true });
+    writeFileSync(path.join(dir("half-removed"), "thumb.jpg"), "x");
     // a house restored from a backup after its folder was marked: its row is back, so it stays
     writeFileSync(path.join(dir(kept.id), ".removed"), "");
-    expect(await sweepHouseDirs(s.dataDir, [house.id, kept.id])).toBe(1);
+    expect(await sweepHouseDirs(s.dataDir, [house.id, kept.id])).toBe(2);
     expect(existsSync(dir("gone-house"))).toBe(false);
-    expect(existsSync(dir("unmarked-house"))).toBe(true);
+    expect(existsSync(dir("half-removed"))).toBe(false);
+    expect(existsSync(dir("unmarked-house"))).toBe(true); // whole: a lost database's house stays
     expect(existsSync(dir(kept.id))).toBe(true);
     // a folder Windows still holds: false, and marked for the next start's sweep
     const held = async () => {
@@ -266,6 +295,36 @@ describe("parts", () => {
     expect((await (await s.app.request(`/v1/houses/${house.id}`)).json()).partsFoundAt).toBeTruthy();
   });
 
+  test("a house restored before its parts were found has no masks folder (a backup keeps no empty one): finding them works", async () => {
+    s = makeServer();
+    const house = await (await s.upload(await jpeg(400, 300))).json();
+    rmSync(path.join(s.dataDir, "houses", house.id, "masks"), { recursive: true, force: true });
+    expect((await s.settle((await (await s.json("POST", `/v1/houses/${house.id}/find-parts`)).json()).id)).state).toBe("done");
+    expect(existsSync(maskPath(s.dataDir, house.id, "body"))).toBe(true);
+    // and a part added by hand to another such house
+    const other = await (await s.upload(await jpeg(400, 300))).json();
+    rmSync(path.join(s.dataDir, "houses", other.id, "masks"), { recursive: true, force: true });
+    expect((await s.json("POST", `/v1/houses/${other.id}/parts`, { key: "fence" })).status).toBe(201);
+  });
+
+  test("a house deleted while a box was outlined: a 404, and no outline written", async () => {
+    s = makeServer();
+    const house = await (await s.upload(await jpeg(400, 300))).json();
+    await s.settle((await (await s.json("POST", `/v1/houses/${house.id}/find-parts`)).json()).id);
+    const before = readFileSync(maskPath(s.dataDir, house.id, "trim"));
+    const box = fakeFinder.box;
+    fakeFinder.box = async function (h, b) {
+      deleteHouse(s.db, h.id); // another tab deleted it meanwhile (its folder goes after its row)
+      return box.call(this, h, b);
+    };
+    try {
+      expect((await s.json("POST", `/v1/houses/${house.id}/parts/trim/box`, { x0: 10, y0: 10, x1: 14, y1: 14 })).status).toBe(404);
+    } finally {
+      fakeFinder.box = box;
+    }
+    expect(readFileSync(maskPath(s.dataDir, house.id, "trim")).equals(before)).toBe(true);
+  });
+
   test("a box moves what's inside it into the part; remove takes it out", async () => {
     s = makeServer();
     const house = await (await s.upload(await jpeg(400, 300))).json();
@@ -316,8 +375,10 @@ describe("parts", () => {
     const kept = await s.settle((await (await s.json("POST", `/v1/houses/${house.id}/find-parts`, { keepEdited: true })).json()).id);
     expect(kept.result).toEqual({ parts: 4, kept: 2 });
     const list = async () => (await (await s.app.request(`/v1/houses/${house.id}/parts`)).json()).map((p) => [p.key, p.source, p.area]);
+    // the body is cut around the kept trim; what the finder called trim this time and the kept one hasn't
+    // (the bottom-left quarter) goes to the body — never to no part
     expect(await list()).toEqual([
-      ["body", "auto", 256 * 86],
+      ["body", "auto", 256 * 86 + 128 * 96],
       ["trim", "edited", 256 * 10],
       ["roof", "auto", 0],
       ["shutters", "added", 0],

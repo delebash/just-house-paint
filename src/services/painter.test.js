@@ -158,7 +158,7 @@ test("a dark wall in a photo with nothing bright in it is calmed once its owner 
   expect(known).toBeLessThan(fromPhoto * 0.6); // measured: 0.069 → 0.035 (unchanged before the paint now counted)
 });
 
-test("a dark wall's calmed lighting is kept through a Texture change and worked out again after an outline edit", () => {
+test("a dark wall's calmed lighting is kept through a Texture change and brush strokes, and worked out again once they pause", () => {
   // a dark board wall under a bright sky band: the body is a dark finish, painted white it is calmed
   const w = 200;
   const h = 120;
@@ -179,5 +179,9 @@ test("a dark wall's calmed lighting is kept through a Texture change and worked 
   expect(prepares[1].calmY).toBeInstanceOf(Float32Array); // the texture changed: the calming carried over
   p.touched("body"); // a brush stroke changed the outline
   p.paint({ body: "#f2f0ea" });
-  expect(prepares[2].calmY).toBeNull(); // worked out again for the new outline
+  expect(prepares[2].calmY).toBeInstanceOf(Float32Array); // kept while the strokes go on (~0.6 s each otherwise)
+  expect(p.calmAgain("body")).toBe(true); // the strokes paused
+  p.paint({ body: "#f2f0ea" });
+  expect(prepares[3].calmY).toBeNull(); // worked out again for the new outline
+  expect(p.calmAgain("door")).toBe(false); // no such part: nothing to repaint
 });

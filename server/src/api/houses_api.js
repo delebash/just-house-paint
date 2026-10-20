@@ -7,6 +7,7 @@ import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { Hono, input, uploadLimit } from "@delebash/core/platform";
 import { ApiError, notFound, RequestValidationError } from "@delebash/core/platform/errors";
+import { houseNotFound } from "./refusals.js";
 import { createHouse, deleteHouse, getHouse, listHouses, renameHouse, setCurrentPaints } from "../database/houses.js";
 import { addingHouseDir, displayPath, houseAdded, originalPath, removeHouseDir, thumbPath } from "../files.js";
 import { ingestPhoto, NotAnImage } from "../images.js";
@@ -32,7 +33,7 @@ export function router(ctx = getState()) {
   const FORM_EXTRA = 64 * 1024;
   const must = (id) => {
     const h = getHouse(ctx.db, id);
-    if (!h) throw notFound(`no house ${id}`);
+    if (!h) throw houseNotFound(id);
     return h;
   };
 

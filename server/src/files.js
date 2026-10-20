@@ -90,13 +90,25 @@ export async function removeHouseDir(dataDir, id, { remove = rm } = {}) {
 }
 
 /**
- * Every house's files (a reset): the houses folder is moved aside at once — a photo added meanwhile
- * gets a new one — then removed with the same retries as one house's. Held: each house's folder is
- * marked, and the next start's sweep finishes. Returns whether all of it went now.
+ * Every house's files (a reset): the houses folder is moved aside at once and an empty one made in its
+ * place — a photo added meanwhile goes there, and the next start never takes a restore's leftover for a
+ * stopped restore's only copy — then removed with the same retries as one house's, a restore's leftovers
+ * with it. Held: each house's folder is marked, and the next start's sweep finishes. Returns whether all
+ * of it went now.
  */
 export async function removeAllHouseDirs(dataDir, { rename = renameSync } = {}) {
   const root = housesRoot(dataDir);
-  if (!existsSync(root)) return true;
+  // a restore's old or staged copy Windows held (the kit's data_api): the reset takes it too
+  const leftovers = existsSync(dataDir) ? readdirSync(dataDir).filter((n) => /^houses\.(replaced|restoring)-/.test(n)) : [];
+  for (const name of leftovers) await rm(path.join(dataDir, name), { recursive: true, force: true, maxRetries: 10, retryDelay: 100 }).catch(() => {});
+  if (!existsSync(root)) {
+    try {
+      mkdirSync(root, { recursive: true });
+    } catch {
+      // made by the next photo added (ensureHouseDirs)
+    }
+    return true;
+  }
   const aside = `${root}${ASIDE}${Date.now()}`;
   try {
     rename(root, aside);
@@ -114,6 +126,11 @@ export async function removeAllHouseDirs(dataDir, { rename = renameSync } = {}) 
     return all;
   }
   try {
+    mkdirSync(root, { recursive: true });
+  } catch {
+    // made again by the next photo added (ensureHouseDirs)
+  }
+  try {
     await rm(aside, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
     return true;
   } catch (e) {
@@ -123,8 +140,9 @@ export async function removeAllHouseDirs(dataDir, { rename = renameSync } = {}) 
 }
 
 /**
- * At start: remove the folders a removal left marked, of houses that don't exist. Only marked ones — a
- * database lost or replaced must never take every house's photos with it. Returns how many went.
+ * At start: remove the folders a removal left marked, of houses that don't exist — and an unmarked one
+ * only when it is half removed (v0.1.2's leftovers). A whole folder without its house stays: a database
+ * lost or replaced must never take every house's photos with it. Returns how many went.
  */
 export async function sweepHouseDirs(dataDir, ids) {
   // a reset's old houses folder moved aside, a restore's replaced or staged copy (the kit's data_api),
@@ -155,10 +173,22 @@ export async function sweepHouseDirs(dataDir, ids) {
     return 0; // no houses folder yet
   }
   const keep = new Set(ids);
+  // a folder with all three copies of its photo: a house's, whole (a lost database's house stays)
+  const whole = (dir) => {
+    try {
+      return existsSync(path.join(dir, "display.jpg")) && existsSync(path.join(dir, "thumb.jpg")) && readdirSync(dir).some((f) => f.startsWith("original."));
+    } catch {
+      return true; // not a folder to judge: left
+    }
+  };
   let gone = 0;
   for (const name of names) {
     const dir = path.join(dataDir, "houses", name);
-    if (!SAFE.test(name) || keep.has(name) || !(existsSync(path.join(dir, GONE)) || existsSync(path.join(dir, ADDING)))) continue;
+    if (!SAFE.test(name) || keep.has(name)) continue;
+    const marked = existsSync(path.join(dir, GONE)) || existsSync(path.join(dir, ADDING));
+    // unmarked, only a half-removed one: v0.1.2 marked nothing, and its delete that Windows stopped halfway
+    // left a folder with part of its photo's copies gone
+    if (!marked && whole(dir)) continue;
     if (await removeHouseDir(dataDir, name)) gone++;
   }
   if (gone) log.info(`removed ${gone} folder(s) of deleted houses`);

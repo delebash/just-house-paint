@@ -3,6 +3,7 @@
 
 import { Hono, input } from "@delebash/core/platform";
 import { ApiError, notFound, RequestValidationError } from "@delebash/core/platform/errors";
+import { houseNotFound } from "./refusals.js";
 
 // a name another design of the house has: the name field's own error (a 422 lands under its field, §15)
 const nameTaken = (name) => new RequestValidationError([{ loc: ["body", "name"], msg: `This house already has a design named “${name}”.`, type: "value_error.taken" }]);
@@ -14,7 +15,7 @@ import { getState } from "../app_state.js";
 export function router(ctx = getState()) {
   const app = new Hono();
   const mustHouse = (id) => {
-    if (!getHouse(ctx.db, id)) throw notFound(`no house ${id}`);
+    if (!getHouse(ctx.db, id)) throw houseNotFound(id);
   };
   const mustDesign = (id) => {
     const d = getDesign(ctx.db, id);

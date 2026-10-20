@@ -178,6 +178,16 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         go mid-run; an engine used while being removed; a re-found outline removed; the bright end moved by lamps (p95);
         the calming compared two scales once a paint now was set (now that paint is the finish); the window line said
         "loaded" for an error page — all fixed, with tests (RESEARCH §13).
+        The seventh (2026-10-19, three agents — the upgrade from 0.1.2, the headless server in a browser, regressions
+        since 0.1.2 — and my own pass on the untouched neighbors): a restore replaced the access tokens (family-wide:
+        the template too, the guard checks it, advisory for JustWrite and docgen) and skipped the settings seed; houses
+        restored before their first parts or AI photo had no folder for them; outline saves raced a delete or reset; a
+        deleted house read "no house <uuid>"; a Reset after a held restore could bring old photos back; v0.1.2's
+        half-deleted folders stayed; a kept Trim left the casings in no part; each stroke on a calmed part took ~0.6 s;
+        Copy failed on plain http (Quasar's copyToClipboard, kit included, a guard rule); the help's claims about
+        another device, a second copy and the headless command (a macOS/Linux launcher, started on every release
+        runner) — all fixed, with tests (RESEARCH §13). Settled: the headless note counting a browser; the finder's
+        release. Left: a 0.1.3 backup restored into 0.1.2 (0.1.2 can't change).
 NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
         the installed 0.1.2 updating to it (the silent Restart now).
 

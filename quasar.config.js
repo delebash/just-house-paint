@@ -149,13 +149,17 @@ export default defineConfig(() => {
         // (RESEARCH §13). sharp's own Electron guidance (sharp.pixelplumbing.com/install#electron-builder),
         // and onnxruntime-node's bin the same way
         asarUnpack: [ '**/*.node', '**/node_modules/sharp/**/*', '**/node_modules/@img/**/*', '**/node_modules/onnxruntime-node/bin/**/*' ],
-        // the headless launcher (just-house-paint-server.cmd) beside the exe — the app's own exe
-        // run as Node on its server package (§Q.3)
-        extraResources: [ { from: path.join(root, 'build', 'launcher'), to: '..' } ],
-        // the exe never shares the headless launcher's name (§Q.3)
+        // the headless launcher — the app's own exe run as Node on its server package (§Q.3): the .cmd
+        // beside the Windows exe, the shell script beside the Linux one and in the Mac app's Resources (its
+        // bundle's root takes no file a signature doesn't seal); the exe never shares the launcher's name
         // each installer carries onnxruntime-node's binaries for its own platform only (the package ships all
         // five: 289 MB) — electron-builder merges a platform's `files` with the ones above
-        win: { target: 'nsis', executableName: 'justhousepaint', files: [ '!**/node_modules/onnxruntime-node/bin/napi-v6/{darwin,linux,win32/arm64}/**' ] },
+        win: {
+          target: 'nsis',
+          executableName: 'justhousepaint',
+          extraResources: [ { from: path.join(root, 'build', 'launcher'), to: '..', filter: [ '*.cmd' ] } ],
+          files: [ '!**/node_modules/onnxruntime-node/bin/napi-v6/{darwin,linux,win32/arm64}/**' ]
+        },
         nsis: {
           oneClick: false,
           perMachine: false,
@@ -174,10 +178,19 @@ export default defineConfig(() => {
           onlyLoadAppFromAsar: true,
           grantFileProtocolExtraPrivileges: false
         },
-        mac: { category: 'public.app-category.productivity', files: [ '!**/node_modules/onnxruntime-node/bin/napi-v6/{linux,win32}/**' ] },
+        mac: {
+          category: 'public.app-category.productivity',
+          extraResources: [ { from: path.join(root, 'build', 'launcher'), to: '.', filter: [ '!*.cmd' ] } ],
+          files: [ '!**/node_modules/onnxruntime-node/bin/napi-v6/{linux,win32}/**' ]
+        },
         // the AppImage; a .deb also needs `linux.maintainer` ("name <email>", published in the package)
         // — add it, and 'deb' to the targets, with the address the app's owner wants public
-        linux: { target: [ 'AppImage' ], category: 'Office', files: [ '!**/node_modules/onnxruntime-node/bin/napi-v6/{darwin,win32,linux/arm64}/**' ] },
+        linux: {
+          target: [ 'AppImage' ],
+          category: 'Office',
+          extraResources: [ { from: path.join(root, 'build', 'launcher'), to: '..', filter: [ '!*.cmd' ] } ],
+          files: [ '!**/node_modules/onnxruntime-node/bin/napi-v6/{darwin,win32,linux/arm64}/**' ]
+        },
         // the AppImage on the AppImage project's static runtime (type2-runtime 20251108): it needs no FUSE 2
         // library, which Ubuntu 24.04 doesn't install — the legacy toolset's AppImage stopped there with
         // "AppImages require FUSE to run" (just-house-paint RESEARCH §13; the release's linux-user check)

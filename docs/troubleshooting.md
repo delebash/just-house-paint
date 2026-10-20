@@ -3,7 +3,9 @@
 **"Can't reach the Just House Paint server".** The app's server isn't running, or its port (17499) is taken by
 another program — the screen says which when it knows. The desktop app starts the server itself:
 the tray's **Restart server** starts it again and **Open log file** shows why it stopped.
-Headless, start it with `just-house-paint-server serve` (`npm run server` from a source checkout).
+Started on its own, the command is `just-house-paint-server serve` — where it is on each system:
+[On another computer, or without a window](getting-started.md#on-another-computer-or-without-a-window)
+(`npm run server` from a source checkout).
 The app won't open without its server: there is no offline mode to lose work in.
 
 **"Just House Paint needs an access token".** The server has access tokens on (**App Settings →
@@ -13,7 +15,8 @@ browser keeps it; the desktop app on the server's own computer never asks.
 
 **Another copy is already running.** One server per data folder: a second one says that another
 Just House Paint server is using this data folder. Quit the other copy (the tray's **Quit**), or
-give the second one its own `--data-dir`.
+give the second one its own `--data-dir`. The desktop app is the exception: opening it stops a server
+started on its own on its usual port (17499) and takes over — what that server was doing stops.
 
 **"Suggest schemes" fails.** No AI is set up yet: open **AI Settings** and run Quick Setup, or add
 an online provider and make it the default. The **AI tasks** panel keeps the failed request with

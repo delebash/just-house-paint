@@ -7,6 +7,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { assertGpuFree } from "../jobs.js";
 import { Hono, input } from "@delebash/core/platform";
 import { ApiError, notFound } from "@delebash/core/platform/errors";
+import { houseNotFound } from "./refusals.js";
 import { addRender, deleteRender, getDesign, getHouse, getRender, listParts, listRenders } from "../database/houses.js";
 import { paintsById } from "../database/paints.js";
 import { removeHouseFile, renderPath } from "../files.js";
@@ -86,7 +87,7 @@ export function router(ctx = getState()) {
 
   app.post("/v1/houses/:id/aiphoto", input({ params: IdParams, body: AiPhotoIn }), (c) => {
     const house = getHouse(ctx.db, c.req.valid("param").id);
-    if (!house) throw notFound(`no house ${c.req.valid("param").id}`);
+    if (!house) throw houseNotFound(c.req.valid("param").id);
     notWhileRemoved("aiphoto", "The AI photo");
     const { designId, colors } = c.req.valid("json");
     let chosen = colors || {};
@@ -123,7 +124,7 @@ export function router(ctx = getState()) {
   });
 
   app.get("/v1/houses/:id/renders", input({ params: IdParams }), (c) => {
-    if (!getHouse(ctx.db, c.req.valid("param").id)) throw notFound(`no house ${c.req.valid("param").id}`);
+    if (!getHouse(ctx.db, c.req.valid("param").id)) throw houseNotFound(c.req.valid("param").id);
     return c.json(listRenders(ctx.db, c.req.valid("param").id));
   });
 

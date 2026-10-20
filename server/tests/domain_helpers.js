@@ -64,7 +64,7 @@ export const fakeFinder = {
     progress(0.5, "halfway");
     this.calls.push(["find", house.id]);
     return [
-      { key: "body", paintable: true, score: 0.9, mask: body },
+      { key: "body", paintable: true, score: 0.9, mask: body, base: true },
       { key: "trim", paintable: true, score: 0.8, mask: trim },
       { key: "roof", paintable: false, score: 0.7, mask: new Uint8Array(w * h) },
     ];

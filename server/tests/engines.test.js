@@ -285,6 +285,19 @@ describe("the engine routes", () => {
     release();
   });
 
+  test("a house restored before its first AI photo has no renders folder (a backup keeps no empty one): the AI photo works", async () => {
+    s = makeServer({ aiphoto: aiphotoFactory([]) });
+    const house = await (await s.upload(await jpeg(200, 150))).json();
+    await s.settle((await (await s.json("POST", `/v1/houses/${house.id}/find-parts`)).json()).id);
+    const form = new FormData();
+    form.append("file", new Blob(["code,name,hex\nX-1,Brick Red,#a33a2f"]), "p.csv");
+    form.append("brand", "behr");
+    await s.app.request("/v1/paints/import", { method: "POST", body: form });
+    rmSync(path.join(s.dataDir, "houses", house.id, "renders"), { recursive: true, force: true });
+    const r = await s.json("POST", `/v1/houses/${house.id}/aiphoto`, { colors: { body: "behr:X-1" } });
+    expect((await s.settle((await r.json()).id)).state).toBe("done");
+  });
+
   test("while an engine is being removed, nothing installs it or runs on it", async () => {
     let finishAiphoto;
     s = makeServer({ aiphoto: (ctx) => ({ ...aiphotoFactory([])(ctx), uninstall: () => new Promise((r) => (finishAiphoto = r)) }) });

@@ -24,7 +24,9 @@ graphics card — the part finder and a local AI model let go of it, and load ag
 The picture opens when it is done, with **Save image**, how far its painted parts are from the paint
 chips (**ΔE … from the chips**) and how long it took (**made in … s**) — and, when other programs held
 more than 1 GB of the graphics card when it started, which ones (**App Settings → General → AI photo**
-sets that amount). Every AI photo is kept on the house's **Designs** tab: open one again, or delete it.
+sets that amount). They are the programs on the computer that draws it: the server's, when you use
+the app from a browser on another computer; with the server started on its own, a browser showing
+the app on that computer is one of them. Every AI photo is kept on the house's **Designs** tab: open one again, or delete it.
 
 The graphics card does one thing at a time — an 8 GB card holds the AI photo's model or the part
 finder, not both. While an AI photo is drawn, finding the parts, a **Box**, a local AI's color schemes

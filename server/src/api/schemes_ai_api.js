@@ -6,6 +6,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { Hono, input } from "@delebash/core/platform";
 import { ApiError, notFound } from "@delebash/core/platform/errors";
+import { houseNotFound } from "./refusals.js";
 import sharp from "sharp";
 import { getHouse, listParts } from "../database/houses.js";
 import { moduleRows } from "../database/paints.js";
@@ -42,7 +43,7 @@ export function router(ctx = getState()) {
     // a local AI model would load on the graphics card beside the running one (a cloud one doesn't wait)
     if (ctx.jobs && ctx.usesLocalAi?.(SCHEMES_FEATURE)) assertGpuFree(ctx.jobs, "local-ai");
     const house = getHouse(ctx.db, houseId);
-    if (!house) throw notFound(`no house ${houseId}`);
+    if (!house) throw houseNotFound(houseId);
     if (!BRANDS[brand]) throw notFound(`no brand ${brand}`);
     const paints = moduleRows(ctx.db, brand);
     if (!paints.length) throw new ApiError(409, "no-paints", "No colors for this brand yet", `load or import ${BRANDS[brand].label}'s colors first`);

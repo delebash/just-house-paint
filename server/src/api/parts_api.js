@@ -2,9 +2,11 @@
 // /v1/houses/:id/parts — the parts the finder found (or the user drew): their masks, finding them
 // (a job), a box whose contents move into a part, a mask fixed by the brush, a part added by hand.
 
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import path from "node:path";
 import { Hono, input, uploadLimit } from "@delebash/core/platform";
 import { ApiError, conflict, notFound, RequestValidationError } from "@delebash/core/platform/errors";
+import { houseNotFound } from "./refusals.js";
 import { getHouse, getPart, listParts, replaceParts, updatePartMask } from "../database/houses.js";
 import { maskPath, removeHouseFile } from "../files.js";
 import { maskToPng, pngToMask } from "../images.js";
@@ -22,7 +24,7 @@ export function router(ctx = getState()) {
   const app = new Hono();
   const mustHouse = (id) => {
     const h = getHouse(ctx.db, id);
-    if (!h) throw notFound(`no house ${id}`);
+    if (!h) throw houseNotFound(id);
     return h;
   };
   const readMask = async (house, key) => {
@@ -30,8 +32,18 @@ export function router(ctx = getState()) {
     if (!existsSync(file)) return new Uint8Array(house.displayWidth * house.displayHeight);
     return pngToMask(readFileSync(file), house.displayWidth, house.displayHeight);
   };
-  const writeMask = async (house, key, mask) => {
-    writeFileSync(maskPath(ctx.dataDir, house.id, key), await maskToPng(mask, house.displayWidth, house.displayHeight));
+  /** Outlines saved (`masks`: [[key, mask]]): the PNGs made first, then in one step the house checked, the
+   *  files written and `rows()` run (the parts' rows), whose value comes back — a house deleted or reset while
+   *  the PNGs were made is a 404, never files written into a folder going away or half the outlines saved;
+   *  a job stopped meanwhile (`signal`) saves nothing. The masks folder is made if it is missing (a backup
+   *  keeps no empty folder: a house restored before its parts were found has none). */
+  const saveMasks = async (house, masks, rows = () => null, signal = null) => {
+    const pngs = await Promise.all(masks.map(([, mask]) => maskToPng(mask, house.displayWidth, house.displayHeight)));
+    signal?.throwIfAborted();
+    if (!getHouse(ctx.db, house.id)) throw houseNotFound(house.id);
+    if (masks.length) mkdirSync(path.dirname(maskPath(ctx.dataDir, house.id, masks[0][0])), { recursive: true });
+    masks.forEach(([key], i) => writeFileSync(maskPath(ctx.dataDir, house.id, key), pngs[i]));
+    return rows();
   };
 
   app.get("/v1/houses/:id/parts", input({ params: IdParams }), (c) => {
@@ -59,8 +71,19 @@ export function router(ctx = getState()) {
           for (let i = 0; i < m.length; i++) if (m[i] >= 128) theirs[i] = 255;
         }
         for (const p of found) if (!keptKeys.has(p.key)) subtractRegion(p.mask, theirs);
+        // what the finder gave a part kept as drawn, and no part has now, goes back to the base part (the
+        // body, as before the finder found it): a Trim fixed by hand before the doors' casings were trim
+        // leaves them on the walls, never in no part
+        const base = found.find((p) => p.base && !keptKeys.has(p.key));
+        if (base) {
+          const taken = theirs;
+          for (const p of found) if (!keptKeys.has(p.key)) for (let i = 0; i < taken.length; i++) if (p.mask[i] >= 128) taken[i] = 255;
+          for (const p of found) {
+            if (!keptKeys.has(p.key)) continue;
+            for (let i = 0; i < taken.length; i++) if (p.mask[i] >= 128 && !taken[i]) base.mask[i] = 255;
+          }
+        }
       }
-      for (const p of found) if (!keptKeys.has(p.key)) await writeMask(house, p.key, p.mask);
       const asIs = (p) => ({ key: p.key, paintable: p.paintable, area: p.area, score: p.score, source: p.source });
       const rows = [
         // the finder's order, a kept part in its place; kept parts it didn't find after them
@@ -69,7 +92,8 @@ export function router(ctx = getState()) {
         ),
         ...kept.filter((k) => !found.some((p) => p.key === k.key)).map(asIs),
       ];
-      const parts = replaceParts(ctx.db, house.id, rows);
+      const fresh = found.filter((p) => !keptKeys.has(p.key)).map((p) => [p.key, p.mask]);
+      const parts = await saveMasks(house, fresh, () => replaceParts(ctx.db, house.id, rows), signal);
       // the outlines of parts not found this time go with their rows (a smaller folder and backup)
       const stays = new Set(rows.map((r) => r.key));
       // each one only while its part is still gone (a part added again meanwhile keeps its new outline)
@@ -106,16 +130,15 @@ export function router(ctx = getState()) {
     } catch {
       throw new RequestValidationError([{ loc: ["body"], msg: "Not a readable PNG", type: "value_error" }]);
     }
-    await writeMask(house, key, mask);
-    return c.json(updatePartMask(ctx.db, house.id, key, { area: area(mask) }));
+    return c.json(await saveMasks(house, [[key, mask]], () => updatePartMask(ctx.db, house.id, key, { area: area(mask) })));
   });
 
   app.post("/v1/houses/:id/parts", input({ params: IdParams, body: PartNew }), async (c) => {
     const house = mustHouse(c.req.valid("param").id);
     const { key, paintable } = c.req.valid("json");
     if (getPart(ctx.db, house.id, key)) throw conflict(`house ${house.id} already has a part ${key}`);
-    await writeMask(house, key, new Uint8Array(house.displayWidth * house.displayHeight));
-    return c.json(updatePartMask(ctx.db, house.id, key, { area: 0, paintable, source: "added" }), 201);
+    const empty = new Uint8Array(house.displayWidth * house.displayHeight);
+    return c.json(await saveMasks(house, [[key, empty]], () => updatePartMask(ctx.db, house.id, key, { area: 0, paintable, source: "added" })), 201);
   });
 
   // A box: the finder outlines what is inside it; `add` gives it to this part (taking it from the
@@ -133,20 +156,22 @@ export function router(ctx = getState()) {
     const region = await ctx.finder.box(house, { x0, y0, x1, y1 });
     const parts = listParts(ctx.db, house.id);
     let changed;
+    const masks = {};
     if (mode === "remove") {
-      const mask = await readMask(house, key);
-      changed = subtractRegion(mask, region) ? [key] : [];
-      if (changed.length) await writeMask(house, key, mask);
-      if (changed.length) updatePartMask(ctx.db, house.id, key, { area: area(mask) });
+      masks[key] = await readMask(house, key);
+      changed = subtractRegion(masks[key], region) ? [key] : [];
     } else {
-      const masks = {};
       for (const p of parts) masks[p.key] = await readMask(house, p.key);
       changed = assignRegion(masks, key, region);
-      for (const k of changed) {
-        await writeMask(house, k, masks[k]);
-        updatePartMask(ctx.db, house.id, k, { area: area(masks[k]) });
-      }
     }
+    // every changed outline saved together, with its row
+    await saveMasks(
+      house,
+      changed.map((k) => [k, masks[k]]),
+      () => {
+        for (const k of changed) updatePartMask(ctx.db, house.id, k, { area: area(masks[k]) });
+      },
+    );
     return c.json({ changed, parts: listParts(ctx.db, house.id) });
   });
 

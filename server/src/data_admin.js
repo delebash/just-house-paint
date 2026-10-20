@@ -11,7 +11,8 @@
 // recovers from schema drift — the houses' files are deleted, and the seed pass runs. The access
 // tokens survive it: a reset on an exposed headless server must not open it to the network. A
 // restore replaces the rows and the houses under the running app, so the same teardown runs after
-// it (the clean-slate rule, JustWrite 2026-07-11).
+// it (the clean-slate rule, JustWrite 2026-07-11) — and it keeps this server's access tokens too, not
+// the backup's (keepAuth).
 
 import { LLM_TABLES } from "@delebash/core/llm";
 import * as llmDb from "@delebash/core/llm/db";
@@ -23,10 +24,24 @@ import { getDb, getState } from "./app_state.js";
 import { dbPath, recreateAppTables } from "./database/index.js";
 import { APP_TABLES } from "./database/schema.js";
 import { seedWorkspace } from "./database/seed.js";
-import { getSetting, setSetting } from "./database/settings.js";
+import { deleteSetting, getSetting, setSetting } from "./database/settings.js";
 import { housesRoot, removeAllHouseDirs } from "./files.js";
 
 const log = getLogger("just_house_paint.data");
+
+/** A restore keeps this server's access tokens, as a reset does: they are the server's, not the data's —
+ *  a backup made before a token was set would open the server to the network, one with another token
+ *  lock every client out. The kit's restore runs both inside its transaction. */
+let keptAuth;
+export const keepAuth = {
+  beforeCopy: (h) => {
+    keptAuth = getSetting(h, "auth");
+  },
+  afterCopy: (h) => {
+    if (keptAuth === undefined) deleteSetting(h, "auth");
+    else setSetting(h, "auth", keptAuth);
+  },
+};
 
 /** Cancel the jobs, let the part finder and the local AI model go — best effort by design: a
  * reset or restore never fails on its teardown. */
@@ -70,5 +85,8 @@ export const router = (dataDir) =>
     metadata: [APP_TABLES, LLM_TABLES],
     runReset: resetWorkspace,
     assetDirs: () => ({ houses: housesRoot(dataDir) }),
+    ...keepAuth,
+    // a backup from an older version: its settings get what this one's seed adds and upgrades (as at start)
+    afterTables: () => seedWorkspace(getDb()),
     onReplaced: teardown,
   });
