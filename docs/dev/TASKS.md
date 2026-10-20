@@ -448,6 +448,21 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         Right: the hash's collisions need the same millisecond and area; the lock cleanup; answered() and per-house
         versions; DATA_WRITES complete; restart vs restore; the commit record's crash points; the start-up order; the
         other apps on the legacy restore; visibility, the token notice, the Mac steps.
+        Their fixes — decided (mine, argued): Add part sends If-Match and takes the answer (as a stroke and a Box); a
+        part added elsewhere still re-reads the outlines here (an empty part left out of the version would let a part
+        erased to nothing be overwritten unseen); each history record carries its design base, Undo/Redo restore it;
+        the roll-forward's removal best effort; a finished job's tombstone kept for the process's life — 410 Gone (RFC
+        9110 §15.5.11) — the window re-reads quietly, only a real restart says "stopped"; the gate drains and refuses
+        only the app's data writes (the same list the change counter counts); the epoch renewed inside the restore's
+        transaction (afterCopy) and right after a reset's seed, written once at start, never by a GET; a designs
+        answer older than the design held is ignored (updatedAt); the refresh raises its busy flag before its first
+        await, and a stroke refused while the outlines are read says so once; the gate's words when shut until a
+        restart; a background update check that fails leaves the panel as it was, and the on-wake one waits 30 s;
+        releaseGpu bounded in the teardown; the journal written beside and renamed in; a 5xx retried ten times; a
+        restore's copy rolled back where there was no folder before is removed, and the sweep never puts a staged
+        (.restoring-) copy back. Kept, argued: a window holding a dialog through another window's restore saves into
+        the restored data (its save is the user's own new change; a deleted house or design is refused by its own
+        404); linkTree's ~0.33 ms a file (a house ~30 files — 100 houses ≈ 1 s, once per backup).
 NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
         the installed 0.1.2 updating to it (the silent Restart now).
 
