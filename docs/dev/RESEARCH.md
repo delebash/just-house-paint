@@ -1146,3 +1146,7 @@ at the app's display size, through the app's own code; scripts and overlays in s
   when what it read changed. A job's poll retries a network or 5xx failure (0.4 → 10 s) and a job gone after a
   restart re-reads the house (`jobGone`). *Measured* (the agent): an idle server costs nothing; logs stay bounded;
   1 200 strokes level at ~157 MB; 150 houses added and deleted leave nothing; a page load writes nothing.
+- **The engines' needs on the release runners** (*measured*, dry run 39410206013, the packaged server's own
+  /v1/aiphoto/status and /v1/segment/status): Ubuntu 22.04 — the AI photo `available: false`, need glibc 2.38,
+  has 2.35; the AppImage on Ubuntu 24.04 — available (cpu); Windows Server (no GPU) — available (cpu); macOS 26
+  (`macos-26-arm64`) — available (metal); the part finder's ONNX Runtime loads on all four.

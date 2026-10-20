@@ -606,7 +606,10 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         The fourteenth's fixes committed (app f4850c0, kit 609bbb9: server 431, unit 162, e2e 16; kit core 1327, ui
         43; JustWrite 173 + 741, JustVoice 260 + 8, docgen 165 + 5). The fifteenth (2026-10-20; started): the
         fourteenth's shell code attacked, and the screens and keyboard again after the tenth-to-fourteenth's interface
-        changes — two agents, read-only. Dry run 39410206013 building.
+        changes — two agents, read-only. Dry run 39410206013 green on every runner; the engines' status read inside each
+        packaged server (start-packaged): Ubuntu 22.04 — the AI photo not offered, "needs glibc 2.38, this one has 2.35";
+        the AppImage on Ubuntu 24.04 — available (cpu), so the glibc read works there; Windows (no GPU) — available
+        (cpu); macOS 26 (macos-latest is macos-26-arm64) — available (metal); the part finder's runtime loads on all.
 NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
         the installed 0.1.2 updating to it (the silent Restart now).
 
