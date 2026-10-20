@@ -1508,6 +1508,40 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         (publish off) green: Windows, macOS, Linux, linux-user. The twenty-first's fresh angles (agents, read-only): an attack on the twentieth's code; the
         screens on its build; the untouched neighbors (the painter, Save image, designs, schemes, history, jobs, the
         help's claims against the code).
+        The twenty-first's untouched neighbors (an agent's; the scratchpad's neighbors21): 0 data lost, 0 breaks, 4 wrong,
+        7 small. Wrong — "On it now" with a colorful or dark paint tints every new color (the light gain is photo ÷ paint
+        per channel: a red door's ΔE 2.2 mismatch gives Alabaster ΔE 14.2, a near-0 channel ΔE 27.5; black shutters'
+        flare clips white) while the ΔE badge, measured against the same arithmetic, stays green — and its hint says
+        "from the paint chip"; the AI photo has the same gain (pixels.js lightGain); Save image draws a 2 px line of the
+        old color where two painted parts touch (the worker scales the outlines smoothly, and each soft edge blends with
+        the photo, not with the paint beside it — measured in Electron); the PRD says the brands load only when asked,
+        the app loads all seven at each start (the help says what ships); the Schemes tab never says the body's paint
+        is another brand's while it builds around the selected part's, and builds around the trim with the body
+        unpainted while the help says "Give the body a color first". Small — Cancel on Suggest schemes leaves the run
+        going (no abort reaches the kit's runAction; the AI photo is refused meanwhile); an AI answer that is a JSON
+        array always fails (the parse slices from the first "{"); a lower Texture darkens the paint ("In light" no
+        longer the chip: ΔE 1.1); a design's caption counts paints not loaded and parts not on the house, Compare shows
+        those parts unpainted without a word, the Schemes tab says "Give the body a color first" when its paint isn't
+        loaded; Copy the color list copies nothing and says "copied"; a color click costs parts × photo (15 parts:
+        372 ms at 2048 px, 1.6 s at 4096) — every loop over the whole photo, not the part's box; the screen's gain cap
+        a constant while the AI photo's is a setting. Held — the chip exact in neutral light; Save image at 16 MP;
+        EXIF and transparency; harmony over 4,861 paints (warm, cool, dark, light bases: 5 complete, distinct
+        schemes); the brand pairings; the undo history across tabs, deletes and other windows; jobs across sleep and
+        two windows; the auto-load; 16 help claims right.
+        Their fixes — decided (mine, argued): one light gain for the screen and the AI photo (a browser-safe shared
+        module): the brightness from luminance, the color cast only from channels with signal (linear ≥ 0.05) and
+        bounded (±18 %), a dark or saturated paint now giving brightness only — the standard way to read a light
+        (white balance from a reference, von Kries) needs a near-neutral reference, and a colorful one amplifies its
+        weak channels; its limits one setting (aiphoto.compose's gainLimits with the cast and floor beside them, read
+        by the screen too — no constant); the badge's hint says what it measures (the paint in this light, not the
+        chip); Save image composites edges by coverage (photo × (1 − Σa) + Σ aₖ·paintₖ — a binary outline on screen
+        is unchanged, a scaled one keeps its antialiasing without the seam); the PRD says what ships and the decision
+        behind it; the Schemes tab names another brand's body paint beside "Around …", and with the body unpainted says
+        whose paint it builds around; Cancel aborts the run (the request's signal through the kit's runAction to the
+        provider) and frees the hold; the AI answer parsed whole first, then from the first "[" or "{"; Texture's
+        light normalised by its own level; designs counted by loaded paints on the house's parts, Compare and Schemes
+        saying "not in the loaded colors"; Copy the color list off when there is nothing to copy; a color click works
+        inside each part's box.
 NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
         the installed 0.1.2 updating to it (the silent Restart now).
 
