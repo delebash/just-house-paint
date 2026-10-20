@@ -1043,6 +1043,12 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         color"; Box off only once the finder is known missing, its refusal said when pressed; the AI photo dialog at
         --w-prose; hints 30em, the lede 33em; start-packaged's realpath guarded and --default-data under a temp home off
         Windows; the houses test waits for the sweep.
+        The seventeenth's fixes committed (app c4c121b, kit 2f60ea1: server 435, unit 185, e2e 16; kit core 1378, ui
+        57; template 77 + 54, e2e 12; JustWrite 745 + 180, docgen 5 + 165; JustVoice 261 + 1366 — its task-queue test
+        counted the announcer's timers (2 left after the ticker stopped): the announcer sets none now, old lines going
+        as the next lands, its words after Vue's nextTick). Dry run started. The eighteenth (2026-10-20): the
+        seventeenth's code attacked, the screens on its build, and a fresh angle — every claim the help and What's
+        new make, checked against the code.
 NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
         the installed 0.1.2 updating to it (the silent Restart now).
 
