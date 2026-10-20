@@ -13,6 +13,7 @@
 // formats is Photoshop/Illustrator Lab (D50). CMYK and grayscale need an ICC profile to become a
 // paint color, so they are skipped with a warning — paint brands publish RGB.
 import { converter, formatHex } from "culori";
+import { leftOut } from "./left_out.js";
 
 const toRgb = converter("rgb");
 
@@ -47,7 +48,10 @@ export function parseAse(buffer) {
   const blocks = dv.getUint32(8);
   const swatches = [];
   const warnings = [];
+  const skipped = leftOut("swatch", "swatches");
+  const odd = leftOut("block", "blocks");
   const groups = [];
+  let colors = 0; // the swatches' numbers, as the file has them
   let p = 12;
   for (let i = 0; i < blocks && p + 6 <= dv.byteLength; i++) {
     const type = dv.getUint16(p);
@@ -70,23 +74,24 @@ export function parseAse(buffer) {
       const model = String.fromCharCode(dv.getUint8(q), dv.getUint8(q + 1), dv.getUint8(q + 2), dv.getUint8(q + 3)).trim();
       q += 4;
       const count = { RGB: 3, LAB: 3, CMYK: 4, Gray: 1 }[model];
+      const at = ++colors;
       if (!count) {
-        warnings.push(`"${name}": unknown color model "${model}" — skipped`);
+        skipped.add(`skipped — an unknown color model "${model}"`, at);
       } else {
         const values = Array.from({ length: count }, (_, k) => dv.getFloat32(q + k * 4));
         let hex = null;
         if (model === "RGB") hex = hexFromRgb01(...values);
         // Adobe writes L as 0..1; GIMP's exporter writes 0..100 — a value above 1 is the latter.
         else if (model === "LAB") hex = hexFromLab50(values[0] > 1 ? values[0] : values[0] * 100, values[1], values[2]);
-        else warnings.push(`"${name}": ${model} needs a color profile — skipped`);
-        if (hex) swatches.push({ name, group: groups.at(-1) || null, model, values, hex });
+        else skipped.add(`skipped — ${model} needs a color profile`, at);
+        if (hex) swatches.push({ name, group: groups.at(-1) || null, model, values, hex, at });
       }
     } else {
-      warnings.push(`block ${i}: unknown type 0x${type.toString(16)} — skipped`);
+      odd.add("of a type this reader doesn't know, skipped", i + 1);
     }
     p = end;
   }
-  return { swatches, warnings };
+  return { swatches, warnings: [...warnings, ...skipped.words(), ...odd.words()] };
 }
 
 export function isAco(buffer) {
@@ -135,16 +140,17 @@ export function parseAco(buffer) {
         p += 4 + units * 2;
       }
       const c = acoColor(space, w, x, y);
-      list.push({ name, group: null, model: c.model, values: [w, x, y], hex: c.hex });
+      list.push({ name, group: null, model: c.model, values: [w, x, y], hex: c.hex, at: i + 1 });
     }
     sections.push({ version, list });
   }
   // Prefer the named version 2 list when the file carries both.
   const chosen = sections.find((s) => s.version === 2) ?? sections[0] ?? { list: [] };
   const swatches = [];
-  for (const [i, s] of chosen.list.entries()) {
+  const skipped = leftOut("swatch", "swatches");
+  for (const s of chosen.list) {
     if (s.hex) swatches.push(s);
-    else warnings.push(`color ${i + 1}${s.name ? ` "${s.name}"` : ""}: ${s.model} needs a color profile — skipped`);
+    else skipped.add(`skipped — ${s.model} needs a color profile`, s.at);
   }
-  return { swatches, warnings };
+  return { swatches, warnings: [...warnings, ...skipped.words()] };
 }

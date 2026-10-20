@@ -10,7 +10,10 @@ const nameTaken = (name) => new RequestValidationError([{ loc: ["body", "name"],
 import { createDesign, deleteDesign, getDesign, getHouse, listDesigns, updateDesign } from "../database/houses.js";
 import { DesignIn, DesignPatch, IdParams } from "../schemas/houses.js";
 import { getState } from "../app_state.js";
-import { cleanName, nameKey } from "../shared/text.js";
+import { cleanName, nameKey, nameProblem } from "../shared/text.js";
+
+/** A design's longest name — its schema's (DesignIn, DesignPatch: schemas/houses.js). */
+const NAME_MAX = 60;
 
 /** `ctx`: { db, maxDesignsPerHouse() } — the limit is a settings row. */
 export function router(ctx = getState()) {
@@ -25,10 +28,12 @@ export function router(ctx = getState()) {
   };
   // compared as a person sees them: composed, invisible characters ignored, any case (shared/text.js nameKey)
   const sameName = (houseId, name, except = null) => listDesigns(ctx.db, houseId).some((d) => d.id !== except && nameKey(d.name) === nameKey(name));
-  /** The name kept (cleanName); one that shows nothing is refused as the schema refuses an empty one. */
+  /** The name kept (cleanName); one that shows nothing, or that its composed form made too long, refused as the
+   *  schema refuses them. */
   const kept = (name) => {
     const clean = cleanName(name);
-    if (!nameKey(clean)) throw new RequestValidationError([{ loc: ["body", "name"], msg: "Name required", type: "value_error" }]);
+    const wrong = nameProblem(clean, NAME_MAX);
+    if (wrong) throw new RequestValidationError([{ loc: ["body", "name"], ...wrong }]);
     return clean;
   };
 
@@ -54,7 +59,9 @@ export function router(ctx = getState()) {
     const current = mustDesign(c.req.valid("param").id);
     const { name, colors } = c.req.valid("json");
     const clean = name === undefined ? undefined : kept(name);
-    if (clean !== undefined && sameName(current.houseId, clean, current.id)) throw nameTaken(clean);
+    // a name kept as it is, or written another way, is never "taken" — a twin stored before the rule aside
+    const renamed = clean !== undefined && nameKey(clean) !== nameKey(current.name);
+    if (renamed && sameName(current.houseId, clean, current.id)) throw nameTaken(clean);
     return c.json(updateDesign(ctx.db, current.id, { name: clean, colors }));
   });
 

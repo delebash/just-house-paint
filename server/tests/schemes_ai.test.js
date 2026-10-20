@@ -116,6 +116,15 @@ describe("POST /v1/schemes/ai", () => {
     const bad = await s.json("POST", "/v1/schemes/ai", { houseId: house.id, brand: "behr" });
     expect(bad.status).toBe(502);
     expect((await bad.json()).type).toMatch(/ai-answer-unusable$/);
+    // a model it can't reach: the local engine not ready (503, with why), the provider unreachable (502) — as the kit's
+    // /v1/ai/run answers (the twentieth review: both 500s)
+    aiAnswer.error = Object.assign(new Error("the AI engine isn't installed — install it first (AI Settings)"), { localNotReady: true });
+    const notReady = await s.json("POST", "/v1/schemes/ai", { houseId: house.id, brand: "behr" });
+    expect(notReady.status).toBe(503);
+    expect(await notReady.json()).toMatchObject({ type: expect.stringMatching(/engine-not-ready$/), detail: expect.stringMatching(/isn't installed/) });
+    aiAnswer.error = Object.assign(new Error("fetch failed"), { unreachable: true });
+    expect((await s.json("POST", "/v1/schemes/ai", { houseId: house.id, brand: "behr" })).status).toBe(502);
+    aiAnswer.error = null;
   });
 
 });

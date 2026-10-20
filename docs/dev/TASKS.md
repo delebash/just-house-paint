@@ -1458,8 +1458,50 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         "restore failed:" prefix; the reset toast quotes each label (“…”, as the lost-colors toast does) and every
         setting key has a label; Find keeps its focused button in view (its row scrolled to the top when the list and
         the button don't both fit); the help's Storage words as the shell says them now; the search's control
-        characters become a space and invisible ones are ignored, on both sides; one wording for an empty name
-        ("Name required"); a "Didn't answer just now" row says it once.
+        characters become a space and invisible ones are ignored, on both sides; one wording for an empty name — the
+        form's: the server's name refusals typed as pydantic's (missing; string_too_long with its max_length), so the
+        kit's fieldMessage says them in the form's own words and language ("Required", "At most 60 characters" — the
+        kit's "Required" is every field's, so the server matches it, not the reverse); a "Didn't answer just now" row
+        says it once.
+        The twentieth's kit fixes made (the shell agent's; not yet committed): an assignment to a preset that doesn't
+        exist, or a feature no catalog, prompt or preset names, a 422 at its field (ids ≤ 100, keys ≤ 200 characters;
+        with nothing registered any key as before — JustWrite's action keys aren't catalog keys); an AI run that can't
+        reach its model 503 engine-not-ready (the local engine, with why) or 502 provider-unreachable (aiRunHttpError,
+        exported for the apps), a provider's own error status still 500; a request body silent for 60 s answered 408
+        with Connection: close (the socket's idle timer only while the body is read — a flowing upload and a streamed
+        answer never cut), so a stalled upload frees the gate; a 422 says which part failed; 405, 409, 502, 503 typed;
+        an unknown model refused for load or download (404) when the catalog is wired (an unwired one is not an empty
+        one); one Hugging Face repo rule for the catalog PUT, list-files and inspect (trimmed, its URL prefixes taken
+        off, <owner>/<name>, every HF URL encoded); gpu-processes kept 5 s and shared by asks in flight; a restore past
+        the room reads the rest and drops it, then answers 413 (a drive full mid-upload 507) — @hono/node-server
+        drains an unread body only 500 ms / 64 MB before closing, the reset the review measured — up to 1 GiB past
+        the room; prefs capped in all after the merge (200 keys, 64 KB, a key ≤ 200 characters; one already past may
+        shrink); the restore's details without their own "restore failed:". Mine: auth's Bearer any case and tokens
+        compared in constant time (SHA-256 digests through timingSafeEqual, every token tried — Hono's bearerAuth),
+        the 403's Host cut to 100; same-site held as cross-site (resource isolation); serveUi — the family's one
+        static UI (a write 405 with Allow, an unknown /v1 write the API's 404, a weak stat ETag and 304s, Vite's hashed
+        assets immutable and the rest no-cache), used by this app and the template; the sync watcher held through
+        this window's own restore or reset (replacingData). The UI agent's: errorMessage, parseProblem and the AI
+        client say errors[]'s words when the detail is the generic sentence.
+        The twentieth's app fixes made (mine; not yet committed): aiphoto.compose's numbers bounded per key, ranges in
+        order; harmony kinds checked by findIndex; a restored setting runs the Settings screen's meaning checks and a
+        number JSON can't say again set back too; a backup whose part keys or AI photo file names the app never makes
+        refused, and such an AI photo answered 404 and removable; the swatch readers' left-out swatches and blocks
+        counted by why (paints/left_out.js — the rows' too), "1 color", "1 repeated code"; names compared by Unicode's
+        Default_Ignorable_Code_Point and the braille blank, a control character a space, a name the composed form
+        made too long refused, a rename to the record's own name never "taken", the server's name refusals typed
+        (missing, string_too_long) so the form's own words say them; the search's fold as the name's (both sides),
+        its box turning a pasted control character into a space; the schemes' AI run 503 / 502 by the kit's
+        aiRunHttpError; paints.autoLoad labelled ("Paint colors: Load automatically", settings.elsewhere) and a test
+        that every setting has a label; the hex box's typing starts a new match, Find keeps its focused button in view,
+        the row's controls level by their tops; the name dialog (and the template's NoteDialog) back in the field after
+        a refusal; Find the parts again by the finder's state — installing, can't run here, not installed — with the
+        card's Install focusable while off; the help's Storage and palette words, what's new. The UI agent's: Storage's
+        Try again and Remove move the focus and say the result, each row's buttons named with their folder, "Didn't
+        answer just now" said once; the kit's fields show a rule's message under the box with no icon, and keep a red
+        edge under the pointer (NOT STANDARD — kit RESEARCH §10); the restore's toasts in the server's words, the reset
+        settings quoted; a dialog cancelled by another answers as its own kind (Reset's "didn't match" after a confirm).
+        The guard: an app serving its UI by hand is told to use serveUi (advisory for JustWrite, JustVoice, docgen).
 NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
         the installed 0.1.2 updating to it (the silent Restart now).
 

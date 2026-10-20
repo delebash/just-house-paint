@@ -365,7 +365,12 @@ describe("the engine routes", () => {
     const renders = await (await s.app.request(`/v1/houses/${house.id}/renders`)).json();
     expect(renders).toHaveLength(1);
     expect((await s.app.request(`/v1/renders/${renders[0].id}/image`)).headers.get("content-type")).toBe("image/png");
+    // a row naming a file the app never makes (an older backup's — the twentieth review: a 500 that couldn't be
+    // removed): no picture, and the row still goes
+    s.db.run("UPDATE renders SET file = ? WHERE id = ?", ["../../outside.png", renders[0].id]);
+    expect((await s.app.request(`/v1/renders/${renders[0].id}/image`)).status).toBe(404);
     expect((await s.app.request(`/v1/renders/${renders[0].id}`, { method: "DELETE" })).status).toBe(204);
+    expect(await (await s.app.request(`/v1/houses/${house.id}/renders`)).json()).toEqual([]);
   });
 
   test("the AI photo says what else held the graphics card while it drew", async () => {

@@ -37,6 +37,9 @@ export const thumbPath = (dataDir, id) => path.join(houseDir(dataDir, id), "thum
 export const originalPath = (dataDir, id, file) => path.join(houseDir(dataDir, id), path.basename(file));
 export const maskPath = (dataDir, id, key) => path.join(houseDir(dataDir, id), "masks", `${safeName(key)}.png`);
 export const renderPath = (dataDir, id, renderId) => path.join(houseDir(dataDir, id), "renders", `${safeName(renderId)}.png`);
+/** An AI photo row's file name as the app makes one (`<id>.png`) — its id, or null for any other (a restored backup's
+ *  row could hold anything: the twentieth review's answered 500 and couldn't be removed). */
+export const renderFileId = (file) => (typeof file === "string" && /^[A-Za-z0-9_-]{1,80}\.png$/.test(file) ? file.slice(0, -4) : null);
 
 export function ensureHouseDirs(dataDir, id) {
   mkdirSync(path.join(houseDir(dataDir, id), "masks"), { recursive: true });

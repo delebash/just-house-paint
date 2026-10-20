@@ -357,8 +357,9 @@ describe("Storage", () => {
       { root: "G:\\Just House Paint", bytes: null, movedAt: 1, changedAt: null, connected: false, cause: "other" },
     ];
     await mountSettings("storage");
-    expect(text()).toContain("Didn't answer just now");
-    expect(text()).toContain("Its drive didn't answer just now — a network folder offline, or a drive waking. Try again in a moment, or Forget it");
+    // said once: the row's label, then its note without the same words again (the twentieth review)
+    expect(text().split("Didn't answer just now").length - 1).toBe(1);
+    expect(text()).toContain("A network folder offline, or a drive waking? Try again in a moment, or Forget it");
     expect(text()).toContain("The folder there now isn't this copy — another drive in its place, or a folder copied by hand — so it isn't removed.");
     // Try again: looked at now
     shell.oldCopies = [shell.oldCopies[1]];
@@ -479,8 +480,8 @@ describe("Backups", () => {
     };
     await restore();
     expect(server.calls.some((c) => c[1] === "/v1/data/restore")).toBe(true);
-    // named as General and Advanced show them, not by key
-    const said = "Some settings in the backup didn't fit this version and were set back to their defaults: Parts reach past the house by (share of the photo) and JPEG quality.";
+    // named as General and Advanced show them, not by key — each in quotes, so a name's own comma isn't the list's
+    const said = "Some settings in the backup didn't fit this version and were set back to their defaults: “Parts reach past the house by (share of the photo)” and “JPEG quality”.";
     expect(JSON.parse(sessionStorage.getItem("kit.dataManagement.afterRestore"))).toEqual({ message: said });
     // the page again after its reload: said then (a toast — its words in the page and to a screen reader)
     wrapper.unmount();

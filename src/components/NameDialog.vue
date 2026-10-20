@@ -6,7 +6,7 @@
 // the field (`fieldErrors(...).name`), any other failure goes through `reportError`; Save is
 // disabled while it saves. `save(name)` does the request; the dialog closes when it resolves.
 import { AppModal, fieldErrors, reportError, UiButton, UiField, UiInput } from "@delebash/ui";
-import { ref } from "vue";
+import { nextTick, ref } from "vue";
 import { useI18n } from "vue-i18n";
 
 const props = defineProps({
@@ -37,6 +37,11 @@ async function submit() {
     const message = fieldErrors(e).name;
     if (message) serverError.value = message;
     else reportError(e);
+    // back in the field to put it right (the WAI-ARIA APG dialog pattern): Save was off while it saved, and the focus
+    // fell to the page behind the dialog (the twentieth review)
+    saving.value = false;
+    await nextTick();
+    document.getElementById("name-dialog-input")?.focus();
   } finally {
     saving.value = false;
   }

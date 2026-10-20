@@ -107,7 +107,7 @@ describe("brands", () => {
     mixed.append("file", new Blob([["code,name,hex", "1001,Pale Ecru,#efe6d2", ",Deep Sea,#123456"].join("\n")]), "valspar.csv");
     mixed.append("brand", "valspar");
     const ok = await (await s.app.request("/v1/paints/import", { method: "POST", body: mixed })).json();
-    expect(ok).toMatchObject({ paintCount: 1, warnings: ["1 colors without a number left out"] });
+    expect(ok).toMatchObject({ paintCount: 1, warnings: ["1 color without a number left out"] });
     expect((await (await s.app.request("/v1/brands")).json()).find((b) => b.key === "valspar").paintCount).toBe(1);
   });
 
@@ -197,6 +197,15 @@ describe("search, nearest, schemes", () => {
     const all = (await (await s.app.request("/v1/paints?brand=sherwin-williams")).json()).total;
     const nul = await (await s.app.request("/v1/paints?brand=sherwin-williams&q=%00")).json();
     expect(nul.total).toBe(all); // stripped: the same as no query, not a match of every row by a NUL
+    // a pasted TAB is a space and a zero-width space nothing, on both sides (the twentieth review: "Shade<TAB>12"
+    // became "Shade12" and matched nothing)
+    const one = (await (await s.app.request("/v1/paints?brand=sherwin-williams&limit=1")).json()).rows[0].name;
+    const words = one.split(" ");
+    expect(words.length).toBeGreaterThan(1); // "Fixture Linen"
+    const tabbed = await (await s.app.request(`/v1/paints?brand=sherwin-williams&q=${encodeURIComponent(words.join("\t"))}`)).json();
+    expect(tabbed.rows.map((r) => r.name)).toContain(one);
+    const hidden = await (await s.app.request(`/v1/paints?brand=sherwin-williams&q=${encodeURIComponent(`${one.slice(0, 2)}​${one.slice(2)}`)}`)).json();
+    expect(hidden.rows.map((r) => r.name)).toContain(one);
     expect((await s.app.request("/v1/paints?brand=sherwin-williams&offset=9223372036854775808")).status).toBe(422);
   });
 

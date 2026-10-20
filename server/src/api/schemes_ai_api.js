@@ -4,6 +4,7 @@
 // answer to real paints, so the run is in-process (the kit's runAction), not the renderer's.
 
 import { existsSync, readFileSync } from "node:fs";
+import { aiRunHttpError } from "@delebash/core/llm";
 import { Hono, input } from "@delebash/core/platform";
 import { ApiError, notFound } from "@delebash/core/platform/errors";
 import { houseNotFound } from "./refusals.js";
@@ -67,7 +68,9 @@ export function router(ctx = getState()) {
         throw new ApiError(501, "ai-not-set-up", "AI isn't set up", "choose an AI model in the AI area first");
       }
       if (/AI's answer/.test(String(e?.message))) throw new ApiError(502, "ai-answer-unusable", "The AI's answer couldn't be used", e.message);
-      throw e;
+      // a model it can't reach: 503 (the local engine isn't ready, with why) or 502 (the provider), as /v1/ai/run
+      // answers — a 500 before (the twentieth review)
+      throw aiRunHttpError(e) ?? e;
     }
   };
 

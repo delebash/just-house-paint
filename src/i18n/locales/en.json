@@ -99,7 +99,12 @@
     },
     "appearanceHint": "How the app looks — applied at once and kept by the app.",
     "accentNote": "The default, 166°, is green.",
-        "logsHint": "What the server and this window reported, newest last.",
+    "elsewhere": {
+      "fields": {
+        "paints": { "autoLoad": "Paint colors: Load automatically" }
+      }
+    },
+    "logsHint": "What the server and this window reported, newest last.",
     "storage": {
       "saves": "your houses and their photos",
       "houses": "Your houses' photos",
@@ -229,6 +234,8 @@
       "boxHint": "Draw a box around something the selected part should take in — drag, or click one corner and then the other",
       "offWhileFinding": "Off while the parts are being found — their new outlines replace these when it's done",
       "needsFinder": "Finding the parts needs the part finder: install it on the Parts tab.",
+      "finderInstalling": "The part finder is still installing — find the parts once it's in (its progress is on the Parts tab).",
+      "finderBlocked": "The part finder can't run on this computer yet — the Parts tab says why.",
       "offNoFinder": "Off until the part finder is installed — it outlines what is inside the box (Install, on the Parts tab)",
       "size": "Brush size",
       "outlines": "Outlines",

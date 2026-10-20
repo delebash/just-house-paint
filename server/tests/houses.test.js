@@ -645,7 +645,26 @@ describe("designs", () => {
     expect(cafe.name).toBe("Caf\u00e9");
     expect((await s.json("POST", other, { name: "Caf\u00e9" })).status).toBe(422);
     expect((await s.json("POST", other, { name: "\u200b\u2060" })).status).toBe(422);
-    expect((await (await s.json("POST", other, { name: "Night\u0000 \u202eblue" })).json()).name).toBe("Night blue");
+    const night = await (await s.json("POST", other, { name: "Night\u0000 \u202eblue" })).json();
+    expect(night.name).toBe("Night blue");
+    // the twentieth review: every character Unicode says shows nothing (Default_Ignorable_Code_Point) and the braille
+    // blank \u2014 a name of only those is no name, and none of them makes a second "Classic"
+    for (const blank of ["\u3164", "\u00ad", "\u200e\u200f", "\ufe0f", "\u{e0041}", "\u2800", "\u034f", "\u115f\u1160", "\uffa0"]) {
+      expect((await s.json("POST", other, { name: blank })).status, escape(blank)).toBe(422);
+    }
+    for (const twin of ["Clas\u00adsic", "Classic\u200e", "Classic\ufe0f", "Clas\u034fsic"]) {
+      expect((await s.json("POST", other, { name: twin })).status, escape(twin)).toBe(422);
+    }
+    // its composed form longer than the schema let through (60 \u00d7 U+0958 is 120 units): refused as too long
+    const long = await s.json("PATCH", `/v1/designs/${night.id}`, { name: "\u0958".repeat(60) });
+    expect(long.status).toBe(422);
+    expect((await long.json()).errors[0]).toMatchObject({ loc: ["body", "name"], type: "string_too_long", ctx: { max_length: 60 } });
+    // a control character is a space
+    expect((await (await s.json("PATCH", `/v1/designs/${night.id}`, { name: "Shade\t12" })).json()).name).toBe("Shade 12");
+    // two "Caf\u00e9"s stored before the rule (composed two ways): either renamed to its own name is no clash
+    s.db.run("UPDATE designs SET name = ? WHERE id = ?", ["Cafe\u0301", night.id]);
+    expect((await s.json("PATCH", `/v1/designs/${night.id}`, { name: "Caf\u00e9" })).status).toBe(200);
+    expect((await s.json("PATCH", `/v1/designs/${cafe.id}`, { name: "Caf\u00e9" })).status).toBe(200);
   });
 
   test("deleting a house deletes its designs and parts", async () => {

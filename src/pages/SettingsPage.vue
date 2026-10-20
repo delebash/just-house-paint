@@ -63,7 +63,7 @@ const ui = useUiStore();
 const { t, te } = useI18n();
 /** A setting's name as General or Advanced shows it (the restore names the settings it set back to their defaults). */
 const settingLabel = (key) => {
-  for (const area of ["general", "advanced"]) if (te(`settings.${area}.fields.${key}`)) return t(`settings.${area}.fields.${key}`);
+  for (const area of ["general", "advanced", "elsewhere"]) if (te(`settings.${area}.fields.${key}`)) return t(`settings.${area}.fields.${key}`);
   return key;
 };
 

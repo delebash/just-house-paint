@@ -296,9 +296,33 @@ test("when the part finder's engine can't load here, the card says so and downlo
   server.runtime = { ok: false, error: "libonnxruntime.so.1: cannot open shared object file" };
   await mountPage();
   expect(text()).toContain("The part finder can't run on this computer: its engine didn't load (libonnxruntime.so.1");
-  expect(byText("button", "Install (").disabled || byText("button", "Install (").classList.contains("disabled")).toBe(true);
+  // off, but focusable (aria-disabled): Find the parts again brings the keyboard to it
+  expect(byText("button", "Install (").getAttribute("aria-disabled")).toBe("true");
   await click(byText("button", "Install ("));
   expect(server.calls).not.toContain("POST /v1/segment/install");
+});
+
+test("Find the parts again without the part finder: its card, its Install focused even while off, and why — by state", async () => {
+  server.finderInstalled = false;
+  server.parts = PARTS;
+  server.runtime = { ok: false, error: "libonnxruntime.so.1: cannot open shared object file" };
+  await mountPage();
+  // it can't run here: said so, not "install it" (the twentieth review)
+  await click(byText("button", "Find the parts again"));
+  await flushPromises();
+  expect(document.activeElement).toBe(byText("button", "Install ("));
+  await vi.waitFor(() => expect(document.querySelector("[data-live-announcer]").textContent).toMatch(/can't run on this computer yet/));
+  // still installing: said so
+  const { useEnginesStore } = await import("../stores/engines.js");
+  const engines = useEnginesStore();
+  engines.finder = { ...engines.finder, runtime: { ok: true } };
+  engines.installing = { ...engines.installing, finder: true };
+  await click(byText(".q-tab", "Colors"));
+  await click(byText("button", "Find the parts again"));
+  await flushPromises();
+  expect(document.activeElement?.textContent).toContain("Installing");
+  await vi.waitFor(() => expect(document.querySelector("[data-live-announcer]").textContent).toMatch(/still installing/));
+  expect(server.calls).not.toContain("POST /v1/houses/h1/find-parts");
 });
 
 test("a color from the Colors tab paints the selected part, and the Parts tab shows it with its ΔE", async () => {
@@ -653,7 +677,7 @@ test("the AI photo says why it's off; where no engine exists, nothing is offered
   await click(byText("button", "AI photo"));
   expect(text()).toContain("has no build for this computer's system and processor");
   expect(text()).not.toContain("one AI photo would take about ten minutes"); // not "slow": unavailable
-  expect(byText("button", "Install").disabled).toBe(true);
+  expect(byText("button", "Install").getAttribute("aria-disabled")).toBe("true"); // off, focusable
   expect(text()).not.toContain("a one-time download of"); // no size where nothing installs
 });
 

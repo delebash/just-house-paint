@@ -206,8 +206,9 @@ one **RGB** column ("r,g,b"), or **R**, **G** and **B** (**Red**, **Green**, **B
 **"No colors in the file".** Nothing in it could be read as a color — often every color lacked its number,
 which the app keeps each paint by.
 
-**"… colors came in; some of the file was left out".** The import worked; what was left out is listed under it
-— colors without a number, a number repeated.
+**"… colors came in; some of the file was left out".** The import worked; what was left out is listed under it,
+counted by why — colors without a number, a number repeated, swatches in CMYK or gray (a paint color is read from
+RGB or Lab: "400 swatches skipped — CMYK needs a color profile").
 
 **"File too large".** The file is bigger than **Largest palette file (MB)** (30 MB at first) in **App Settings →
 General → Designs and paint files**.
@@ -288,8 +289,12 @@ it was.
 **Remove the old copy… refuses.**
 
 - **"… holds the data folder in use — it isn't removed."** — that folder is the one the app uses now.
-- **"The old copy in … can't be found"** — its drive isn't connected: connect it, then remove it — or
-  **Forget** it, which drops the app's record of it and leaves the drive as it is.
+- **"The old copy in … isn't there"** — its drive is unplugged, or the folder was renamed or deleted: connect it,
+  then remove it — or **Forget** it, which drops the app's record of it and leaves the drive as it is.
+- **"The old copy in … didn't answer just now"** — its drive is slow to wake (a network drive, a disk asleep): try
+  again in a moment.
+- **"The folder in … isn't this old copy now"** — another drive is in its place, or the folder was copied by hand:
+  it isn't removed. **Forget** it to stop listing it.
 - **"A server of the app is using … now"** — a server started on its own runs on that copy: stop it first.
 - **"Part of the old copy in … couldn't be removed"** — a program holds a file in it: close it and try again
   later.

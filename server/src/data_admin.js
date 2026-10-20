@@ -25,8 +25,10 @@ import { dbPath, recreateAppTables } from "./database/index.js";
 import { APP_TABLES } from "./database/schema.js";
 import { SETTING_DEFAULTS, seedWorkspace } from "./database/seed.js";
 import { deleteSetting, getSetting, setSetting } from "./database/settings.js";
+import { meaningProblem } from "./api/settings_api.js";
 import { renewEpoch } from "./changes.js";
-import { HOUSE_ID, housesRoot, removeAllHouseDirs } from "./files.js";
+import { HOUSE_ID, housesRoot, removeAllHouseDirs, renderFileId } from "./files.js";
+import { PART_KEY } from "./schemas/houses.js";
 import { SETTINGS } from "./schemas/settings.js";
 
 const log = getLogger("just_house_paint.data");
@@ -52,17 +54,37 @@ export const keepAuth = {
  *  is one the app makes (HOUSE_ID). A throw is the restore's refusal, in these words. (Its settings never refuse it —
  *  an older version's backup restores: resetUnfitSettings.) */
 export function checkBackup(h) {
-  const has = !!h.one("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'houses'");
-  if (!has) return;
+  const has = (t) => !!h.one("SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?", [t]);
+  const named = (v) => JSON.stringify(String(v)).slice(0, 60);
+  if (!has("houses")) return;
   for (const { id } of h.all("SELECT id FROM houses")) {
     if (typeof id !== "string" || !HOUSE_ID.test(id)) {
-      throw new Error(`its houses include one whose id isn't a safe folder name (${JSON.stringify(String(id)).slice(0, 60)}) — this backup can't be restored`);
+      throw new Error(`its houses include one whose id isn't a safe folder name (${named(id)}) — this backup can't be restored`);
+    }
+  }
+  // and every other name a file is made from (the twentieth review): a part's key (its mask), an AI photo's file
+  const partKey = new RegExp(PART_KEY);
+  if (has("parts")) {
+    for (const { key } of h.all("SELECT DISTINCT key FROM parts")) {
+      if (typeof key !== "string" || !partKey.test(key)) throw new Error(`its parts include one whose name isn't a safe file name (${named(key)}) — this backup can't be restored`);
+    }
+  }
+  if (has("renders")) {
+    for (const { file } of h.all("SELECT file FROM renders")) {
+      if (!renderFileId(file)) throw new Error(`its AI photos include one whose file name isn't one the app makes (${named(file)}) — this backup can't be restored`);
     }
   }
 }
 
-/** The restored settings rows that don't fit this version's schemas (schemas/settings.js) — a value out of today's
- *  range, of another shape, unreadable — set back to their defaults (the seed's), inside the restore's transaction;
+/** A number JSON can't say again: 1e400 parses as Infinity and reads back as null. */
+function hasNonFinite(v) {
+  if (typeof v === "number") return !Number.isFinite(v);
+  return !!v && typeof v === "object" && Object.values(v).some(hasNonFinite);
+}
+
+/** The restored settings rows that don't fit this version — its schemas (schemas/settings.js) and the checks the
+ *  Settings screen makes (settings_api.js meaningProblem): a value out of today's range, of another shape, unreadable,
+ *  a number past what JSON says, a mistake that would only show later — set back to their defaults (the seed's), inside the restore's transaction;
  *  returns their keys, which the restore's answer names (`resetSettings`) so the screen can say so. A backup from an
  *  older version always restores (the help: it gets this one's settings at once). */
 export function resetUnfitSettings(h) {
@@ -76,7 +98,7 @@ export function resetUnfitSettings(h) {
     } catch {
       fits = false;
     }
-    if (fits && !schemaProblem(SETTINGS[key], v)) continue;
+    if (fits && !schemaProblem(SETTINGS[key], v) && !hasNonFinite(v) && !meaningProblem(key, v)) continue;
     if (Object.hasOwn(SETTING_DEFAULTS, key)) setSetting(h, key, SETTING_DEFAULTS[key]);
     else deleteSetting(h, key); // (every setting is seeded; the seed after the restore fills a missing one)
     reset.push(key);

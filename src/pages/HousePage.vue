@@ -730,15 +730,19 @@ watch(
 
 async function findParts() {
   if (finding.value) return;
-  if (!engines.finderInstalled) {
+  // known not to be installed (before the status answers, the server says why if it must — as the Box tool does)
+  if (engines.finderMissing) {
     // the part finder's install, shown and said: the Parts tab, its card brought into view and its Install focused
-    // (with parts listed the card was below them, out of view, and nothing happened — the nineteenth review)
+    // (with parts listed the card was below them, out of view, and nothing happened — the nineteenth review) — off
+    // or not (focusable while off): still installing, or unable to run here, said so (it said "install it" while it
+    // installed, and moved no focus — the twentieth review)
     tab.value = "parts";
     await nextTick();
     const card = document.querySelector(".house__tab .engine");
     card?.scrollIntoView?.({ block: "nearest" });
-    card?.querySelector("button:not([disabled])")?.focus();
-    announce(t("house.tools.needsFinder"));
+    card?.querySelector("button")?.focus();
+    const runtime = engines.finder?.runtime;
+    announce(t(engines.installing.finder ? "house.tools.finderInstalling" : runtime?.ok === false ? "house.tools.finderBlocked" : "house.tools.needsFinder"));
     return;
   }
   // the parts changed by hand can stay as they are (on unless the user unticks it)

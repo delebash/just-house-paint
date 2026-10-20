@@ -13,7 +13,7 @@ import { addingHouseDir, displayPath, houseAdded, originalPath, removeHouseDir, 
 import { ingestPhoto, NotAnImage, TooManyPixels } from "../images.js";
 import { CurrentPaintsIn, CurrentPaintsPatch, HousePatch, IdParams, ImageQuery } from "../schemas/houses.js";
 import { getState } from "../app_state.js";
-import { cleanName, cutToLength, nameKey } from "../shared/text.js";
+import { cleanName, cutToLength, nameKey, nameProblem } from "../shared/text.js";
 
 const CONTENT_TYPES = { jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp" };
 
@@ -94,7 +94,8 @@ export function router(ctx = getState()) {
   app.patch("/v1/houses/:id", input({ params: IdParams, body: HousePatch }), (c) => {
     must(c.req.valid("param").id);
     const name = cleanName(c.req.valid("json").name);
-    if (!nameKey(name)) throw new RequestValidationError([{ loc: ["body", "name"], msg: "Name required", type: "value_error" }]);
+    const wrong = nameProblem(name, NAME_MAX);
+    if (wrong) throw new RequestValidationError([{ loc: ["body", "name"], ...wrong }]);
     return c.json(renameHouse(ctx.db, c.req.valid("param").id, name));
   });
 

@@ -101,7 +101,14 @@ describe(".aco", () => {
     ]);
     expect(swatches[0].hex).toBe("#d5d8d9");
     expect(swatches[2].hex).toBe("#ff0000");
-    expect(warnings).toEqual([expect.stringMatching(/FIXTURE INK.*CMYK/)]);
+    expect(warnings).toEqual(["1 swatch skipped — CMYK needs a color profile (swatch 4)"]);
+  });
+
+  test("the swatches left out are counted by why, not one warning each (the twentieth review: 400 made 21,091 characters)", () => {
+    const many = Array.from({ length: 400 }, (_, i) => ({ name: `PPG${i} INK`, space: 2, values: [0, 65535, 65535] }));
+    const { swatches, warnings } = parseAco(writeAco([colors[0], ...many]));
+    expect(swatches).toHaveLength(1);
+    expect(warnings).toEqual(["400 swatches skipped — CMYK needs a color profile (swatches 2, 3, 4, 5, 6 …)"]);
   });
 
   test("a version 1 file alone has colors but no names", () => {
@@ -138,7 +145,7 @@ describe(".xlsx", () => {
     ]);
     expect(rows[0].sourceRef).toBe("voc_invented.xlsx [Sheet1]#row2");
     // counted by why, in words — never the row as raw JSON (the nineteenth review)
-    expect(warnings).toEqual(["1 row without a usable color (row 4)", "1 repeated codes dropped"]);
+    expect(warnings).toEqual(["1 row without a usable color (row 4)", "1 repeated code dropped"]);
   });
 
   test("title rows above the header are skipped; a hex column works too", async () => {

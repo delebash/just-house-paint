@@ -8,6 +8,7 @@
 // page's (the app ships no brand data).
 import { announce, EmptyState, reportError, schemaRules, UiButton, UiColorPicker, UiField, UiInput, UiSegmented, UiSelect, UiTag, UiToggle } from "@delebash/ui";
 import { NearestQuery } from "just-house-paint-server/schemas/paints.js";
+import { controlsAsSpaces } from "just-house-paint-server/shared/text.js";
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, useId, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
@@ -37,6 +38,8 @@ const tonesId = useId();
 let matchSeq = 0;
 const brand = ref(null);
 const q = ref("");
+// the search box as typed — a pasted control character (a TAB, a NUL) a space there too, as the server compares it
+const qBox = computed({ get: () => q.value, set: (v) => (q.value = controlsAsSpaces(v)) });
 const exterior = ref(true);
 // discontinued colors — off, unless matching the paint already on the house
 const archived = ref(false);
@@ -198,6 +201,9 @@ const exactForm = ref(null);
 function onHexInput() {
   picked.value = false;
   exactForm.value?.resetValidation();
+  // a Find still answering was for the hex before: it lands nowhere (it showed the old color's matches as "near"
+  // the new one — the twentieth review); the matches shown stay, named by their own hex
+  matchSeq++;
 }
 
 // a color read off the photo: into "An exact color", matched at once — and shown: the panel opens the tab at its
@@ -227,6 +233,26 @@ watch(
   },
   { immediate: true },
 );
+
+/** The nearest scrolling box `el` is in (its overflow-y scrolls), or the page's. */
+function scrollerOf(el) {
+  for (let p = el?.parentElement; p; p = p.parentElement) {
+    if (/(auto|scroll)/.test(getComputedStyle(p).overflowY) && p.scrollHeight > p.clientHeight) return p;
+  }
+  return document.scrollingElement;
+}
+
+/** Find's matches brought into view — and Find itself kept there, focused as it is: where the matches and the button
+ *  don't both fit (960 × 700: the button went above the panel's top, its focus ring unseen — the twentieth review),
+ *  the form's row goes to the top and the matches show below it as far as they fit (WCAG 2.4.11). */
+function findResultInView() {
+  const result = document.querySelector(".colors__nearest, .colors__none");
+  if (!result) return;
+  result.scrollIntoView?.({ block: "nearest" });
+  const row = exactForm.value?.$el;
+  const top = scrollerOf(row)?.getBoundingClientRect?.().top ?? 0;
+  if (row?.getBoundingClientRect && row.getBoundingClientRect().top < top) row.scrollIntoView?.({ block: "start" });
+}
 
 /** The matches said to a screen reader (after a pick, and after Find — WCAG 4.1.3): how many, or none. */
 function sayMatches() {
@@ -276,16 +302,17 @@ async function gridSettled() {
 async function match({ say = true } = {}) {
   if (!/^#[0-9a-fA-F]{6}$/.test(hex.value)) return false;
   const seq = ++matchSeq;
+  const wanted = hex.value;
   try {
-    const found = await paints.nearest(hex.value, { brand: brand.value, k: 6, exterior: exterior.value });
+    const found = await paints.nearest(wanted, { brand: brand.value, k: 6, exterior: exterior.value });
     if (seq !== matchSeq) return false;
     nearest.value = found;
-    matchedHex.value = hex.value;
+    matchedHex.value = wanted;
     paints.remember(nearest.value.map((n) => n.paint));
     if (say) {
       // Find's result in view too — below the box in a short panel (only a pick scrolled it in — the nineteenth review)
       await nextTick();
-      document.querySelector(".colors__nearest, .colors__none")?.scrollIntoView?.({ block: "nearest" });
+      findResultInView();
       sayMatches();
     }
     return true;
@@ -341,7 +368,7 @@ async function match({ say = true } = {}) {
           v-if="missingBrands" intent="ghost" size="small" :label="t('colors.moreBrands', { n: missingBrands }, missingBrands)"
           @click="router.push('/colors')"
         />
-        <UiInput v-model="q" type="search" width="name" :placeholder="t('colors.search')" :aria-label="t('colors.search')" />
+        <UiInput v-model="qBox" type="search" width="name" :placeholder="t('colors.search')" :aria-label="t('colors.search')" />
         <UiSelect
           v-model="colorFamily" :options="familyOptions" width="name" show-clear :placeholder="t('colors.families.label')"
           :aria-label="t('colors.families.label')"
@@ -412,11 +439,11 @@ async function match({ say = true } = {}) {
 .colors__target {
   margin: 0 0 var(--sp-2);
 }
-/* the hex box, the picker and Find on one row, on the box's middle (the box's rule message, shown only after a
-   failed Find and gone as it is typed into, moves them a little meanwhile) */
+/* the hex box, the picker and Find on one row, their tops level with the box's: the box's rule message sits below
+   it in a line the box keeps while it shows, and "center" moved them down by half of it (the twentieth review) */
 .colors__exact {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   flex-wrap: wrap;
   gap: var(--sp-2);
 }

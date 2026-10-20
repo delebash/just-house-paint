@@ -12,7 +12,7 @@ import { ApiError, notFound } from "@delebash/core/platform/errors";
 import { designNotFound, houseNotFound } from "./refusals.js";
 import { addRender, deleteRender, getDesign, getHouse, getRender, listParts, listRenders } from "../database/houses.js";
 import { paintsById } from "../database/paints.js";
-import { removeHouseFile, renderPath } from "../files.js";
+import { removeHouseFile, renderFileId, renderPath } from "../files.js";
 import { AiPhotoIn, IdParams } from "../schemas/houses.js";
 import { getState } from "../app_state.js";
 import { MODEL_FILES as FINDER_FILES } from "../segment/models.js";
@@ -216,8 +216,9 @@ export function router(ctx = getState()) {
   app.get("/v1/renders/:id/image", input({ params: IdParams }), (c) => {
     const r = getRender(ctx.db, c.req.valid("param").id);
     if (!r) throw notFound(`no AI photo ${c.req.valid("param").id}`);
-    const file = renderPath(ctx.dataDir, r.houseId, r.file.replace(/\.png$/, ""));
-    if (!existsSync(file)) throw notFound("the AI photo's file is missing");
+    const fileId = renderFileId(r.file);
+    const file = fileId && renderPath(ctx.dataDir, r.houseId, fileId);
+    if (!file || !existsSync(file)) throw notFound("the AI photo's file is missing");
     return c.body(readFileSync(file), 200, { "Content-Type": "image/png", "Cache-Control": "no-cache" });
   });
 
@@ -225,8 +226,10 @@ export function router(ctx = getState()) {
     const r = getRender(ctx.db, c.req.valid("param").id);
     if (!r) throw notFound(`no AI photo ${c.req.valid("param").id}`);
     deleteRender(ctx.db, r.id);
-    // the AI photo is gone; a file Windows still holds is left, never a row without its picture
-    await removeHouseFile(renderPath(ctx.dataDir, r.houseId, r.file.replace(/\.png$/, "")));
+    // the AI photo is gone; a file Windows still holds is left, never a row without its picture (and a name the app
+    // never makes names no file of its own: the row goes, nothing else)
+    const fileId = renderFileId(r.file);
+    if (fileId) await removeHouseFile(renderPath(ctx.dataDir, r.houseId, fileId));
     return c.body(null, 204);
   });
 

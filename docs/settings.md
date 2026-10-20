@@ -154,7 +154,8 @@ A restore keeps this computer's access tokens and where its AI engine and models
 build and the models' folder). Every other setting comes from the backup — the part finder's and the AI
 photo's too. A backup from an older version gets this version's new settings at once; a setting in it that doesn't fit this
 version is set back to its default, and the app says which. A backup this app can't read — not one of its
-backups, cut off, or holding a house it can't keep — is refused, and nothing is changed.
+backups, cut off, or holding a house, a part or an AI photo whose name it can't keep as a file — is refused, and
+nothing is changed.
 
 ## Reset Just House Paint
 

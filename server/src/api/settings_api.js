@@ -35,6 +35,28 @@ function likeDefaults(value, defaults) {
   }
 }
 
+/** Where each compositing number means something — past it, every AI photo later fails (a featherPx of 1e308 is a
+ *  blur sharp refuses: its sigma is 0.3–1000) or comes out wrong (an insideAt of 0 makes the whole photo the
+ *  surface). A pair is a range: its low end below its high end. */
+const COMPOSE_LIMITS = {
+  featherPx: [0, 1000],
+  insideAt: [0.01, 1],
+  basePercentile: [0, 100],
+  litBand: [0, 10],
+  repaintedRange: [0, 100],
+  sameColorDeltaE: [0, 200],
+  gainLimits: [0.01, 100],
+};
+
+function composeInRange(value) {
+  for (const [k, [lo, hi]] of Object.entries(COMPOSE_LIMITS)) {
+    if (!(k in value)) continue;
+    const v = value[k];
+    if ((Array.isArray(v) ? v : [v]).some((n) => !(n >= lo && n <= hi))) throw new TypeError(`"${k}" must be from ${lo} to ${hi}`);
+    if (Array.isArray(v) && !(v[0] < v[1])) throw new TypeError(`"${k}" is a range: its first number must be below its second`);
+  }
+}
+
 /**
  * The checks a key's schema can't make — the ones whose mistake would only show later, as every run
  * failing: the finder's parts (a `minus` naming a part not in the list…), the harmony rules' kinds
@@ -44,12 +66,16 @@ const MEANING = {
   "finder.parts": (v) => validatePartsConfig(v),
   "schemes.harmony": (v) => {
     likeDefaults(v, HARMONY_DEFAULTS);
-    const unknown = (v.kinds || []).find((k) => !SCHEME_KINDS.includes(k));
-    if (unknown) throw new TypeError(`"${unknown}" isn't a scheme kind (${SCHEME_KINDS.join(", ")})`);
+    // findIndex, not find: a kind of "" is falsy and passed (the twentieth review's fuzz)
+    const at = (v.kinds || []).findIndex((k) => !SCHEME_KINDS.includes(k));
+    if (at >= 0) throw new TypeError(`"${v.kinds[at]}" isn't a scheme kind (${SCHEME_KINDS.join(", ")})`);
     // no kind at all and every scheme came back empty, silently (the nineteenth review's fuzz)
     if (Array.isArray(v.kinds) && !v.kinds.length) throw new TypeError(`name at least one scheme kind (${SCHEME_KINDS.join(", ")})`);
   },
-  "aiphoto.compose": (v) => likeDefaults(v, DEFAULT_COMPOSE),
+  "aiphoto.compose": (v) => {
+    likeDefaults(v, DEFAULT_COMPOSE);
+    composeInRange(v);
+  },
   "paints.colorOrder": (v) => {
     const keys = v.families.map((f) => f.key);
     const twice = keys.find((k, i) => keys.indexOf(k) !== i);
@@ -57,6 +83,17 @@ const MEANING = {
     if (keys.includes(NEUTRALS)) throw new TypeError(`"${NEUTRALS}" is the near-grays' name — give the hue family another`);
   },
 };
+
+/** What's wrong with `value` for `key` beyond its schema (MEANING), or null. A restore asks it too: an older backup's
+ *  row that fails it is set back to its default (data_admin.js resetUnfitSettings — the twentieth review). */
+export function meaningProblem(key, value) {
+  try {
+    MEANING[key]?.(value);
+    return null;
+  } catch (e) {
+    return String(e?.message || e);
+  }
+}
 
 export function router() {
   const app = new Hono();
@@ -67,11 +104,8 @@ export function router() {
     const patch = c.req.valid("json");
     const wrong = [];
     for (const [key, value] of Object.entries(patch)) {
-      try {
-        MEANING[key]?.(value);
-      } catch (e) {
-        wrong.push({ loc: ["body", key], msg: String(e?.message || e), type: "value_error" });
-      }
+      const msg = meaningProblem(key, value);
+      if (msg) wrong.push({ loc: ["body", key], msg, type: "value_error" });
     }
     if (wrong.length) throw new RequestValidationError(wrong);
     writeSettings(getDb(), patch);

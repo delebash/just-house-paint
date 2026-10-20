@@ -57,12 +57,12 @@ test("the Visual C++ runtime missing: named, Microsoft's download linked, Instal
   const link = document.querySelector("a[href='https://aka.ms/vs/17/release/vc_redist.x64.exe']");
   expect(link?.textContent).toBe("Microsoft's download");
   expect(link?.getAttribute("target")).toBe("_blank");
-  expect(install().disabled).toBe(true);
+  expect(install().getAttribute("aria-disabled")).toBe("true"); // off, focusable
   wrapper.unmount();
   document.body.innerHTML = "";
   await mountCard("aiphoto", { ...AIPHOTO, available: false, need: { ...vc, missing: ["VCOMP140.DLL"] } });
   expect(text()).toContain("(VCOMP140.DLL missing)");
-  expect(install().disabled).toBe(true);
+  expect(install().getAttribute("aria-disabled")).toBe("true"); // off, focusable
 });
 
 test("an old macOS or glibc, and the app's own onnxruntime.dll quarantined, are said in words", async () => {
@@ -75,7 +75,7 @@ test("an old macOS or glibc, and the app's own onnxruntime.dll quarantined, are 
   wrapper.unmount();
   await mountCard("finder", { ...FINDER, runtime: { ok: false, reason: "files-missing", files: ["onnxruntime.dll"], error: "…" } });
   expect(text()).toContain("A file of the part finder's engine is missing from the app (onnxruntime.dll) — an antivirus may have quarantined it.");
-  expect(install().disabled).toBe(true);
+  expect(install().getAttribute("aria-disabled")).toBe("true"); // off, focusable
 });
 
 // The screens-and-keyboard review (2026-10-20): "macOS ." when the server didn't know this Mac's version;
@@ -106,7 +106,7 @@ test("the AI photo's notes: slow on a graphics card that isn't NVIDIA's, too lit
   expect(text()).toContain("The AI photo is quickest on an NVIDIA graphics card (about 20 seconds); on this computer's graphics card one AI photo may take several minutes.");
   expect(text()).toContain("This computer has 8 GB of memory, and one AI photo takes about 16 GB: here it may be very slow, or not finish.");
   expect(text()).toContain("Files of the AI photo's engine are gone (stable-diffusion.dll) — an antivirus may have removed them. Install puts them back.");
-  expect(install().disabled).toBe(false); // told, not stopped
+  expect(install().getAttribute("aria-disabled")).not.toBe("true"); // told, not stopped
   wrapper.unmount();
   await mountCard("aiphoto", { ...AIPHOTO, backend: "cpu", slow: true });
   expect(text()).toContain("about ten minutes");

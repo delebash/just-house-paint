@@ -91,8 +91,9 @@ async function install() {
     <!-- true here, not a failure: the warning look (UiBanner's warning intent) -->
     <UiBanner v-if="slow" intent="warning" class="engine__note">{{ t(`engines.aiphoto.${slow}`) }}</UiBanner>
     <UiBanner v-if="lowMemory" intent="warning" class="engine__note">{{ t("engines.aiphoto.lowMemory", { have: lowMemory.haveGb, need: lowMemory.needGb }) }}</UiBanner>
+    <!-- focusable while off: Find the parts again brings the keyboard here, installing or not -->
     <UiButton
-      intent="primary" :disabled="engines.installing[kind] || !!installTask || !status || blocked"
+      intent="primary" focusable-when-disabled :disabled="engines.installing[kind] || !!installTask || !status || blocked"
       :label="engines.installing[kind] ? t('engines.installing') : size ? t('engines.install', { size }) : t('engines.installPlain')" @click="install"
     />
     <AiTaskStrip :task="installTask" />

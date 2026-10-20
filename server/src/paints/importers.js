@@ -8,6 +8,7 @@
 // `splitLabel` separates the code from the name.
 import { parse as parseCsv } from "csv-parse/sync";
 import readExcelFile from "read-excel-file/node";
+import { leftOut } from "./left_out.js";
 import { dedupeByCode, normalizeHex, normalizeRow } from "./normalize.js";
 import { isAco, isAse, parseAco, parseAse } from "./swatches.js";
 
@@ -83,31 +84,23 @@ export function mapHeader(header, { mapping = {}, aliases = HEADER_ALIASES } = {
 const hasColor = (cols) => cols.hex !== undefined || cols.rgb !== undefined || (cols.r !== undefined && cols.g !== undefined && cols.b !== undefined);
 const hasLabel = (cols) => cols.code !== undefined || cols.name !== undefined;
 
-/** Rows of cells (the first rows may be titles) → normalized paint rows. */
-export /** The rows (or swatches) a file's import leaves out, counted by why and said in words — at most five numbers each
- *  ("12 rows without a usable color (rows 3, 7, 9, 15, 20 …)"): each row was a warning of its own, with the row's
- *  raw JSON, and 400 bad rows made a 64,692-character toast (the nineteenth review). */
-function skippedRows() {
-  const why = new Map();
+/** The rows (or swatches) a file's import leaves out, by why (left_out.js): each was a warning of its own, with the
+ *  row's raw JSON (the nineteenth review). */
+function skippedRows(one, many) {
+  const tally = leftOut(one, many);
   return {
     add(err, n) {
       const msg = String(err?.message || err);
-      const key = /no usable color/.test(msg) ? "without a usable color" : /neither a code nor a name/.test(msg) ? "with neither a number nor a name" : "that couldn't be read";
-      if (!why.has(key)) why.set(key, []);
-      why.get(key).push(n);
+      tally.add(/no usable color/.test(msg) ? "without a usable color" : /neither a code nor a name/.test(msg) ? "with neither a number nor a name" : "that couldn't be read", n);
     },
-    words(what) {
-      return [...why].map(([key, ns]) => {
-        const shown = ns.slice(0, 5).join(", ") + (ns.length > 5 ? " …" : "");
-        return `${ns.length} ${what}${ns.length === 1 ? "" : "s"} ${key} (${what}${ns.length === 1 ? "" : "s"} ${shown})`;
-      });
-    },
+    words: tally.words,
   };
 }
 
-function rowsFromTable(table, { brand, filename, mapping, aliases, headerSearchRows = 20 }) {
+/** Rows of cells (the first rows may be titles) → normalized paint rows. */
+export function rowsFromTable(table, { brand, filename, mapping, aliases, headerSearchRows = 20 }) {
   const warnings = [];
-  const skipped = skippedRows();
+  const skipped = skippedRows("row", "rows");
   let headerAt = -1;
   let cols = {};
   for (let i = 0; i < Math.min(table.length, headerSearchRows); i++) {
@@ -152,12 +145,12 @@ function rowsFromTable(table, { brand, filename, mapping, aliases, headerSearchR
       skipped.add(err, i + 1);
     }
   }
-  return { rows, warnings: [...warnings, ...skipped.words("row")] };
+  return { rows, warnings: [...warnings, ...skipped.words()] };
 }
 
 function rowsFromSwatches({ swatches, warnings }, { brand, filename, patterns }) {
   const rows = [];
-  const skipped = skippedRows();
+  const skipped = skippedRows("swatch", "swatches");
   for (const [i, s] of swatches.entries()) {
     const { code, name } = splitLabel(s.name, { brand, patterns });
     try {
@@ -168,10 +161,10 @@ function rowsFromSwatches({ swatches, warnings }, { brand, filename, patterns })
         ),
       );
     } catch (err) {
-      skipped.add(err, i + 1);
+      skipped.add(err, s.at ?? i + 1);
     }
   }
-  warnings.push(...skipped.words("swatch"));
+  warnings.push(...skipped.words());
   return { rows, warnings };
 }
 
@@ -227,8 +220,9 @@ export async function importFile(buffer, filename, { brand, mapping, patterns = 
   }
   // a paint is kept by its number (its id is <brand>:<number>): a color without one can't be stored
   const numbered = out.rows.filter((r) => r.code);
-  if (numbered.length < out.rows.length) out.warnings.push(`${out.rows.length - numbered.length} colors without a number left out`);
+  const many = (n, one, more) => `${n} ${n === 1 ? one : more}`;
+  if (numbered.length < out.rows.length) out.warnings.push(`${many(out.rows.length - numbered.length, "color", "colors")} without a number left out`);
   const rows = dedupeByCode(numbered);
-  if (rows.length < numbered.length) out.warnings.push(`${numbered.length - rows.length} repeated codes dropped`);
+  if (rows.length < numbered.length) out.warnings.push(`${many(numbered.length - rows.length, "repeated code", "repeated codes")} dropped`);
   return { format, rows, warnings: out.warnings };
 }

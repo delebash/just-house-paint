@@ -68,6 +68,20 @@ test("a backup whose houses hold an id that isn't a safe folder name is refused,
   expect(await names()).toEqual(["Mine"]);
 });
 
+test("a backup whose parts or AI photos name a file the app never makes is refused, nothing replaced (the twentieth review)", async () => {
+  const id = await addHouse("Mine");
+  const cases = [
+    (h) => h.run("INSERT INTO parts (house_id, key, paintable, area, score, source, position, updated_at) VALUES (?, '../x', 1, 0, 0, 'added', 0, '')", [id]),
+    (h) => h.run("INSERT INTO renders (id, house_id, file, engine, created_at) VALUES ('r1', ?, '../../outside.png', 'x', '')", [id]),
+  ];
+  for (const change of cases) {
+    const r = await restore(await backupChanged(change));
+    expect(r.status).toBe(422);
+    expect((await r.json()).detail).toMatch(/isn't (a safe file name|one the app makes) \(.+\) — this backup can't be restored$/);
+  }
+  expect(await names()).toEqual(["Mine"]);
+});
+
 // overruled (the coordinator, 2026-10-20): a backup from an older version must restore — the help promises it gets this
 // version's settings at once. A row that doesn't fit today's schema is set back to its default, the rest restored, and
 // the answer names the keys (the kit's DataManagement says so after the reload)
@@ -77,6 +91,13 @@ test("a backup's settings rows that don't fit this version are set back to their
     h.run("UPDATE settings SET value = ? WHERE key = ?", [JSON.stringify(0.9), "finder.houseMargin"]); // out of today's range (max 0.2)
     h.run("UPDATE settings SET value = ? WHERE key = ?", ["{not json", "photos.jpegQuality"]); // unreadable
     h.run("UPDATE settings SET value = ? WHERE key = ?", [JSON.stringify(12), "designs.maxPerHouse"]); // fits: kept as the backup has it
+    // the Settings screen's own checks (the twentieth review): no kind at all; a minus naming a part not in the list;
+    // a number JSON can't say again (1e400 is Infinity, read back as null)
+    h.run("UPDATE settings SET value = ? WHERE key = ?", [JSON.stringify({ ...SETTING_DEFAULTS["schemes.harmony"], kinds: [] }), "schemes.harmony"]);
+    const parts = structuredClone(SETTING_DEFAULTS["finder.parts"]);
+    parts.find((p) => p.key === "windowTrim").minus = ["no-such-part"];
+    h.run("UPDATE settings SET value = ? WHERE key = ?", [JSON.stringify(parts), "finder.parts"]);
+    h.run("UPDATE settings SET value = ? WHERE key = ?", ['{"featherPx": 1e400}', "aiphoto.compose"]);
     h.run("INSERT INTO settings (key, value) VALUES (?, ?)", ["pref.anything", JSON.stringify({ any: "shape" })]); // not a setting
   });
   await addHouse("After the backup");
@@ -84,7 +105,9 @@ test("a backup's settings rows that don't fit this version are set back to their
   expect(r.status).toBe(200);
   const answer = await r.json();
   expect(answer.ok).toBe(true);
-  expect([...answer.resetSettings].sort()).toEqual(["finder.houseMargin", "photos.jpegQuality"]);
+  expect([...answer.resetSettings].sort()).toEqual(["aiphoto.compose", "finder.houseMargin", "finder.parts", "photos.jpegQuality", "schemes.harmony"]);
+  expect(getSetting(getDb(), "schemes.harmony")).toEqual(SETTING_DEFAULTS["schemes.harmony"]);
+  expect(getSetting(getDb(), "finder.parts")).toEqual(SETTING_DEFAULTS["finder.parts"]);
   expect(getSetting(getDb(), "finder.houseMargin")).toBe(SETTING_DEFAULTS["finder.houseMargin"]);
   expect(getSetting(getDb(), "photos.jpegQuality")).toBe(SETTING_DEFAULTS["photos.jpegQuality"]);
   expect(getSetting(getDb(), "designs.maxPerHouse")).toBe(12);

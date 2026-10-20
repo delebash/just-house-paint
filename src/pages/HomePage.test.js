@@ -213,10 +213,12 @@ test("a rename checks the route's own rule, and a server 422 lands under the fie
 
   server.refuseRename = true;
   await type(input, "A name the server refuses");
+  byText(".form__actions button", "Save").focus(); // as a click leaves it (then Save is off while it saves)
   await submit();
   expect(server.calls).toContain("PATCH /v1/houses/h1");
   expect(text()).toContain("At most 80 characters"); // kit.validation.maxLength, from the 422's ctx
   expect(document.querySelector(".ui-modal")).not.toBeNull(); // the dialog stays open
+  expect(document.activeElement).toBe(input); // and the focus is back in the field (the twentieth review: <body>)
 
   server.refuseRename = false;
   await type(input, "Lake house");

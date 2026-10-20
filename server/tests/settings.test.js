@@ -55,12 +55,28 @@ test("a value whose mistake would only show later is refused: the parts, the har
   const kinds = await client.patch("/v1/settings", { json: { "schemes.harmony": { ...SETTING_DEFAULTS["schemes.harmony"], kinds: ["warm"] } } });
   expect(kinds.statusCode).toBe(422);
   expect(kinds.json().errors[0].msg).toMatch(/"warm" isn't a scheme kind/);
+  const blank = await client.patch("/v1/settings", { json: { "schemes.harmony": { kinds: [""] } } });
+  expect(blank.statusCode).toBe(422);
+  expect(blank.json().errors[0].msg).toMatch(/"" isn't a scheme kind/);
   const typed = await client.patch("/v1/settings", { json: { "schemes.harmony": { kinds: "classic" } } });
   expect(typed.statusCode).toBe(422);
   const gain = await client.patch("/v1/settings", { json: { "aiphoto.compose": { ...SETTING_DEFAULTS["aiphoto.compose"], gainLimits: 5 } } });
   expect(gain.json().errors[0]).toMatchObject({ loc: ["body", "aiphoto.compose"], msg: expect.stringMatching(/gainLimits/) });
   const pair = await client.patch("/v1/settings", { json: { "aiphoto.compose": { litBand: [0.9, 1, 1.1] } } });
   expect(pair.json().errors[0].msg).toMatch(/litBand" must be two numbers/);
+  // each number within its meaning, a range in order
+  for (const [bad, said] of [
+    [{ featherPx: 1e308 }, /featherPx" must be from 0 to 1000/],
+    [{ featherPx: -1 }, /featherPx/],
+    [{ insideAt: 0 }, /insideAt" must be from 0.01 to 1/],
+    [{ basePercentile: 101 }, /basePercentile/],
+    [{ gainLimits: [4, 0.25] }, /gainLimits" is a range/],
+    [{ litBand: [1, 1] }, /litBand" is a range/],
+  ]) {
+    const r = await client.patch("/v1/settings", { json: { "aiphoto.compose": bad } });
+    expect(r.statusCode, JSON.stringify(bad)).toBe(422);
+    expect(r.json().errors[0]).toMatchObject({ loc: ["body", "aiphoto.compose"], msg: expect.stringMatching(said) });
+  }
   // a retired key an older install still carries is left alone; a list that isn't a pair takes any length
   const retired = { ...SETTING_DEFAULTS["schemes.harmony"], classicAccentHueShift: 30, classicAccentHues: [0, 120] };
   expect((await client.patch("/v1/settings", { json: { "schemes.harmony": retired } })).statusCode).toBe(200);

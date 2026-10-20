@@ -119,6 +119,13 @@
   you changed by hand** ticked) gives it the new ones — a box marks only the part it gives to as changed by hand.
   A part you changed by hand stays as you drew it — if that is **Trim**, the door casings go with the walls:
   untick **Keep**, or add them to Trim with a **Box**.
+- **Clearer refusals**: a palette file with no usable color, a token, a model's repository and every other refusal
+  say what was wrong (no more "Request body failed validation"); a palette's swatches that can't be read are counted
+  by why ("400 swatches skipped — CMYK needs a color profile"); a restore too big for the drive says so; the window
+  that restores or resets says **Restored**, not "replaced in another window"; **Find the parts again** while the
+  part finder installs, or where it can't run, says which.
+- **Names as they show**: characters that show nothing (a zero-width space, a soft hyphen) never make a second
+  "Blue", and a name of only those is refused; a TAB pasted into a name or the color search is a space.
 - **Help for every screen**: each App Settings section ([App Settings](settings.md)), AI Settings, the tray, the
   server's command line, and the messages you may meet ([Troubleshooting](troubleshooting.md)).
 

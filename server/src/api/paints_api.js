@@ -157,8 +157,8 @@ export function router(ctx = getState()) {
     return c.json(
       searchPaints(ctx.db, {
         brand: q.brand,
-        // control characters are no search (a NUL matched every paint — the nineteenth review's fuzz)
-        q: q.q?.replace(/[\u0000-\u001F\u007F-\u009F]/gu, ""),
+        // compared as it shows: control characters spaces, invisible ones nothing (database/paints.js folded)
+        q: q.q,
         family: q.family,
         colorFamily: q.colorFamily,
         exterior: q.exterior,
