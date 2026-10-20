@@ -348,7 +348,10 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         The twelfth (2026-10-20; started): today's fixes attacked (races, the restore's crash points, the snapshot,
         regressions, the docs' words) and the app left open for hours or days (polls, timers, growth, a sleeping
         laptop, a server restarted under a window) — two agents, read-only. Dry run 39385554498 (app 8c30158, kit
-        062d3ab) building.
+        062d3ab): macOS green; Windows and Linux failed in the data-folder comparison now run on every runner —
+        Git Bash on Windows has no /dev/stderr for tee, and the unpacked Linux build was refused for a data folder
+        beside its executable (by design; the rule is for a bundle only) — FIXED (app d30fe19, the template too);
+        dry run 39386374890 building.
 NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
         the installed 0.1.2 updating to it (the silent Restart now).
 
