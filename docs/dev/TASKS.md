@@ -251,7 +251,7 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         temp files and maybe a half PNG, Cancel waits out the finder's hash check. Clean: downloads resume, no
         network at first start, SQLite busy, jobs after a restart, memory over house switches, SAM encodings.
         The tenth (2026-10-20; the checks themselves, the kit's changes in the other apps, the screens). The checks
-        (an agent's, mutations in a scratch copy — each survived all 385 server tests; being fixed): the restore
+        (an agent's, mutations in a scratch copy — each survived all 385 server tests; all FIXED — app dcf917e, kit 0728a8f, each mutant now fails): the restore
         test's "backup with a token" was already scrubbed (dropping afterCopy's delete survives); scrubBackup's wiring
         untested; the finder's Cancel test throws before any hash (isValid not passing cancelCheck survives); the
         outline save test passes with the old write-in-place; the start-up AI-photo sweep in serve.js is never run
@@ -261,7 +261,7 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         check passes a blank page and could serve a stale dist/spa from the checkout; "window loaded" when a page
         inside the layout fails; Windows never compares its data folders; saveFromUrl and the backup wiring
         untested; the backup's "never whole" pinned only by Content-Length.
-        The screens (an agent's, 173 captures of the built app at 960×700, 1366×768, 1920×1032, light and dark, faked
+        The screens (an agent's, 173 captures of the built app — being fixed by an agent — at 960×700, 1366×768, 1920×1032, light and dark, faked
         parts and paints): Your houses' cards white in dark (names unreadable — a raw q-card); the Help button's
         tooltip stuck on screen after Help closes, one more per close (the kit's tooltip.js show() leaves a pending
         timer); the Parts tab squeezes the paint name to ~45–110 px (the side section ~190 px); the Colors tab's "On
@@ -273,7 +273,7 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         invisible; small: Paint colors' rows wrap at 960, "Reset just house paint" in lowercase, About's link in
         browser blue, the boot plate still the template's notes icon and light-only. Right: dialogs, Help, the
         connection page, most Settings cards, title bar, nav, the house page at 1366/1920, focus rings.
-        The kit's changes in the other apps (an agent's, from the code — fixing in the kit): the health answer's
+        The kit's changes in the other apps (an agent's, from the code — all FIXED in the kit, 0728a8f: the token page only for an app that asks, the restore keeps this computer's runner rows only, bundled only when packaged with AppRun, work folders beside the database, the save's held-rename retry; the editor ring with the screens' fixes; JustVoice's host and JustWrite's ring sent to their sessions): the health answer's
         tokenRequired stops JustVoice's, JustWrite's and docgen's windows at the token page, which they can't pass
         (JustVoice keeps its token under jt:token; the others' Settings keep none) — their escape (Settings →
         Server, open from this computer) gone; the restore's kept runner_setting holds the user's default preset,
@@ -283,6 +283,9 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         (APPIMAGE set) would move its data/ out; backups and restores unpack on the system drive's temp; the shell's
         .part rename has no retry for a held file; Docker's host.docker.internal calling JustVoice's /mcp is refused
         (no allowedHosts wired there).
+        The eleventh (2026-10-20; started): a 0.1.2 user updating (the database, a 0.1.2 backup, the data folder's
+        place on each platform, the updater's feed, the first start after) and several clients on one server at once
+        (lost updates, deletes under a running job, a restore while another client saves) — two agents, read-only.
 NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
         the installed 0.1.2 updating to it (the silent Restart now).
 
