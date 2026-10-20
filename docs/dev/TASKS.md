@@ -691,6 +691,37 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         region and its zoom, toggles, rings, the no-color swatch's name, EmptyState centred, the connection page's
         five reasons, the install cards' states, right-to-left names shown in their direction, light contrast but
         two.
+        Their fixes — decided (mine, argued; each against WCAG 2.2 / WAI-ARIA APG unless named): UiField's label points
+        at its input (`props.for`); the help drawer's text a focusable named region, focused on open (axe
+        scrollable-region-focusable); dark `--on-accent` near-black (#1a1a1a — 4.5:1 or more on the accent and the
+        danger at every hue the appearance engine can set, measured; if the engine moves lightness it picks the ink of
+        the higher contrast, Material's on-primary); `--danger-ink` and `--info-ink` defined in the contract and both
+        themes, 4.5:1 on their banners' tints; a field-edge token 3:1 or more for inputs, selects and the segment's
+        track; the chosen segment shown (accent-soft fill, accent ink, weight 600, an accent edge 3:1 or more);
+        v-tooltip names an element with no name of its own and adds no description equal to its name, no `title`
+        equal to an aria-label anywhere (v-tooltip instead), the AI page's radiogroup, images, switch and button named;
+        toasts and the task strip announced through one live region present from the start (@react-aria/live-announcer
+        — React Spectrum's, DOM only; errors assertive), the toast itself no live role, the task strip's bar a
+        progressbar with its value, AiTaskStack's region always there; Box draws with two clicks as well as a drag and
+        from the keyboard (the photo focused: a crosshair, arrows move it, Shift ten times, Enter sets each corner,
+        Escape cancels), pan buttons beside the zoom while zoomed (2.5.7); the side panel back at its top on a tab
+        change; banners wrap a long path (`overflow-wrap: anywhere`), a link in one takes its ink, underlined;
+        UiBanner gets a warning intent (`--warn-bg` / `--warn-ink`) and the slow and low-memory notes use it; card
+        hints capped at `--w-prose`; the split slider's label shown; the hex box checks only on Find (Quasar
+        `lazy-rules="ondemand"`), the picker and Find on the box's middle; the tabs' ring inside the tab; Paint colors'
+        ⌄ in one column; Your houses' cards off the header's rule (Paint colors' gap) and the "?" kept with its row;
+        Reset in this app's words (houses, designs, paints — no demo, no projects); isolate() marks a name only when it
+        holds a letter of the other direction than the page (Google Closure's goog.i18n.bidi ranges), plain names left
+        as typed; a part row's swatch hidden from screen readers; Settings' tablist named and its tabs wired to their
+        panels (APG Tabs), the AI page's tabs as tabs; UiSegmented checks on arrows (APG Radio Group — an off option
+        takes the focus, never the pick); a menu closes on Tab and gives the focus back to its trigger (MUI's Menu —
+        the kit kept Tab inside only from Reka's habit); the switch named by its visible words ("Load automatically"),
+        the brand its description; "On this wall" a group; the AI page at 960 one scroller, its sublabel 4.5:1;
+        Logs and Updates one scroller, Advanced's JSON boxes grow with their text; Change folder's question names
+        the folder it makes; the AI photo dialog as wide as its card; the install size and "Not enough room" in one
+        unit (the kit's one formatter); macOS's version said only when known; every help word as on screen,
+        troubleshooting with each connection reason and its remedy, Reset Just House Paint and Load the colors in the
+        help.
 NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
         the installed 0.1.2 updating to it (the silent Restart now).
 
