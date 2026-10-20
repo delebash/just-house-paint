@@ -112,15 +112,28 @@ onMounted(() => {
   observer.observe(host.value);
   followPixelRatio();
   // the capture lost without a lift (a native menu, Alt+Tab): the stroke ends there — Konva fires no event of its
-  // own for it, the DOM does (W3C Pointer Events, "lostpointercapture"; it bubbles to the stage's container)
-  stage.value?.getNode()?.container?.()?.addEventListener("lostpointercapture", onLost);
+  // own for it, the DOM does (W3C Pointer Events, "lostpointercapture", which bubbles). Heard on the host, which is
+  // always there: the stage is made only once there is a photo, after this — listened to on its container, it was
+  // never heard (the sixteenth review)
+  host.value.addEventListener("lostpointercapture", onLost);
 });
 onBeforeUnmount(() => {
   observer?.disconnect();
   stopFollowingRatio?.();
-  stage.value?.getNode()?.container?.()?.removeEventListener("lostpointercapture", onLost);
+  host.value?.removeEventListener("lostpointercapture", onLost);
 });
-watch(() => props.photo, fitToStage);
+// another photo: fitted, and a box half drawn, a stroke and the crosshair on the old one go
+watch(
+  () => props.photo,
+  () => {
+    fitToStage();
+    if (active === null) {
+      boxing.value = null;
+      drawing.value = null;
+    }
+    aim.value = null;
+  },
+);
 watch(() => props.sideBySide, fitToStage);
 // another tool: a box half drawn and the crosshair go
 watch(
@@ -179,7 +192,7 @@ function onDown(e) {
   } else if (props.tool === "box") {
     // a click set the first corner: this press sets the other (where it is let go)
     if (boxing.value?.armed && pt) boxing.value = { ...boxing.value, ...clamped(pt) };
-    else if (inside(pt)) boxing.value = { x0: pt.x, y0: pt.y, x1: pt.x, y1: pt.y };
+    else if (inside(pt)) boxing.value = { x0: pt.x, y0: pt.y, x1: pt.x, y1: pt.y, slop: e.evt.pointerType === "touch" ? TOUCH_SLOP : CLICK_SLOP };
   } else {
     panFrom = { x: e.evt.clientX, y: e.evt.clientY, view: { ...view.value }, moved: false };
   }
@@ -235,7 +248,8 @@ function finish() {
     const b = boxing.value;
     // a click (let go within a few screen pixels of the press), not a drag: its corner waits for the next click
     const s = view.value.scale;
-    if (!b.armed && Math.abs(b.x1 - b.x0) * s < CLICK_SLOP && Math.abs(b.y1 - b.y0) * s < CLICK_SLOP) {
+    const slop = b.slop ?? CLICK_SLOP;
+    if (!b.armed && Math.abs(b.x1 - b.x0) * s < slop && Math.abs(b.y1 - b.y0) * s < slop) {
       boxing.value = { ...b, x1: b.x0, y1: b.y0, armed: true };
       return;
     }
@@ -257,8 +271,10 @@ function onLeave(e) {
   if (active !== null) finish();
 }
 
-// a press and its lifting this close (screen pixels) are a click, not a drag — the pan's own threshold
+// a press and its lifting this close (screen pixels) are a click, not a drag — the pan's own threshold; a finger's
+// tap moves more (Android's touch slop is 8 dp — developer.android.com, ViewConfiguration.getScaledTouchSlop)
 const CLICK_SLOP = 4;
+const TOUCH_SLOP = 10;
 /** The box drawn ends: one big enough (2 photo pixels each way) is asked for. */
 function endBox() {
   const b = boxing.value;
@@ -299,26 +315,34 @@ function aimKey(e) {
   const dir = PAN_KEYS[e.key];
   if (e.key === "Escape") {
     if (!boxing.value && !aim.value) return;
+    // handled here: no dialog or page behind hears it
     e.preventDefault();
+    e.stopPropagation();
     if (boxing.value) boxing.value = null;
     else aim.value = null;
     return;
   }
   if (!dir && e.key !== "Enter" && e.key !== " ") return;
   e.preventDefault();
+  // Enter held down picks or sets a corner once, not on every repeat
+  if (!dir && e.repeat) return;
   if (!aim.value) {
-    // the first key shows the crosshair, in the middle of what is in view
+    // the first key shows the crosshair: where a box a click began has got to, or the middle of what is in view
     const s = view.value.scale;
-    aim.value = clampAim({ x: (size.value.width / 2 - view.value.x) / s - offsetX.value, y: (size.value.height / 2 - view.value.y) / s });
+    aim.value = boxing.value
+      ? clampAim({ x: boxing.value.x1, y: boxing.value.y1 })
+      : clampAim({ x: (size.value.width / 2 - view.value.x) / s - offsetX.value, y: (size.value.height / 2 - view.value.y) / s });
+    takeOverBox();
     return;
   }
   if (dir) {
     const step = (e.shiftKey ? AIM_STEP * 10 : AIM_STEP) / view.value.scale;
     aim.value = clampAim({ x: aim.value.x - dir[0] * step, y: aim.value.y - dir[1] * step });
-    if (boxing.value?.keys) boxing.value = { ...boxing.value, x1: aim.value.x, y1: aim.value.y };
+    takeOverBox();
     keepAimInView();
     return;
   }
+  takeOverBox();
   const { x, y } = aim.value;
   if (props.tool === "pick") emit("pick", { x: Math.min(imgW.value - 1, Math.floor(x)), y: Math.min(imgH.value - 1, Math.floor(y)) });
   else if (!boxing.value) boxing.value = { x0: x, y0: y, x1: x, y1: y, keys: true };
@@ -326,6 +350,11 @@ function aimKey(e) {
   else if (Math.abs(boxing.value.x1 - boxing.value.x0) >= 2 && Math.abs(boxing.value.y1 - boxing.value.y0) >= 2) endBox();
 }
 const clampAim = (pt) => ({ x: Math.min(imgW.value, Math.max(0, pt.x)), y: Math.min(imgH.value, Math.max(0, pt.y)) });
+/** A box being drawn follows the crosshair from now on — one a click began too (it ended at the pointer, not the
+ *  crosshair — the sixteenth review). */
+function takeOverBox() {
+  if (boxing.value) boxing.value = { ...boxing.value, keys: true, armed: false, x1: aim.value.x, y1: aim.value.y };
+}
 /** A zoomed photo moves with the crosshair once it would leave the view, bringing it back a little way in
  *  (a fitted photo is all in view: it never moves). */
 function keepAimInView() {

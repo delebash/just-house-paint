@@ -234,9 +234,14 @@ test("without the part finder: its install is offered, runs as a task, and then 
   await mountPage();
   expect(text()).toContain("Main street");
   expect(text()).toContain("Install the part finder");
+  // Box asks the finder: off, saying why, until it is installed (the sixteenth review)
+  const box = () => byText(".ui-seg button", "Box");
+  expect(box().getAttribute("aria-disabled")).toBe("true");
+  expect(box().getAttribute("title")).toContain("Off until the part finder is installed");
   await click(byText("button", "Install ("));
   await settle();
   expect(server.calls).toContain("POST /v1/segment/install");
+  expect(box().getAttribute("aria-disabled")).not.toBe("true");
   expect(text()).toContain("Find the parts first");
   await click(byText(".ui-empty button, .ui-empty .q-btn", "Find the parts"));
   await settle();
@@ -781,10 +786,41 @@ test("the eyedropper and a part's color as photographed find the nearest paints"
   server.calls.length = 0;
   await click(byText(".ui-seg button", "Pick a color"));
   expect(canvas().props("tool")).toBe("pick");
-  canvas().vm.$emit("pick", { x: 1, y: 1 });
-  await flushPromises();
+  // the matches are far below the panel's top: brought into view, and said (a keyboard pick showed nothing — the
+  // sixteenth review)
+  const scrolled = [];
+  const scrollIntoView = Element.prototype.scrollIntoView;
+  Element.prototype.scrollIntoView = function () {
+    scrolled.push(this.textContent);
+  };
+  try {
+    canvas().vm.$emit("pick", { x: 1, y: 1 });
+    await flushPromises();
+  } finally {
+    Element.prototype.scrollIntoView = scrollIntoView;
+  }
   expect(text()).toContain("From the photo");
   expect(server.calls).toContain("GET /v1/paints/nearest");
+  expect(scrolled).toEqual(["An exact color"]);
+  expect(document.querySelector("[data-live-announcer]").textContent).toMatch(/paints? nearest #c8c8c8, under An exact color/);
+});
+
+test("the hex box says what's wrong when Find is pressed, and stops saying it as it is put right", async () => {
+  server.parts = PARTS;
+  await mountPage();
+  await click(byText(".q-tab", "Colors"));
+  const box = document.body.querySelector("#exact-hex");
+  box.value = "#12";
+  box.dispatchEvent(new Event("input"));
+  await flushPromises();
+  expect(document.body.querySelector(".colors__exact .q-field--error")).toBeNull(); // nothing said while typing
+  await click(byText("button", "Find the closest paints"));
+  await flushPromises();
+  expect(document.body.querySelector(".colors__exact .q-field--error")).not.toBeNull();
+  box.value = "#1234";
+  box.dispatchEvent(new Event("input"));
+  await flushPromises();
+  expect(document.body.querySelector(".colors__exact .q-field--error")).toBeNull();
 });
 
 test("Compare shows the photo as taken or a saved design left of the split", async () => {

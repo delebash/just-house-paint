@@ -58,7 +58,7 @@ with the tools above the photo, on the part selected on the **Parts** tab:
   **Brush size** sits beside them.
 - **Box** — drag a box around something (a shutter, the fascia), or click one corner and then the
   other; the finder outlines what is inside it and gives it to the selected part, taking it from any
-  other part. **Escape** lets go of a box half drawn.
+  other part. **Escape** lets go of a box half drawn. Box is off until the part finder is installed.
 - **Add the part** (under the list) — a part to paint that the finder knows but didn't find on this
   house: choose it, then draw it with the brush or a box.
 
@@ -73,9 +73,9 @@ Advanced**.
 
 Your fixes are kept, and **Undo** takes back the last ones. **Find the parts again** starts over
 from what the finder sees. It asks first, and if you changed parts by hand — with the brush, the
-eraser or a box — or added any, it offers to **keep** them as they are: the parts found now are then
-cut around them, and what the finder would have added to a kept part goes to the body. Untick it to
-have every part found again.
+eraser or a box — or added any, it offers **Keep the parts you changed by hand** (it names them), ticked: the
+parts found now are then cut around them, and what the finder would have added to a kept part goes to the body.
+Untick it to have every part found again.
 
 ## Settings
 

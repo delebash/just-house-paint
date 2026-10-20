@@ -26,6 +26,8 @@ const VALUES = {
   "photos.thumbMax": 480,
   "photos.jpegQuality": 88,
   "photos.maxMegabytes": 40,
+  "photos.fullSizeMaxMegapixels": 16,
+  "windows.checkSeconds": 5,
   "designs.maxPerHouse": 30,
   "paints.maxImportMegabytes": 30,
   "finder.useGpu": true,

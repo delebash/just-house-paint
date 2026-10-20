@@ -255,6 +255,5 @@ async function clear(brand) {
 }
 .paint-colors__note {
   margin-top: var(--sp-3);
-  max-width: var(--w-prose);
 }
 </style>

@@ -256,9 +256,12 @@ test("the canvas follows the screen's pixel ratio: a window moved to a sharper s
   }
 });
 
-test("only the primary button draws; a pen's eraser end erases; a capture lost mid-stroke ends it there", () => {
-  // the fourteenth review: a right click left a dot, a lost capture (a native menu, Alt+Tab) kept the stroke live
-  mountCanvas({ tool: "brush", brushSize: 4 });
+test("only the primary button draws; a pen's eraser end erases; a capture lost mid-stroke ends it there", async () => {
+  // the fourteenth review: a right click left a dot, a lost capture (a native menu, Alt+Tab) kept the stroke live;
+  // the sixteenth: it was listened to on the stage's container at mount, before the stage existed (no photo yet) —
+  // never heard. Mounted with no photo, then given one, as the page does
+  mountCanvas({ tool: "brush", brushSize: 4, photo: null });
+  await wrapper.setProps({ photo: { width: 100, height: 80 } });
   fire("pointerdown", { button: 2 }); // right
   fire("pointerup", { button: 2 });
   fire("pointerdown", { button: 1 }); // middle
@@ -272,7 +275,8 @@ test("only the primary button draws; a pen's eraser end erases; a capture lost m
   fire("pointerdown", { pointerId: 6, pointerType: "pen" });
   pointerAt = { x: 60, y: 45 };
   fire("pointermove", { pointerId: 6, pointerType: "pen" });
-  container.dispatchEvent(Object.assign(new Event("lostpointercapture", { bubbles: true }), { pointerId: 6 }));
+  // dispatched where the browser does — the stage's canvas, inside the photo's host — and bubbling up
+  wrapper.find(".stage-stub").element.dispatchEvent(Object.assign(new Event("lostpointercapture", { bubbles: true }), { pointerId: 6 }));
   const strokes = wrapper.emitted("stroke").length;
   expect(wrapper.emitted("stroke").at(-1)[0].mode).toBe("paint");
   fire("pointermove", { pointerId: 6, pointerType: "pen" });
@@ -373,4 +377,61 @@ test("a zoomed photo has pan buttons beside the zoom: a drag's single-pointer wa
   // fitted again: they go
   await wrapper.findAll("button").find((b) => b.text() === "Fit").trigger("click");
   expect(named("Move left")).toBeUndefined();
+});
+
+test("keys take over a box a click began: its corner is the crosshair's, never where the pointer last was", async () => {
+  const host = (await mountFitted({ tool: "box" })).find(".house-canvas").element;
+  pointerAt = { x: 50, y: 40 };
+  fire("pointerdown");
+  fire("pointerup"); // a click: the first corner
+  pointerAt = { x: 200, y: 150 };
+  fire("pointermove"); // the pointer wanders off
+  keyWith(host, "ArrowRight"); // the crosshair shows where the box had got to
+  keyWith(host, "ArrowLeft", { shiftKey: true });
+  keyWith(host, "ArrowUp", { shiftKey: true });
+  keyWith(host, "Enter");
+  const first = toPhoto({ x: 50, y: 40 });
+  const hover = toPhoto({ x: 200, y: 150 });
+  expect(wrapper.emitted("box")).toEqual([[{ x0: first.x, y0: first.y, x1: hover.x - 32, y1: hover.y - 32 }]]);
+});
+
+test("Enter held down sets one corner, not one per repeat; a handled Escape goes no further", async () => {
+  const host = (await mountFitted({ tool: "pick" })).find(".house-canvas").element;
+  keyWith(host, "ArrowDown");
+  keyWith(host, "Enter");
+  keyWith(host, "Enter", { repeat: true });
+  keyWith(host, "Enter", { repeat: true });
+  expect(wrapper.emitted("pick")).toHaveLength(1);
+  const outside = vi.fn();
+  document.body.addEventListener("keydown", outside);
+  keyWith(host, "Escape"); // hides the crosshair: handled
+  keyWith(host, "Escape"); // nothing left to let go of: the page's
+  document.body.removeEventListener("keydown", outside);
+  expect(outside).toHaveBeenCalledTimes(1);
+});
+
+test("another photo drops a box half drawn and the crosshair", async () => {
+  const host = (await mountFitted({ tool: "box" })).find(".house-canvas").element;
+  keyWith(host, "ArrowRight");
+  keyWith(host, "Enter");
+  keyWith(host, "ArrowRight", { shiftKey: true });
+  await flushPromises();
+  expect(configs("v-rect").length).toBeGreaterThan(0);
+  await wrapper.setProps({ photo: { width: 120, height: 90 } });
+  expect(configs("v-rect")).toEqual([]);
+  expect(configs("v-line")).toEqual([]);
+});
+
+test("a finger's tap is a click for a box: within 10 px, where a mouse's is 4", async () => {
+  await mountFitted({ tool: "box" });
+  pointerAt = { x: 50, y: 40 };
+  fire("pointerdown", { pointerType: "touch" });
+  pointerAt = { x: 57, y: 46 }; // a finger moves a little as it lifts
+  fire("pointermove", { pointerType: "touch" });
+  fire("pointerup", { pointerType: "touch" });
+  expect(wrapper.emitted("box")).toBeUndefined(); // armed, not a tiny box
+  pointerAt = { x: 120, y: 100 };
+  fire("pointerdown", { pointerType: "touch" });
+  fire("pointerup", { pointerType: "touch" });
+  expect(wrapper.emitted("box")).toHaveLength(1);
 });

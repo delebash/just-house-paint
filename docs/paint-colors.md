@@ -14,8 +14,8 @@ collection, PPG one Excel file of every color), which the app finds on the brand
 first time the app starts, it loads each brand by itself, one after another, and keeps them on
 your computer — their progress shows at the bottom right, with **Cancel**. **Load automatically**, under
 a brand's name, turns that off for the brand (its colors already here stay; **Remove** clears them) or on
-again (an empty brand loads at once). **Load again** fetches a list again; its progress shows above the
-list. Each brand's own website terms apply to what you download — the app downloads each list for your
+again (an empty brand loads at once). A brand with no colors here has **Load the colors**; one already
+loaded has **Load again**, which fetches its list again; their progress shows above the list. Each brand's own website terms apply to what you download — the app downloads each list for your
 own use.
 
 ## Importing a brand's palette file

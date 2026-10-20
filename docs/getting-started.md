@@ -136,12 +136,15 @@ inside the folder you pick (what else is in that folder is never touched; the qu
 after checking the drive has room, and the app restarts on it. A folder inside the app's own folder is refused
 — an update or an uninstall replaces that folder. The old folder keeps its copy: **App Settings → Storage**
 shows it with its size, and **Remove the old copy…** deletes what the move copied there (nothing else in that
-folder, and never the folder the app uses); if the app ran on the old copy after the move, Storage says when it
-was last changed — move what you need out of it first. When the app runs on an old copy (its new folder's drive
-unplugged), Storage says so and names the folder the data moved to. **Move back to the default folder…** brings
-the data back where the app keeps it by default. When the folder is set by the `JUST_HOUSE_PAINT_DATA_DIR`
-variable, Storage says so and Change folder is off — change the variable instead. While the data is being copied the app can't be quit (it says so); if the computer
-stops midway, the half-made copy is removed at the next start and the data is where it was. Best on a drive
+folder, and never the folder the app uses; it names the apps that share this app's AI models); if the app ran on
+the old copy after the move, Storage says when it was last changed — move what you need out of it first. An old
+copy on a drive that isn't plugged in is listed as **Not connected**. When the app runs on an old copy, or on the
+default folder this time because the data's folder can't be used, Storage says where your data is — connect it and
+restart, or **Use the default folder from now on…** — and **Change folder…** isn't shown. **Move back to the default folder…**
+brings the data back where the app keeps it by default (once any old copy there is removed). When the folder is set
+by the `JUST_HOUSE_PAINT_DATA_DIR` variable, Storage says so and **Change folder…** isn't shown — change the variable
+instead. While the data is being copied the app can't be quit (it says so); if the computer stops midway, the
+half-made copy is removed at a later start and the data is where it was. Best on a drive
 inside the computer: a folder synced by OneDrive, Dropbox or another sync service can hold the app's files
 while they are written, and OneDrive's "files on demand" leaves the 12 GB of models online-only, so the
 engines fail without the network; a network drive or a USB stick works only while it is there. A FAT32 USB

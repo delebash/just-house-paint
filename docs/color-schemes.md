@@ -16,8 +16,8 @@ so the trim stands out from the body and the door from both. The rules' threshol
 **App Settings → Advanced**.
 
 A scheme that can't be made says why on its row, and its **Apply** is off. A nearly gray paint (a
-white, a gray, a black) has no hue for **complementary**, **analogous**, **triadic** or **one color,
-three shades** — **classic** works with any color; and when no paint of the brand near a role's color
+white, a gray, a black) has no hue for **Complementary**, **Analogous**, **Triadic** or **One color,
+three shades** — **Classic** works with any color; and when no paint of the brand near a role's color
 is light, dark or colorful enough, the row says which role.
 
 ## The brand's own pairings

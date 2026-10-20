@@ -6,9 +6,9 @@
 // to the brand's nearest paints, each with its ΔE2000, so a color seen elsewhere becomes a paint you
 // can buy. Only brands with colors on this computer are offered; adding one is the Paint colors
 // page's (the app ships no brand data).
-import { EmptyState, reportError, schemaRules, UiButton, UiColorPicker, UiField, UiInput, UiSegmented, UiSelect, UiTag, UiToggle } from "@delebash/ui";
+import { announce, EmptyState, reportError, schemaRules, UiButton, UiColorPicker, UiField, UiInput, UiSegmented, UiSelect, UiTag, UiToggle } from "@delebash/ui";
 import { NearestQuery } from "just-house-paint-server/schemas/paints.js";
-import { computed, onBeforeUnmount, onMounted, ref, useId, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, useId, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import { partName } from "../services/partNames.js";
@@ -181,26 +181,44 @@ async function clearNow() {
   }
 }
 
-// a color read off the photo: into "An exact color", matched at once
+// "An exact color" (its heading, brought into view) and its form (its rule's error cleared as the hex is changed:
+// with lazy-rules "ondemand" it stayed after the hex was fixed — the sixteenth review)
+const exactHeading = ref(null);
+const exactForm = ref(null);
+function onHexInput() {
+  picked.value = false;
+  exactForm.value?.resetValidation();
+}
+
+// a color read off the photo: into "An exact color", matched at once — and shown: the panel opens the tab at its
+// top and the matches are far below it, so they are brought into view and said (a keyboard Pick a color showed and
+// said nothing — the sixteenth review)
 watch(
   () => house.pickedColor,
-  (p) => {
+  async (p) => {
     if (!p) return;
     const got = house.takePickedColor();
     hex.value = got.hex;
     picked.value = true;
-    match();
+    if (await match()) {
+      await nextTick();
+      exactHeading.value?.scrollIntoView?.({ block: "start", behavior: "smooth" });
+      announce(t("colors.exact.found", { n: nearest.value.length, hex: hex.value }, nearest.value.length));
+    }
   },
   { immediate: true },
 );
 
+/** The brand's nearest paints to the hex; true once they are shown. */
 async function match() {
-  if (!/^#[0-9a-fA-F]{6}$/.test(hex.value)) return;
+  if (!/^#[0-9a-fA-F]{6}$/.test(hex.value)) return false;
   try {
     nearest.value = await paints.nearest(hex.value, { brand: brand.value, k: 6, exterior: exterior.value });
     paints.remember(nearest.value.map((n) => n.paint));
+    return true;
   } catch (e) {
     reportError(e);
+    return false;
   }
 }
 </script>
@@ -284,16 +302,16 @@ async function match() {
       <p v-if="!searching && !rows.length" class="muted">{{ t("colors.noMatch") }}</p>
       <UiButton v-if="rows.length < total" intent="ghost" :disabled="searching" :label="t('colors.more', { n: total - rows.length })" @click="search(true)" />
 
-      <h3 class="colors__h">{{ t("colors.exact.title") }}</h3>
+      <h3 ref="exactHeading" class="colors__h">{{ t("colors.exact.title") }}</h3>
       <p class="hint">{{ t("colors.exact.hint") }}</p>
       <!-- the hex is checked when Find is pressed (Quasar's lazy-rules "ondemand"): Tab through an empty box
            said "Required" (the screens review, 2026-10-20). The picker and Find sit in the field beside the box,
            top-aligned with it, so the rule's words under the box never move them -->
-      <q-form @submit="match">
+      <q-form ref="exactForm" @submit="match">
         <UiField :label="t('colors.exact.hex')" layout="block" for="exact-hex">
           <span class="colors__exact">
-            <UiInput id="exact-hex" v-model="hex" width="token" @update:model-value="picked = false" :placeholder="t('colors.exact.placeholder')" lazy-rules="ondemand" :rules="hexRule" />
-            <UiColorPicker v-model="hex" :aria-label="t('colors.exact.pick')" @update:model-value="picked = false" />
+            <UiInput id="exact-hex" v-model="hex" width="token" @update:model-value="onHexInput" :placeholder="t('colors.exact.placeholder')" lazy-rules="ondemand" :rules="hexRule" />
+            <UiColorPicker v-model="hex" :aria-label="t('colors.exact.pick')" @update:model-value="onHexInput" />
             <UiButton type="submit" intent="secondary" :label="t('colors.exact.match')" />
           </span>
         </UiField>
@@ -319,11 +337,11 @@ async function match() {
 .colors__target {
   margin: 0 0 var(--sp-2);
 }
-/* the hex box, the picker and Find on one row, their tops together: the box's rule message grows it
-   downward without moving them */
+/* the hex box, the picker and Find on one row, on the box's middle (the box's rule message, shown only after a
+   failed Find and gone as it is typed into, moves them a little meanwhile) */
 .colors__exact {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   flex-wrap: wrap;
   gap: var(--sp-2);
 }

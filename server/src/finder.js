@@ -216,7 +216,7 @@ export function createFinder(ctx) {
 
   async function segmenter() {
     if (!installed()) {
-      throw new ApiError(409, "models-missing", "The part finder isn't installed", "download the part-finding model first (about 3.1 GB)");
+      throw new ApiError(409, "models-missing", "The part finder isn't installed", "install it first, on a house's Parts tab (about 3.1 GB)");
     }
     if (seg) return seg;
     // never a model on a runtime that isn't the app's, or that doesn't load: refused in words, not a crash mid-Find

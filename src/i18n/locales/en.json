@@ -1,8 +1,9 @@
 {
   "kit": {
     "dataManagement": {
+      "hint": "Saves everything — your houses with their photos and outlines, the designs, the settings and your AI providers' keys — in one file, and restores it. Keep the file as you would a password: the keys are in it.",
       "reset": {
-        "label": "Wipes ALL data — your houses with their photos and designs, the paint colors, the settings and the AI providers — and starts again as on the first start. The installed engines and AI models stay. Type {word} to confirm.",
+        "message": "Wipes ALL data — your houses with their photos and designs, the paint colors, the settings and the AI providers — and starts again as on the first start. The installed engines and AI models stay.",
         "hint": "Wipes every house, design, paint color and setting, and starts again as on the first start; the installed engines and AI models stay. Take a backup first."
       }
     }
@@ -228,6 +229,7 @@
       "box": "Box",
       "boxHint": "Draw a box around something the selected part should take in — drag, or click one corner and then the other",
       "offWhileFinding": "Off while the parts are being found — their new outlines replace these when it's done",
+      "offNoFinder": "Off until the part finder is installed — it outlines what is inside the box (Install, on the Parts tab)",
       "size": "Brush size",
       "outlines": "Outlines",
       "split": "Line — where the before ends",
@@ -371,7 +373,8 @@
       "deltaEClose": "— a close match to this color: under 2 is hard to tell apart",
       "deltaEFar": "— not a close match to this color: under 2 is hard to tell apart",
       "placeholder": "#a1b2c3",
-      "picked": "From the photo — its light and shadow are in this color, so the nearest paint is close, not exact."
+      "picked": "From the photo — its light and shadow are in this color, so the nearest paint is close, not exact.",
+      "found": "No paint near {hex} | The paint nearest {hex}, under An exact color | The {n} paints nearest {hex}, under An exact color"
     },
     "moreBrands": "{n} more brand on Paint colors | {n} more brands on Paint colors",
     "tones": {

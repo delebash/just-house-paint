@@ -707,6 +707,13 @@ const redo = () => !finding.value && !outlineBusy.value && history.redo();
 watch(finding, (on) => {
   if (on && EDIT_TOOLS.includes(tool.value)) tool.value = "look";
 });
+// the box asks the part finder: removed while Box is chosen, Box is let go of
+watch(
+  () => engines.finderInstalled,
+  (on) => {
+    if (!on && tool.value === "box") tool.value = "look";
+  },
+);
 
 async function findParts() {
   if (finding.value) return;
@@ -862,13 +869,16 @@ const failedReason = computed(() => {
   const { title, detail } = errorMessage(loadFailed.value);
   return [title, detail].filter(Boolean).join(" — ");
 });
-// the outline tools, off (dimmed, saying why) while the parts are being found
+// the outline tools, off (dimmed, saying why) while the parts are being found; the box also while the part finder,
+// which outlines what is inside it, isn't installed (it was offered, and its two corners gave an error — the
+// sixteenth review)
 const editTool = (tool) => (finding.value ? { ...tool, title: t("house.tools.offWhileFinding"), disabled: true } : tool);
+const boxTool = (tool) => (engines.finderInstalled ? editTool(tool) : { ...tool, title: t("house.tools.offNoFinder"), disabled: true });
 const tools = computed(() => [
   { value: "look", label: t("house.tools.look"), title: t("house.tools.lookHint") },
   editTool({ value: "brush", label: t("house.tools.brush"), title: t("house.tools.brushHint") }),
   editTool({ value: "eraser", label: t("house.tools.eraser"), title: t("house.tools.eraserHint") }),
-  editTool({ value: "box", label: t("house.tools.box"), title: t("house.tools.boxHint") }),
+  boxTool({ value: "box", label: t("house.tools.box"), title: t("house.tools.boxHint") }),
   { value: "pick", label: t("house.tools.pick"), title: t("house.tools.pickHint") },
 ]);
 const outlineOptions = computed(() => [

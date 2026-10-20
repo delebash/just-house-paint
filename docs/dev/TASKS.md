@@ -871,6 +871,43 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         aria-controls only to a panel in the page; the help's words as the screen. Kept, argued: the panel at 960 (the
         window's smallest; the panel scrolls; moving the header's actions costs finding them); the JSON boxes' cap;
         the fallback folder's name (platformdirs' Windows layout, author\app — moving it strands data).
+        The sixteenth's shell fixes made (the agent's; not yet committed): the single-instance lock first, the sweep at
+        whenReady and never a move whose process is alive (two real processes: the copy left alone, the move
+        committed); no move while a start runs on the default this time or on an old copy ("Your data is in <B>:
+        connect it and restart…"); "used after the move" by the database's files alone; an old copy on a missing drive
+        "Not connected", kept; "from now on" removes the moved-to record; a half copy's record kept while its drive is
+        out; the shell reads the window's token itself (just.serverToken); the records and carried.json written before
+        the commit, the marker committed first; folder links moved as junctions on Windows, a file link refused by
+        name (unverified here — no symlink right); every recursive remove in the kit on fs.promises.rm
+        (junction_removers.test.js: five removers, each leaves a junction's target whole); Remove names the sharing
+        apps, Move back hidden while the default holds the old copy; the guard's peer check counts a peer only when
+        Node resolves it from the package that needs it. Kit core 1369; the app's and template's Storage tests 16 / 13.
+        Local Windows: the four start checks (the window, the server on its own, both on the default folder) pass from
+        temp copies and name one folder.
+        The sixteenth's UI fixes made (the other agent's; not yet committed): Enter in a number box does what leaving it
+        does (read, clamp) before the form submits; a text that isn't a number fails the field with or without rules
+        ("1e3", "0x200", "5 min"), aria-invalid; arrows do nothing on a refused text or a read-only box; "-0" is 0; an
+        emptied box whose schema takes no null says Required before sending (schemaRules marks nullable); a failed task
+        announced once, by the task store (reportError sees the mark); a modal dialog gets its own live regions while
+        it is open (Chromium keeps outside text in the tree — measured, headless Edge 155 — but VoiceOver and NVDA
+        confine themselves to a modal); v-tooltip's own-name test by dom-accessibility-api 0.7.1 (a runtime peer
+        now); isolate() wraps any name holding a bidi control; UiSegmented ignores modified arrows and mirrors them
+        right-to-left; the AI tasks panel on QDialog position="right" (focus in, Tab kept, Escape back to the trigger;
+        its triggers aria-haspopup, aria-expanded, aria-controls); the selects named (Appearance's by their rows,
+        Logs' "Day" and "Lines shown"); a banner's text at 38em and its box as wide as its text (kept, argued: the
+        user's layout rule — a control sized to its content, nothing stretched to the page — though it changes every
+        banner in every app); the error toast on --danger-ink / --danger-bg (6.99 / 7.17); Pick a color's swatch in
+        --border-field (3.21+); Reset's sentence as its prompt, "Type RESET to confirm", Reset off until it is typed;
+        field labels in small capitals by font-variant-caps at 14 px (to be seen on screen); a slider's box named by
+        the slider; info and warning banners status, danger alert; a tab's aria-controls only to a panel in the page;
+        a toast's second line capitalised, announced "Title. Detail.". Kit ui 54, template 70. Mine meanwhile: the
+        hint at 33em, the lede 35em; Storage's buttons apart; the error count in the danger ink; the hex row on the
+        box's middle; Box off until the finder is installed and the server's words "install it first, on a house's
+        Parts tab"; a picked color's matches brought into view and said; the hex box's error cleared as it is typed
+        into; keys take over a box a click began; a photo change drops a half box; a finger's slop 10 px; Enter
+        repeats ignored, a handled Escape stopped; lostpointercapture on the host; Backup & restore's hint in this
+        app's words; the help ("Load the colors", the schemes' names, Keep the parts you changed by hand, Change
+        folder… isn't shown); the e2e's AI-tasks toggle on the modal panel (its backdrop, Escape, the focus back).
 NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
         the installed 0.1.2 updating to it (the silent Restart now).
 
