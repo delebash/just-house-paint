@@ -1354,6 +1354,10 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         (the card in view, Install focused, said); the thumbnail's address by the photo's time; start-packaged keeps
         its real error; the app's Backups hint dropped; Settings' help at the section shown; "12 GB" unbroken; the e2e
         harness closes its page first; the help's Storage and restore words.
+        The nineteenth's fixes committed (app 59c6afb, kit 7680aca: server 446, unit 189, e2e 16; kit core 1406, ui 57;
+        template 83 + 57, e2e 12; JustWrite 745 + 180, JustVoice 261 + 1366, docgen 5 + 165); the peers told. Dry run
+        started. The twentieth (2026-10-20): the nineteenth's code attacked, the screens on its build, and the routes the
+        fuzz didn't reach (the static UI and Host over a socket, the kit's AI and data routes).
 NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
         the installed 0.1.2 updating to it (the silent Restart now).
 
