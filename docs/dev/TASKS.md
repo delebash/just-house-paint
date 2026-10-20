@@ -1052,6 +1052,57 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         Dry run 39438246634 green on every runner, linux-user too: the default-data starts on macOS and the AppImage
         now run under a temp home ("~/Library/Application Support/JustHousePaint", "~/.local/share/JustHousePaint" —
         the window's and the server's the same), Windows' and the unpacked Linux build's beside the build.
+        The eighteenth's attack on the seventeenth's code (an agent's and its fork's; the scratchpad's adv18): loses data
+        — Clear models through a linked hf folder empties the folder it points to, the user's own files with it
+        (measured: a fine-tune and notes.txt gone, their bytes counted as freed; a link to a drive's root would empty
+        the drive, to the shared HF cache other tools' models) — the seventeenth's "empty the linked folder" did it.
+        Breaks — two moves in a row strand the first old copy for good ("not connected" on a drive that is there; Remove
+        and Move back refused; measured); off Windows a disk's device number doesn't stay the same (btrfs, NFS, the
+        order disks come up), so the volume check fails there, and two sticks with one label share one (reasoned).
+        Wrong — a long start's sweep puts the window on the connection page (the page gave up at 6.7 s, the server was
+        ready at 13.4 s — real Electron); the tray's Start or Restart server during the sweep runs a server on the half
+        copy being removed (measured); "restart the app to use it" said for a folder that is there but can't be used;
+        the 3 s limit stops the look but not the stat under it — four looks at an offline share fill Node's file pool
+        (a local read took 14.5 s); a share answering in 3.5 s reads "not connected"; "not connected" has no way out
+        (no Forget); moved-to.json written after the commit and an unguarded cleanup after it; relative links pointing
+        outside the data dangle in the copy; the start's check of a pointer on an offline share still blocks 21 s; a
+        pick from another tab asks every brand for its nearest paints (the brand set after the pick's watch);
+        "No paint of this brand near …" stays after the filters change; a failed task's row still shows "409
+        Conflict: …". Small — a burst of more than four messages loses the first; announced lines never expire (a stale
+        "Saved" at the top of the page); clearAnnouncer can't take back a message of the same tick; isolate() strips
+        LRM and RLM (a name typed with an RLM can flip); sentence() leaves "cancelled." lower case; the chips' names
+        read twice while their tooltip shows; a hung grid search never scrolls or speaks (no limit, its watch not
+        stopped on unmount); an off link-style UiButton still navigates; the brush's ring left at the old photo's
+        place; an off tool's toast added again at each press; start-packaged can leave its temp folders; on macOS the
+        temp HOME doesn't cover Cocoa's own files (the preferences, the saved state). Right — one window on a second
+        launch during the sweep; Windows' volume id (the NTFS root's file id is one constant: the serial tells sticks
+        apart); a deleted parent, a drive out, mount points; committed by the pointer with other spellings and 0.1.2's
+        records; the restore's undo repeatable; the carried token; Clear models on a real folder; focusableWhenDisabled
+        under a QForm Enter; UiSegmented's descriptions; Reset's word; the info icon; the announcer around dialogs; the
+        AI tasks panel's scroll and focus; "Write it like …"; the canvas's box; the Colors tab's failed search; Box;
+        General's focus.
+        Their fixes — decided (mine, argued): Clear models on a linked hf folder removes only the folders of the models
+        this app downloaded (its catalog's models--<org>--<name> and their locks) and counts only those — never the
+        rest of the folder it points to; a model's Delete on a linked repo folder empties that model's own folder (what
+        Delete means); an old copy known by a move id written into both its records (the new root's and its own
+        moved-to.json) — no device number, no volume; a copy whose record doesn't answer is "not found", never removed
+        and never forgotten by the app, with **Forget** to drop the record (the user decides); every carried copy's
+        moved-to.json re-pointed at the new folder at each move, a chain of moves accepted; while the start's sweep runs
+        the start is busy — the page waits for the server's address, the tray's server items are off, Change folder
+        refuses; "connected" only when the folder passes the start's check, else its words; a path found unreachable is
+        not looked at again for 60 s and one look per path at a time (Node's pool never filled); moved-to.json written
+        before the commit (the undo removes it), nothing after the commit can throw; relative links pointing outside
+        the data re-pointed to their absolute target; the start's check of a pointer async with a time limit; the Colors
+        tab takes its brand before a pick matches, and a filter change clears "No paint of this brand near …"; a failed
+        task's row in the server's words; the announcer's lines expire again by a timer (React Spectrum's 7 s — one per
+        region, not per message), a burst never drops the lines of the same tick, clearAnnouncer takes back the pending
+        ones (JustVoice's ticker test is to mock the announcer — its subject is the ticker); isolate() strips only the
+        embeddings, overrides and isolates (U+202A–202E, U+2066–2069), never LRM/RLM; sentence()'s code test ignores a
+        word's closing punctuation; a chip's tooltip its name; the grid's wait has a limit and stops with the tab; an off
+        link-style UiButton doesn't navigate; another photo takes the brush's ring away; a toast identical to one
+        showing isn't added again (Quasar's group); start-packaged makes its temp folders inside its try. Kept, argued:
+        on macOS the temp HOME doesn't cover Cocoa's own preferences and saved state — the data folder is what matters
+        and is covered (RESEARCH).
 NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
         the installed 0.1.2 updating to it (the silent Restart now).
 
