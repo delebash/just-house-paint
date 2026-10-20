@@ -250,7 +250,8 @@ export function router(ctx = getState()) {
       house,
       changed.map((k) => [k, masks[k]]),
       () => {
-        for (const k of changed) updatePartMask(ctx.db, house.id, k, { area: area(masks[k]) });
+        // the part the box gives to is changed by hand; the parts it took from only lost some of it
+        for (const k of changed) updatePartMask(ctx.db, house.id, k, { area: area(masks[k]), source: k === key ? "edited" : null });
       },
     );
     return { changed, parts: listParts(ctx.db, house.id), outlines: changed.length ? newVersion(c, house) : ctx.outlines.etag(house.id) };

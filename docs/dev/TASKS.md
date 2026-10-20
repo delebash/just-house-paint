@@ -1180,6 +1180,42 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         UiButton's icon slot; the AI tasks panel one scroller (its aside); Appearance's descriptions at 30em; the lede
         32em, banner text 33em; the AI photo dialog's install card at 34em; Enter in General's box gives the focus back
         to the box after the save.
+        The eighteenth's fixes made (three agents' and mine; not yet committed). The shell: Clear models on a linked hf
+        folder removes only this app's catalog models and their locks (the user's fine-tune, notes and another tool's
+        model kept — the reviewer's s12 rerun), a model's Delete on a linked repo empties it and keeps the link; an old
+        copy known by a move id in both its records (no device number), "Not found" with **Forget…** (asks first, drops
+        the record only), carried copies' records re-pointed at each move, a chain read up to five hops (A → X → Y:
+        A removable, Move back works); the start busy while its sweep runs (the page waits for the server — 13.1 s, no
+        connection page; the tray's Start refused, the server afterwards on the swept folder); "connected" only when the
+        folder passes the start's check, else its words; a drive that timed out not looked at for 60 s, one look per
+        drive at a time (eight looks at an offline share: 3.1 s, local reads 0.00 s — they took 14.5 s); moved-to.json
+        before the commit, nothing after it can throw, carried copies looked at async; relative links pointing outside
+        the data re-pointed (runs on the release runners — no symlink right here); the start's check of a pointer on an
+        offline share in a worker, the main thread waiting 4 s at most (was 21.1 s blocked); "Leave without saving?" —
+        Leave / Stay — on will-prevent-unload, Quit and the tray's Quit through it (real Electron: reload, ×, a hidden
+        window's Quit). NOT STANDARD, researched (kit RESEARCH §2): the worker + Atomics.wait start check (spawnSync
+        with a timeout costs a process per start), the look cache and per-drive queue (no package does it), the POSIX
+        drive key from a path's first names (the mount point needs the very stat that hangs), the 10 s close fallback.
+        Kept, argued: a look at an offline share still under way at Quit keeps the process ~21 s after the window
+        closed (the lock is released — a relaunch 3.4 s later got it); a share answering in 3.5 s reads "didn't answer"
+        for that minute; the boot's own ~15 s limit before the connection page (which boots once the server answers);
+        the shell's words English (the app's only language). The UI kit: a failed task's row in the server's words;
+        the announcer's lines expiring again (one timer per region), a burst kept, clearAnnouncer taking back the
+        queued; isolate() keeps LRM/RLM; "Cancelled."; an off link-style button never navigates; an identical toast
+        not added twice; ServerPanel's line on reverse proxies; the success, info, warning and plain toasts themed
+        (6.29–17.40:1 in both themes); the Logs' dim lines in --muted (5.33 / 5.65); the AI tasks panel's icons apart
+        and one scroller; Appearance's descriptions 30em; banner text 33em. Mine: a job ended unseen said as ended
+        (finds, AI photos, installs, brand loads); a Box marks only the part it gives to; the house's time on every
+        change of parts, designs, AI photos; closing, a reload or Quit with unsaved colors asks first (beforeunload);
+        an import says what it left out; the Colors tab takes its brand before a pick, brings the matches into view at
+        960, says Find's result, clears a stale no-match on a filter change, its chips' tooltip their name, its wait
+        limited and stopped with the tab; the brush's ring gone with another photo; General's Enter gives the focus
+        back to its box; the lede 32em, the AI photo dialog's card 38em; start-packaged's temp folders inside its
+        cleanup; Settings' help opens the new App Settings page; Backups' hint says what isn't in a backup; the
+        "window failed" line no longer logged for a window closed by a quit. The help: every FALSE and PARTLY claim
+        rewritten, the 18 contradictions settled, a new App Settings page (settings.md), the tray and the command
+        line, ~45 troubleshooting entries; Microsoft's Smart App Control FAQ and Apple's Gatekeeper page read before
+        writing those two.
 NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
         the installed 0.1.2 updating to it (the silent Restart now).
 

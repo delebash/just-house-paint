@@ -127,13 +127,29 @@ async function onFile(file) {
   if (!file || !brand) return;
   mark(brand.key, true);
   try {
-    tellLost(brand, (await paints.importFile(brand.key, file))?.lost);
+    const result = await paints.importFile(brand.key, file);
+    tellLost(brand, result?.lost);
+    tellLeftOut(brand, result);
   } catch (e) {
     reportError(e);
   } finally {
     mark(brand.key, false);
     importFor.value = null;
   }
+}
+
+/** What an import left out (rows with no color, no number, a repeated code), said — the server listed it and
+ *  nothing showed it (the eighteenth review): how many colors came in, then the first few reasons. */
+function tellLeftOut(brand, result) {
+  const warnings = result?.warnings || [];
+  if (!warnings.length) return;
+  const shown = warnings.slice(0, 3).join("; ");
+  pushToast({
+    message: t("paintColors.leftOut", { brand: brand.label, n: n(result.paintCount || 0) }),
+    description: warnings.length > 3 ? t("paintColors.leftOutMore", { shown, more: warnings.length - 3 }) : shown,
+    kind: "warning",
+    duration: 12000,
+  });
 }
 
 async function clear(brand) {

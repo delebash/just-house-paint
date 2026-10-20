@@ -9,11 +9,14 @@ Advanced**.
 
 ## From a paint you chose
 
-Give the body a color first (the **Colors** tab); the schemes are built around it:
-**Complementary**, **Analogous**, **Triadic**, **One color, three shades**, and **Classic** (light
-trim on a mid-tone body with a strong door). Each color is the brand's nearest real paint, checked
-so the trim stands out from the body and the door from both. The rules' thresholds are in
-**App Settings → Advanced**.
+Give the body a color first (the **Colors** tab); the schemes are built around it, in the brand chosen above them —
+when the body's paint is another brand's, the tab says so ("The body's paint is …'s — choose … above, or give the
+body a color of this brand") and builds them around the selected part's paint, if it is this brand's. The schemes:
+**Complementary**, **Analogous**, **Triadic**, **One color, three shades**, and **Classic** — light trim and a
+strong door on a mid-tone body: a light or dark body color becomes the brand's nearest mid-tone paint of its hue, so
+**Apply** changes the body too. Each color is the brand's nearest real paint, checked so the trim stands out from
+the body and the door from the body (the door is only a different paint from the trim). Schemes leave out the
+paints a brand marks for inside use, and discontinued ones. The rules' thresholds are in **App Settings → Advanced**.
 
 A scheme that can't be made says why on its row, and its **Apply** is off. A nearly gray paint (a
 white, a gray, a black) has no hue for **Complementary**, **Analogous**, **Triadic** or **One color,
@@ -22,16 +25,18 @@ is light, dark or colorful enough, the row says which role.
 
 ## The brand's own pairings
 
-Sherwin-Williams lists two or three coordinating colors for many of its paints; when the body's
-paint has them, they come first, checked against the same rules. Brands that don't publish pairings
-show none.
+Sherwin-Williams, Valspar, HGTV Home and Dutch Boy list two or three coordinating colors for most of their paints;
+when the body's paint has them, they come first, checked against the same rules. Behr, Benjamin Moore and
+PPG / Glidden publish none.
 
 ## Ask the AI
 
 **Suggest schemes** asks the AI model set up in **AI Settings** for schemes that suit your house.
 The app tells it the colors it found on your photo — the body's current color, the roof, the stone,
 what stays — and which parts will be painted, and the AI answers with schemes; every color it names
-is matched to the brand's nearest real paint. Add a few words about what you like ("warm",
-"coastal", "historic") to steer it. Its progress shows under the button while it works, with **Cancel**. Find the parts first: the AI reads the house's colors from
-them. This needs an AI model — see [Set up the AI](ai-providers.md); what the AI is told can be
-changed — see [The AI features](ai-features.md).
+is matched to the brand's nearest real exterior paint. The AI's schemes don't go through the checks above: look
+at the trim and the door before you apply one. Add a few words about what you like ("warm",
+"coastal", "historic") to steer it. Its progress shows under the button while it works, with **Cancel**. Find the
+parts first: the AI reads the house's colors from them. If the answer can't be read as schemes, the app says "The
+AI's answer couldn't be used" — ask again, or point the feature at a stronger model. This needs an AI model — see
+[Set up the AI](ai-providers.md); what the AI is told can be changed — see [The AI features](ai-features.md).

@@ -47,6 +47,7 @@ import {
   pickDirectory,
   setKeepRunning,
   shellVersion,
+  storageForgetOldCopy,
   storageGetRoot,
   storageOldCopies,
   storageRelocate,
@@ -97,6 +98,7 @@ const storageShell = {
   relocate: storageRelocate,
   oldCopies: storageOldCopies,
   removeOldCopy: storageRemoveOldCopy,
+  forgetOldCopy: storageForgetOldCopy,
   useDefault: storageUseDefault,
 };
 async function removeEngine(kind, usage, run) {
@@ -126,7 +128,7 @@ watch(
 
 <template>
   <q-page :style-fn="pageFlow" class="page settings">
-    <PaneHeader :eyebrow="t('app.name')" :title="t('settings.title')" help-key="getting-started" />
+    <PaneHeader :eyebrow="t('app.name')" :title="t('settings.title')" help-key="settings" />
     <SettingsShell :sections="SECTIONS" :model-value="active" @update:model-value="go">
       <GeneralSection v-if="active === 'general'" />
       <AdvancedSection v-else-if="active === 'advanced'" />

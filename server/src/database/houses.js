@@ -95,6 +95,8 @@ export function renameHouse(h, id, name) {
 
 export const deleteHouse = (h, id) => h.run("DELETE FROM houses WHERE id = ?", [id]).changes > 0;
 
+/** The house changed — its parts' outlines, its designs, its AI photos: Your houses' "changed …" and its order
+ *  follow every change (only some moved it — the eighteenth review). */
 export const touchHouse = (h, id) => h.run("UPDATE houses SET updated_at = ? WHERE id = ?", [nowIso(), id]);
 
 // ── parts ─────────────────────────────────────────────────────────────────
@@ -127,12 +129,15 @@ export function outlinesState(h, houseId) {
   return [found, parts];
 }
 
-/** A part's mask changed by hand (its area, and `source`: edited, or added for a new part). */
+/** A part's mask changed by hand (its area, and `source`: edited, or added for a new part; null keeps the part's
+ *  own — a part a Box only took from isn't one the user changed: marked edited, "Keep the parts you changed by hand"
+ *  kept the body whole and Find the parts again changed nothing — the eighteenth review). */
 export function updatePartMask(h, houseId, key, { area, paintable, source = "edited" }) {
   const now = nowIso();
   const existing = getPart(h, houseId, key);
   if (existing) {
-    h.run("UPDATE parts SET area = ?, source = ?, updated_at = ? WHERE house_id = ? AND key = ?", [area, existing.source === "added" ? "added" : source, now, houseId, key]);
+    const next = existing.source === "added" ? "added" : (source ?? existing.source);
+    h.run("UPDATE parts SET area = ?, source = ?, updated_at = ? WHERE house_id = ? AND key = ?", [area, next, now, houseId, key]);
   } else {
     const position = h.value("SELECT coalesce(max(position), -1) + 1 FROM parts WHERE house_id = ?", [houseId]);
     h.run(
@@ -140,6 +145,7 @@ export function updatePartMask(h, houseId, key, { area, paintable, source = "edi
       [houseId, key, paintable === false ? 0 : 1, area, position, now],
     );
   }
+  touchHouse(h, houseId);
   return getPart(h, houseId, key);
 }
 
@@ -220,7 +226,12 @@ export function updateDesign(h, id, { name, colors }) {
   return getDesign(h, id);
 }
 
-export const deleteDesign = (h, id) => h.run("DELETE FROM designs WHERE id = ?", [id]).changes > 0;
+export function deleteDesign(h, id) {
+  const houseId = h.value("SELECT house_id FROM designs WHERE id = ?", [id]);
+  const gone = h.run("DELETE FROM designs WHERE id = ?", [id]).changes > 0;
+  if (gone && houseId) touchHouse(h, houseId);
+  return gone;
+}
 
 // ── renders (AI photos) ───────────────────────────────────────────────────
 
@@ -236,6 +247,7 @@ export function addRender(h, { houseId, designId = null, file, engine, deltaE = 
     seconds,
     nowIso(),
   ]);
+  touchHouse(h, houseId);
   return getRender(h, id);
 }
 
@@ -244,4 +256,9 @@ const render = (r) =>
 
 export const getRender = (h, id) => render(h.one("SELECT * FROM renders WHERE id = ?", [id]));
 export const listRenders = (h, houseId) => h.all("SELECT * FROM renders WHERE house_id = ? ORDER BY created_at DESC", [houseId]).map(render);
-export const deleteRender = (h, id) => h.run("DELETE FROM renders WHERE id = ?", [id]).changes > 0;
+export function deleteRender(h, id) {
+  const houseId = h.value("SELECT house_id FROM renders WHERE id = ?", [id]);
+  const gone = h.run("DELETE FROM renders WHERE id = ?", [id]).changes > 0;
+  if (gone && houseId) touchHouse(h, houseId);
+  return gone;
+}

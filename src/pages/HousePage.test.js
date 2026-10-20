@@ -793,7 +793,7 @@ test("the eyedropper and a part's color as photographed find the nearest paints"
   const scrolled = [];
   const scrollIntoView = Element.prototype.scrollIntoView;
   Element.prototype.scrollIntoView = function () {
-    scrolled.push(this.textContent);
+    scrolled.push(this.classList.contains("colors__nearest") ? "the matches" : this.textContent);
   };
   try {
     canvas().vm.$emit("pick", { x: 1, y: 1 });
@@ -803,7 +803,8 @@ test("the eyedropper and a part's color as photographed find the nearest paints"
   }
   expect(text()).toContain("From the photo");
   expect(server.calls).toContain("GET /v1/paints/nearest");
-  expect(scrolled).toEqual(["An exact color"]);
+  // the heading to the panel's top, then the matches themselves into view (below it in a short panel — 960 × 700)
+  expect(scrolled).toEqual(["An exact color", "the matches"]);
   expect(document.querySelector("[data-live-announcer]").textContent).toMatch(/paints? nearest #c8c8c8, under An exact color/);
 });
 

@@ -7,7 +7,8 @@ and for what usually isn't painted: the roof, the windows, stone, brick and lamp
 
 It finds them on **your** house — the one the photo is framed on, its wings and garage included. A
 neighbor's house in the photo is left as it is, even right beside yours, and so are a car parked in
-front and a garden statue.
+front and a garden statue. That works when the finder recognizes your house in the photo, and while
+**Parts reach past the house by** (App Settings → General → Part finder) is above 0.
 
 **Trim** includes the casings around the front door and the garage door. A board the finder takes
 for trim has to lie at least partly on the house itself, so a fence's end board beside the house
@@ -31,19 +32,21 @@ A scheme paints them the trim's color; give them their own on the **Colors** tab
 ## The first time: installing the part finder
 
 Until it is installed, a house's **Parts** tab offers the part finder: **Install (3.1 GB)** downloads
-it, once. Its progress shows on the card while it downloads; **Cancel** there stops it. If the
+it, once, after checking the drive of the app's data folder has room (3.4 GB). Its progress shows on the card
+while it downloads; **Cancel** there stops it, and the next **Install** goes on where it stopped. If the
 finder's engine can't run on the computer, the card says so instead, and nothing is downloaded. On a
 Windows computer with a graphics card the finder uses the card (on macOS and Linux it runs on the
-processor, which is slower); finding the parts of one photo takes under a minute (a little longer the first
-time, while the model loads); its progress shows under the
+processor, which is slower); finding the parts of one photo takes about a minute on Windows with a graphics card
+(a little longer the first time, while the model loads), longer on the processor. Its progress shows under the
 house's name while it works — the part it is looking for and how far along it is ("Trim · 40%") — with
 **Cancel**. While it works, the **Brush**, the **Eraser**, the **Box**, **Undo** and **Redo** are off:
-the parts it finds replace the outlines when it's done, and Undo starts over from them. Open the house again — or reload the window — while it works,
-and its progress shows there again, and the new parts load when it's done.
+the parts it finds replace the outlines when it's done, and Undo starts over from them. Open the house again — or
+reload the window — while it works, and its progress shows there again, and the new parts load when it's done.
 
-If the finder recognizes no house in the photo, the **Parts** tab says **No parts found on this
-photo**: a photo with the house in full view, from the front, works best — or press **Find the parts
-again**.
+If the finder finds nothing, the **Parts** tab says **No parts found on this photo**: a photo with the house in
+full view, from the front, works best — or press **Find the parts again**. With no parts there is nothing to add
+a part to, so try another photo. If it doesn't recognize a house but finds a door or a window, those are
+listed without a **Body** — the same advice holds.
 
 ## When a part is wrong
 
@@ -67,20 +70,31 @@ eraser end erases whichever is chosen, and only a mouse's left button (a finger,
 the keyboard, select the part on the **Parts** tab (Tab to it, **Enter**) and draw a box with the arrow
 keys and **Enter** — under **With the keyboard** in [Painting your house](painting.md).
 
-A pixel belongs to one part only. Where two parts overlap, the more specific one keeps it (the
-garage door before the door, the gutters before the trim) — the order is in **App Settings →
-Advanced**.
+What the finder finds, and what a **Box** gives a part, belong to that part only. Where two parts the finder
+found overlap, the more specific one keeps it (the garage door before the door, the gutters before the trim) —
+the order is in **App Settings → Advanced**. The **Brush** only adds to the selected part and takes nothing from
+another: where two outlines then cover the same spot, the part lower on the **Parts** tab shows there. To give
+that spot to the other part, erase it from the one that shows, or draw a **Box**.
 
 Your fixes are kept, and **Undo** takes back the last ones. **Find the parts again** starts over
 from what the finder sees. It asks first, and if you changed parts by hand — with the brush, the
-eraser or a box — or added any, it offers **Keep the parts you changed by hand** (it names them), ticked: the
-parts found now are then cut around them, and what the finder would have added to a kept part goes to the body.
-Untick it to have every part found again.
+eraser or a box (a box changes only the part it gives to) — or added any, it offers **Keep the parts you changed by
+hand** (it names them), ticked: the parts found now are then cut around them, and what the finder would have added
+to a kept part goes to the body, where it lies on the house (past the house, it goes to no part). A kept part stays
+as you drew it — a kept **Trim** doesn't get the door casings the finder now finds; they go with the walls. Untick
+it to have every part found again: a part you added that the finder doesn't find is then removed.
 
 ## Settings
 
-**App Settings → General → Part finder**: whether the graphics card helps (on Windows), after how many idle
-minutes the finder lets go of its memory, how far past the house a part may reach, and how much of
-a piece must be on the house to count — so a car parked in front isn't taken for a door. What the finder looks for — each part's words and
-threshold — is in **App Settings → Advanced**. **App Settings → Storage** shows how much space it
-takes; **Remove** there frees it (the parts already found stay) and Install brings it back.
+**App Settings → General → Part finder** (see [General](settings.md#general)):
+
+- **Use the graphics card (Windows)** — whether the graphics card helps; it takes effect the next time the finder
+  loads.
+- **Let go after (minutes idle)** — when the finder lets go of its memory.
+- **Parts reach past the house by (share of the photo)** — how far past the house a part may reach; 0 turns off
+  both checks on the house, this one and the next.
+- **A piece counts when this share of it is on the house** — so a car parked in front isn't taken for a door.
+
+What the finder looks for — each part's words and threshold — is in **App Settings → Advanced**. **App Settings →
+Storage** shows how much space it takes; **Remove** there frees it (the parts already found stay) and Install
+brings it back.

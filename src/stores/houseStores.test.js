@@ -71,6 +71,14 @@ describe("runServerJob", () => {
     await expect(runServerJob({ start: async () => ({ id: "j3", state: "running", progress: 0 }), feature: "x", label: "x", pollMs: 1 })).rejects.toMatchObject({ name: "JobEnded", state: "done" });
   }, 10000);
 
+  test("a job that ended unseen without finishing is said as that, never as the server starting again", async () => {
+    // the eighteenth review: a find that failed while the computer slept was told "the app's server started again"
+    const { jobEndedAway } = await import("../services/jobs.js");
+    expect(jobEndedAway("error").message).toBe("This work ended while the app wasn't looking, without finishing. Start it again.");
+    expect(jobEndedAway("cancelled").message).toBe("This work was cancelled while the app wasn't looking.");
+    expect(jobEndedAway("error").message).not.toMatch(/started again/);
+  });
+
   test("its waits between polls leave no listener behind on the task's signal", async () => {
     let n = 0;
     answer("GET /v1/jobs/j1", () => (++n < 4 ? { id: "j1", state: "running", progress: n / 4 } : { id: "j1", state: "done", result: 1 }));

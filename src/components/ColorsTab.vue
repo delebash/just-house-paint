@@ -207,18 +207,37 @@ watch(
     const got = house.takePickedColor();
     hex.value = got.hex;
     picked.value = true;
-    if (await match()) {
+    // the tab's brand first: a pick from another tab matched before the tab had chosen it — across every brand,
+    // while the box showed one (the eighteenth review)
+    if (!brand.value) brand.value = current.value?.brand || paints.ready[0]?.key || null;
+    if (await match({ say: false })) {
       // once the color grid's first search has landed — it pushes the heading thousands of pixels down when it does
       // (a pick from another tab opens this one with the grid still loading: the matches stayed out of view — the
-      // seventeenth review); no smooth scroll, which would aim at where the heading was
+      // seventeenth review); no smooth scroll, which would aim at where the heading was; then the matches themselves,
+      // below the heading in a short panel (960 × 700 — the eighteenth)
       await gridSettled();
       if (gone) return;
       exactHeading.value?.scrollIntoView?.({ block: "start" });
-      announce(t("colors.exact.found", { n: nearest.value.length, hex: hex.value }, nearest.value.length));
+      document.querySelector(".colors__nearest, .colors__none")?.scrollIntoView?.({ block: "nearest" });
+      sayMatches();
     }
   },
   { immediate: true },
 );
+
+/** The matches said to a screen reader (after a pick, and after Find — WCAG 4.1.3): how many, or none. */
+function sayMatches() {
+  if (gone) return;
+  const n = nearest.value.length;
+  announce(n ? t("colors.exact.found", { n, hex: matchedHex.value }, n) : t("colors.exact.none", { hex: matchedHex.value }));
+}
+
+// another brand, or Exterior colors only changed: the matches shown were for the old ones — gone, never stale ("No
+// paint of this brand near …" stayed after the filter it named was turned off — the eighteenth review)
+watch([brand, exterior], () => {
+  nearest.value = [];
+  matchedHex.value = null;
+});
 
 /** A chip's name starts with what it shows — its name, then its number — and then says the brand (WCAG 2.5.3: the
  *  name held "SW T-121 Shade 21" for a chip showing "Shade 21 T-121"). */
@@ -226,30 +245,37 @@ const brandLabels = computed(() => Object.fromEntries(paints.brands.map((b) => [
 const chipName = (p) => [p.name, p.code].filter(Boolean).join(" ") + (brandLabels.value[p.brand] ? ` — ${brandLabels.value[p.brand]}` : "");
 
 /** The color grid has its first page: the search the tab's opening started (it starts a tick after the brand is
- *  set) has answered. */
+ *  set) has answered — waited for 10 s at most, and never once the tab is left (a search that hangs held the pick's
+ *  scroll and words for good, its watch alive — the eighteenth review). */
 async function gridSettled() {
   await nextTick();
   await nextTick();
-  while (searching.value) {
+  if (searching.value && !gone) {
     await new Promise((resolve) => {
-      const stop = watch(searching, (on) => {
-        if (!on) {
-          stop();
-          resolve();
-        }
+      let stop = () => {};
+      const done = () => {
+        clearTimeout(limit);
+        stop();
+        resolve();
+      };
+      const limit = setTimeout(done, 10_000);
+      stop = watch([searching, () => gone], ([on]) => {
+        if (!on || gone) done();
       });
     });
   }
   await nextTick();
 }
 
-/** The brand's nearest paints to the hex; true once they are shown. */
-async function match() {
+/** The brand's nearest paints to the hex; true once they are shown — and said (Find; a pick says them once in
+ *  view, `say: false`). */
+async function match({ say = true } = {}) {
   if (!/^#[0-9a-fA-F]{6}$/.test(hex.value)) return false;
   try {
     nearest.value = await paints.nearest(hex.value, { brand: brand.value, k: 6, exterior: exterior.value });
     matchedHex.value = hex.value;
     paints.remember(nearest.value.map((n) => n.paint));
+    if (say) sayMatches();
     return true;
   } catch (e) {
     reportError(e);
@@ -324,7 +350,7 @@ async function match() {
       <div ref="grid" class="colors__grid" role="group" :aria-label="t('colors.paints')" :aria-busy="searching" @keydown="onGridKey">
         <q-btn
           v-for="p in rows" :key="p.id" flat no-caps unelevated class="chip" :class="{ 'chip--on': chosenId === p.id }"
-          v-tooltip="p.displayName" :aria-label="chipName(p)" :aria-pressed="chosenId === p.id ? 'true' : 'false'"
+          v-tooltip="chipName(p)" :aria-label="chipName(p)" :aria-pressed="chosenId === p.id ? 'true' : 'false'"
           :tabindex="stopId === p.id ? 0 : -1" :disable="!house.selectedPart" @focus="focusedId = p.id" @click="choose(p)"
         >
           <span class="chip__body">
@@ -353,7 +379,7 @@ async function match() {
       </q-form>
       <p v-if="picked" class="hint">{{ t("colors.exact.picked") }}</p>
       <!-- a search that found nothing says so where its matches would be (it was said to a screen reader alone) -->
-      <p v-if="matchedHex && !nearest.length" class="muted">{{ t("colors.exact.none", { hex: matchedHex }) }}</p>
+      <p v-if="matchedHex && !nearest.length" class="muted colors__none">{{ t("colors.exact.none", { hex: matchedHex }) }}</p>
       <q-list v-if="nearest.length" class="colors__nearest" dense>
         <q-item v-for="n in nearest" :key="n.paint.id" clickable class="nearest" :disable="!house.selectedPart" @click="choose(n.paint)">
           <q-item-section avatar class="nearest__swatch"><span class="nearest__color" :style="{ background: n.paint.hex }" /></q-item-section>

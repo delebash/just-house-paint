@@ -1,7 +1,7 @@
 {
   "kit": {
     "dataManagement": {
-      "hint": "Saves everything — your houses with their photos and outlines, the designs, the settings and your AI providers' keys — in one file, and restores it. Keep the file as you would a password: the keys are in it.",
+      "hint": "Saves your houses with their photos and outlines, the designs, the paint colors, the settings and your AI providers' keys in one file, and restores it — not the access tokens, nor the engines and AI models (they download again). Keep the file as you would a password: the keys are in it.",
       "reset": {
         "message": "Wipes ALL data — your houses with their photos and designs, the paint colors, the settings and the AI providers — and starts again as on the first start. The installed engines and AI models stay.",
         "hint": "Wipes every house, design, paint color and setting, and starts again as on the first start; the installed engines and AI models stay. Take a backup first."
@@ -559,11 +559,15 @@
     "more": "{n} more",
     "note": "Colors on a screen are close to the paint, never the same: check a real paint chip before you buy. Brand names belong to their owners; this app isn't connected to any of them.",
     "moreActions": "More actions for {brand}",
+    "leftOut": "{n} {brand} colors came in; some of the file was left out",
+    "leftOutMore": "{shown}; and {more} more",
     "fileOnly": "From its palette file"
   },
   "jobs": {
     "failed": "The work stopped with an error.",
     "gone": "The app's server started again, and this work stopped. Start it again.",
+    "endedAway": "This work ended while the app wasn't looking, without finishing. Start it again.",
+    "cancelledAway": "This work was cancelled while the app wasn't looking.",
     "percent": "{n}%"
   },
   "colorCard": {

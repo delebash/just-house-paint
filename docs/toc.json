@@ -4,7 +4,8 @@
     "items": [
       { "slug": "getting-started", "title": "Getting started" },
       { "slug": "your-houses", "title": "Your houses" },
-      { "slug": "finding-parts", "title": "Finding the parts" }
+      { "slug": "finding-parts", "title": "Finding the parts" },
+      { "slug": "settings", "title": "App Settings" }
     ]
   },
   {

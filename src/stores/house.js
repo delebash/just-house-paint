@@ -9,7 +9,7 @@
 // window changed since is refused (412) and the page reads them again.
 import { del, get, patch as patchJson, post, request } from "@delebash/ui";
 import { defineStore } from "pinia";
-import { jobGone, runServerJob } from "../services/jobs.js";
+import { jobEndedAway, runServerJob } from "../services/jobs.js";
 
 const hp = (id, rest = "") => `/v1/houses/${encodeURIComponent(id)}${rest}`;
 
@@ -213,7 +213,7 @@ export const useHouseStore = defineStore("house", {
         // it ended while the window was away (done: read quietly, as if followed to the end), or the server started
         // again: its parts are read as they are (the run may have saved before), then said
         if (e?.name === "JobEnded" && e.state === "done") gone = null;
-        else if (e?.name === "JobGone" || e?.name === "JobEnded") gone = e.name === "JobGone" ? e : jobGone();
+        else if (e?.name === "JobGone" || e?.name === "JobEnded") gone = e.name === "JobGone" ? e : jobEndedAway(e.state);
         else throw e;
       }
       // another house opened meanwhile: this one's parts are on the server, read when it opens again
@@ -373,7 +373,7 @@ export const useHouseStore = defineStore("house", {
         if (renders && this.house?.id === id) this.renders = renders;
         // made while away: the newest one is it
         if (e.name === "JobEnded" && e.state === "done" && renders?.length) return renders[0];
-        throw e.name === "JobEnded" ? jobGone() : e;
+        throw e.name === "JobEnded" ? jobEndedAway(e.state) : e;
       }
       // kept with its house on the server; listed here only while that house is open
       if (this.house?.id === id) this.renders = [render, ...this.renders];

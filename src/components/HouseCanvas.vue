@@ -131,6 +131,7 @@ watch(
     fitToStage();
     active = null;
     panFrom = null;
+    pointer.value = null; // the brush's ring was left at the old photo's place
     boxing.value = null;
     drawing.value = null;
     aim.value = null;

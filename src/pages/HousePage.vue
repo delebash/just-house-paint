@@ -218,6 +218,16 @@ async function confirmLeave() {
   return confirmDialog({ title: t("designs.discard.title"), message: t("house.leave.message"), confirmLabel: t("house.leave.confirm") });
 }
 onBeforeRouteLeave(confirmLeave);
+// closing the window, a reload or Quit with such colors: asked first too (the HTML standard's beforeunload — a browser
+// asks in its own words; the desktop app's shell shows its box on Electron's will-prevent-unload) — they were
+// dropped silently (the eighteenth review)
+function onBeforeUnload(e) {
+  if (!house.house || !house.dirty || !Object.keys(house.colors).length) return;
+  e.preventDefault();
+  e.returnValue = "";
+}
+window.addEventListener("beforeunload", onBeforeUnload);
+onBeforeUnmount(() => window.removeEventListener("beforeunload", onBeforeUnload));
 onBeforeRouteUpdate((to, from) => (to.params.id !== from.params.id ? confirmLeave() : true));
 watch(
   () => route.params.id,

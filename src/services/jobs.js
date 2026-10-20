@@ -30,9 +30,18 @@ export function jobGone() {
   return Object.assign(new Error(message), { name: "JobGone", status: 404, problem: { title: message, detail: "" }, errors: [], requestId: null });
 }
 
+/** A job that ended unseen without finishing — failed or cancelled while the window was away (asleep): said as
+ *  that, never as "the server started again", which it didn't (the eighteenth review). */
+export function jobEndedAway(state) {
+  const message = i18n.global.t(state === "cancelled" ? "jobs.cancelledAway" : "jobs.endedAway");
+  return Object.assign(new Error(message), { name: "JobEnded", state, status: 410, problem: { title: message, detail: "" }, errors: [], requestId: null });
+}
+
 /** The job ended a while ago and the server forgot it (410 — a window asleep through it): `state` says how; the
  *  caller reads what it left (a find's parts, the AI photo kept). */
 export function jobEnded(state) {
+  // failed or cancelled unseen: in words, wherever it surfaces (an install or a brand's load showed "ended: failed")
+  if (state !== "done") return jobEndedAway(state);
   return Object.assign(new Error(`ended: ${state}`), { name: "JobEnded", state });
 }
 

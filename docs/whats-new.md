@@ -5,50 +5,58 @@
 - **On a Mac, coming from v0.1.2: save your data before you replace the app.** v0.1.2 kept your houses
   inside the app (`Just House Paint.app/Contents/MacOS/data`), and replacing the app removes them. Before
   you replace it, make a backup (**App Settings → Backups → Export backup**) and restore it in the new
-  version. Or: quit the app, Control-click it, choose **Show Package Contents**, open `Contents/MacOS`,
+  version — a backup doesn't hold the part finder and the AI photo: install them again. Or keep everything, the
+  engines too: quit the app, Control-click it, choose **Show Package Contents**, open `Contents/MacOS`,
   and move the `data` folder into `Library/Application Support` (in Finder, **Go → Go to Folder…** and type
   `~/Library/Application Support`), then rename it `JustHousePaint` — if a `JustHousePaint` folder is
   already there (the new version was opened first), quit the app and put yours in its place. From this
   version on, your data stays outside the app.
 - **Behind a reverse proxy, or under another name for your computer** (Caddy, nginx, `tailscale serve`):
-  name its address in `JUST_HOUSE_PAINT_ALLOWED_HOSTS` and give each device an access token, or the
-  server refuses it — see [On another computer, or without a window](getting-started.md#on-another-computer-or-without-a-window).
+  name its address in `JUST_HOUSE_PAINT_ALLOWED_HOSTS`, or the server refuses it; keep an access token on, and
+  turn on **Require a token on this computer too** or have the proxy send `X-Forwarded-For` (Caddy does) — see
+  [On another computer, or without a window](getting-started.md#on-another-computer-or-without-a-window).
 - **Several windows at once** — the desktop app, a browser on another computer, a phone: what one
-  changes shows in the others within seconds (**App Settings → General → Other windows**), two painting
+  saves shows in the others within seconds (**App Settings → General → Other windows**), two painting
   different parts of one design keep both, and a stroke, a Box or a part added on outlines another window
   has just changed is refused and the house shown as it is now — never one window's work saved over the
   other's.
 - **Restoring a backup is all or nothing**: if it can't finish — a file in the app's data open in another
-  program, say — it says so and your data is as it was (work that was running, like finding parts, stops);
-  in the rare case it can't even put your data back while it runs, it asks you to restart the app, which puts
-  it back as it starts. While it runs, other windows' changes are refused; then they show the restored houses.
-  **A backup** can be made while you or another window keep working.
-- **Left open for days**: a window that is minimized or hidden asks the server only about work it is waiting
-  for (a part search, an AI photo, a download); the app checks for
-  updates every few hours and when the computer wakes; the server started again (the tray's **Restart
-  server**) no longer refuses your next stroke; a part search or an AI photo survives a moment without the
-  network, and one that ended while the computer slept shows its result when it wakes; a token removed in
+  program, say — it says so and your data is as it was; in the rare case it can't even put your data back while
+  it runs, it asks you to restart the app, which puts it back as it starts. Once it starts replacing the data,
+  work that was running (finding parts, an AI photo, a download) stops. While it runs, other windows' changes are
+  refused; then they show the restored houses. **A backup** can be made while you or another window keep working.
+- **Left open for days**: a window that is minimized or hidden stops looking for other windows' changes and asks
+  the server only about work it is waiting for (a part search, an AI photo, a download) — **AI Settings**, while
+  it's open, still watches its engine; the app checks for updates every 6 hours and when the computer wakes; the
+  server started again (the tray's **Restart server**) no longer refuses your next stroke; a part search or an AI
+  photo survives a moment without the network, and one that ended while the computer slept says how it ended when
+  it wakes — its result, or "This work ended while the app wasn't looking" (start it again); a token removed in
   **App Settings → Server** brings the window to the token page.
-- **On a small screen** the window is never taller or wider than the screen.
+- **On a small screen** the window never opens taller or wider than its screen.
 - **Change folder…** (**App Settings → Storage**) copies the data into a new folder for the app inside the one you
   pick, checks the copy and only then switches — your old folder is left whole. Storage shows the old copy and its
-  size, with **Remove the old copy** (it says so first if the old copy was used after the move). Quitting waits
-  while the data copies; a folder inside the app's own folder, which an update replaces, is refused; **Move back
-  to the default folder** returns it; an access token you use on this computer comes along. When
-  `JUST_HOUSE_PAINT_DATA_DIR` names the folder, Storage says to change it there.
+  size, with **Remove the old copy** (it says so first if the old copy was used after the move); an old copy it
+  can't find is **Not found**, with **Forget**. Quitting and closing the window are held while the data copies (it
+  says so), and the app restarts on the new folder; a folder inside the app's own folder, which an update replaces,
+  is refused; **Move back to the default folder** returns it; an access token you use on this computer comes along.
+  When `JUST_HOUSE_PAINT_DATA_DIR` names the folder, Storage says to change it there. See
+  [Storage](settings.md#storage).
 - **On more computers**: the part finder and the AI photo say what a computer lacks before anything downloads —
   Microsoft's Visual C++ runtime (with its link), macOS 26 or a newer Linux for the AI photo, room on the drive,
   enough memory — and an engine an antivirus damaged says so instead of failing; a data folder on a USB stick or
   a network drive that isn't there is said at start, with **Use the default folder** for that time only (and
   **Use the default folder from now on** in **App Settings → Storage**); behind most company
-  networks' proxies and certificates, downloads and brand lists work; two people signed in to one computer no longer
-  stop each other's app; the photo stays sharp moved to another screen; a pen or a finger draws one stroke at a
-  time; a comma works as the decimal point; paint search ignores accents; a saved picture's file name never holds
-  characters Windows refuses.
+  networks' proxies and certificates, downloads and brand lists work (the desktop app passes the system's proxy on;
+  a server started on its own takes `HTTPS_PROXY`); two people signed in to one computer no longer stop each other's
+  app (still, one of them at a time has it open); the photo stays sharp moved to another screen; a pen or a finger
+  draws one stroke at a time; a comma works as the decimal point in a box that takes fractions; paint search
+  ignores accents; a saved picture's file name never holds characters Windows refuses.
 - **Easier to read and use**: the house cards in the dark theme, a switch that is off, the Parts tab's
   paint names, the Colors tab's swatches; **Remove the color**; a scheme that can't be made from a
-  gray says why; the house page fits a 960 × 700 window with nothing to scroll; tabs that don't fit
+  gray says why; the house page fits half a 1920 px screen with nothing to scroll; tabs that don't fit
   scroll with arrows instead of taking a second row; a part with no color shows a **No color** swatch.
+- **Nothing unsaved goes by accident**: closing the window, a reload or Quit with colors that aren't saved in a
+  design asks first.
 - **A dark wall painted light looks freshly painted.** Stained wood or a dark paint painted much
   lighter no longer shows the old finish's blotches and grain; the lines between the boards and the
   shadows stay. With **On it now** set, the app goes by that paint to tell a dark finish from a light
@@ -58,17 +66,19 @@
 - **Trim** now takes the casings around the front door and the garage door, and no longer a fence's
   end board beside the house.
 - **Only your house is painted**: the finder no longer finds windows, doors, soffits and trim on a
-  neighbor's house in the photo.
+  neighbor's house in the photo, when it recognizes yours.
 - **The AI photo says when other programs slowed it**: under its time, the programs that held the
-  graphics card when it started, and how much.
-- **Linux**: the AppImage opens on Ubuntu 24.04 with nothing to install — before, its
+  graphics card when it started, and how much (on Windows, and on Linux with an NVIDIA card).
+- **Linux**: the AppImage opens on Ubuntu 24.04 with nothing to install — before, it asked for FUSE, and its
   server didn't start.
 - **The part finder's card says when it can't run** on the computer, before anything is downloaded.
 - **Deleting a house** right after finding its parts no longer stops halfway.
 - **Clearer at every step**: the parts stay listed when the part finder is removed; a search that
   finds nothing says so; on the first start the Colors and Schemes tabs say the brands are loading
   and pick one as it lands; a design name the house already has is shown under the name; an iPhone's
-  HEIC photo gets words that say what to do; a failed AI photo, download or search says which.
+  HEIC photo gets words that say what to do; a failed AI photo, download or search says which; an imported palette
+  file says how many colors came in and what it left out; a house's card shows when anything of it last changed —
+  its parts, outlines, designs or AI photos.
 - **By keyboard**: a ring shows where you are; the paint colors are one stop for Tab (the arrow
   keys move between them); the arrow keys move a zoomed photo; with **Box** or **Pick a color** chosen they
   move a crosshair on the photo and **Enter** sets a box's corners or reads the color; the arrow keys pick in
@@ -80,16 +90,18 @@
   buttons beside **+**, **−** and **Fit** move it.
 - **Easier to see**: in the dark theme, the text on buttons and on warnings; the edges of fields; which choice is
   chosen in a row of choices (**The new color | On it now**); slow-computer notes as warnings, not errors; a long
-  path wraps; the Compare slider has its label (**Line**); the side panel opens each tab at its top.
-- **Number boxes** take what you type as you type it — ".7", "15.", "1 500", a comma as the decimal point — and a
-  number that isn't allowed stays in the box with what's wrong, never erased.
+  path wraps in messages and in Storage; the Compare slider has its label (**Line**); the side panel opens each tab
+  at its top.
+- **Number boxes** in App Settings take what you type as you type it — ".7", "15.", "1 500", a comma as the decimal
+  point — and a number that isn't allowed stays in the box with what's wrong, never erased; a slider's box keeps to
+  the slider's range.
 - **Safer on your network**: a web page open in your browser can't read or change the app's server
   any more; a backup no longer holds the access tokens, and a restore keeps this computer's own (and
-  its engines' settings). See [On another computer, or without a window](getting-started.md#on-another-computer-or-without-a-window)
-  and [Backups](getting-started.md#backups).
+  where its AI engine and models are). See [On another computer, or without a window](getting-started.md#on-another-computer-or-without-a-window)
+  and [Backups](settings.md#backups).
 - **The server on its own on macOS and Linux** too, and **Copy** works in a browser on another computer.
-- **The window's smallest size is 960 × 700** — half a 1920 px screen, where the house page fits
-  with nothing to scroll (it was 800 × 600, which left the photo a thumbnail).
+- **The window's smallest size is 960 × 700** — half a 1920 px screen wide; snapped to that half of the screen,
+  the house page fits with nothing to scroll (at 800 × 600, the old smallest size, the photo was a thumbnail).
 - **Your data stays outside the app on macOS and Linux**: on a Mac in Library/Application Support
   (never inside the app, which an update replaces — coming from v0.1.2, see the first point above), and the
   AppImage and its server on its own share one folder. **Require a token on this computer too** no longer leaves the window unable to do anything.
@@ -97,15 +109,17 @@
   first **Find the parts** or **AI photo** no longer fails.
 - **Quicker with big photos**: **Texture** applies when you let go (about four times faster);
   **Save image** works in the background — the window stays responsive — and saves at most 16 megapixels,
-  as the AI photo works (**App Settings → General → Photos**); a backup goes straight to disk however many
-  photos it holds.
+  as the AI photo works (**App Settings → General → Photos**); in the desktop app a backup goes straight to its
+  file however many photos it holds.
 - A page opened or reloaded while the parts are found or an AI photo is drawn follows that work; a brand
   reloaded or removed takes its colors with it; a photo with transparency shows white there everywhere; a
-  photo too big for the app says its size.
+  photo too big for the app says which limit it passed.
 - A house whose parts were found before keeps them: **Find the parts again** (with **Keep the parts
-  you changed by hand** ticked) gives it the new ones. A part you changed by hand stays as you drew
-  it — if that is **Trim**, the door casings go with the walls: untick **Keep**, or add them to Trim
-  with a **Box**.
+  you changed by hand** ticked) gives it the new ones — a box marks only the part it gives to as changed by hand.
+  A part you changed by hand stays as you drew it — if that is **Trim**, the door casings go with the walls:
+  untick **Keep**, or add them to Trim with a **Box**.
+- **Help for every screen**: each App Settings section ([App Settings](settings.md)), AI Settings, the tray, the
+  server's command line, and the messages you may meet ([Troubleshooting](troubleshooting.md)).
 
 ## v0.1.2
 

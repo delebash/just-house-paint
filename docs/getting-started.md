@@ -13,34 +13,43 @@ Download the installer for your computer from the app's
 The installers aren't signed with a publisher's certificate yet, so the first time:
 
 - **Windows** says "Windows protected your PC": press **More info**, then **Run anyway**.
-- **macOS** says the app can't be opened: Control-click it in Applications and choose **Open**, or
-  press **Open Anyway** in System Settings → Privacy & Security. If it says the app "is damaged",
-  run `xattr -cr "/Applications/Just House Paint.app"` in Terminal once, then open it.
+- **macOS** says the app can't be opened. On macOS 15 and later: open **System Settings → Privacy & Security**,
+  go to **Security** and press **Open Anyway** (it's there for about an hour after you try to open the app), then
+  enter your password. On macOS 14 and earlier: Control-click the app in Finder and choose **Open**. If it says the
+  app "is damaged", run `xattr -cr "/Applications/Just House Paint.app"` in Terminal once, then open it.
 - **Linux**: make the `.AppImage` executable (`chmod +x`) and run it — nothing else to install. Where the
   system keeps an AppImage out of Chromium's sandbox (Ubuntu 24.04 and later), the app's window runs without
   it; the window shows only the app's own pages.
-- **Windows with Smart App Control on** (some new Windows 11 computers) blocks the app with no **Run anyway**:
-  its files aren't signed yet. It runs there once Smart App Control is off (Windows Security → App & browser
-  control → Smart App Control) — Windows can't turn it back on without being reset, so choose knowingly.
+- **Windows with Smart App Control on** (some new Windows 11 computers) blocks the app with no **Run anyway**, and
+  it can't let one app through on its own: the app's files aren't signed yet. It runs once Smart App Control is off
+  (Windows Security → App & browser control → Smart App Control). With recent Windows updates you can turn it back
+  on in the same place; before them, turning it back on took a clean install of Windows.
 
 **What it needs:**
 
 - **Windows** 10 or 11, 64-bit. The part finder and the AI photo also need Microsoft's Visual C++
   Redistributable (2015–2022), which most computers have; where it's missing, they say so before anything
-  downloads and name Microsoft's download (then open the house again). On Windows for ARM the app runs, and the AI photo works on the
-  processor only (slow).
+  downloads and name Microsoft's download (then open the house again). On Windows for ARM the app runs, and the AI
+  photo works on the processor only (slow).
 - **macOS** on Apple silicon (M1 and later). The AI photo needs macOS 26 or later.
 - **Linux**: Ubuntu 22.04 or newer (or a system as recent). The AI photo needs Ubuntu 24.04 or newer
   (glibc 2.38).
-- For the AI photo: 12 GB of memory with a graphics card of its own, 16 GB on a Mac or with the processor's own
-  graphics; on an 8 GB NVIDIA card it takes about 20 seconds (see [The AI photo](ai-photo.md)). Before the 9 GB
-  download the app says what the computer lacks — the system, the memory, the room on the drive.
-- Room on the data folder's drive: about 3.6 GB free for the part finder, 10 GB for the AI photo (the app checks
-  before it downloads).
+- **For the AI photo**: 12 GB of memory with a graphics card of its own, 16 GB on a Mac or with the processor's own
+  graphics — with less, the card says it may be very slow or not finish — and about 8 GB of the graphics card's own
+  memory (the app doesn't check that one). It is quickest on Windows with an NVIDIA card: about 20 seconds on an
+  8 GB card. Other graphics cards — AMD, Intel, Apple silicon, and NVIDIA on Linux — run a slower build, and the
+  card says one picture may take several minutes; without a graphics card it takes about ten minutes. See
+  [The AI photo](ai-photo.md).
+- **Room on the data folder's drive**, as the app counts it: 3.4 GB for the part finder (**Install (3.1 GB)**);
+  for the AI photo 9.5 GB on Windows with an NVIDIA card (**Install (9.0 GB)**) and about 8.5 GB on most other
+  computers (**Install (8.2 GB)**), up to 9.7 GB with an AMD card on Linux. The app checks before it downloads,
+  and says what the computer lacks — the system, the memory, the room on the drive.
 
-**Updates:** the app looks for a new version each time it starts. **App Settings → Updates** shows
-it: **Download** fetches it, and it installs when you quit the app (or press **Restart now**). On a
-Mac, Updates offers **Open the release page**, to download it from there.
+**Updates:** the app looks for a new version when it starts, every 6 hours, and shortly after the computer wakes.
+**App Settings → Updates** shows it: **Download** fetches it, and it installs when you quit the app (or press
+**Restart now**). With **Keep server running after the app closes** on, closing the window only hides it: the update
+installs when you quit from the tray. On a Mac, Updates offers **Open the release page**, to download it from there.
+See [Updates](settings.md#updates).
 
 ## The first time
 
@@ -48,11 +57,12 @@ Mac, Updates offers **Open the release page**, to download it from there.
    in daylight, with the whole house in the frame works best. See [Your houses](your-houses.md).
 2. **Install the part finder.** The house opens on its **Parts** tab, which offers the part finder:
    press **Install (3.1 GB)** — a download, once. See [Finding the parts](finding-parts.md).
-3. **Find the parts.** Press **Find the parts**. It takes under a minute.
-4. **Paint colors load by themselves.** The first time the app starts, it loads seven brands'
-   colors from their sites (about 17,000 colors, a few seconds each — the stack at the bottom right
-   shows them). **Paint colors** in the sidebar lists them and turns a brand off. See
-   [Paint colors](paint-colors.md).
+3. **Find the parts.** Press **Find the parts**. It takes about a minute on Windows with a graphics card, longer
+   on macOS and Linux, where it runs on the processor.
+4. **Paint colors load by themselves.** When the app opens, it loads each brand that has no colors here yet,
+   one after another — the first time, seven brands, about 17,000 colors, a few seconds each (the stack at the
+   bottom right shows them). **Paint colors** in the sidebar lists them; turn **Load automatically** off for a brand
+   you don't want loaded. See [Paint colors](paint-colors.md).
 5. **Paint.** Select a part, pick a color on the **Colors** tab, and see it at once. Save the colors
    you like as a design. See [Painting your house](painting.md).
 
@@ -63,13 +73,26 @@ Mac, Updates offers **Open the release page**, to download it from there.
   **Colors**, **Schemes** and **Designs** beside it.
 - **Paint colors** — the brands' colors on this computer.
 - **AI Settings** — the AI model the color-scheme suggestions use. See [Set up the AI](ai-providers.md).
-- **App Settings** — **General** (photos, designs, the part finder, the AI photo, other windows), **Advanced**
-  (the same settings' structured parts), then **Appearance** (theme, font, size, language),
-  **Backups**, **Storage** (the space each part takes, and **Change folder…** to move the data),
-  **Server** (its address and the command that starts it on its own, keeping it running in the tray
-  when the window closes, access tokens — **Copy the address with this token** gives an address that
-  signs a browser in), **Logs**, **Updates** and **About**.
-- The button at the top right of the title bar switches the theme: light, dark, or the system's.
+- **App Settings** — **General** and **Advanced** (the app's settings), **Appearance**, **Backups**, **Storage**,
+  **Server**, **Logs**, **Updates** and **About**. See [App Settings](settings.md).
+- **The title bar** — the arrows at its left go back and forward; at its right, the theme button switches the
+  theme (the system's, light, dark), and the **AI tasks** button beside it shows the work running and what failed —
+  see [The AI tasks panel](ai-providers.md#the-ai-tasks-panel).
+- **Help** — the **?** beside a page's title opens that page's help.
+
+## The tray
+
+The desktop app has an icon in the system tray (on a Mac, the menu bar). Clicking it shows or hides the window. Its
+menu: **Show window**, **Hide window**, **Start server**, **Stop server**, **Restart server**, **Open settings**,
+**Copy server URL** (the address a browser on this computer opens), **Open log file**, **About Just House Paint** and
+**Quit Just House Paint**.
+
+- **Stop server** leaves the window on "Can't reach the Just House Paint server" — its **Retry** doesn't start it
+  again — until you press **Start server** (or **Restart server**).
+- **Restart server** stops the work that was running (finding parts, an AI photo, a download); start it again.
+- The server items are off while the data folder is being moved.
+- Closing the window quits the app, unless **Keep server running after the app closes** is on
+  (**App Settings → Server**): then the window hides and the server keeps running — **Quit Just House Paint** quits.
 
 ## On another computer, or without a window
 
@@ -94,64 +117,66 @@ listening on your network:
    (`http://<its address>:17499/…`). The address: Windows `ipconfig` ("IPv4 Address"), macOS
    `ipconfig getifaddr en0`, Linux `hostname -I`.
 
-The server started on its own uses the same data folder as the desktop app. Opening the desktop app
-stops it and takes over (what it was doing stops too). Updates come through the desktop app — in a
-browser, **App Settings → Updates** shows the version and what's new.
+The server started on its own uses the same data folder as the desktop app, and has no tray: **Ctrl+C** in its
+terminal stops it. Opening the desktop app stops it too and takes over (what it was doing stops) — when it runs on
+the usual port, 17499, and was started by the same user on this computer; otherwise the desktop app says another
+server is using the data folder. Updates come through the desktop app — in a browser, **App Settings → Updates**
+shows the version and what's new.
 
 Several windows can use one server at once — the desktop app and a browser, two browsers, a phone. What
-one changes shows in the others by itself within a few seconds (**App Settings → General → Other
-windows** sets how often they look). Two people painting different parts of one design keep both. If
-one changes a house's outlines (a brush stroke, a Box, a part added, Find the parts) just as the other
+one saves shows in the others by itself within a few seconds (**App Settings → General → Other
+windows** sets how often they look; a window waits while one of its dialogs is open or you type in a field). The
+colors you pick show in the others once you save the design; two people painting different parts of one design
+keep both. If one changes a house's outlines (a brush stroke, a Box, a part added, Find the parts) just as the other
 does, the later one is refused — "This house was changed in another window" — and the house is shown as it is
-now: draw it again.
+now: draw it again. While another window is finding the house's parts, a stroke or a Box says "The parts are being
+found": wait for it to finish.
 
-Behind a reverse proxy on the same computer (Caddy, nginx, `tailscale serve`), name its public address
-in `JUST_HOUSE_PAINT_ALLOWED_HOSTS` (`paint.example.com`; several with commas) — the server answers
-requests from its own computer only under its own names, so a web page can't reach it by renaming
-itself — and keep an access token on: requests through a proxy always need one.
+**Behind a reverse proxy on the same computer** (Caddy, nginx, `tailscale serve`): name its public address in
+`JUST_HOUSE_PAINT_ALLOWED_HOSTS` (`paint.example.com`; several with commas) — the server answers requests from its
+own computer only under its own names, so a web page can't reach it by renaming itself; until the name is there, the
+browser shows the token page and no token is accepted. Keep an access token on, and make sure a request through the
+proxy needs it: the server can't tell a proxy from a browser on this computer unless the proxy says so. Either
+turn on **Require a token on this computer too** (**App Settings → Server**), or have the proxy send
+`X-Forwarded-For` — Caddy sends it; in nginx add `proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;`.
+
+## The command line
+
+`just-house-paint-server serve` takes these options (`npm run server` in a source checkout):
+
+- `--host` — the address it listens on: `127.0.0.1` (this computer only) unless you name another; `0.0.0.0` is
+  every network the computer is on.
+- `--port` — `17499` unless you name another.
+- `--data-dir` — the data folder; it must already exist (one that isn't there is refused, never made). Without it,
+  the folder the desktop app uses.
+- `--log-level` — `debug`, `info` (the default), `warning` or `error`: how much it writes to its log.
+
+Each option can also be a variable — `JUST_HOUSE_PAINT_HOST`, `JUST_HOUSE_PAINT_PORT`, `JUST_HOUSE_PAINT_DATA_DIR`,
+`JUST_HOUSE_PAINT_LOG_LEVEL` (the option wins). `JUST_HOUSE_PAINT_DATA_DIR` set for the desktop app moves its data
+folder too (see [Storage](settings.md#storage)). `JUST_HOUSE_PAINT_ALLOWED_HOSTS` names a reverse proxy's
+addresses (above).
+
+Behind a company proxy, the desktop app hands the system's proxy to its server by itself. A server started on its
+own uses only the `HTTPS_PROXY` and `HTTP_PROXY` variables (and `NO_PROXY`); a SOCKS proxy isn't supported. Both
+trust the certificates the computer trusts.
+
+One server per data folder: a second one says "Another Just House Paint server is using this data folder … — stop
+it first" (after 10 to 15 seconds), or give it its own `--data-dir`.
 
 ## Backups
 
-**App Settings → Backups** saves everything — your houses, their photos and outlines, designs,
-settings and your AI providers' keys — in one file, and restores it. Keep the file as you would a
-password: the keys are in it. The access tokens are not, and a restore keeps this computer's own
-(and its downloaded engines' settings). A backup can be made while you or another window keep working. A
-restore is all or nothing: while it runs, other windows' changes are refused (try them again after), and then
-they show the restored houses; if it can't finish, your data is as it was — work that was running (finding
-parts, an AI photo) stops. In the rare case it can't even put your data back while it runs, it asks you to
-restart the app, which puts it back as it starts. **Export backup…** makes the file, **Import backup…** restores
-one.
-
-**Reset…** (under **Reset Just House Paint**, below the backups) wipes every house, design, paint color and setting, and starts
-again as on the first start — the installed engines and AI models stay. It asks you to type a word first; make a
-backup before it.
+**App Settings → Backups** saves your houses, their photos and outlines, designs, paint colors, settings and your
+AI providers' keys in one file, and restores it — keep the file as you would a password. The access tokens are not
+in it, nor the downloaded engines and models. See [Backups](settings.md#backups), and
+[Reset Just House Paint](settings.md#reset-just-house-paint) to start again.
 
 ## Everything stays on your computer
 
-Your photos, designs and colors stay in the app's data folder (App Settings → Storage). Nothing is
-uploaded unless you choose an online AI provider in AI Settings.
-
-**Where to keep the data folder.** **Change folder…** copies it into a new folder named **Just House Paint**
-inside the folder you pick (what else is in that folder is never touched; the question names the new folder),
-after checking the drive has room, and the app restarts on it. A folder inside the app's own folder is refused
-— an update or an uninstall replaces that folder. The old folder keeps its copy: **App Settings → Storage**
-shows it with its size, and **Remove the old copy…** deletes what the move copied there (nothing else in that
-folder, and never the folder the app uses; it names the apps that share this app's AI models); if the app ran on
-the old copy after the move, Storage says when it was last changed — move what you need out of it first. An old
-copy on a drive that isn't plugged in is listed as **Not connected**. When the app runs on an old copy, or on the
-default folder this time because the data's folder can't be used, Storage says where your data is — connect it and
-restart, or **Use the default folder from now on…**; once that folder is there again, restart the app to use it; when
-the `JUST_HOUSE_PAINT_DATA_DIR` variable names the old copy, change the variable to the folder Storage names — and
-**Change folder…** isn't shown. **Move back to the default folder…**
-brings the data back where the app keeps it by default (once any old copy there is removed). When the folder is set
-by the `JUST_HOUSE_PAINT_DATA_DIR` variable, Storage says so and **Change folder…** isn't shown — change the variable
-instead. While the data is being copied the app can't be quit (it says so); if the computer stops midway, the
-half-made copy is removed at a later start and the data is where it was. Best on a drive
-inside the computer: a folder synced by OneDrive, Dropbox or another sync service can hold the app's files
-while they are written, and OneDrive's "files on demand" leaves the 12 GB of models online-only, so the
-engines fail without the network; a network drive or a USB stick works only while it is there. A FAT32 USB
-stick can't hold the AI photo's model (over 4 GB) — the move stops and says so. Pick a folder with a short path
-(the app's folder in it can be at most 180 characters long) — some parts of the engines can't open longer ones.
+Your photos, designs and colors stay in the app's data folder (**App Settings → Storage**). Nothing is
+uploaded unless you choose an online AI provider in AI Settings — and that provider gets your house's colors as
+text and the words you add, never the photo. The app does go online to download: the brands' color lists, the
+part finder, the AI photo, AI models, and its updates. Where the data folder is, and how to move it:
+[Where to keep the data folder](settings.md#where-to-keep-the-data-folder).
 
 > Colors on a screen are never exactly the paint. Check a real paint sample on your house before
 > you buy.
