@@ -111,12 +111,13 @@ export function preparePart({ Y, mask, width, height, texture = 1, blurRadius = 
   return { mask, base, texture, blurred, radius, pixels: inside.length, Y, width, height, calmY, exposure };
 }
 
-/** The photo's bright end: the 99th percentile of its luminance (a sample of it) — the sky, white trim. */
+/** The photo's bright end: the 95th percentile of its luminance (a sample of it) — the sky, white trim. Not
+ *  the 99th: a dim photo's lamps or lit windows (1% of it) moved that, and the light houses read dark. */
 export function photoExposure(Y) {
   const step = Math.max(1, Math.floor(Y.length / 200_000));
   const sample = [];
   for (let i = 0; i < Y.length; i += step) sample.push(Y[i]);
-  return Math.max(1e-4, percentile(sample, 99));
+  return Math.max(1e-4, percentile(sample, 95));
 }
 
 /** CIE L* (0–100) of a relative luminance. */
@@ -253,15 +254,16 @@ function coarseBlur(fields, mask, w, h, f, radius) {
   });
 }
 
-/** How much of `part`'s old finish paint `hex` (in the light `gain`) hides: 0 for a light finish or a
- *  paint not much lighter than it, up to 1 for a dark one painted light (CALM). */
-export function calmStrength(part, hex, gain = [1, 1, 1]) {
-  const [r, g, b] = paintLinear(hex);
-  // against the photo's own bright end: a light house photographed dark stays a light finish
-  const finish = lstar(Math.min(1, part.base / (part.exposure || 1)));
+/** How much of `part`'s old finish paint `hex` hides: 0 for a light finish or a paint not much lighter
+ *  than it, up to 1 for a dark one painted light (CALM). The finish is the paint the part has now
+ *  (`current`, #rrggbb) when its owner said so — exact, whatever the photo's light — else read from the
+ *  photo against its bright end (a light house photographed dark stays a light finish). Both are compared
+ *  as normally lit paints, never as this photo's exposure shows them. */
+export function calmStrength(part, hex, current = null) {
+  const finish = current ? lstar(lum(...paintLinear(current))) : lstar(Math.min(1, part.base / (part.exposure || 1)));
   const dark = 1 - smoothstep(CALM.dark[0], CALM.dark[1], finish);
   if (dark <= 0) return 0;
-  return dark * smoothstep(CALM.lighter[0], CALM.lighter[1], lstar(lum(r * gain[0], g * gain[1], b * gain[2])) - finish);
+  return dark * smoothstep(CALM.lighter[0], CALM.lighter[1], lstar(lum(...paintLinear(hex))) - finish);
 }
 
 /** The part's calmed lighting, computed the first time a paint needs it and kept with the part. */
@@ -282,13 +284,13 @@ function calmed(part) {
 }
 
 /**
- * How lit each pixel of `part` is for paint `hex` (in the light `gain`), as a function of the pixel
- * index: its lighting ÷ the part's normally lit level — the photo's own, through the texture
- * setting, with the old finish calmed by calmStrength.
+ * How lit each pixel of `part` is for paint `hex` (on a part whose paint now is `current`), as a function
+ * of the pixel index: its lighting ÷ the part's normally lit level — the photo's own, through the
+ * texture setting, with the old finish calmed by calmStrength.
  */
-export function partLight(part, hex, gain = [1, 1, 1]) {
+export function partLight(part, hex, current = null) {
   const { Y, base, texture, blurred } = part;
-  const s = calmStrength(part, hex, gain);
+  const s = calmStrength(part, hex, current);
   if (s <= 0) return blurred ? (i) => (texture * Y[i] + (1 - texture) * blurred[i]) / base : (i) => Y[i] / base;
   const cal = calmed(part);
   const level = base ** (1 - s) * cal.base ** s;
@@ -301,14 +303,14 @@ export function partLight(part, hex, gain = [1, 1, 1]) {
  * Paint one part into `out` (RGBA, the photo's size), reading the photo's own pixels from
  * `photo`. Pixels outside the mask are left as they are in `out`; the mask's soft edge blends.
  */
-export function tintPart({ photo, out, part, hex, gain = [1, 1, 1] }) {
+export function tintPart({ photo, out, part, hex, gain = [1, 1, 1], current = null }) {
   const [pr0, pg0, pb0] = paintLinear(hex);
   // the light the paint on it now says falls there (lightGain): the photo's exposure and its color cast
   const pr = pr0 * gain[0];
   const pg = pg0 * gain[1];
   const pb = pb0 * gain[2];
   const { mask } = part;
-  const light = partLight(part, hex, gain);
+  const light = partLight(part, hex, current);
   for (let i = 0, p = 0; i < mask.length; i++, p += 4) {
     const m = mask[i];
     if (m === 0) continue;
@@ -333,11 +335,11 @@ export function tintPart({ photo, out, part, hex, gain = [1, 1, 1] }) {
 
 /**
  * Paint every assigned part, in order (later parts paint over earlier ones where masks overlap).
- * `assignments`: [{ part, hex }]. Returns a new RGBA array; `photo` is not changed.
+ * `assignments`: [{ part, hex, gain?, current? }]. Returns a new RGBA array; `photo` is not changed.
  */
 export function tintPhoto({ photo, assignments }) {
   const out = new Uint8ClampedArray(photo);
-  for (const { part, hex, gain } of assignments) if (hex) tintPart({ photo, out, part, hex, gain });
+  for (const { part, hex, gain, current } of assignments) if (hex) tintPart({ photo, out, part, hex, gain, current });
   return out;
 }
 
@@ -414,9 +416,9 @@ export const TONE_PERCENTILES = Object.freeze({ shade: 20, middle: 50, light: 75
  * by the light that falls there (partLight), through the Light setting `k`.
  * Returns { shade, middle, light } as #rrggbb.
  */
-export function partTones({ part, hex, k = 1, gain = [1, 1, 1] }) {
+export function partTones({ part, hex, k = 1, gain = [1, 1, 1], current = null }) {
   const ratios = [];
-  const light = partLight(part, hex, gain);
+  const light = partLight(part, hex, current);
   for (let i = 0; i < part.mask.length; i++) if (part.mask[i] === 255) ratios.push(light(i));
   const [pr, pg, pb] = paintLinear(hex).map((v, c) => v * gain[c]);
   const toHex = (ratio) =>
@@ -429,14 +431,15 @@ export function partTones({ part, hex, k = 1, gain = [1, 1, 1] }) {
 /**
  * How close the painted part reads to the paint: ΔE2000 between `hex` (the chip, or the chip in the
  * part's light — litHex) and the median color of the part's normally lit pixels (lighting within
- * ±10% of its base level) in `tinted`.
+ * ±10% of its base level, in the light the part was painted with: `paint` on a part whose paint now
+ * is `current`) in `tinted`.
  * Below 1 is not visible to most people; below 2 is a close match. null when no pixel is lit.
  */
-export function chipDeltaE({ tinted, part, hex }) {
+export function chipDeltaE({ tinted, part, hex, paint = hex, current = null }) {
   const rs = [];
   const gs = [];
   const bs = [];
-  const light = partLight(part, hex);
+  const light = partLight(part, paint, current);
   for (let i = 0, p = 0; i < part.mask.length; i++, p += 4) {
     if (part.mask[i] < 255) continue;
     const ratio = light(i);

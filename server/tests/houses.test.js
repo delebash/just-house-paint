@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MIT
 // /v1/houses, /v1/designs, /v1/jobs and the parts routes (app-structure §18: each route's happy
 // path, one 422 from its schema, one refusal).
-import { existsSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
+import { closeSync, existsSync, mkdirSync, openSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import sharp from "sharp";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { nameFromFile } from "../src/api/houses_api.js";
-import { isHeic } from "../src/images.js";
+import { ingestPhoto, isHeic } from "../src/images.js";
 import { createHouse } from "../src/database/houses.js";
-import { addingHouseDir, maskPath, removeAllHouseDirs, removeHouseDir, sweepHouseDirs } from "../src/files.js";
-import { fakeFinder, jpeg, makeServer } from "./domain_helpers.js";
+import { addingHouseDir, displayPath, housesRoot, maskPath, removeAllHouseDirs, removeHouseDir, sweepHouseDirs } from "../src/files.js";
+import { fakeFinder, jpeg, LIMITS, makeServer } from "./domain_helpers.js";
 
 let s;
 afterEach(() => s?.close());
@@ -90,10 +90,67 @@ describe("houses", () => {
 
   test("a reset's old houses folder left beside the data (held) goes at the next start", async () => {
     s = makeServer();
+    const house = await (await s.upload(await jpeg(100, 80))).json();
     const left = ["houses.removed-1760000000000", "houses.replaced-1760000000001", "houses.restoring-1760000000002"];
     for (const name of left) mkdirSync(path.join(s.dataDir, name, "some-house"), { recursive: true });
-    await sweepHouseDirs(s.dataDir, []);
+    await sweepHouseDirs(s.dataDir, [house.id]);
     for (const name of left) expect(existsSync(path.join(s.dataDir, name))).toBe(false);
+    expect(existsSync(displayPath(s.dataDir, house.id))).toBe(true);
+  });
+
+  test("a restore stopped between its two renames: the next start puts the backup's houses back, not away", async () => {
+    s = makeServer();
+    rmSync(housesRoot(s.dataDir), { recursive: true, force: true });
+    const file = (name, ...rest) => path.join(s.dataDir, name, "restored-house", ...rest);
+    for (const name of ["houses.restoring-1750000000000", "houses.replaced-1760000000001", "houses.restoring-1760000000001"]) mkdirSync(file(name), { recursive: true });
+    writeFileSync(file("houses.restoring-1760000000001", "display.jpg"), "the backup's");
+    // the database already holds the backup's houses (restored first): its newest staged copy is theirs
+    await sweepHouseDirs(s.dataDir, ["restored-house"]);
+    expect(readFileSync(path.join(s.dataDir, "houses", "restored-house", "display.jpg"), "utf8")).toBe("the backup's");
+    expect(readdirSync(s.dataDir).filter((n) => n.startsWith("houses."))).toEqual([]);
+    // only the replaced copy left (the staged one already gone): that one goes back
+    rmSync(housesRoot(s.dataDir), { recursive: true, force: true });
+    mkdirSync(file("houses.replaced-1760000000005"), { recursive: true });
+    await sweepHouseDirs(s.dataDir, ["restored-house"]);
+    expect(existsSync(path.join(s.dataDir, "houses", "restored-house"))).toBe(true);
+    expect(readdirSync(s.dataDir).filter((n) => n.startsWith("houses."))).toEqual([]);
+  });
+
+  test.skipIf(process.platform !== "win32")("a staged copy Windows holds isn't put back — and then nothing beside it is removed", async () => {
+    s = makeServer();
+    rmSync(housesRoot(s.dataDir), { recursive: true, force: true });
+    mkdirSync(path.join(s.dataDir, "houses.restoring-1760000000001", "h"), { recursive: true });
+    mkdirSync(path.join(s.dataDir, "houses.replaced-1760000000001", "h"), { recursive: true });
+    const fd = openSync(path.join(s.dataDir, "houses.restoring-1760000000001", "h", "display.jpg"), "w");
+    try {
+      expect(await sweepHouseDirs(s.dataDir, ["h"])).toBe(0);
+    } finally {
+      closeSync(fd);
+    }
+    expect(existsSync(path.join(s.dataDir, "houses.restoring-1760000000001"))).toBe(true);
+    expect(existsSync(path.join(s.dataDir, "houses.replaced-1760000000001"))).toBe(true);
+    // the start after: put back, the other copy removed
+    await sweepHouseDirs(s.dataDir, ["h"]);
+    expect(existsSync(path.join(s.dataDir, "houses", "h", "display.jpg"))).toBe(true);
+    expect(existsSync(path.join(s.dataDir, "houses.replaced-1760000000001"))).toBe(false);
+  });
+
+  test("a reset while a photo is read: its files still land, in the new houses folder", async () => {
+    s = makeServer();
+    addingHouseDir(s.dataDir, "racing");
+    let moved = false;
+    // the reset moves the houses folder aside after the photo was checked, while it is resized
+    const limits = {
+      ...LIMITS,
+      get displayMax() {
+        if (!moved) renameSync(housesRoot(s.dataDir), `${housesRoot(s.dataDir)}.removed-1`);
+        moved = true;
+        return LIMITS.displayMax;
+      },
+    };
+    expect(await ingestPhoto(await jpeg(100, 80), s.dataDir, "racing", limits)).toMatchObject({ originalFile: "original.jpg" });
+    expect(moved).toBe(true);
+    for (const f of ["original.jpg", "display.jpg", "thumb.jpg"]) expect(existsSync(path.join(s.dataDir, "houses", "racing", f))).toBe(true);
   });
 
   test("a photo being added leaves no folder behind if its house never got written", async () => {
@@ -126,6 +183,10 @@ describe("houses", () => {
     };
     expect(await removeAllHouseDirs(s.dataDir, { rename: held })).toBe(true);
     expect(readdirSync(path.join(s.dataDir, "houses"))).toEqual([]);
+    // not even listed (here a file where the folder should be): false, and nothing thrown
+    rmSync(housesRoot(s.dataDir), { recursive: true, force: true });
+    writeFileSync(housesRoot(s.dataDir), "");
+    expect(await removeAllHouseDirs(s.dataDir, { rename: held })).toBe(false);
   });
 
   test("only a folder a held removal marked is swept at start, and only when its house is gone", async () => {

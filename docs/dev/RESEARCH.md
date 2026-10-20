@@ -973,9 +973,17 @@ at the app's display size, through the app's own code; scripts and overlays in s
   got 26–74% of the calming): each body's normally lit level against the photo's 99th-percentile luminance (the sky,
   white trim), as taken and dimmed to 35%: house1 L* 73.8 → relative 78.7 (dimmed: absolute 26.7, relative 80.7),
   house2 79.4 → 82.2 (dimmed 29.0 → 83.5), the user's 52.5 → 53.8 (dimmed 17.7 → 58.0), house3's stain 22.8 → 26.9
-  (dimmed 5.7 → 34.6). So `calmStrength` judges a finish's darkness relative to `photoExposure` (p99): the dimmed light
+  (dimmed 5.7 → 34.6). So `calmStrength` judges a finish's darkness relative to `photoExposure`: the dimmed light
   houses stay light (no calming), house3 stays dark. A photo with nothing bright in it reads every part as light —
   the calming then misses (conservative).
+  **The 95th percentile since the sixth review**: the 99th is moved by 1% of the photo — a dim photo's lamps or lit
+  windows — and then a light house reads dark. At p95 (the same photos, measured the same way): house1 94.4
+  (dimmed 95.2), house2 91.1 (91.8), the user's 55.8 (59.9), house3's stain 28.4 (dimmed 36.3) — the light ones far
+  over the 45 limit, house3 still fully calmed as taken (under 30) and partly when dimmed. **Limits:** a backlit
+  house (a bright sky over most of the photo, the walls in their own shadow) reads darker than it is — a light finish
+  there under L* 45 relative would be calmed; a close-up with no sky or white trim reads every part light and is
+  never calmed. Neither is in the probe or obstruction sets' bodies. Both are settled when the part's paint now is
+  set (On it now): that paint's own L* is the finish then, exact whatever the photo's light (below).
 - **What the body loses to pieces the house rule drops** (2026-10-19, the fifth review): the body is the main "house"
   instance minus every piece a text prompt found, before the house rule and `onHouse` drop some — so a dropped piece's
   pixels on the house are left out of the body too. Kept on purpose: what a prompt finds and the rule drops is almost
@@ -989,3 +997,25 @@ at the app's display size, through the app's own code; scripts and overlays in s
 - **The window too** (2026-10-19, dry run 39357687376): the kit's shell prints "[shell] window loaded" when its window's
   page loads, and the start check waits for it — every runner showed it: Windows 1.6 s, macOS 5.5 s, Linux (unpacked,
   22.04) 1.5 s, the AppImage itself on Ubuntu 24.04 2.5 s, each with the part finder's runtime loading.
+  Since the sixth review the line means more: Electron's `did-finish-load` says the document loaded, not that the
+  app is on screen (a script that throws still "finishes"), so the shell now prints "window loaded" only once the
+  app drew its layout (`#q-app .q-layout`, polled for up to a minute),
+  and "[shell] window failed: <why>" for a failed load, a crashed page or a layout never drawn; the start check stops
+  at that line instead of waiting out its two minutes.
+- **The sixth review** (2026-10-19, the removals, restores and releases under a fresh angle — two things at once):
+  a restore stopped between its two renames left no `houses` folder, and the next start's sweep deleted the staged
+  copy — the only one of the restored photos (the database is restored first, so the staged copy is the one that
+  matches; the sweep now puts the newest `houses.restoring-*`, else `houses.replaced-*`, back, and removes nothing
+  when that fails); the kit's restore now retries a held rename and never leaves the folder missing (the old one
+  back, or the backup copied over it — tested with a held file); a reset while a photo was being read left its
+  files nowhere to go (a 500; the folder is now made in the same step as the writes); the part finder's model was
+  let go mid-run — the idle release (one minute is allowed, a CPU part search can be longer), a removal, a reset, the
+  AI photo starting while a box ran — now each waits for the finds and boxes running on it; installing or using an
+  engine while it was being removed (now 409 "…is being removed"); an outline re-found while the old one was being
+  removed lost the new file (checked first now); the bright end at p99 (above). And the calming compared two scales:
+  since the fifth review the finish was read against the photo's bright end, but with a paint now set the new paint
+  was taken in the photo's light (chip × gain) — on a dim photo a dark stain painted light read as barely lighter and
+  wasn't calmed (a synthetic dim board wall: the faces' spread unchanged, 0.069). Now, with a paint now set, its own
+  L* is the finish and the new paint's chip L* is compared with it (0.069 → 0.035); without one, the chip against the
+  photo's reading, as before. ΔE's "normally lit" pixels are picked in the same light the part was painted with
+  (they were picked with the lit chip's own calming).

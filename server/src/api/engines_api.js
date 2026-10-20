@@ -3,7 +3,7 @@
 // each is installed, installing it (a job: ~3.4 GB / ~9 GB of downloads), the AI photo of a house
 // (a job), and the AI photos kept.
 
-import { existsSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { assertGpuFree } from "../jobs.js";
 import { Hono, input } from "@delebash/core/platform";
 import { ApiError, notFound } from "@delebash/core/platform/errors";
@@ -17,6 +17,11 @@ import { getState } from "../app_state.js";
  * streamDownload; `sharedGpu()` what else holds the graphics card (services.js). */
 export function router(ctx = getState()) {
   const app = new Hono();
+  // the engines being removed (Settings → Storage): nothing installs into, or runs from, a folder going away
+  const removing = (ctx.enginesRemoving ??= new Set());
+  const notWhileRemoved = (engine, name) => {
+    if (removing.has(engine)) throw new ApiError(409, "engine-busy", `${name} is being removed`, "try again when it's done");
+  };
 
   // not installed yet: whether its runtime loads here, so the install card can say so before the download
   app.get("/v1/segment/status", async (c) => {
@@ -32,6 +37,7 @@ export function router(ctx = getState()) {
   });
 
   app.post("/v1/segment/install", (c) => {
+    notWhileRemoved("finder", "The part finder");
     const job = ctx.jobs.start({ kind: "install-finder", key: "", failTitle: "The part finder didn't install" }, ({ signal, progress }) =>
       ctx.finder.install({
         download: ctx.download,
@@ -47,7 +53,12 @@ export function router(ctx = getState()) {
     if (ctx.jobs.busy(["find-parts", "install-finder"])) {
       throw new ApiError(409, "engine-busy", "The part finder is busy", "wait until it has finished finding the parts or installing");
     }
-    await ctx.finder.uninstall();
+    removing.add("finder");
+    try {
+      await ctx.finder.uninstall();
+    } finally {
+      removing.delete("finder");
+    }
     return c.body(null, 204);
   });
 
@@ -58,11 +69,17 @@ export function router(ctx = getState()) {
     if (ctx.jobs.busy(["aiphoto", "install-aiphoto"])) {
       throw new ApiError(409, "engine-busy", "The AI photo is busy", "wait until it has finished drawing or installing");
     }
-    await ctx.aiphoto.uninstall();
+    removing.add("aiphoto");
+    try {
+      await ctx.aiphoto.uninstall();
+    } finally {
+      removing.delete("aiphoto");
+    }
     return c.body(null, 204);
   });
 
   app.post("/v1/aiphoto/install", (c) => {
+    notWhileRemoved("aiphoto", "The AI photo");
     const job = ctx.jobs.start({ kind: "install-aiphoto", key: "", failTitle: "The AI photo didn't install" }, ({ signal, progress }) => ctx.aiphoto.install({ download: ctx.download, signal, progress }));
     return c.json(job, 202);
   });
@@ -70,6 +87,7 @@ export function router(ctx = getState()) {
   app.post("/v1/houses/:id/aiphoto", input({ params: IdParams, body: AiPhotoIn }), (c) => {
     const house = getHouse(ctx.db, c.req.valid("param").id);
     if (!house) throw notFound(`no house ${c.req.valid("param").id}`);
+    notWhileRemoved("aiphoto", "The AI photo");
     const { designId, colors } = c.req.valid("json");
     let chosen = colors || {};
     if (designId) {
@@ -96,7 +114,8 @@ export function router(ctx = getState()) {
         const render = addRender(ctx.db, { houseId: house.id, designId: keepDesign, file: r.file, engine: r.engine, deltaE: r.deltaE, seconds: r.seconds });
         return { ...render, sharedGpu: await shared };
       } catch (e) {
-        rmSync(renderPath(ctx.dataDir, house.id, r.file.replace(/\.png$/, "")), { force: true });
+        // the picture whose row didn't save goes (retried; a held one is left) — the row's own error stands
+        await removeHouseFile(renderPath(ctx.dataDir, house.id, r.file.replace(/\.png$/, "")));
         throw e;
       }
     });

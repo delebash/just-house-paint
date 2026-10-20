@@ -202,6 +202,30 @@ test("a light wall photographed dark isn't a dark finish: darkness is judged aga
   expect(calmStrength({ ...part, exposure: 0.8 }, "#f2f0ea")).toBe(1);
 });
 
+test("a part whose paint now is known: its darkness is that paint's, whatever the photo's light", () => {
+  const w = 120;
+  const h = 80;
+  const Y = luminance(weatherboard(w, h, 0.035).photo);
+  const part = preparePart({ Y, mask: maskOf(w, h, () => 255), width: w, height: h, exposure: photoExposure(Y) });
+  // a dim photo with nothing bright: read from the photo the finish is light — told it's a dark stain, it is dark
+  expect(calmStrength(part, "#f2f0ea")).toBe(0);
+  expect(calmStrength(part, "#f2f0ea", "#4a3426")).toBe(1);
+  // the paints compared as paints, not as the dim photo shows the new one: a mid grey is still 40+ L* lighter
+  expect(calmStrength(part, "#a0a0a0", "#4a3426")).toBe(1);
+  // backlit (a bright sky far above the walls): read from the photo, dark — told it's white, never calmed
+  const backlit = { ...part, exposure: 0.8 };
+  expect(calmStrength(backlit, "#f2f0ea")).toBe(1);
+  expect(calmStrength(backlit, "#f2f0ea", "#f4f4f2")).toBe(0);
+});
+
+test("the photo's bright end passes over a few lamps or lit windows, and is the sky when there is one", () => {
+  const Y = new Float32Array(10_000).fill(0.3);
+  for (let i = 0; i < 300; i++) Y[i * 33] = 1; // 3 % of the photo: lamps, lit windows
+  expect(photoExposure(Y)).toBeCloseTo(0.3, 5); // the 99th percentile was 1: a dim photo's houses read dark
+  for (let i = 0; i < 1000; i++) Y[i] = 0.9; // a tenth of it bright sky
+  expect(photoExposure(Y)).toBeCloseTo(0.9, 5);
+});
+
 test("a display-size dark wall (the calming's coarser grid) loses its blotches and keeps its board lines", () => {
   // 1600 × 1200: the structure and the light worked out on a grid 3× coarser, as at 2048 × 1536
   const w = 1600;

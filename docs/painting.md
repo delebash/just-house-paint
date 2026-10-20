@@ -38,9 +38,11 @@ The ΔE beside each part is always measured at the photo's own light.
 When you paint a dark part (stained wood, a dark paint — a wall, a door, shutters, trim) much lighter,
 the app takes out the old finish's blotches and grain and keeps the lines between the boards, as fresh
 paint would look. It does this only for a dark finish, and only along the boards: stucco keeps its
-texture; on brick the rows stay and the joints between bricks soften; a light part — even one
-photographed in deep shade — is painted as photographed. The first light color on such a part, and
-the first after you change its outline, take a moment longer.
+texture; on brick the rows stay and the joints between bricks soften. Whether a finish is dark is read
+from the photo, against its brightest parts, so a light part photographed in shade is painted as
+photographed. In a photo taken against a bright sky, a light wall can read as dark: set its paint in
+**On it now** and the app goes by that paint instead. The first light color on such a part, and the
+first after you change its outline, take a moment longer.
 
 **Texture** — how much of what's left of the photo's texture shows: lower it to calm it further; at 1
 it is kept whole.

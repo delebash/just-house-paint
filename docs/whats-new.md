@@ -4,7 +4,8 @@
 
 - **A dark wall painted light looks freshly painted.** Stained wood or a dark paint painted much
   lighter no longer shows the old finish's blotches and grain; the lines between the boards and the
-  shadows stay.
+  shadows stay. With **On it now** set, the app goes by that paint to tell a dark finish from a light
+  one.
 - **Decorations**: the finder finds the medallions and other ornaments on the walls as their
   own part — a garden statue in front isn't one. A scheme paints them the trim's color.
 - **Trim** now takes the casings around the front door and the garage door, and no longer a fence's

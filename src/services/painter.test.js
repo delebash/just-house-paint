@@ -130,6 +130,34 @@ test("the paint a part has now sets its light: the photo's color there ÷ that p
   expect(p.gain("body", "#101010").every((v) => v === 4)).toBe(true);
 });
 
+test("a dark wall in a photo with nothing bright in it is calmed once its owner says the paint it has now", () => {
+  // dark blotchy boards (tint.test.js's weatherboard), no sky: read from the photo alone the finish is
+  // its own bright end — light, not calmed (600 px: the calming's reach grows with the photo, and at 300 a
+  // blotch this long is out of it)
+  const w = 600;
+  const h = 400;
+  const photo = new Uint8ClampedArray(w * h * 4);
+  for (let y = 0; y < h; y++)
+    for (let x = 0; x < w; x++) {
+      const k = Math.floor(y / 10);
+      const blotch = Math.exp(0.35 * Math.sin(x / 4 + k * 1.7) * Math.cos(x / 9 + k));
+      const v = Math.round(255 * (0.035 * blotch * (y % 10 >= 8 ? 1 / 3 : 1)) ** (1 / 2.2));
+      photo.set([v, v, v, 255], (y * w + x) * 4);
+    }
+  const p = createPainter({ rgba: photo, width: w, height: h });
+  p.setMask("body", new Uint8Array(w * h).fill(255));
+  // the red channel's spread over the boards' faces (the lines between them left out), against its mean
+  const spread = (out) => {
+    const v = [];
+    for (let y = 0; y < h; y++) if (y % 10 < 8) for (let x = 0; x < w; x++) v.push(out[(y * w + x) * 4]);
+    const mean = v.reduce((a, b) => a + b, 0) / v.length;
+    return Math.sqrt(v.reduce((a, b) => a + (b - mean) ** 2, 0) / v.length) / mean;
+  };
+  const fromPhoto = spread(p.paint({ body: "#a0a0a0" }).rgba);
+  const known = spread(p.paint({ body: "#a0a0a0" }, ["body"], { current: { body: "#4a3426" } }).rgba); // a dark stain
+  expect(known).toBeLessThan(fromPhoto * 0.6); // measured: 0.069 → 0.035 (unchanged before the paint now counted)
+});
+
 test("a dark wall's calmed lighting is kept through a Texture change and worked out again after an outline edit", () => {
   // a dark board wall under a bright sky band: the body is a dark finish, painted white it is calmed
   const w = 200;

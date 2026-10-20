@@ -95,6 +95,10 @@ export function createFinder(ctx) {
   let loading = null;
   let idleTimer = null;
   const handles = new Map(); // houseId → encoded photo (the last two)
+  // the finds and boxes running on the loaded model: it is let go only once they're done (a model
+  // disposed mid-run fails the run — the idle time can be one minute, a part search on a CPU longer)
+  let running = 0;
+  const drained = [];
 
   const installed = () => MODEL_FILES.every((f) => existsSync(`${ctx.modelDir}/${f.name}`));
 
@@ -103,6 +107,21 @@ export function createFinder(ctx) {
     idleTimer = setTimeout(() => releaseGpu().catch(() => {}), ctx.idleMs());
     idleTimer.unref?.();
   };
+
+  /** One find or box on the model: no idle release while it runs, the idle time counted from its end. */
+  async function using(work) {
+    running++;
+    clearTimeout(idleTimer);
+    try {
+      return await work();
+    } finally {
+      running--;
+      if (!running) {
+        for (const done of drained.splice(0)) done();
+        touch();
+      }
+    }
+  }
 
   async function segmenter() {
     if (!installed()) {
@@ -144,6 +163,8 @@ export function createFinder(ctx) {
 
   async function releaseGpu() {
     clearTimeout(idleTimer);
+    while (running) await new Promise((done) => drained.push(done));
+    clearTimeout(idleTimer);
     const s = seg || (loading ? await loading.catch(() => null) : null);
     seg = null;
     handles.clear();
@@ -183,16 +204,16 @@ export function createFinder(ctx) {
 
     async find(house, { signal, progress }) {
       progress(0.02, "loading");
-      const { s, h } = await encoded(house);
-      touch();
       const config = validatePartsConfig(ctx.partsConfig() || DEFAULT_PARTS);
-      const result = await findParts(s, h, config, {
-        signal,
-        houseMargin: ctx.houseMargin?.() ?? 0,
-        houseMinShare: ctx.houseMinShare?.() ?? 0.5,
-        onProgress: ({ part, index, total }) => progress(0.1 + (0.85 * index) / total, part),
+      const result = await using(async () => {
+        const { s, h } = await encoded(house);
+        return findParts(s, h, config, {
+          signal,
+          houseMargin: ctx.houseMargin?.() ?? 0,
+          houseMinShare: ctx.houseMinShare?.() ?? 0.5,
+          onProgress: ({ part, index, total }) => progress(0.1 + (0.85 * index) / total, part),
+        });
       });
-      touch();
       const byKey = Object.fromEntries(config.map((p) => [p.key, p]));
       const exclusive = resolveOverlaps(result.parts, ctx.priority() || DEFAULT_PART_PRIORITY);
       return exclusive
@@ -202,10 +223,10 @@ export function createFinder(ctx) {
 
     /** The region inside a box [x0, y0, x1, y1] (display pixels): the best instance's mask. */
     async box(house, { x0, y0, x1, y1 }) {
-      const { s, h } = await encoded(house);
-      touch();
-      const found = await s.findBoxes(h, [[x0, y0, x1, y1]], { phrase: "visual", mode: "select", threshold: 0.3 });
-      touch();
+      const found = await using(async () => {
+        const { s, h } = await encoded(house);
+        return s.findBoxes(h, [[x0, y0, x1, y1]], { phrase: "visual", mode: "select", threshold: 0.3 });
+      });
       const best = found.sort((a, b) => b.score - a.score)[0];
       return best ? best.mask : new Uint8Array(house.displayWidth * house.displayHeight);
     },

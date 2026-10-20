@@ -54,32 +54,32 @@ export function houseAdded(dataDir, id) {
   rmSync(path.join(houseDir(dataDir, id), ADDING), { force: true });
 }
 
-/**
- * Remove a house's folder. Windows holds a file just written for a moment (a scanner, the indexer:
- * a delete right after finding the parts failed with EPERM halfway through, 2026-10-19), so the removal
- * retries for about five seconds (Node's own retries on EBUSY / EPERM / ENOTEMPTY), without holding up
- * the server. Still held: false, and the folder is marked so the start-up sweep takes it — never a
- * half-deleted house left as one. `remove` is node:fs/promises' rm (a test passes one that fails).
- */
 /** One file a house no longer needs (an AI photo deleted, an outline not found again): removed with the
- *  same retries as a folder; held, it is left (a stray file costs nothing) and false comes back. */
+ *  same retries as a folder; one that still can't go is left (a stray file costs nothing), false back. */
 export async function removeHouseFile(file) {
   try {
     await rm(file, { force: true, maxRetries: 10, retryDelay: 100 });
     return true;
   } catch (e) {
-    log.warning(`${path.basename(file)} is still held (${e.code || e.message}); left in place`);
+    log.warning(`${path.basename(file)} couldn't be removed (${e.code || e.message}); left in place`);
     return false;
   }
 }
 
+/**
+ * Remove a house's folder. Windows holds a file just written for a moment (a scanner, the indexer:
+ * a delete right after finding the parts failed with EPERM halfway through, 2026-10-19), so the removal
+ * retries for about five seconds (Node's own retries on EBUSY / EPERM / ENOTEMPTY), without holding up
+ * the server. Still there: false, and the folder is marked so the start-up sweep takes it — never a
+ * half-deleted house left as one. `remove` is node:fs/promises' rm (a test passes one that fails).
+ */
 export async function removeHouseDir(dataDir, id, { remove = rm } = {}) {
   const dir = houseDir(dataDir, id);
   try {
     await remove(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
     return true;
   } catch (e) {
-    log.warning(`house ${id}'s folder is still held (${e.code || e.message}); it is removed later`);
+    log.warning(`house ${id}'s folder couldn't be removed (${e.code || e.message}); it is tried again later`);
     try {
       writeFileSync(path.join(dir, GONE), "");
     } catch {
@@ -102,9 +102,15 @@ export async function removeAllHouseDirs(dataDir, { rename = renameSync } = {}) 
     rename(root, aside);
   } catch (e) {
     // held as a whole: house by house instead, each with its retries (a held one is marked for the start)
-    log.warning(`the houses folder is held (${e.code || e.message}); removing its houses one by one`);
+    log.warning(`the houses folder couldn't be moved aside (${e.code || e.message}); removing its houses one by one`);
+    let names = [];
+    try {
+      names = readdirSync(root);
+    } catch {
+      return false; // not even listed: the next start's sweep has nothing marked, the folder stays
+    }
     let all = true;
-    for (const name of readdirSync(root)) if (SAFE.test(name) && !(await removeHouseDir(dataDir, name))) all = false;
+    for (const name of names) if (SAFE.test(name) && !(await removeHouseDir(dataDir, name))) all = false;
     return all;
   }
   try {
@@ -122,7 +128,22 @@ export async function removeAllHouseDirs(dataDir, { rename = renameSync } = {}) 
  */
 export async function sweepHouseDirs(dataDir, ids) {
   // a reset's old houses folder moved aside, a restore's replaced or staged copy (the kit's data_api),
-  // still there because Windows held a file
+  // still there because Windows held a file. With no houses folder at all (a restore stopped between its
+  // two renames), the newest staged copy — the backup's — or else the replaced one is put back first.
+  const all = existsSync(dataDir) ? readdirSync(dataDir) : [];
+  const newest = (tag) => all.filter((n) => n.startsWith(`houses${tag}`)).sort().at(-1);
+  if (!existsSync(housesRoot(dataDir))) {
+    const back = newest(".restoring-") ?? newest(".replaced-");
+    if (back) {
+      try {
+        renameSync(path.join(dataDir, back), housesRoot(dataDir));
+        log.warning(`the houses folder was missing; ${back} put back in its place`);
+      } catch (e) {
+        log.warning(`the houses folder is missing and ${back} couldn't be put back (${e.code || e.message})`);
+        return 0; // nothing removed while the only copy may be beside it
+      }
+    }
+  }
   const leftover = (name) => [ASIDE, ".replaced-", ".restoring-"].some((tag) => name.startsWith(`houses${tag}`));
   for (const name of existsSync(dataDir) ? readdirSync(dataDir) : []) {
     if (leftover(name)) await rm(path.join(dataDir, name), { recursive: true, force: true, maxRetries: 10, retryDelay: 100 }).catch(() => {});

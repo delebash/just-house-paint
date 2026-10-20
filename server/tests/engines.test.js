@@ -5,7 +5,7 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { afterEach, describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { createAiPhoto, sharedGpuNote, surfaceWords } from "../src/aiphoto_service.js";
 import { ENGINE_RELEASES, MODEL_FILES as SD_FILES, selectEngineAsset } from "../src/aiphoto/engine.js";
 import { createFinder, resolveOverlaps } from "../src/finder.js";
@@ -111,6 +111,25 @@ describe("createFinder", () => {
     expect(Array.from(region)).toEqual([0, 255, 0, 0, 0, 0, 0, 0]);
     expect(seg.calls.filter((c) => c[0] === "encode")).toHaveLength(1);
     await f.releaseGpu();
+    expect(seg.calls.at(-1)).toEqual(["dispose"]);
+  });
+
+  test("the model is let go only once the box running on it is done", async () => {
+    const seg = fakeSegmenter();
+    const made = seg.factory;
+    let finishBox;
+    seg.factory = async (...args) => ({ ...(await made(...args)), findBoxes: () => new Promise((r) => (finishBox = () => r([{ score: 0.8, mask: mask(8, (i) => i === 1) }]))) });
+    const f = finderWith(seg);
+    const box = f.box(house, { x0: 0, y0: 0, x1: 2, y1: 2 });
+    await vi.waitFor(() => expect(finishBox).toBeTypeOf("function"));
+    let released = false;
+    const release = f.releaseGpu().then(() => (released = true));
+    await new Promise((r) => setTimeout(r, 30));
+    expect(released).toBe(false); // the idle release, a removal, the AI photo: all wait for the box
+    expect(seg.calls).not.toContainEqual(["dispose"]);
+    finishBox();
+    expect(Array.from(await box)).toEqual([0, 255, 0, 0, 0, 0, 0, 0]);
+    await release;
     expect(seg.calls.at(-1)).toEqual(["dispose"]);
   });
 
@@ -264,6 +283,40 @@ describe("the engine routes", () => {
     expect(busy.status).toBe(409);
     expect((await busy.json()).type).toMatch(/engine-busy$/);
     release();
+  });
+
+  test("while an engine is being removed, nothing installs it or runs on it", async () => {
+    let finishAiphoto;
+    s = makeServer({ aiphoto: (ctx) => ({ ...aiphotoFactory([])(ctx), uninstall: () => new Promise((r) => (finishAiphoto = r)) }) });
+    const house = await (await s.upload(await jpeg(200, 150))).json();
+    await s.settle((await (await s.json("POST", `/v1/houses/${house.id}/find-parts`)).json()).id);
+    const refused = async (r, title) => {
+      expect(r.status).toBe(409);
+      expect(await r.json()).toMatchObject({ title });
+    };
+    // the part finder
+    const real = fakeFinder.uninstall;
+    let finishFinder;
+    fakeFinder.uninstall = () => new Promise((r) => (finishFinder = r));
+    try {
+      const removing = s.app.request("/v1/segment/install", { method: "DELETE" });
+      await vi.waitFor(() => expect(finishFinder).toBeTypeOf("function"));
+      await refused(await s.app.request("/v1/segment/install", { method: "POST" }), "The part finder is being removed");
+      await refused(await s.json("POST", `/v1/houses/${house.id}/find-parts`), "The part finder is being removed");
+      await refused(await s.json("POST", `/v1/houses/${house.id}/parts/trim/box`, { x0: 10, y0: 10, x1: 14, y1: 14 }), "The part finder is being removed");
+      finishFinder();
+      expect((await removing).status).toBe(204);
+    } finally {
+      fakeFinder.uninstall = real;
+    }
+    expect((await s.json("POST", `/v1/houses/${house.id}/parts/trim/box`, { x0: 10, y0: 10, x1: 14, y1: 14 })).status).toBe(200); // done: it works again
+    // the AI photo
+    const removing = s.app.request("/v1/aiphoto/install", { method: "DELETE" });
+    await vi.waitFor(() => expect(finishAiphoto).toBeTypeOf("function"));
+    await refused(await s.app.request("/v1/aiphoto/install", { method: "POST" }), "The AI photo is being removed");
+    await refused(await s.json("POST", `/v1/houses/${house.id}/aiphoto`, { colors: { body: "behr:X-1" } }), "The AI photo is being removed");
+    finishAiphoto();
+    expect((await removing).status).toBe(204);
   });
 
   test("the AI photo paints the design's paintable parts, frees the GPU first, and is kept", async () => {

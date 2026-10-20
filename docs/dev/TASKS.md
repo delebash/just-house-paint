@@ -171,6 +171,13 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         HEIF brands taken for HEIC; the install card's size words where nothing installs; the photo started after an
         install while the card was busy; the tooltip naming the wrong reason; two screens missing from the help — all
         fixed, with tests.
+        The fifth (the claims against the code; a light house photographed dark): darkness judged against the photo's
+        bright end; every removal with retries; tests for what had none; the claims corrected (707bc9c).
+        The sixth (two things at once): a restore stopped between its renames would lose the restored photos at the
+        next start; the kit's restore could leave the folder missing; a reset during a photo add; the finder's model let
+        go mid-run; an engine used while being removed; a re-found outline removed; the bright end moved by lamps (p95);
+        the calming compared two scales once a paint now was set (now that paint is the finish); the window line said
+        "loaded" for an error page — all fixed, with tests (RESEARCH §13).
 NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
         the installed 0.1.2 updating to it (the silent Restart now).
 

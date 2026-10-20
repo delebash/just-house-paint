@@ -4,7 +4,7 @@
 
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { Hono, input, uploadLimit } from "@delebash/core/platform";
-import { conflict, notFound, RequestValidationError } from "@delebash/core/platform/errors";
+import { ApiError, conflict, notFound, RequestValidationError } from "@delebash/core/platform/errors";
 import { getHouse, getPart, listParts, replaceParts, updatePartMask } from "../database/houses.js";
 import { maskPath, removeHouseFile } from "../files.js";
 import { maskToPng, pngToMask } from "../images.js";
@@ -43,6 +43,7 @@ export function router(ctx = getState()) {
     const house = mustHouse(c.req.valid("param").id);
     const keepEdited = c.req.valid("json")?.keepEdited === true;
     assertGpuFree(ctx.jobs, "find-parts", house.id);
+    if (ctx.enginesRemoving?.has("finder")) throw new ApiError(409, "engine-busy", "The part finder is being removed", "try again when it's done");
     const job = ctx.jobs.start({ kind: "find-parts", key: house.id, label: house.name, failTitle: "Finding the parts didn't finish" }, async ({ signal, progress }) => {
       const found = await ctx.finder.find(house, { signal, progress });
       signal.throwIfAborted();
@@ -71,7 +72,10 @@ export function router(ctx = getState()) {
       const parts = replaceParts(ctx.db, house.id, rows);
       // the outlines of parts not found this time go with their rows (a smaller folder and backup)
       const stays = new Set(rows.map((r) => r.key));
-      for (const p of before) if (!stays.has(p.key)) await removeHouseFile(maskPath(ctx.dataDir, house.id, p.key));
+      // each one only while its part is still gone (a part added again meanwhile keeps its new outline)
+      for (const p of before) {
+        if (!stays.has(p.key) && !getPart(ctx.db, house.id, p.key)) await removeHouseFile(maskPath(ctx.dataDir, house.id, p.key));
+      }
       return { parts: parts.length, kept: kept.length };
     });
     return c.json(job, 202);
@@ -121,6 +125,7 @@ export function router(ctx = getState()) {
     const key = c.req.valid("param").key;
     if (!getPart(ctx.db, house.id, key)) throw notFound(`house ${house.id} has no part ${key}`);
     assertGpuFree(ctx.jobs, "box");
+    if (ctx.enginesRemoving?.has("finder")) throw new ApiError(409, "engine-busy", "The part finder is being removed", "try again when it's done");
     const { x0, y0, x1, y1, mode } = c.req.valid("json");
     const outside = [["x0", x0, house.displayWidth], ["x1", x1, house.displayWidth], ["y0", y0, house.displayHeight], ["y1", y1, house.displayHeight]].find(([, v, max]) => v > max);
     if (outside) throw new RequestValidationError([{ loc: ["body", outside[0]], msg: "Outside the photo", type: "value_error" }]);

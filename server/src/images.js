@@ -56,7 +56,6 @@ export function fitInside(width, height, max) {
  */
 export async function ingestPhoto(buffer, dataDir, houseId, limits) {
   const { ext, width, height } = await inspectPhoto(buffer);
-  ensureHouseDirs(dataDir, houseId);
   const originalFile = `original.${ext}`;
   const d = fitInside(width, height, limits.displayMax);
   const t = fitInside(width, height, limits.thumbMax);
@@ -75,7 +74,10 @@ export async function ingestPhoto(buffer, dataDir, houseId, limits) {
     // its header read, its pixels didn't: a file cut off part-way, or one past sharp's pixel limit
     throw new NotAnImage(`this photo can't be read (${String(e?.message || e).split("\n")[0]})`);
   }
-  // the three copies written only once all three were made (a disk error is the disk's, not "not a photo")
+  // the three copies written only once all three were made (a disk error is the disk's, not "not a photo"),
+  // into a folder made in the same step: a reset that moved the houses folder aside while the photo was
+  // being read leaves none to write into
+  ensureHouseDirs(dataDir, houseId);
   writeFileSync(originalPath(dataDir, houseId, originalFile), upright);
   writeFileSync(displayPath(dataDir, houseId), display);
   writeFileSync(thumbPath(dataDir, houseId), thumb);
