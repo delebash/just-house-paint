@@ -1216,6 +1216,10 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         rewritten, the 18 contradictions settled, a new App Settings page (settings.md), the tray and the command
         line, ~45 troubleshooting entries; Microsoft's Smart App Control FAQ and Apple's Gatekeeper page read before
         writing those two.
+        The eighteenth's fixes committed (app 3358588, kit 90c513f: server 435, unit 187, e2e 16; kit core 1385, ui 57;
+        template 81 + 54, e2e 12; JustWrite 745 + 180, JustVoice 261 + 1366, docgen 5 + 165); the peers told (Clear
+        models through a link especially). Dry run started. The nineteenth (2026-10-20): the eighteenth's code
+        attacked, the screens on its build, and a fresh angle — the server's routes under hostile and odd input.
 NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
         the installed 0.1.2 updating to it (the silent Restart now).
 
