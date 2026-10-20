@@ -768,6 +768,17 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         expected the old marks and the stack's v-if to be updated (mine). Left to me: RESEARCH facts, the app's
         NOTICE (Closure), the dedupe lists, a darker light --info (4.43 at hue 192), the peers' tests (the AI page's
         tabs no longer links — docgen's smoke, JustWrite's headless smoke and probes) and tokens.
+        The fifteenth's fixes committed (app acb1b81 + 79e0400, kit 70e6df1 + 010360f: server 435, unit 175, e2e 16; kit
+        core 1353, ui 52; template 52 + 54; JustVoice 261 + 1364, docgen 5 + 165; JustWrite 736 of 745 — its 9
+        providerScope tests mount the kit's AI page, now on Quasar's tabs, in jsdom with no ResizeObserver: its test
+        setup's to stub, sent to its session). Decided while making them: hints at most 70 characters, not --w-prose
+        (640 px is ~100 characters at the hint's size — the typographic 45–75, WCAG 1.4.8's 80); the light --info at
+        L 0.535 (white 4.64:1 at every hue); the reserved port's remedy in the help (a restart; as administrator,
+        winnat stopped, an administered exclusion with store=persistent, winnat started — NetBird's Windows guide);
+        the release's start check runs a temp copy of the build, and the kit's data-folder tests run on each runner
+        (real links on macOS and Linux — this machine has no symlink right); JustWrite's template notes (a .deb's
+        homepage, a universal Mac build's x64ArchFiles, the launcher's LF pinned). Dry run 39421285767 started. The
+        sixteenth (2026-10-20): the fifteenth's code attacked, and the screens on the new build.
 NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
         the installed 0.1.2 updating to it (the silent Restart now).
 
