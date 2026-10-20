@@ -1360,6 +1360,39 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         fuzz didn't reach (the static UI and Host over a socket, the kit's AI and data routes).
         Dry run 39466444972 green on every runner, linux-user too — the packaged windows load and draw under Fetch
         Metadata.
+        The twentieth's fresh angle — the static server, the Host handling over a real socket and the kit's routes (an
+        agent's; ~16,500 requests; the scratchpad's fuzz20): no security hole, no data lost or corrupted, no escape from
+        dist\spa (44 traversal forms), integrity_check ok throughout. 500 or hang — a feature assigned to a preset that
+        doesn't exist (FOREIGN KEY failed); harmony kinds [""] accepted (find() returns the falsy "") and every harmony
+        request then a 500; an AI run that can't reach its model (the engine not installed, a provider unreachable) a 500
+        — /v1/ai/run and the app's /v1/schemes/ai alike, while embeddings answer 502 and the stream an event; an upload
+        that stalls halfway holds every Reset and Restore for the gate's 60 s drain (each try: 60 s of 503s for every
+        window) and a body that never comes never times out (requestTimeout 0). Wrong — the default preset and a
+        feature's key stored whatever they are (a 1,000,000-character id); aiphoto.compose's numbers unbounded (a
+        featherPx of 1e308 breaks every AI photo later — sharp's sigma); a write to an unknown /v1 path a 405 (the
+        static catch-all), a 404 when no UI is built; unknown paths FastAPI's {"detail"} (kept, as before). Small —
+        static files with no ETag or Cache-Control; Range quirks of @hono/node-server's serve-static; Windows' ::$DATA and
+        case served inside dist\spa (harmless); the adapter's own empty 400s; the 403 echoes a 5,000-character Host;
+        "Bearer" case-sensitive and tokens compared with includes(); a bad path or query said as "Request body failed
+        validation"; errors with no type of their own (405, 409, 502, 503) typed "error"; an unknown model queued for
+        load or download; list-files / inspect take any repo unencoded into the HF URL; gpu-processes 2.6 s a call.
+        Held — the Host guard on /v1 against every form tried, cross-site image and navigation to the backup refused, a
+        17 KB URL / 20 KB cookie / 3,000 headers 431, CL + TE 400, no prototype pollution, every bad body a 422/400, prefs
+        deep nesting 422, nothing written outside the temp folders, the local escape door with a token required, a
+        house deleted mid-upload.
+        Their fixes — decided (mine, argued): an assignment to a preset that doesn't exist, or a feature the catalog
+        doesn't have, refused (422 at its field; ids and keys bounded); harmony kinds checked with every kind named
+        (some(), not find()); an AI run that can't reach its model answers 503 (the local engine not ready, with why) or
+        502 (the provider unreachable), in the kit's run and the app's schemes alike; a request body that sends nothing
+        for 60 s is cut (the socket's idle timer while its body is read — a long backup that keeps flowing is never
+        cut, a response that streams isn't timed), so a stalled upload frees the gate; aiphoto.compose's numbers
+        bounded per key (featherPx 0–1000, insideAt 0–1, basePercentile 0–100, pairs ordered); the static catch-all
+        only outside /v1, answering 405 with Allow: GET, HEAD and a proper type; hashed assets Cache-Control immutable
+        and an ETag on the rest (hono/etag); the Host in the 403 cut to 100 characters; Bearer any case and tokens
+        compared in constant time (crypto.timingSafeEqual); a path's or query's 422 says where; 405, 409, 502, 503
+        given their own types; an unknown model refused for load or download (404); list-files and inspect check the
+        repo as the catalog does and encode it; gpu-processes kept 5 s. Kept, argued: FastAPI's 404 shape; the
+        adapter's empty 400s and its Range quirks (the library's, on loopback; no harm); no compression (loopback).
 NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
         the installed 0.1.2 updating to it (the silent Restart now).
 
