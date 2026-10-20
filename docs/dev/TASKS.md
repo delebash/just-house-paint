@@ -549,6 +549,9 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         memory; brand lists through the kit's fetch (proxy) with the failure's cause kept; "Use the graphics card
         (Windows)". Kept, argued: the RAM need and the 5× unpack allowance stay constants — what the engines need, not
         a choice a user makes (family rule 1 is for values a user might change).
+        The thirteenth's fixes committed (app 487b364, kit 0cec745: server 430, unit 161, e2e 16; kit core 1299, ui 43;
+        JustWrite 21 + 741, JustVoice 8 + 260, docgen 165 + 5). The fourteenth (2026-10-20; started): the thirteenth's
+        three agents' code attacked — one agent, read-only. Dry run 39400636078 building.
 NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
         the installed 0.1.2 updating to it (the silent Restart now).
 
