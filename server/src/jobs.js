@@ -100,7 +100,7 @@ export class JobRegistry {
         // a watcher's error never fails the job
       }
     };
-    Promise.resolve()
+    job.settled = Promise.resolve()
       .then(() => fn({ signal: controller.signal, progress }))
       .then(
         // the work returned: it is done (and saved), even when Cancel came while it was committing
@@ -136,9 +136,15 @@ export class JobRegistry {
     }
   }
 
-  /** Stop everything (the server is closing). */
-  cancelAll() {
-    for (const j of this.jobs.values()) if (j.state === "running") j.controller.abort();
+  /** Stop everything (the server is closing, the data is about to be replaced). Resolves once every one of them
+   *  has ended — at most `waitMs`: a job past its last check of the signal (a find's commit) finishes what it
+   *  does before anything is replaced under it (the twelfth review, 2026-10-20). */
+  cancelAll({ waitMs = 30_000 } = {}) {
+    const running = [...this.jobs.values()].filter((j) => j.state === "running");
+    for (const j of running) j.controller.abort();
+    let timer;
+    const ended = Promise.all(running.map((j) => j.settled?.catch(() => {})));
+    return Promise.race([ended, new Promise((r) => (timer = setTimeout(r, waitMs)))]).finally(() => clearTimeout(timer));
   }
 }
 

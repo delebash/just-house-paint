@@ -97,9 +97,10 @@ itself — and keep an access token on: requests through a proxy always need one
 **App Settings → Backups** saves everything — your houses, their photos and outlines, designs,
 settings and your AI providers' keys — in one file, and restores it. Keep the file as you would a
 password: the keys are in it. The access tokens are not, and a restore keeps this computer's own
-(and its downloaded engines' settings). A backup is your data at one moment, even while you or another
-window keep working. A restore is all or nothing: other windows wait while it runs and then show the
-restored houses; if it can't finish, nothing changed.
+(and its downloaded engines' settings). A backup can be made while you or another window keep working. A
+restore is all or nothing: while it runs, other windows' changes are refused (try them again after), and then
+they show the restored houses; if it can't finish, your data is as it was — work that was running (finding
+parts, an AI photo) stops.
 
 ## Everything stays on your computer
 

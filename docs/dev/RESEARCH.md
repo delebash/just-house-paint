@@ -1133,3 +1133,16 @@ at the app's display size, through the app's own code; scripts and overlays in s
   and a Mac update replaces the app by hand first — What's new says what to do; a proxy or another name for this
   computer now needs `JUST_HOUSE_PAINT_ALLOWED_HOSTS`. The 960 × 700 minimum was taller than a 1280 × 720 work
   area (1080p at 150 %): the kit's shell clamps it to the screen.
+- **The twelfth review** (2026-10-20; today's fixes attacked, and the app left open for days — the kit's RESEARCH §2
+  "Today's restore and windows, attacked"). The design merge needed a base: the refreshed design became the patch's
+  base and sent another window's parts back — now a three-way merge (`designBase`, the draft rebased on refresh). A
+  stroke drawn on old outlines could save with the new version (the gap before the busy flag, onStroke's await,
+  Undo during a re-read, a version taken though a mask failed) — now each save carries its stroke's generation and
+  a re-read drops the waiting ones. The in-memory outline series made every restart refuse the next stroke — the
+  version is now a hash of the parts rows (`outlinesState`), the same across a restart and for the same data
+  restored. The counter split in two: `boot` (in `rev` — a restart re-reads in place) and the data's `epoch` (a
+  settings row renewed by a restore or reset that succeeded — the window reloads); a refused restore moves neither.
+  Only data writes count (prefs, a harmony calculation, logs, cancels, AI runs don't); the house page repaints only
+  when what it read changed. A job's poll retries a network or 5xx failure (0.4 → 10 s) and a job gone after a
+  restart re-reads the house (`jobGone`). *Measured* (the agent): an idle server costs nothing; logs stay bounded;
+  1 200 strokes level at ~157 MB; 150 houses added and deleted leave nothing; a page load writes nothing.

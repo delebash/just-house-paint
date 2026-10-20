@@ -75,10 +75,13 @@ export const useHouseStore = defineStore("house", {
     selectedPart: null,
     // bumps when a part's mask changes on the server (the mask URL's cache-buster)
     maskVersions: {},
-    // the version of the outlines the page holds (the server's ETag): an outline write sends it (If-Match).
-    // The page takes a new one only once it has the outlines that go with it (useOutlines), or from the
-    // answer to its own write
-    outlinesVersion: null,
+    // the version of each house's outlines the page holds (the server's ETag): an outline write sends it
+    // (If-Match) — a save that runs after the page left its house too. The page takes a new one only once it has
+    // the outlines that go with it (useOutlines), or from the answer to its own write made on it
+    versions: {},
+    // the open design's colors the draft on screen started from (a three-way merge's base): a save sends what
+    // changed since, and another window's change to the design moves the parts left as they were
+    designBase: null,
     // a color read off the photo (the eyedropper, a part's color as photographed) for the Colors tab:
     // { hex, at } until the tab takes it
     pickedColor: null,
@@ -88,6 +91,8 @@ export const useHouseStore = defineStore("house", {
   }),
   getters: {
     design: (s) => s.designs.find((d) => d.id === s.designId) || null,
+    /** The open house's outlines' version the page holds. */
+    outlinesVersion: (s) => (s.house ? (s.versions[s.house.id] ?? null) : null),
     /** The colors differ from the open design's (or there are colors and no design). */
     dirty() {
       const base = this.design?.colors || {};
@@ -112,7 +117,8 @@ export const useHouseStore = defineStore("house", {
       try {
         const [house, parts, designs, renders] = await Promise.all([get(hp(id)), get(hp(id, "/parts")), get(hp(id, "/designs")), get(hp(id, "/renders"))]);
         if (seq !== openSeq) return;
-        Object.assign(this, { house, parts, designs, renders, colors: {}, designId: null, maskVersions: {}, pickedColor: null, trimOffer: null, outlinesVersion: null });
+        const { [id]: _, ...versions } = this.versions;
+        Object.assign(this, { house, parts, designs, renders, colors: {}, designId: null, designBase: null, maskVersions: {}, pickedColor: null, trimOffer: null, versions });
         this.selectedPart = this.paintableParts[0]?.key ?? null;
       } finally {
         this.loading = false;
@@ -127,9 +133,9 @@ export const useHouseStore = defineStore("house", {
       const [house, parts, designs, renders] = await Promise.all([get(hp(id)), get(hp(id, "/parts")), get(hp(id, "/designs")), get(hp(id, "/renders"))]);
       if (this.house?.id !== id) return { outlinesChanged: false };
       const outlinesChanged = house.outlines !== this.outlinesVersion;
-      Object.assign(this, { house, parts, designs, renders });
+      Object.assign(this, { house, parts, renders });
+      this.takeDesigns(designs);
       if (outlinesChanged) this.bumpMasks(parts.map((p) => p.key));
-      if (this.designId && !designs.some((d) => d.id === this.designId)) this.designId = null;
       if (!parts.some((p) => p.key === this.selectedPart)) this.selectedPart = this.paintableParts[0]?.key ?? null;
       return { outlinesChanged };
     },
@@ -138,16 +144,43 @@ export const useHouseStore = defineStore("house", {
       const id = this.house.id;
       const designs = await get(hp(id, "/designs"));
       if (this.house?.id !== id) return;
+      this.takeDesigns(designs);
+    },
+    /** The server's designs in place of these. The open design changed in another window: the draft is rebased —
+     *  a three-way merge, each part this window left as the design had it takes the design's new paint, one it
+     *  changed keeps this window's. Deleted there: the colors stay, a draft. */
+    takeDesigns(designs) {
       this.designs = designs;
-      if (this.designId && !designs.some((d) => d.id === this.designId)) this.designId = null;
+      const open = this.designId && designs.find((d) => d.id === this.designId);
+      if (!open) {
+        if (this.designId) this.designId = null;
+        this.designBase = null;
+        return;
+      }
+      const base = this.designBase || {};
+      if (sameColors(base, open.colors)) return;
+      const next = { ...this.colors };
+      for (const k of new Set([...Object.keys(base), ...Object.keys(open.colors)])) {
+        if ((this.colors[k] || null) !== (base[k] || null)) continue; // changed here: this window's stays
+        if (open.colors[k]) next[k] = open.colors[k];
+        else delete next[k];
+      }
+      this.designBase = { ...open.colors };
+      if (!sameColors(next, this.colors)) this.colors = next;
     },
     /** The page has the outlines of version `v` (read after it): its writes send it from now on. */
     useOutlines(v) {
-      this.outlinesVersion = v;
+      if (this.house) this.versions = { ...this.versions, [this.house.id]: v };
     },
-    /** The If-Match an outline write sends (none until the page holds outlines). */
-    ifMatch() {
-      return this.outlinesVersion ? { "If-Match": this.outlinesVersion } : {};
+    /** The If-Match an outline write to house `houseId` sends (none until the page held its outlines). */
+    ifMatch(houseId = this.house?.id) {
+      const v = this.versions[houseId];
+      return v ? { "If-Match": v } : {};
+    },
+    /** The answer to this window's write made on version `sent` of house `houseId`'s outlines: its new version —
+     *  unless the page took another meanwhile (the outlines read again: that one stands). */
+    answered(houseId, sent, v) {
+      if (this.versions[houseId] === sent) this.versions = { ...this.versions, [houseId]: v };
     },
     bumpMasks(keys) {
       const next = { ...this.maskVersions };
@@ -166,8 +199,15 @@ export const useHouseStore = defineStore("house", {
     async findParts(label, describe, { keepEdited = false, job = null } = {}) {
       const id = this.house.id;
       // keeping the hand edits was asked from the parts this page holds: refused if another window changed them
-      const start = job ? async () => job : () => post(hp(id, "/find-parts"), { keepEdited }, { headers: this.ifMatch() });
-      await runServerJob({ start, feature: "parts.find", label, meta: { houseId: id }, describe });
+      const start = job ? async () => job : () => post(hp(id, "/find-parts"), { keepEdited }, { headers: this.ifMatch(id) });
+      let gone = null;
+      try {
+        await runServerJob({ start, feature: "parts.find", label, meta: { houseId: id }, describe });
+      } catch (e) {
+        // the server started again: its parts are read as they are (the run may have saved before), then said
+        if (e?.name !== "JobGone") throw e;
+        gone = e;
+      }
       // another house opened meanwhile: this one's parts are on the server, read when it opens again
       if (this.house?.id !== id) return;
       const [house, parts] = await Promise.all([get(hp(id)), get(hp(id, "/parts"))]);
@@ -176,29 +216,31 @@ export const useHouseStore = defineStore("house", {
       this.parts = parts;
       this.bumpMasks(parts.map((p) => p.key));
       if (!parts.some((p) => p.key === this.selectedPart)) this.selectedPart = this.paintableParts[0]?.key ?? null;
+      if (gone) throw gone;
     },
     /** What is inside a box (display pixels) joins the part (`add`) or leaves it (`remove`). */
     async box(key, box, mode = "add") {
       const id = this.house.id;
-      const r = await post(hp(id, `/parts/${encodeURIComponent(key)}/box`), { ...box, mode }, { headers: this.ifMatch() });
+      const headers = this.ifMatch(id);
+      const r = await post(hp(id, `/parts/${encodeURIComponent(key)}/box`), { ...box, mode }, { headers });
+      // the page holds the box's result once it has read the changed outlines — it was current before (If-Match)
+      this.answered(id, headers["If-Match"], r.outlines);
       if (this.house?.id !== id) return [];
       this.parts = r.parts;
       this.bumpMasks(r.changed);
-      // the page holds the box's result once it has read the changed outlines — it was current before (If-Match)
-      this.outlinesVersion = r.outlines;
       return r.changed;
     },
     /** The brush's result for one part: a PNG Blob at the display size, saved to `houseId` — the house
      *  it was drawn on (a save can run after the page left it). */
     async saveMask(key, pngBlob, houseId = this.house.id) {
       // raw PNG bytes (the kit's put() would send JSON)
-      const headers = { "Content-Type": "image/png", ...(this.house?.id === houseId ? this.ifMatch() : {}) };
+      const headers = { "Content-Type": "image/png", ...this.ifMatch(houseId) };
       const { outlines, ...part } = await request(hp(houseId, `/parts/${encodeURIComponent(key)}/mask`), { method: "PUT", headers, body: pngBlob });
+      // this window's own stroke on the outlines it held: the page holds the new version
+      this.answered(houseId, headers["If-Match"], outlines);
       if (this.house?.id !== houseId) return part;
       this.parts = this.parts.map((p) => (p.key === key ? part : p));
       this.bumpMasks([key]);
-      // this window's own stroke on the outlines it held: the page holds the new version
-      this.outlinesVersion = outlines;
       return part;
     },
     async addPart(key, paintable = true) {
@@ -252,6 +294,7 @@ export const useHouseStore = defineStore("house", {
       const d = this.designs.find((x) => x.id === id);
       if (!d) return;
       this.designId = id;
+      this.designBase = { ...d.colors };
       this.colors = { ...d.colors };
       const offer = unpaintedTrim(d.colors, this.paintableParts.map((p) => p.key), roleParts);
       this.trimOffer = offer ? { ...offer, designId: id } : null;
@@ -271,14 +314,19 @@ export const useHouseStore = defineStore("house", {
       const d = await post(hp(this.house.id, "/designs"), { name, colors: this.colors });
       this.designs = [...this.designs, d];
       this.designId = d.id;
+      this.designBase = { ...d.colors };
       return d;
     },
     /** The open design saved: the parts changed on screen since it was read (JSON Merge Patch) — another
      *  window's changes to its other parts stay, and come back here with the answer. */
     async saveDesign() {
-      const d = await patchJson(`/v1/designs/${encodeURIComponent(this.designId)}`, { colors: colorsPatch(this.design?.colors, this.colors) });
+      // what changed here since the draft's base — never the design's newer paints read since (another window's)
+      const d = await patchJson(`/v1/designs/${encodeURIComponent(this.designId)}`, { colors: colorsPatch(this.designBase ?? this.design?.colors, this.colors) });
       this.designs = this.designs.map((x) => (x.id === d.id ? d : x));
-      if (this.designId === d.id && !sameColors(this.colors, d.colors)) this.colors = { ...d.colors };
+      if (this.designId === d.id) {
+        this.designBase = { ...d.colors };
+        if (!sameColors(this.colors, d.colors)) this.colors = { ...d.colors };
+      }
       return d;
     },
     async renameDesign(id, name) {
@@ -289,14 +337,24 @@ export const useHouseStore = defineStore("house", {
     async deleteDesign(id) {
       await del(`/v1/designs/${encodeURIComponent(id)}`);
       this.designs = this.designs.filter((x) => x.id !== id);
-      if (this.designId === id) this.designId = null;
+      if (this.designId === id) {
+        this.designId = null;
+        this.designBase = null;
+      }
     },
     /** An AI photo of the colors on screen (a server job) — or `job`, one already being made (runningJobs),
      *  followed. Resolves with the kept render. */
     async aiPhoto(label, { job = null } = {}) {
       const id = this.house.id;
       const start = job ? async () => job : () => post(hp(id, "/aiphoto"), { colors: this.colors });
-      const render = await runServerJob({ start, feature: "aiphoto.render", label, meta: { houseId: id } });
+      let render;
+      try {
+        render = await runServerJob({ start, feature: "aiphoto.render", label, meta: { houseId: id } });
+      } catch (e) {
+        // the server started again: its AI photos as they are (this one may have been kept before)
+        if (e?.name === "JobGone" && this.house?.id === id) this.renders = await get(hp(id, "/renders")).catch(() => this.renders);
+        throw e;
+      }
       // kept with its house on the server; listed here only while that house is open
       if (this.house?.id === id) this.renders = [render, ...this.renders];
       return render;

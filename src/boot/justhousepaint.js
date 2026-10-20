@@ -21,8 +21,10 @@ import {
   checkServer,
   configureFileSave,
   configureHelp,
+  configureServerApi,
   installErrorReporting,
   installLlmUi,
+  serverNeedsToken,
   startWarmOnBoot,
   tooltipDirective,
 } from "@delebash/ui";
@@ -80,7 +82,10 @@ async function boot({ app, router, store: pinia }) {
     router.beforeEach((to) => (to.path === "/offline" ? true : { path: "/offline", query: { from: to.fullPath } }));
     return;
   }
-  router.beforeEach((to) => (to.path === "/offline" ? to.query.from || "/" : true));
+  // the connection page only while the server needs a token this window doesn't have (removed in Settings while it
+  // was open): the kit's token form, then the app again
+  router.beforeEach((to) => (to.path === "/offline" && !serverNeedsToken.value ? to.query.from || "/" : true));
+  configureServerApi({ onTokenNeeded: () => router.push({ path: "/offline", query: { from: router.currentRoute.value.fullPath } }) });
   // another window's changes on this server: the pages read again (a restore or a reset reloads the window)
   watchOtherWindows();
 

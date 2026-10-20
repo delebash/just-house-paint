@@ -8,40 +8,36 @@
 // stroke on one part takes its pixels from the others. The writes themselves run one at a time per house (the
 // kit's Mutex).
 //
-// The versions live in the server's memory (opaque values: a new series at each start, restore and reset — a
-// window holding one from before is refused once and reads again). No column, so no migration.
+// The version is the database's: a hash of the house's parts rows (each outline write changes its part's
+// updated_at and area, a find all of them and the house's parts_found_at). It stays while the outlines do — a
+// server started again (the tray's Restart, a reboot) refused every window's next stroke when it was a counter in
+// memory (the twelfth review) — and a restore of the same data gives the same one (RFC 9110 §8.8.3).
 
-import { randomUUID } from "node:crypto";
+import { createHash } from "node:crypto";
 import { Mutex } from "@delebash/core/platform/asyncutil";
 import { ApiError } from "@delebash/core/platform/errors";
+import { outlinesState } from "./database/houses.js";
 
 export class Outlines {
-  #series = randomUUID().slice(0, 8);
-  #n = new Map(); // house id → its outlines' number of changes in this series
-  #locks = new Map(); // house id → Mutex
+  #db;
+  #locks = new Map(); // house id → Mutex, while a write holds or waits for it
+
+  /** `db`: the app's database handle (the parts rows the version is made from). */
+  constructor({ db }) {
+    this.#db = db;
+  }
 
   /** House `id`'s outlines' version, as an ETag (quoted). */
   etag(id) {
-    return `"${this.#series}-${this.#n.get(id) ?? 0}"`;
-  }
-
-  /** House `id`'s outlines changed: their new version. */
-  bump(id) {
-    this.#n.set(id, (this.#n.get(id) ?? 0) + 1);
-    return this.etag(id);
-  }
-
-  /** Every house's outlines replaced (a restore, a reset): every version before is stale. */
-  replaced() {
-    this.#series = randomUUID().slice(0, 8);
-    this.#n.clear();
+    const hash = createHash("sha256").update(JSON.stringify(outlinesState(this.#db, id))).digest("base64url");
+    return `"${hash.slice(0, 22)}"`;
   }
 
   /** Refused (412) when `ifMatch` — a request's If-Match — names another version than house `id`'s now. No
-   *  If-Match, or `*`: unconditional (RFC 9110). */
+   *  If-Match, or `*`: unconditional; a weak tag never matches (If-Match compares strongly — RFC 9110 §13.1.1). */
   check(id, ifMatch) {
     if (!ifMatch || ifMatch.trim() === "*") return;
-    const tags = ifMatch.split(",").map((s) => s.trim().replace(/^W\//, ""));
+    const tags = ifMatch.split(",").map((s) => s.trim());
     if (!tags.includes(this.etag(id))) {
       throw new ApiError(412, "outlines-changed", "This house was changed in another window", "your last change wasn't saved — the house is shown as it is now", {
         houseId: String(id),
@@ -49,13 +45,24 @@ export class Outlines {
     }
   }
 
-  /** `fn` run alone among house `id`'s outline writes. */
-  serial(id, fn) {
-    let m = this.#locks.get(id);
-    if (!m) {
-      m = new Mutex();
-      this.#locks.set(id, m);
+  /** `fn` run alone among house `id`'s outline writes (the lock goes once none holds or waits for it). */
+  async serial(id, fn) {
+    let lock = this.#locks.get(id);
+    if (!lock) {
+      lock = { m: new Mutex(), n: 0 };
+      this.#locks.set(id, lock);
     }
-    return m.run(fn);
+    lock.n += 1;
+    try {
+      return await lock.m.run(fn);
+    } finally {
+      lock.n -= 1;
+      if (!lock.n) this.#locks.delete(id);
+    }
+  }
+
+  /** How many houses have a write holding or waiting (a test reads it). */
+  get held() {
+    return this.#locks.size;
   }
 }

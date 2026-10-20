@@ -10,8 +10,11 @@ import { getState } from "../app_state.js";
 /** `ctx`: { changes (changes.js ChangeCounter), checkSeconds() } */
 export function router(ctx = getState()) {
   const app = new Hono();
-  app.get("/v1/sync/rev", (c) =>
-    c.json({ rev: ctx.changes.revFor(c.req.header("x-client-id") || null), epoch: ctx.changes.epoch, pollSeconds: ctx.checkSeconds?.() ?? 5 }),
-  );
+  // `rev` is opaque — this process's boot id and the count: a server started again (its count from 0) is a change
+  // to the window even where the counts happen to match; `epoch` moves only when the data was replaced
+  app.get("/v1/sync/rev", (c) => {
+    const n = ctx.changes.revFor(c.req.header("x-client-id") || null);
+    return c.json({ rev: `${ctx.changes.boot}:${n}`, epoch: ctx.changes.epoch, pollSeconds: ctx.checkSeconds?.() ?? 5 });
+  });
   return app;
 }

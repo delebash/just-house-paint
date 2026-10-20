@@ -2,11 +2,14 @@
 
 ## v0.1.3
 
-- **On a Mac, coming from v0.1.2: move your data before you replace the app.** v0.1.2 kept your houses
-  inside the app (`Just House Paint.app/Contents/MacOS/data`), and replacing the app removes them. First
-  make a backup (**App Settings → Backups → Export backup**) and restore it after the update — or
-  Control-click the app, choose **Show Package Contents**, and move `Contents/MacOS/data` to
-  `~/Library/Application Support/JustHousePaint`. From this version on, your data stays outside the app.
+- **On a Mac, coming from v0.1.2: save your data before you replace the app.** v0.1.2 kept your houses
+  inside the app (`Just House Paint.app/Contents/MacOS/data`), and replacing the app removes them. Before
+  you replace it, make a backup (**App Settings → Backups → Export backup**) and restore it in the new
+  version. Or: quit the app, Control-click it, choose **Show Package Contents**, open `Contents/MacOS`,
+  and move the `data` folder into `Library/Application Support` (in Finder, **Go → Go to Folder…** and type
+  `~/Library/Application Support`), then rename it `JustHousePaint` — if a `JustHousePaint` folder is
+  already there (the new version was opened first), quit the app and put yours in its place. From this
+  version on, your data stays outside the app.
 - **Behind a reverse proxy, or under another name for your computer** (Caddy, nginx, `tailscale serve`):
   name its address in `JUST_HOUSE_PAINT_ALLOWED_HOSTS` and give each device an access token, or the
   server refuses it — see [On another computer, or without a window](getting-started.md#on-another-computer-or-without-a-window).
@@ -14,9 +17,14 @@
   changes shows in the others within seconds (**App Settings → General → Other windows**), two painting
   different parts of one design keep both, and a stroke made on outlines another window has just
   changed is refused and the house shown as it is now — never one window's work saved over the other's.
-- **Restoring a backup is all or nothing**: if a file in the app's data is open in another program, the
-  restore says so and changes nothing; other windows wait while it runs, then show the restored houses.
-  **A backup** is your data at one moment, even while another window works.
+- **Restoring a backup is all or nothing**: if it can't finish — a file in the app's data open in another
+  program, say — it says so and your data is as it was (work that was running, like finding parts, stops).
+  While it runs, other windows' changes are refused; then they show the restored houses. **A backup** can be
+  made while you or another window keep working.
+- **Left open for days**: a window that is minimized or hidden asks the server nothing; the app checks for
+  updates every few hours and when the computer wakes; the server started again (the tray's **Restart
+  server**) no longer refuses your next stroke; a part search or an AI photo survives a moment without the
+  network; a token removed in **App Settings → Server** brings the window to the token page.
 - **On a small screen** the window is never taller or wider than the screen.
 - **Easier to read and use**: the house cards in the dark theme, a switch that is off, the Parts tab's
   paint names, the Colors tab's swatches; **Remove the color**; a scheme that can't be made from a

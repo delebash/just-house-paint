@@ -227,7 +227,7 @@ async function loadPhoto() {
  *  without its file yet (added by hand, the server's 404) gets an empty outline, so the brush can draw
  *  it; any other failure is reported and leaves the part without one — a stroke on an outline that
  *  didn't load would save over the real one. */
-async function loadMasks(keys) {
+async function loadMasks(keys, failed = []) {
   const { displayWidth: w, displayHeight: h, id } = house.house;
   const blobs = {};
   await Promise.all(
@@ -238,7 +238,10 @@ async function loadMasks(keys) {
         blobs[key] = blob;
       } catch (e) {
         if (e?.status === 404) painter.setMask(key, new Uint8Array(w * h), texture.value);
-        else reportError(e);
+        else {
+          failed.push(key);
+          reportError(e);
+        }
       }
     }),
   );
@@ -260,10 +263,15 @@ watch(
  *  before the other window's change). No stroke meanwhile (outlineBusy). */
 async function reloadParts() {
   outlineBusy.value++;
+  // what waits to be saved was made on the outlines being replaced: it never lands with their new version
+  dropWaitingWrites();
   try {
     const v = house.house.outlines;
-    const masks = await loadMasks(house.parts.map((p) => p.key));
-    house.useOutlines(v);
+    const failed = [];
+    const masks = await loadMasks(house.parts.map((p) => p.key), failed);
+    // their version only with all of them: a part still holding the old outline keeps the old version, whose next
+    // write is refused and reads them again
+    if (!failed.length) house.useOutlines(v);
     history.reset({ colors: house.colors, designId: house.designId, masks });
     photographed.value = {};
     refreshPhotographed();
@@ -436,16 +444,23 @@ let pendingWrites = 0;
 let writeGen = 0;
 // the outlines being read or a Box answering: a stroke now would be made on the outlines from before
 const outlineBusy = ref(0);
-function queueWrite(fn) {
-  const gen = writeGen;
+// a stroke, an Undo or a save in the middle of its awaits (the refresh waits for it — holdChangesWhile)
+let stroking = 0;
+/** `fn` in the queue, made in generation `gen` — dropped when the outlines it was made on were replaced since. */
+function queueWrite(fn, gen = writeGen) {
   pendingWrites++;
   const next = chain.catch(() => {}).then(() => (gen === writeGen ? fn() : null));
   chain = next;
   next.catch(() => {}).finally(() => pendingWrites--);
   return next;
 }
-function queueSave(key, blob, houseId) {
-  queueWrite(() => house.saveMask(key, blob, houseId)).catch(onWriteRefused);
+function queueSave(key, blob, houseId, gen = writeGen) {
+  queueWrite(() => house.saveMask(key, blob, houseId), gen).catch(onWriteRefused);
+}
+/** The writes still waiting are dropped (the outlines they were made on are being replaced). */
+function dropWaitingWrites() {
+  writeGen++;
+  for (const key of [...saveTimers.keys()]) cancelSave(key);
 }
 /** The waiting saves sent now, and every write finished — before a Box or Find the parts, which carry the
  *  version the last save answers. */
@@ -462,8 +477,7 @@ const STALE = /\/(outlines-changed|finding-parts|maintenance)$/;
 function onWriteRefused(e) {
   if (e?.cancelled) return;
   if (STALE.test(e?.problem?.type || "")) {
-    writeGen++;
-    for (const key of [...saveTimers.keys()]) cancelSave(key);
+    dropWaitingWrites();
     if (e.status === 412) reloadOutlines().catch(reportError);
   }
   reportError(e);
@@ -486,13 +500,13 @@ async function reloadOutlines() {
 // house it was drawn on; then a dark part's calming follows the new outline (kept as it was while the
 // strokes went on: working it out takes too long for each one)
 const saveTimers = new Map(); // key → { timer, run }
-function scheduleSave(key, blob) {
+function scheduleSave(key, blob, gen = writeGen) {
   cancelSave(key);
   const houseId = house.house.id;
   const drawnOn = painter;
   const run = (leaving = false) => {
     saveTimers.delete(key);
-    queueSave(key, blob, houseId);
+    queueSave(key, blob, houseId, gen);
     if (!leaving && drawnOn === painter && painter?.calmAgain(key)) repaint();
   };
   saveTimers.set(key, { timer: setTimeout(run, 600), run });
@@ -506,20 +520,31 @@ function cancelSave(key) {
 // changed are read again (the history starts over), a find or an AI photo started there is followed here (the
 // tools off while the parts are found), a brand's colors loaded again or removed there are looked up again. Never
 // while a stroke or a save is under way: the change waits for them.
-const releaseHold = holdChangesWhile(() => saveTimers.size > 0 || pendingWrites > 0 || outlineBusy.value > 0);
+const releaseHold = holdChangesWhile(() => loading || stroking > 0 || saveTimers.size > 0 || pendingWrites > 0 || outlineBusy.value > 0);
+let retryRefresh = null;
 async function refreshFromServer() {
   if (!house.house || loading || !painter) return;
+  clearTimeout(retryRefresh);
   const id = house.house.id;
+  // what the picture is made of: repainted only when it changed (another window's change to another house, its
+  // prefs or settings leave this one as it is — a repaint is ~300 ms at 2048 px)
+  const seen = () => JSON.stringify([house.house, house.parts, house.designs, house.colors]);
+  const before = seen();
   try {
     const running = await house.runningJobs(id).catch(() => []);
     await reloadOutlines();
     if (house.house?.id !== id) return;
-    await paints.refreshBrands();
-    await paints.paints(housePaints());
-    repaint();
+    await paints.refreshBrands(); // a brand changed: its own watch repaints
+    if (seen() !== before) {
+      await paints.paints(housePaints());
+      repaint();
+    }
     follow(running);
   } catch (e) {
-    if (!e?.cancelled) reportError(e);
+    if (e?.cancelled) return;
+    reportError(e);
+    // the change isn't shown yet: tried again in a moment (the counter has moved on past it)
+    retryRefresh = setTimeout(refreshFromServer, 5000);
   }
 }
 watch(() => otherWindows.changes, refreshFromServer);
@@ -527,6 +552,7 @@ watch(() => otherWindows.changes, refreshFromServer);
 // leaving the page saves what is still waiting (a stroke made just before Back isn't lost)
 onBeforeUnmount(() => {
   releaseHold();
+  clearTimeout(retryRefresh);
   for (const { timer, run } of [...saveTimers.values()]) {
     clearTimeout(timer);
     run(true);
@@ -538,13 +564,21 @@ async function onStroke({ points, radius, mode }) {
   const key = house.selectedPart;
   const mask = key && painter?.mask(key);
   if (!mask) return;
-  brushStroke(mask, painter.width, painter.height, points, radius, mode);
-  painter.touched(key);
-  refreshPhotographed([key]);
-  repaint();
-  const blob = await pngOf(mask, painter.width, painter.height);
-  history.record({ masks: { [key]: blob } });
-  scheduleSave(key, blob);
+  // the outlines it is drawn on: its save is made in this generation, and dropped if they were replaced since
+  const gen = writeGen;
+  stroking++;
+  try {
+    brushStroke(mask, painter.width, painter.height, points, radius, mode);
+    painter.touched(key);
+    refreshPhotographed([key]);
+    repaint();
+    const blob = await pngOf(mask, painter.width, painter.height);
+    if (gen !== writeGen) return;
+    history.record({ masks: { [key]: blob } });
+    scheduleSave(key, blob, gen);
+  } finally {
+    stroking--;
+  }
 }
 
 async function onBox(box) {
@@ -576,17 +610,24 @@ async function applyRecord(rec, prev) {
   const changed = keys.filter((k) => rec.masks[k] !== prev.masks[k]);
   if (!changed.length || !painter) return;
   const { displayWidth: w, displayHeight: h } = house.house;
-  const blobs = {};
-  for (const key of changed) {
-    cancelSave(key);
-    blobs[key] = rec.masks[key] || (await pngOf(new Uint8Array(w * h), w, h));
-    painter.setMask(key, await maskOf(blobs[key], w, h), texture.value);
+  const gen = writeGen;
+  stroking++;
+  try {
+    const blobs = {};
+    for (const key of changed) {
+      cancelSave(key);
+      blobs[key] = rec.masks[key] || (await pngOf(new Uint8Array(w * h), w, h));
+      if (gen !== writeGen) return; // the outlines were read again meanwhile: the history starts over from them
+      painter.setMask(key, await maskOf(blobs[key], w, h), texture.value);
+    }
+    refreshPhotographed(changed);
+    repaint();
+    // saved without holding the history: a stroke made while they save is recorded as usual
+    const houseId = house.house.id;
+    for (const key of changed) queueSave(key, blobs[key], houseId, gen);
+  } finally {
+    stroking--;
   }
-  refreshPhotographed(changed);
-  repaint();
-  // saved without holding the history: a stroke made while they save is recorded as usual
-  const houseId = house.house.id;
-  for (const key of changed) queueSave(key, blobs[key], houseId);
 }
 
 // Ctrl+Z / Ctrl+Y (and Ctrl+Shift+Z) — never while typing in a field (its own undo is the browser's),
@@ -631,8 +672,9 @@ const finding = computed(() => busy.value.find || !!findTask.value);
 const EDIT_TOOLS = ["brush", "eraser", "box"];
 // Undo and Redo too, all of them: a step can put an outline back (and save it), and the run's end starts
 // the history over from the parts it found anyway (reloadParts)
-const undo = () => !finding.value && history.undo();
-const redo = () => !finding.value && history.redo();
+// and not while the outlines are being read again: a step would put back one from before them
+const undo = () => !finding.value && !outlineBusy.value && history.undo();
+const redo = () => !finding.value && !outlineBusy.value && history.redo();
 watch(finding, (on) => {
   if (on && EDIT_TOOLS.includes(tool.value)) tool.value = "look";
 });

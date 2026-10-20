@@ -19,7 +19,7 @@ import { createApp } from "./app.js";
 import { getDb } from "./app_state.js";
 import { seedWorkspace } from "./database/seed.js";
 import { defaultDataDir } from "./paths.js";
-import { tidyAtStart } from "./startup.js";
+import { tidyAtStart, tidyNowAndThen } from "./startup.js";
 import { DEFAULT_PORT, PRODUCT, VERSION } from "./version.js";
 
 export async function main(argv = process.argv.slice(2)) {
@@ -35,6 +35,7 @@ export async function main(argv = process.argv.slice(2)) {
       const app = await createApp(dataDir);
       seedWorkspace(getDb());
       await tidyAtStart(dataDir, getDb());
+      tidyNowAndThen(dataDir);
       const h = host || "127.0.0.1";
       const p = port ?? DEFAULT_PORT;
       return { app, host: h, port: p, banner: `${PRODUCT} ${VERSION} server listening on http://${h}:${p}` };

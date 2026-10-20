@@ -90,9 +90,9 @@ export function makeServer({ fetch = async () => new Response("offline", { statu
   const db = openDatabase(path.join(dataDir, "app.db"), { foreignKeys: true });
   migrate(db, MIGRATIONS);
   // as services.js and app.js wire them: a job's end is its window's change; each window's writes counted apart
-  const changes = new ChangeCounter();
+  const changes = new ChangeCounter({ db });
   const jobs = new JobRegistry({ onFinish: (job) => changes.note(job.clientId) });
-  const ctx = { db, dataDir, jobs, changes, outlines: new Outlines(), checkSeconds: () => 3, fetch, finder: fakeFinder, limits: () => LIMITS, maxDesignsPerHouse: () => 3, harmony: () => ({}), maxImportBytes: () => 5_000_000,
+  const ctx = { db, dataDir, jobs, changes, outlines: new Outlines({ db }), checkSeconds: () => 3, fetch, finder: fakeFinder, limits: () => LIMITS, maxDesignsPerHouse: () => 3, harmony: () => ({}), maxImportBytes: () => 5_000_000,
     // read as services.js reads it: the row, else the seed's value
     colorOrder: () => getSetting(db, "paints.colorOrder") ?? SETTING_DEFAULTS["paints.colorOrder"],
     partLabel: (k) => k.replace(/_/g, " "),

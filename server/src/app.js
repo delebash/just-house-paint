@@ -159,10 +159,12 @@ export async function createApp(dataDir = null, { services = {} } = {}) {
   // Each window's writes that succeed are counted apart (changes.js — its X-Client-Id), so the other windows'
   // pages read again (GET /v1/sync/rev); a restore and a reset are everyone's change (data_admin.js).
   const changes = new ChangeCounter();
-  app.use("*", changes.middleware({ except: [SHUTDOWN_PATH, "/v1/data/restore", "/v1/data/reset"] }));
+  app.use("*", changes.middleware());
 
   // 4. The database and the app state the routes read: the house-paint services ride on it.
   const db = openAppDatabase(dataDir);
+  // the data's epoch is kept in the database (a restore or a reset renews it)
+  changes.useDatabase(db);
   setState(new AppState(dataDir, db, createServices({ db, dataDir }, { changes, ...services })));
 
   // 5. The family routers.

@@ -137,37 +137,70 @@ describe("houses", () => {
     expect(existsSync(displayPath(s.dataDir, house.id))).toBe(true);
   });
 
-  test("a restore stopped between its two renames: the next start puts the backup's houses back, not away", async () => {
+  test("no houses folder and a restore's copies beside it: the old (replaced) one goes back, not the backup's", async () => {
+    // a restore swaps the folders before its tables: the tables are still the old ones (the twelfth review)
     s = makeServer();
     rmSync(housesRoot(s.dataDir), { recursive: true, force: true });
-    const file = (name, ...rest) => path.join(s.dataDir, name, "restored-house", ...rest);
-    for (const name of ["houses.restoring-1750000000000", "houses.replaced-1760000000001", "houses.restoring-1760000000001"]) mkdirSync(file(name), { recursive: true });
+    const file = (name, ...rest) => path.join(s.dataDir, name, "my-house", ...rest);
+    for (const name of ["houses.restoring-1760000000001", "houses.replaced-1760000000001"]) mkdirSync(file(name), { recursive: true });
+    writeFileSync(file("houses.replaced-1760000000001", "display.jpg"), "mine");
     writeFileSync(file("houses.restoring-1760000000001", "display.jpg"), "the backup's");
-    // the database already holds the backup's houses (restored first): its newest staged copy is theirs
-    await sweepHouseDirs(s.dataDir, ["restored-house"]);
-    expect(readFileSync(path.join(s.dataDir, "houses", "restored-house", "display.jpg"), "utf8")).toBe("the backup's");
+    await sweepHouseDirs(s.dataDir, ["my-house"]);
+    expect(readFileSync(path.join(s.dataDir, "houses", "my-house", "display.jpg"), "utf8")).toBe("mine");
     expect(readdirSync(s.dataDir).filter((n) => n.startsWith("houses."))).toEqual([]);
-    // only the replaced copy left (the staged one already gone): that one goes back
+    // only a staged copy left: that one, rather than none
     rmSync(housesRoot(s.dataDir), { recursive: true, force: true });
-    mkdirSync(file("houses.replaced-1760000000005"), { recursive: true });
-    await sweepHouseDirs(s.dataDir, ["restored-house"]);
-    expect(existsSync(path.join(s.dataDir, "houses", "restored-house"))).toBe(true);
+    mkdirSync(file("houses.restoring-1760000000005"), { recursive: true });
+    await sweepHouseDirs(s.dataDir, ["my-house"]);
+    expect(existsSync(path.join(s.dataDir, "houses", "my-house"))).toBe(true);
     expect(readdirSync(s.dataDir).filter((n) => n.startsWith("houses."))).toEqual([]);
   });
 
-  test.skipIf(process.platform !== "win32")("a staged copy Windows holds is copied into place instead of renamed", async () => {
+  test("the start's tidy: a half-written outline a killed save left goes, the outline stays; old work folders go", async () => {
+    s = makeServer();
+    const house = await (await s.upload(await jpeg(100, 80))).json();
+    const { tidyAtStart } = await import("../src/startup.js");
+    const { dbPath } = await import("../src/database/index.js");
+    const masks = path.join(s.dataDir, "houses", house.id, "masks");
+    mkdirSync(masks, { recursive: true });
+    writeFileSync(path.join(masks, "body.png"), "whole");
+    writeFileSync(path.join(masks, "body.png.saving"), "half");
+    const work = path.join(path.dirname(dbPath(s.dataDir)), ".restore-old");
+    mkdirSync(work, { recursive: true });
+    const hourAgo = new Date(Date.now() - 2 * 3600_000);
+    utimesSync(work, hourAgo, hourAgo);
+    await tidyAtStart(s.dataDir, s.db);
+    expect(readdirSync(masks)).toEqual(["body.png"]);
+    expect(existsSync(work)).toBe(false);
+  });
+
+  test("a restore the kit couldn't finish yet: the start's tidy touches none of the houses' folders", async () => {
+    // its record still beside the database: the copies it names are the only ones (the twelfth review — a failed
+    // recovery, then this sweep, removed the user's own houses)
+    s = makeServer();
+    const { tidyAtStart } = await import("../src/startup.js");
+    mkdirSync(path.join(s.dataDir, "houses.replaced-1760000000001", "mine"), { recursive: true });
+    mkdirSync(path.join(s.dataDir, "houses", "orphan-half"), { recursive: true });
+    const { dbPath } = await import("../src/database/index.js");
+    writeFileSync(`${dbPath(s.dataDir)}.restoring`, JSON.stringify({ stamp: 1760000000001, dirs: [] }));
+    await tidyAtStart(s.dataDir, s.db);
+    expect(existsSync(path.join(s.dataDir, "houses.replaced-1760000000001", "mine"))).toBe(true);
+    expect(existsSync(path.join(s.dataDir, "houses", "orphan-half"))).toBe(true);
+  });
+
+  test.skipIf(process.platform !== "win32")("a copy Windows holds is copied into place instead of renamed", async () => {
     s = makeServer();
     rmSync(housesRoot(s.dataDir), { recursive: true, force: true });
     mkdirSync(path.join(s.dataDir, "houses.restoring-1760000000001", "h"), { recursive: true });
     mkdirSync(path.join(s.dataDir, "houses.replaced-1760000000001", "h"), { recursive: true });
-    const fd = openSync(path.join(s.dataDir, "houses.restoring-1760000000001", "h", "display.jpg"), "w");
+    const fd = openSync(path.join(s.dataDir, "houses.replaced-1760000000001", "h", "display.jpg"), "w");
     try {
       await sweepHouseDirs(s.dataDir, ["h"]);
     } finally {
       closeSync(fd);
     }
     expect(existsSync(path.join(s.dataDir, "houses", "h", "display.jpg"))).toBe(true);
-    expect(existsSync(path.join(s.dataDir, "houses.replaced-1760000000001"))).toBe(false);
+    expect(existsSync(path.join(s.dataDir, "houses.restoring-1760000000001"))).toBe(false);
     // the start after: what was held beside it goes
     await sweepHouseDirs(s.dataDir, ["h"]);
     expect(readdirSync(s.dataDir).filter((n) => n.startsWith("houses."))).toEqual([]);

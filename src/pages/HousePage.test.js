@@ -1179,3 +1179,24 @@ test("another window's change: the page reads the house again in place, and foll
   server.jobs = [];
   await settle();
 }, 20000);
+
+test("a refused save drops the saves still waiting — they were made on the same old outlines", async () => {
+  server.parts = PARTS;
+  server.version = '"v1"';
+  await mountPage();
+  await click(byText(".ui-seg button", "Brush"));
+  const { useHouseStore } = await import("../stores/house.js");
+  // another window changed the outlines; this page strokes the body, then the trim, before either is saved
+  server.version = '"v9"';
+  canvas().vm.$emit("stroke", { points: [1, 1, 3, 1], radius: 2, mode: "add" });
+  await flushPromises();
+  useHouseStore().selectedPart = "trim";
+  canvas().vm.$emit("stroke", { points: [5, 5, 6, 5], radius: 2, mode: "add" });
+  await new Promise((r) => setTimeout(r, 900));
+  await flushPromises();
+  await flushPromises();
+  // the first is refused; the second never goes with the version the re-read brings
+  expect(server.calls.filter((c) => c === "PUT /v1/houses/h1/parts/body/mask")).toHaveLength(1);
+  expect(server.calls.filter((c) => c === "PUT /v1/houses/h1/parts/trim/mask")).toHaveLength(0);
+  expect(server.ifMatch).toEqual(['"v1"']);
+}, 20000);

@@ -119,6 +119,14 @@ export const listParts = (h, houseId) => h.all("SELECT * FROM parts WHERE house_
 
 export const getPart = (h, houseId, key) => part(h.one("SELECT * FROM parts WHERE house_id = ? AND key = ?", [houseId, key]));
 
+/** What a house's outlines' version is made from (outlines.js): when its parts were found, and each part's key, last
+ *  change and area — every outline write changes them. */
+export function outlinesState(h, houseId) {
+  const found = h.value("SELECT parts_found_at FROM houses WHERE id = ?", [houseId]) ?? null;
+  const parts = h.all("SELECT key, updated_at, area FROM parts WHERE house_id = ? ORDER BY key", [houseId]).map((r) => [r.key, r.updated_at, r.area]);
+  return [found, parts];
+}
+
 /** A part's mask changed by hand (its area, and `source`: edited, or added for a new part). */
 export function updatePartMask(h, houseId, key, { area, paintable, source = "edited" }) {
   const now = nowIso();

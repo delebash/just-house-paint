@@ -40,6 +40,10 @@ again.
 **"A backup is being restored" or "The app is being reset".** Another window is restoring or resetting
 the app; your change wasn't saved. When it is done every window shows the new data — then do it again.
 
+**"The app needs a restart" or "The restore couldn't put your data back".** A restore stopped half-way and a
+file held by another program kept the app from putting your data back while it ran. Close the program, then
+quit the app and open it again: it puts your data back as it starts.
+
 **"Some colors aren't loaded any more"** for the AI photo. A brand was removed, or loaded again without
 some colors, here or in another window. Load the brand again (**Paint colors**), or pick other colors for
 the parts it names.

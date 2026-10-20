@@ -22,7 +22,8 @@ const as = (who, method, url, body, ifMatch) => {
   else if (body !== undefined) headers["content-type"] = "application/json";
   return s.app.request(url, { method, headers, body: body instanceof Buffer || body === undefined ? body : JSON.stringify(body) });
 };
-const rev = async (who) => (await (await as(who, "GET", "/v1/sync/rev")).json()).rev;
+// the count in the opaque rev ("<series>:<count>")
+const rev = async (who) => Number((await (await as(who, "GET", "/v1/sync/rev")).json()).rev.split(":")[1]);
 
 /** A display-size outline PNG with rows [from, to) set. */
 async function rows(house, from, to) {
@@ -190,9 +191,11 @@ describe("the AI photo and the paints another window removed", () => {
 });
 
 describe("outlines.js", () => {
-  test("writes for one house run one at a time, in order; other houses don't wait; the version checks as RFC 9110 says", async () => {
+  test("writes for one house run one at a time, in order; other houses don't wait; the version checks strongly", async () => {
+    s = makeServer();
+    const house = await houseWithParts();
     const { Outlines } = await import("../src/outlines.js");
-    const o = new Outlines();
+    const o = new Outlines({ db: s.db });
     const log = [];
     let release;
     const first = o.serial("h1", async () => {
@@ -208,15 +211,41 @@ describe("outlines.js", () => {
     release();
     await Promise.all([first, second]);
     expect(log).toEqual(["h1 first starts", "h2", "h1 first ends", "h1 second"]);
-    const v0 = o.etag("h1");
-    expect(() => o.check("h1", v0)).not.toThrow();
-    expect(() => o.check("h1", `W/${v0}`)).not.toThrow(); // weak comparison
-    expect(() => o.check("h1", "*")).not.toThrow();
-    expect(() => o.check("h1", undefined)).not.toThrow(); // unconditional
-    const v1 = o.bump("h1");
-    expect(() => o.check("h1", v0)).toThrow(/wasn't saved/);
-    expect(() => o.check("h1", `"x", ${v1}`)).not.toThrow(); // any of a list
-    o.replaced();
-    expect(() => o.check("h1", v1)).toThrow(); // a restore: every version before is stale
+    expect(o.held).toBe(0); // the locks go once nothing holds them
+    const v0 = o.etag(house.id);
+    expect(v0).toBe(house.outlines);
+    expect(() => o.check(house.id, v0)).not.toThrow();
+    expect(() => o.check(house.id, `W/${v0}`)).toThrow(); // a weak tag never matches (If-Match compares strongly)
+    expect(() => o.check(house.id, "*")).not.toThrow();
+    expect(() => o.check(house.id, undefined)).not.toThrow(); // unconditional
+    await as(A, "PUT", `/v1/houses/${house.id}/parts/trim/mask`, await rows(house, 0, 4), v0);
+    const v1 = o.etag(house.id);
+    expect(v1).not.toBe(v0);
+    expect(() => o.check(house.id, v0)).toThrow(/wasn't saved/);
+    expect(() => o.check(house.id, `"x", ${v1}`)).not.toThrow(); // any of a list
+  });
+});
+
+describe("a server started again", () => {
+  test("the outlines' version is the database's: a new process holds the same one; only data writes count; a restart is a change, not a reload", async () => {
+    s = makeServer();
+    const house = await houseWithParts();
+    const { Outlines } = await import("../src/outlines.js");
+    const { ChangeCounter } = await import("../src/changes.js");
+    // a server started again: the same version, so the page's next stroke lands
+    expect(new Outlines({ db: s.db }).etag(house.id)).toBe(house.outlines);
+    expect((await as(A, "PUT", `/v1/houses/${house.id}/parts/trim/mask`, await rows(house, 0, 4), house.outlines)).status).toBe(200);
+    // the data's epoch is the database's; the rev carries this process's boot id
+    const before = await (await as(B, "GET", "/v1/sync/rev")).json();
+    const again = new ChangeCounter({ db: s.db });
+    expect(again.epoch).toBe(before.epoch);
+    expect(again.boot).not.toBe(before.rev.split(":")[0]);
+    // what isn't data: no change
+    const n = await rev(B);
+    await as(A, "POST", "/v1/schemes/harmony", { brand: "behr", baseHex: "#336699" });
+    await as(A, "DELETE", "/v1/jobs/none");
+    expect(await rev(B)).toBe(n);
+    // the window ids go after a day without a word
+    expect(s.ctx.changes.windows).toBeGreaterThan(0);
   });
 });

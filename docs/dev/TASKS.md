@@ -354,7 +354,8 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         dry run 39386374890 all green (Windows, macOS, Linux, the AppImage as a user opens it): the window and the
         server on its own share one folder on each — macOS ~/Library/Application Support/JustHousePaint, Windows and
         the unpacked Linux build data/ beside the executable.
-        Today's fixes attacked (an agent's, with scratch tests; being fixed): a design saved after another window's
+        Today's fixes attacked (an agent's, with scratch tests; all FIXED as decided below — kit 54b1e8b, the app's
+        server and page with tests): a design saved after another window's
         change sends that window's parts back with their old values (the patch's base is the refreshed design, the
         screen's colors the old draft — B's trim lost); a stroke drawn on old outlines can be saved with the new
         version (the gap before reloadOutlines raises its busy flag, onStroke's await before scheduleSave, Undo/Redo
@@ -379,7 +380,7 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         counted), the journal's crash points inside the swap, the snapshot for this app's writers, no caller left on
         PUT current-paints, the docs' refusal words and setting name, the draft release.
         Left open for hours or days (an agent's, the headless server on a temp folder driven by fetch, real Edge and
-        Playwright; being fixed): after any server restart the first stroke, Box or Find is refused "changed in
+        Playwright; all FIXED as decided below, two kept with their reasons): after any server restart the first stroke, Box or Find is refused "changed in
         another window" (the outline versions are a new random series each start; one window's rev reads 0 before
         and after) and the Undo history goes; a plain restart is taken for a restore — every window reloads
         (unsaved colors on screen lost), or keeps the old epoch and reloads at the next ordinary change, or misses

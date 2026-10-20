@@ -45,6 +45,22 @@ beforeEach(() => {
 const HOUSE = { id: "h1", name: "Home", updatedAt: "2026-10-18T10:00:00Z", displayWidth: 4, displayHeight: 2 };
 
 describe("runServerJob", () => {
+  test("a poll that fails on the way (a laptop waking, a server starting again) is tried again; a job the server no longer has is JobGone", async () => {
+    let n = 0;
+    answer("GET /v1/jobs/j1", () => {
+      n++;
+      if (n === 1) throw new Error("Failed to fetch"); // no answer at all
+      if (n === 2) throw Object.assign(new Error("503"), { status: 503 });
+      return { id: "j1", state: "done", result: 7 };
+    });
+    expect(await runServerJob({ start: async () => ({ id: "j1", state: "running", progress: 0 }), feature: "x", label: "x", pollMs: 1 })).toBe(7);
+    expect(n).toBe(3);
+    answer("GET /v1/jobs/j2", () => {
+      throw Object.assign(new Error("404"), { status: 404 });
+    });
+    await expect(runServerJob({ start: async () => ({ id: "j2", state: "running", progress: 0 }), feature: "x", label: "x", pollMs: 1 })).rejects.toMatchObject({ name: "JobGone" });
+  }, 10000);
+
   test("its waits between polls leave no listener behind on the task's signal", async () => {
     let n = 0;
     answer("GET /v1/jobs/j1", () => (++n < 4 ? { id: "j1", state: "running", progress: n / 4 } : { id: "j1", state: "done", result: 1 }));
@@ -266,6 +282,29 @@ describe("the open house", () => {
     s.setColor("trim", "p:3");
     s.setColor("trim", null);
     expect(s.colors).toEqual({ body: "p:5" });
+  });
+
+  test("another window's change to the open design: the parts left as they were take it, a save sends only this window's", async () => {
+    // the twelfth review: the refreshed design became the patch's base, and the draft sent the other window's trim back
+    const s = await opened();
+    s.openDesign("d1");
+    expect(s.colors).toEqual({ body: "p:1" });
+    // window B gives the design a trim; this window reads the designs again
+    answer("GET /v1/houses/h1/designs", [{ id: "d1", name: "Classic", colors: { body: "p:1", trim: "p:B" } }]);
+    await s.refreshDesigns();
+    expect(s.colors).toEqual({ body: "p:1", trim: "p:B" });
+    expect(s.dirty).toBe(false); // nothing touched here
+    // this window paints the body and saves: only the body goes
+    s.setColor("body", "p:A");
+    answer("PATCH /v1/designs/d1", (b) => ({ id: "d1", name: "Classic", colors: { body: "p:1", trim: "p:B", ...b.colors } }));
+    await s.saveDesign();
+    expect(calls.at(-1)[2]).toEqual({ colors: { body: "p:A" } });
+    expect(s.colors).toEqual({ body: "p:A", trim: "p:B" });
+    // B changes the trim again while this window has its own trim on screen: this window's stays
+    s.setColor("trim", "p:mine");
+    answer("GET /v1/houses/h1/designs", [{ id: "d1", name: "Classic", colors: { body: "p:A", trim: "p:B2" } }]);
+    await s.refreshDesigns();
+    expect(s.colors).toEqual({ body: "p:A", trim: "p:mine" });
   });
 
   test("a scheme paints the roles' parts this house has", async () => {

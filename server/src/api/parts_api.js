@@ -80,7 +80,7 @@ export function router(ctx = getState()) {
   };
   /** The outlines changed: their new version, on the answer too (ETag). */
   const newVersion = (c, house) => {
-    const etag = ctx.outlines.bump(house.id);
+    const etag = ctx.outlines.etag(house.id);
     c.header("ETag", etag);
     return etag;
   };
@@ -157,7 +157,7 @@ export function router(ctx = getState()) {
     for (const p of before) {
       if (!stays.has(p.key) && !getPart(ctx.db, house.id, p.key)) await removeHouseFile(maskPath(ctx.dataDir, house.id, p.key));
     }
-    return { parts: parts.length, kept: kept.length, outlines: ctx.outlines.bump(house.id) };
+    return { parts: parts.length, kept: kept.length, outlines: ctx.outlines.etag(house.id) };
   };
 
   app.get("/v1/houses/:id/parts/:key/mask", input({ params: PartParams }), (c) => {
@@ -199,10 +199,13 @@ export function router(ctx = getState()) {
     const { key, paintable } = c.req.valid("json");
     if (getPart(ctx.db, house.id, key)) throw conflict(`house ${house.id} already has a part ${key}`);
     const empty = new Uint8Array(house.displayWidth * house.displayHeight);
-    // an empty outline takes no other part's pixels: the version stays
-    return ctx.outlines.serial(house.id, async () =>
-      c.json(await saveMasks(house, [[key, empty]], () => updatePartMask(ctx.db, house.id, key, { area: 0, paintable, source: "added" })), 201),
-    );
+    // a new part's row changes the version: made on the outlines the page holds, it answers the next one
+    mustBeCurrent(c, house);
+    return ctx.outlines.serial(house.id, async () => {
+      mustBeCurrent(c, house);
+      const part = await saveMasks(house, [[key, empty]], () => updatePartMask(ctx.db, house.id, key, { area: 0, paintable, source: "added" }));
+      return c.json({ ...part, outlines: newVersion(c, house) }, 201);
+    });
   });
 
   // A box: the finder outlines what is inside it; `add` gives it to this part (taking it from the

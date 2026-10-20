@@ -45,15 +45,13 @@ export const keepAuth = {
   scrubBackup: (h) => deleteSetting(h, "auth"),
 };
 
-/** Cancel the jobs, let the part finder and the local AI model go — best effort by design: a
- * reset or restore never fails on its teardown. Every window reads again after it, every outline version
- * before it is stale (changes.js, outlines.js). */
+/** Cancel the jobs and wait for them to end, let the part finder and the local AI model go — best effort by design:
+ * a reset or restore never fails on its teardown. Before a restore replaces anything (beforeReplace) and after it
+ * (onReplaced). */
 async function teardown() {
   const state = getState();
-  state.changes?.replaced();
-  state.outlines?.replaced();
   try {
-    state.jobs?.cancelAll();
+    await state.jobs?.cancelAll();
     await state.finder?.releaseGpu();
   } catch {
     // best effort, as below
@@ -63,6 +61,13 @@ async function teardown() {
   } catch {
     // nothing running
   }
+}
+
+/** The data replaced: every window reloads (changes.js — the data's epoch) — only once it has been (a refused restore
+ *  changed nothing: no window reloads for it). */
+function replaced() {
+  const state = getState();
+  state.changes?.replaced(state.db);
 }
 
 /** Back to the first-run state (POST /v1/data/reset). */
@@ -81,8 +86,7 @@ export async function resetWorkspace() {
   if (auth !== undefined) setSetting(db, "auth", auth);
   seedWorkspace(db);
   await removeAllHouseDirs(getState().dataDir);
-  // a window that read while it ran reads again
-  getState().changes?.replaced();
+  replaced();
   log.info("workspace reset to its first-run state");
 }
 
@@ -98,6 +102,9 @@ export const router = (dataDir, { gate } = {}) =>
     // what would write into the data being replaced stops before it is (the gate is closed by then), and what was
     // derived from the old data after
     beforeReplace: teardown,
-    onReplaced: teardown,
+    onReplaced: async () => {
+      replaced();
+      await teardown();
+    },
     gate,
   });

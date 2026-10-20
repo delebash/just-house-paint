@@ -71,7 +71,7 @@ test("backup, change, restore: the backup's houses and their files come back", a
   expect(existsSync(displayPath(dataDir, after))).toBe(false); // the houses folder is the backup's
 });
 
-test("a restore and a reset are every window's change: their counters move, the outline versions start again", async () => {
+test("a restore and a reset are every window's change: their counters and the data's epoch move", async () => {
   // the eleventh review (2026-10-20): the other windows read again after the data was replaced, and a stroke made
   // on outlines read before it is refused (412), never saved over the restored ones
   const id = await addHouse("Before the backup");
@@ -84,13 +84,36 @@ test("a restore and a reset are every window's change: their counters move, the 
   const restored = await client.app.request("http://testserver/v1/data/restore", { method: "POST", body: form, headers: { host: "testserver", "x-client-id": "a" } });
   expect(restored.status).toBe(200);
   const after = { a: await rev("a"), b: await rev("b") };
-  expect(after.a.rev).toBeGreaterThan(before.a.rev);
-  expect(after.b.rev).toBeGreaterThan(before.b.rev);
+  expect(after.a.rev).not.toBe(before.a.rev);
+  expect(after.b.rev).not.toBe(before.b.rev);
   expect(after.b.epoch).not.toBe(before.b.epoch);
-  expect((await client.get(`/v1/houses/${id}`)).json().outlines).not.toBe(before.outlines);
+  // the outlines' version is the data's: the same outlines restored, the same version (RFC 9110 §8.8.3)
+  expect((await client.get(`/v1/houses/${id}`)).json().outlines).toBe(before.outlines);
+  // a refused restore changed nothing: no window reads again, every outline version stands
+  const bad = new FormData();
+  bad.append("file", new Blob([Buffer.from("not a zip")], { type: "application/zip" }), "backup.zip");
+  const refused = await client.app.request("http://testserver/v1/data/restore", { method: "POST", body: bad, headers: { host: "testserver" } });
+  expect(refused.status).toBe(400);
+  expect((await rev("b")).rev).toBe(after.b.rev);
   // the same for a reset
   expect((await client.post("/v1/data/reset", { headers: { "x-client-id": "a" } })).statusCode).toBe(200);
-  expect((await rev("b")).rev).toBeGreaterThan(after.b.rev);
+  expect((await rev("b")).rev).not.toBe(after.b.rev);
+});
+
+test("a restore stops the running work and waits for it before anything is replaced", async () => {
+  const { jobs } = getState();
+  let ended = false;
+  jobs.start({ kind: "find-parts", key: "x" }, async ({ signal }) => {
+    await new Promise((r) => signal.addEventListener("abort", r));
+    await new Promise((r) => setTimeout(r, 200)); // past its last check: finishing what it does
+    ended = true;
+  });
+  const backup = await client.get("/v1/data/backup");
+  const form = new FormData();
+  form.append("file", new Blob([backup.rawPayload], { type: "application/zip" }), "backup.zip");
+  const restored = await client.app.request("http://testserver/v1/data/restore", { method: "POST", body: form, headers: { host: "testserver" } });
+  expect(restored.status).toBe(200);
+  expect(ended).toBe(true);
 });
 
 test("reset returns the first-run state but keeps the access tokens", async () => {

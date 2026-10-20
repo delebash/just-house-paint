@@ -140,6 +140,20 @@ export async function removeAllHouseDirs(dataDir, { rename = renameSync } = {}) 
   }
 }
 
+/** At start: an outline a killed save left beside its place (`masks/<part>.png.saving`, written before the rename
+ *  that puts it in place) goes — the outline itself is whole. Returns how many went. */
+export async function sweepSaving(dataDir, ids) {
+  let gone = 0;
+  for (const id of ids) {
+    const dir = path.join(houseDir(dataDir, id), "masks");
+    for (const name of existsSync(dir) ? readdirSync(dir) : []) {
+      if (name.endsWith(".saving") && (await removeHouseFile(path.join(dir, name)))) gone++;
+    }
+  }
+  if (gone) log.info(`removed ${gone} outline(s) a stopped save left half written`);
+  return gone;
+}
+
 // the file naming a restore's copy a start couldn't put back yet
 const PUT_BACK = ".houses-put-back";
 
@@ -201,15 +215,18 @@ async function putBack(dataDir, name) {
  */
 export async function sweepHouseDirs(dataDir, ids) {
   // a reset's old houses folder moved aside, a restore's replaced or staged copy (the kit's data_api),
-  // still there because Windows held a file. With no houses folder at all (a restore stopped between its
-  // two renames), the newest staged copy — the backup's — or else the replaced one is put back first.
+  // still there because Windows held a file. With no houses folder at all, the newest replaced copy — the old
+  // one — or else a staged one is put back first (a restore swaps the folders before its tables; one stopped in
+  // between is put right by the kit's record before this runs, and tidyAtStart leaves everything while it isn't).
   const all = existsSync(dataDir) ? readdirSync(dataDir) : [];
   const newest = (tag) => all.filter((n) => n.startsWith(`houses${tag}`)).sort().at(-1);
   // a put-back an earlier start couldn't finish names its copy here: never removed as a leftover, tried
   // again (a photo added meanwhile made a new houses folder: the copy's files join it)
   const pending = path.join(dataDir, PUT_BACK);
   const owed = existsSync(pending) ? readFileSync(pending, "utf8").trim() : null;
-  const back = existsSync(housesRoot(dataDir)) ? (owed && all.includes(owed) ? owed : null) : (newest(".restoring-") ?? newest(".replaced-"));
+  // the replaced (old) copy first: a restore swaps the folders before its tables, so one stopped in between left the
+  // old tables — and the kit's record puts that right before this runs; this is the fallback
+  const back = existsSync(housesRoot(dataDir)) ? (owed && all.includes(owed) ? owed : null) : (newest(".replaced-") ?? newest(".restoring-"));
   if (back) {
     if (await putBack(dataDir, back)) {
       rmSync(pending, { force: true });

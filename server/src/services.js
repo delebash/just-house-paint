@@ -82,7 +82,7 @@ export function createServices({ db, dataDir }, overrides = {}) {
   const changes = overrides.changes ?? new ChangeCounter();
   return {
     changes,
-    outlines: overrides.outlines ?? new Outlines(),
+    outlines: overrides.outlines ?? new Outlines({ db }),
     // a job's end is a change by the window that started it (its page reads the result itself)
     jobs: new JobRegistry({ onFinish: (job) => changes.note(job.clientId) }),
     // how often a window asks whether another window changed something (GET /v1/sync/rev)
