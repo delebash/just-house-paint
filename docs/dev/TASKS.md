@@ -1222,6 +1222,43 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         attacked, the screens on its build, and a fresh angle — the server's routes under hostile and odd input.
         Dry run 39452696637 green on every runner, linux-user too (Windows 75 data-folder tests with the link ones,
         macOS and Linux 71 + 4 Windows-only skipped; one data folder shared on each; engines as before).
+        The nineteenth's fresh angle — the server's routes under hostile and odd input (an agent's, in-process on
+        createApp with fake engines; the scratchpad's fuzz19; partial — backup/restore, the static UI over a socket and
+        the kit's /v1/llm-* and /v1/ai/* routes still to do): security — brand keys that are built-in object names
+        (constructor, __proto__, toString, valueOf, hasOwnProperty) taken as brands (BRANDS a plain object: 201 for an
+        import under "constructor"; the capital ones can't be removed after); a cross-site <img> of /v1/data/backup
+        makes full backups (a GET has no CSRF check — read in the code). Loses data — a stroke answered 200 is lost under
+        a find that started while it saved (the check before the awaits, not in the serial section; a Box the same);
+        a part added during a find is dropped (the route has no check). 500 or hang — prefs nested 5,000 deep or more
+        are stored, and then every GET /v1/prefs answers 500 until a DELETE; an offset past 64 bits answers 500. Wrong —
+        1e400 accepted as Infinity and stored as null (unbounded numbers in the settings); schemes.harmony with no kinds
+        accepted, every scheme then empty; a padded token stored untrimmed (never matches), a non-ASCII one accepted;
+        "Café" in two Unicode forms, or with a zero-width space, both accepted as design names; a pref named __proto__
+        stored and never returned. Small — no caps on current-paints, a design's colors, aiphoto.templates (40 MB),
+        paints.autoLoad, X-Client-Id (kept 24 h, any number); three 422s without an errors array; unrouted paths answer
+        FastAPI's {"detail":"Not Found"}; the outline upload takes any image sharp reads; names keep NUL,
+        zero-width-only, overrides; q=%00 matches every paint; con / nul / aux / com1 / lpt1 as part keys; a broken
+        multipart said "file: Field required". Read in the code, not yet run: a restore's broken multipart likely a 500
+        and its upload unbounded (it can fill the drive before the room check); zip errors other than a bad zip a 500;
+        a restored house id that isn't a safe name makes the next start fail (tidyAtStart throws); restored settings
+        rows never checked against their schema. Held — path traversal and odd ids everywhere, uploads (size, pixels,
+        formats, EXIF, an iTXt, an entity-expansion SVG), deep JSON on every schema'd route, bounds, If-Match, the races
+        tried, CSRF on writes, CORS, the Host check, spoofed forwarding headers, token placement; integrity_check ok.
+        Their fixes — decided (mine, argued): a brand is one of the app's own (Object.hasOwn — BRANDS keyed with no
+        prototype), everywhere a brand key comes in; GETs refused when the browser marks them cross-site (Fetch Metadata
+        — Sec-Fetch-Site: cross-site, web.dev's resource isolation policy), top-level navigation to the UI excepted;
+        the finding check repeated inside the outlines' serial section for a stroke, a Box and an added part, and the
+        added part refused while a find runs; prefs capped (32 deep, 64 KB a key, 200 keys) and read with no prototype;
+        the paint search's offset bounded; non-finite numbers refused in every body (JSON can't carry them — the kit's
+        validator), the settings' numbers given bounds; harmony needs one kind at least; tokens trimmed and visible ASCII
+        only; names compared after NFC with zero-width characters removed, NUL and other control characters refused,
+        a name of only invisible characters refused, bidi overrides stripped; maxProperties and length caps on the free
+        lists; every 422 with its errors; the outline upload must be a PNG; q stripped of control characters; part keys
+        never a Windows device name; a broken multipart said as broken; the restore's upload bounded by the drive's room
+        as it streams, any zip error a 422 "not a backup this app can read", a backup whose house ids or settings fail
+        their rules refused before anything is replaced, and the start's tidy skips (and logs) a house folder whose
+        name isn't safe instead of failing. Kept, argued: unrouted paths answer FastAPI's 404 shape (the family's
+        contract — its clients read it).
 NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
         the installed 0.1.2 updating to it (the silent Restart now).
 
