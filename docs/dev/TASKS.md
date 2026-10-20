@@ -395,6 +395,33 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         an idle server costs nothing, logs bounded (500 lines, 30 days), 1,200 strokes and 150 houses add/delete
         level off, no WAL growth, the finder and the local model let go when idle, the renderer frees its URLs,
         bitmaps, worker and listeners, Undo keeps 50, waking makes one request.
+        The twelfth's fixes — decided (mine, argued, under the finish-everything go; each names its standard):
+        · Designs: a three-way merge — the draft keeps the design's colors it started from; a save sends what
+          changed since; another window's change moves the parts left as they were (git's merge, RFC 7396 diffs).
+        · Outlines: the version is the database's — a hash of the house's parts rows (key, updated_at, area) and
+          when its parts were found (RFC 9110 §8.8.3: a validator stays while the representation does) — so a
+          restart changes nothing; a stroke's save carries the generation of the outlines it was drawn on and is
+          dropped if they were read again since; Undo and Redo wait for a re-read; a version is taken only with
+          every outline; an answer's version only if none was taken meanwhile; If-Match compares strongly.
+        · Two signals: a process boot id in `rev` (a restart: the page reads again in place) and a data epoch kept in
+          the database, renewed only by a restore or a reset that succeeded (the window reloads); only data writes
+          count (an allow-list of the app's data routes); the house page repaints only when what it read changed.
+        · Restore: the jobs stopped and waited for (bounded) before anything moves; the series renewed only after
+          success; the backup's database checked (quick_check, the app's hook in a dry run) before the gate closes;
+          a write still running past the drain refuses the restore; the commit record inside the restored tables
+          (the record outside them rolls forward or back on it); the start-up recovery retries a held rename and,
+          failing, shuts writes until a restart; nothing restores, resets or sweeps while a record names folders; a
+          failed undo shuts writes until a restart; apps without the gate keep the restore before it (JustVoice's
+          own open audio would make the swap refuse).
+        · Long sessions: the kit's watchSync, the connection page (2 → 60 s backoff) and the AI tasks ticker pause
+          while the page is hidden (the Page Visibility API) and check at once when it shows or the network is back;
+          a job's poll retries a network or 5xx failure with backoff, and a job gone (a restart) re-reads the house;
+          a 401/403 from the token check sends the window to the token page; the update check also every 6 hours
+          and on wake (powerMonitor resume — electron-updater's pattern); the kit's work folders swept at start and
+          daily, stray .saving files at start; the per-house lock dropped when idle, window ids by age.
+        · Kept, argued: keep-running hides the window (Electron's tray pattern — destroying it would lose the open
+          page and its unsaved colors; hidden, it no longer polls); llm_usage keeps a row per AI call the user makes
+          (tiny, the AI usage page reads it).
 NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
         the installed 0.1.2 updating to it (the silent Restart now).
 
