@@ -1505,7 +1505,7 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         Committed: kit 7e617b7, app 0c598e4 — checked before: kit core 1423 + lint, UI 60 + lint + pickers, the guard
         clean; app server 448, unit 191, i18n clean, build + e2e 16/16; template server 57, unit 89, build + e2e 12/12;
         JustWrite 745 + 181, JustVoice 261 + 1366, docgen 5 + 165. JustWrite and JustVoice told. Dry run 39476095703
-        (publish off). The twenty-first's fresh angles (agents, read-only): an attack on the twentieth's code; the
+        (publish off) green: Windows, macOS, Linux, linux-user. The twenty-first's fresh angles (agents, read-only): an attack on the twentieth's code; the
         screens on its build; the untouched neighbors (the painter, Save image, designs, schemes, history, jobs, the
         help's claims against the code).
 NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
