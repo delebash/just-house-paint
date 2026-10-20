@@ -932,8 +932,9 @@ at the app's display size, through the app's own code; scripts and overlays in s
 - **The AppImage opened as a user does** (2026-10-19, dry run 39341716579, the new linux-user job on GitHub's
   ubuntu-24.04: the `.AppImage` itself, no flags): user namespaces restricted (1), no `libfuse.so.2` — it stopped
   at once, "AppImages require FUSE to run": the published AppImage wouldn't have opened on a fresh Ubuntu 24.04
-  even with sharp fixed. Now built on the static runtime (`toolsets.appimage: "1.0.3"`) and the kit's shell runs
-  without Chromium's sandbox when an AppImage can't have it (the kit's RESEARCH §2). The build runners' own start
+  even with sharp fixed. Now built on the static runtime (`toolsets.appimage: "1.0.3"`); Chromium's sandbox, which an
+  AppImage can't have there, is electron-builder's own launcher's to drop — it adds `--no-sandbox` when user
+  namespaces are blocked (the kit's RESEARCH §2; a kit switch added for it was removed). The build runners' own start
   check: Windows 1.6 s, macOS 6.6 s, Linux 3.1 s, the part finder's runtime loading on all three.
 - **What else SAM 3 calls "house"** (2026-10-19, "house" at 0.5 on the 27 set photos and the four app houses, each
   instance drawn: the main one — pickMainInstance, as the body uses — the ones touching it within the 2% margin, the

@@ -8,7 +8,8 @@
 //   <dataDir>/houses/<id>/masks/<part>.png one 8-bit mask per part, display size
 //   <dataDir>/houses/<id>/renders/<id>.png AI photos
 
-import { mkdirSync, readdirSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
+import { rm } from "node:fs/promises";
 import path from "node:path";
 import { getLogger } from "@delebash/core/platform/log";
 
@@ -35,26 +36,37 @@ export function ensureHouseDirs(dataDir, id) {
   mkdirSync(path.join(houseDir(dataDir, id), "renders"), { recursive: true });
 }
 
+/** The mark a removal that Windows held leaves in the folder: only a marked folder is ever swept. */
+const GONE = ".removed";
+
 /**
  * Remove a house's folder. Windows holds a file just written for a moment (a scanner, the indexer:
  * a delete right after finding the parts failed with EPERM halfway through, 2026-10-19), so the removal
- * retries for about five seconds (Node's own retries on EBUSY / EPERM / ENOTEMPTY). Still held: false —
- * the caller leaves it for later (sweepHouseDirs at start, or a retry), never a half-deleted house.
+ * retries for about five seconds (Node's own retries on EBUSY / EPERM / ENOTEMPTY), without holding up
+ * the server. Still held: false, and the folder is marked so the start-up sweep takes it — never a
+ * half-deleted house left as one. `remove` is node:fs/promises' rm (a test passes one that fails).
  */
-export function removeHouseDir(dataDir, id) {
+export async function removeHouseDir(dataDir, id, { remove = rm } = {}) {
+  const dir = houseDir(dataDir, id);
   try {
-    rmSync(houseDir(dataDir, id), { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
+    await remove(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
     return true;
   } catch (e) {
     log.warning(`house ${id}'s folder is still held (${e.code || e.message}); it is removed later`);
+    try {
+      writeFileSync(path.join(dir, GONE), "");
+    } catch {
+      // not even a mark: the folder stays, as it was before the delete
+    }
     return false;
   }
 }
 
-/** Remove the folders of houses that no longer exist (`ids`: the houses there are) — a delete whose
- *  folder Windows still held, or a photo added when the server stopped. Returns how many went. */
-export function sweepHouseDirs(dataDir, ids) {
-  let gone = 0;
+/**
+ * At start: remove the folders a removal left marked, of houses that don't exist. Only marked ones — a
+ * database lost or replaced must never take every house's photos with it. Returns how many went.
+ */
+export async function sweepHouseDirs(dataDir, ids) {
   let names = [];
   try {
     names = readdirSync(path.join(dataDir, "houses"));
@@ -62,7 +74,11 @@ export function sweepHouseDirs(dataDir, ids) {
     return 0; // no houses folder yet
   }
   const keep = new Set(ids);
-  for (const name of names) if (SAFE.test(name) && !keep.has(name) && removeHouseDir(dataDir, name)) gone++;
-  if (gone) log.info(`removed ${gone} folder(s) of houses that no longer exist`);
+  let gone = 0;
+  for (const name of names) {
+    if (!SAFE.test(name) || keep.has(name) || !existsSync(path.join(dataDir, "houses", name, GONE))) continue;
+    if (await removeHouseDir(dataDir, name)) gone++;
+  }
+  if (gone) log.info(`removed ${gone} folder(s) of deleted houses`);
   return gone;
 }

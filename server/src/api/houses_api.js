@@ -61,7 +61,7 @@ export function router(ctx = getState()) {
     try {
       facts = await ingestPhoto(Buffer.from(await file.arrayBuffer()), ctx.dataDir, id, limits);
     } catch (e) {
-      removeHouseDir(ctx.dataDir, id);
+      await removeHouseDir(ctx.dataDir, id);
       if (e instanceof NotAnImage) throw new ApiError(415, "not-a-photo", "Not a photo", e.message);
       throw e;
     }
@@ -81,7 +81,7 @@ export function router(ctx = getState()) {
     return c.json(setCurrentPaints(ctx.db, c.req.valid("param").id, c.req.valid("json")));
   });
 
-  app.delete("/v1/houses/:id", input({ params: IdParams }), (c) => {
+  app.delete("/v1/houses/:id", input({ params: IdParams }), async (c) => {
     const id = c.req.valid("param").id;
     must(id);
     // its AI photo or part search stops (and frees the graphics card) instead of failing later
@@ -90,9 +90,12 @@ export function router(ctx = getState()) {
       if (job) ctx.jobs.cancel(job.id);
     }
     deleteHouse(ctx.db, id);
-    // the house is gone; a folder Windows still holds goes a little later (or at the next start)
-    if (!removeHouseDir(ctx.dataDir, id)) {
-      const later = setTimeout(() => removeHouseDir(ctx.dataDir, id), 30_000);
+    // the house is gone; a folder Windows still holds goes a little later (or at the next start) —
+    // unless the house came back meanwhile (a backup restored)
+    if (!(await removeHouseDir(ctx.dataDir, id))) {
+      const later = setTimeout(() => {
+        if (!getHouse(ctx.db, id)) removeHouseDir(ctx.dataDir, id);
+      }, 30_000);
       later.unref?.();
     }
     return c.body(null, 204);

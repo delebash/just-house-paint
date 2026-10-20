@@ -62,18 +62,30 @@ describe("houses", () => {
     expect((await s.app.request(`/v1/houses/${house.id}`)).status).toBe(404);
   });
 
-  test("a folder Windows still holds doesn't fail the delete; a house's leftover folder goes at start", async () => {
+  test("only a folder a held removal marked is swept at start, and only when its house is gone", async () => {
     s = makeServer();
     const house = await (await s.upload(await jpeg(100, 80))).json();
     const kept = await (await s.upload(await jpeg(100, 80))).json();
-    // a folder whose house is gone (a delete Windows held, a photo added as the server stopped)
-    mkdirSync(path.join(s.dataDir, "houses", "gone-house", "masks"), { recursive: true });
-    writeFileSync(path.join(s.dataDir, "houses", "gone-house", "masks", "body.png"), "x");
-    expect(sweepHouseDirs(s.dataDir, [house.id, kept.id])).toBe(1);
-    expect(existsSync(path.join(s.dataDir, "houses", "gone-house"))).toBe(false);
-    expect(existsSync(path.join(s.dataDir, "houses", house.id))).toBe(true);
-    expect(removeHouseDir(s.dataDir, house.id)).toBe(true);
-    expect(sweepHouseDirs(path.join(s.dataDir, "nowhere"), [])).toBe(0); // no houses folder yet
+    const dir = (name) => path.join(s.dataDir, "houses", name);
+    // a deleted house's folder Windows held: marked; a folder with no mark (a database lost or replaced)
+    mkdirSync(path.join(dir("gone-house"), "masks"), { recursive: true });
+    writeFileSync(path.join(dir("gone-house"), ".removed"), "");
+    mkdirSync(dir("unmarked-house"), { recursive: true });
+    writeFileSync(path.join(dir("unmarked-house"), "display.jpg"), "x");
+    // a house restored from a backup after its folder was marked: its row is back, so it stays
+    writeFileSync(path.join(dir(kept.id), ".removed"), "");
+    expect(await sweepHouseDirs(s.dataDir, [house.id, kept.id])).toBe(1);
+    expect(existsSync(dir("gone-house"))).toBe(false);
+    expect(existsSync(dir("unmarked-house"))).toBe(true);
+    expect(existsSync(dir(kept.id))).toBe(true);
+    // a folder Windows still holds: false, and marked for the next start's sweep
+    const held = async () => {
+      throw Object.assign(new Error("operation not permitted"), { code: "EPERM" });
+    };
+    expect(await removeHouseDir(s.dataDir, house.id, { remove: held })).toBe(false);
+    expect(existsSync(path.join(dir(house.id), ".removed"))).toBe(true);
+    expect(await removeHouseDir(s.dataDir, house.id)).toBe(true);
+    expect(await sweepHouseDirs(path.join(s.dataDir, "nowhere"), [])).toBe(0); // no houses folder yet
   });
 
   test("the paint each part has now is kept on the house: set, replaced whole, gone with the house", async () => {

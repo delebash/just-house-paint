@@ -35,7 +35,7 @@ export async function main(argv = process.argv.slice(2)) {
       setLevel(logLevel);
       const app = await createApp(dataDir);
       seedWorkspace(getDb());
-      sweepHouseDirs(dataDir, listHouses(getDb()).map((h) => h.id));
+      await sweepHouseDirs(dataDir, listHouses(getDb()).map((h) => h.id));
       const h = host || "127.0.0.1";
       const p = port ?? DEFAULT_PORT;
       return { app, host: h, port: p, banner: `${PRODUCT} ${VERSION} server listening on http://${h}:${p}` };
