@@ -351,7 +351,9 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         062d3ab): macOS green; Windows and Linux failed in the data-folder comparison now run on every runner —
         Git Bash on Windows has no /dev/stderr for tee, and the unpacked Linux build was refused for a data folder
         beside its executable (by design; the rule is for a bundle only) — FIXED (app d30fe19, the template too);
-        dry run 39386374890 building.
+        dry run 39386374890 all green (Windows, macOS, Linux, the AppImage as a user opens it): the window and the
+        server on its own share one folder on each — macOS ~/Library/Application Support/JustHousePaint, Windows and
+        the unpacked Linux build data/ beside the executable.
 NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
         the installed 0.1.2 updating to it (the silent Restart now).
 
