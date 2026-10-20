@@ -1431,6 +1431,35 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         characters; a backup's AI photo file names checked as its house ids are, and an unsafe one answered 404 and
         removable; paints.autoLoad labelled; the hex box's typing starts a new match; Find again with Install off
         says why (installing, not read yet, blocked) and focuses the card. The typos and the indent fixed.
+        The twentieth's screens on the nineteenth's build (an agent's; 445 shots, the scratchpad's screens7): no blocks.
+        Hard to use — a palette file with no usable color toasts "Request body failed validation" (the menu import has
+        no field; the kit's errorMessage read only the detail); after the server refuses a name (Rename, Save as) the
+        focus leaves the dialog's field for <body>; Storage's Try again on a copy that now answers drops the focus and
+        says nothing (nor when it still doesn't). Looks wrong — a text field in error breaks its own box (Quasar's
+        error icon on a row of its own, the message inside the border: 38 → 98 px; the hover rule turns the error
+        border grey); a file that isn't a backup toasts "Restore failed: HTTP 400 — …", one "restore failed:" twice;
+        the reset-settings toast runs labels with commas together, and a key with no label shows raw
+        (paints.autoLoad). Small — Find at 960×700 scrolls its focused button out of view; Remove the old copy says
+        nothing; several "Forget…" buttons with the same name; the help quotes the old "can't be found" words
+        (troubleshooting.md:291); a pasted TAB in the search is stripped, not a space, and a zero-width space in it
+        matches nothing; "Name required" (the server) and "Required" (the form) for one mistake; a "Didn't answer
+        just now" row says it twice. Held — Find the parts again from every tab, by mouse and keys, at every size;
+        Find's result; the left-out toast's words; Storage's banner in all nine states; Forget's and Remove's focus;
+        Settings' help anchors; the toasts' contrast in both themes (6.3:1 and up); the restore's reset toast after
+        the reload; data replaced in another window; the names' cleaning; the search's NUL and BEL; every surface at
+        3 sizes × 2 themes as before.
+        Their fixes — decided (mine, argued): the kit's errorMessage says errors[]'s words when the detail is the
+        generic sentence (done — the UI agent's problemDetail; the help's "No colors in the file" right again); the
+        name dialog focuses its field after the server refuses (WAI-ARIA APG dialog: the field in error); Storage's Try
+        again moves the focus as Forget does (focusAfterRow) and says the result, Remove the old copy says it was
+        removed, each Forget… and Remove named with its folder (label in name); the kit's UiInput keeps its message
+        below the box and the error icon off the row (Quasar's no-error-icon), and a field in error keeps its border
+        under the pointer; the restore's toast says the server's own words (no "HTTP 400 —"), and the server drops its
+        "restore failed:" prefix; the reset toast quotes each label (“…”, as the lost-colors toast does) and every
+        setting key has a label; Find keeps its focused button in view (its row scrolled to the top when the list and
+        the button don't both fit); the help's Storage words as the shell says them now; the search's control
+        characters become a space and invisible ones are ignored, on both sides; one wording for an empty name
+        ("Name required"); a "Didn't answer just now" row says it once.
 NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
         the installed 0.1.2 updating to it (the silent Restart now).
 
