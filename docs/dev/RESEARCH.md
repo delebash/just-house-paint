@@ -1080,4 +1080,21 @@ at the app's display size, through the app's own code; scripts and overlays in s
   §2); What's new said the window grew narrower (its minimum grew: 800 → 960); labels as they read (**Quit Just
   House Paint**, **Install (3.1 GB)**, the models' "(QAT)"); the help now says where the Windows app's folder is,
   Windows' firewall question, how to find the network address, and that an unpacked AppImage doesn't update.
-  Failure paths and size: being fixed (TASKS).
+  Failure paths and size (measured by an agent with the app's own modules, then fixed — the renderer by an
+  implementing agent, measured again; the server and the kit by me, each with a test that fails on the old code):
+  a Texture change re-prepared every part over the whole photo — each part is now prepared inside its mask's box
+  plus the blur radius (identical inside the mask, pinned exactly), and the slider applies on release (QSlider's
+  `change`): 2048×1536, 15 parts, 2.1–2.2 s → 0.57 s per change (calmed body 3.2 → 0.9 s), preparing 1648 → 180 ms,
+  arrays 261 → 85 MB; Save image painted the full original on the main thread — now at most
+  `photos.fullSizeMaxMegapixels` (seeded 16, Settings → General) in a module worker (OffscreenCanvas): 12 MP 3.6 s
+  in the worker with the page's longest freeze 25 ms (was 2.06 s frozen, 485 MB on the page → 63 MB), 48 MP with a
+  dark body saved at 16 MP in 13.5 s, page freeze 23 ms (was 47 s / 4.2 GB); the AI photo composes at the same cap;
+  a backup is written to a file and streamed (the kit), and the desktop shell streams it to the chosen file
+  (`saveFromUrl`) — no copy in the window or the shell; a removed or reloaded brand's paints leave the cache (an
+  import too) and the house repaints; a page opened or reloaded during a part search or an AI photo attaches to it
+  (`GET /v1/houses/:id/jobs`) and Brush, Eraser and Box are off during any search (they weren't, even when the page
+  started it); outlines are written beside their place and renamed in together, and one that can't be read is
+  taken as empty; a transparent photo is flattened onto white when added (the AI photo read the hidden colors); a
+  photo past sharp's 268 MP limit says its size (413), not "not an image"; a killed AI photo's picture without a row
+  and its day-old work folder go at start; Cancel answers during the part finder's hash check; saves land whole (the
+  kit's `.part` then rename).

@@ -308,3 +308,72 @@ test("a display-size photo tints fast", () => {
   tintPhoto({ photo, Y, assignments: [{ part, hex: RED }] });
   expect(performance.now() - t0).toBeLessThan(400);
 });
+
+test("a part is prepared in the box around it: the same light as the whole photo's blur, in a box-sized array", () => {
+  // until 2026-10-20 each part's Texture blur and its level were worked out over the whole photo (2.2 s a
+  // Texture step for 15 parts at 2048 px, ~280 MB): this is that code, and the box must give its numbers exactly
+  const w = 240;
+  const h = 160;
+  let seed = 5;
+  const rnd = () => {
+    seed = (seed * 16807) % 2147483647;
+    return seed / 2147483647;
+  };
+  // a dark grainy finish (so a light paint calms it) with lighting that changes everywhere
+  const photo = photoOf(w, h, (x, y) => {
+    const v = Math.round(20 + 40 * rnd() + 20 * Math.sin(x / 7) * Math.cos(y / 5));
+    return [v, v, v + 6];
+  });
+  const Y = luminance(photo);
+  const texture = 0.35;
+  const masks = {
+    inside: maskOf(w, h, (x, y) => (x >= 60 && x < 150 && y >= 40 && y < 110 ? 255 : 0)),
+    // touching the photo's top and left edges
+    corner: maskOf(w, h, (x, y) => (x < 30 && y < 25 ? 255 : 0)),
+    // a soft edge, near the right and bottom edges
+    soft: maskOf(w, h, (x, y) => {
+      const d = Math.hypot(x - 215, y - 140);
+      return d < 18 ? 255 : d < 23 ? 90 : 0;
+    }),
+    // two pieces far apart, with a hole
+    apart: maskOf(w, h, (x, y) => ((x >= 10 && x < 40 && y >= 120 && y < 150) || (x >= 170 && x < 230 && y >= 10 && y < 60 && !(x >= 190 && x < 200 && y >= 30 && y < 40)) ? 255 : 0)),
+  };
+  const level = (values, mask) => {
+    const inside = [];
+    for (let i = 0; i < mask.length; i++) if (mask[i] >= 128) inside.push(values[i]);
+    return Math.max(1e-4, percentile(inside, 75));
+  };
+  /** partLight as the whole photo's blur gave it. */
+  const wholePhotoLight = (part, mask, hex) => {
+    const base = level(Y, mask);
+    const blurred = maskedBlur(Y, mask, w, h, part.radius);
+    const s = calmStrength(part, hex);
+    if (s <= 0) return (i) => (texture * Y[i] + (1 - texture) * blurred[i]) / base;
+    const cY = calmFinish({ Y, mask, width: w, height: h });
+    const cBlurred = maskedBlur(cY, mask, w, h, part.radius);
+    const lvl = base ** (1 - s) * level(cY, mask) ** s;
+    const lit = s >= 1 ? (i) => cY[i] : (i) => Y[i] ** (1 - s) * cY[i] ** s;
+    return (i) => (texture * lit(i) + (1 - texture) * ((1 - s) * blurred[i] + s * cBlurred[i])) / lvl;
+  };
+  for (const [name, mask] of Object.entries(masks)) {
+    const part = preparePart({ Y, mask, width: w, height: h, texture });
+    expect(part.base, name).toBe(level(Y, mask));
+    expect(part.blurred.length, name).toBe(part.box.w * part.box.h);
+    expect(part.blurred.length, name).toBeLessThan(w * h);
+    // a paint that calms the old finish fully, one that calms it partly, one that keeps it as photographed
+    for (const hex of ["#f2f0ea", "#8a8a8a", "#2a2a2a"]) {
+      const now = partLight(part, hex);
+      const before = wholePhotoLight(part, mask, hex);
+      let differ = 0;
+      for (let i = 0; i < mask.length; i++) if (mask[i] && now(i) !== before(i)) differ++;
+      expect(differ, `${name} ${hex}`).toBe(0);
+    }
+  }
+  expect(calmStrength(preparePart({ Y, mask: masks.inside, width: w, height: h }), "#f2f0ea")).toBe(1);
+  const partly = calmStrength(preparePart({ Y, mask: masks.inside, width: w, height: h }), "#8a8a8a");
+  expect(partly).toBeGreaterThan(0);
+  expect(partly).toBeLessThan(1);
+  // an empty outline (a part added by hand, not drawn yet): nothing to paint
+  const empty = preparePart({ Y, mask: new Uint8Array(w * h), width: w, height: h, texture });
+  expect(empty).toMatchObject({ pixels: 0, box: null, blurred: null });
+});

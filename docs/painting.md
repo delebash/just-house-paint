@@ -45,7 +45,8 @@ photographed. In a photo taken against a bright sky, a light wall can read as da
 first after you change its outline, take a moment longer.
 
 **Texture** — how much of what's left of the photo's texture shows: lower it to calm it further; at 1
-it is kept whole.
+it is kept whole. The photo changes when you let go of the slider (or leave its box after typing a
+number), not while you drag it.
 
 ## Comparing
 
@@ -99,7 +100,10 @@ around it.
 
 ## Saving the picture
 
-**Save image** writes the painted photo at full size, and **Copy the color list** gives you the
+**Save image** writes the painted photo at full size — up to 16 megapixels: a bigger photo is saved
+scaled down to that, the same shape (**App Settings → General → Photos** → **Save image and the AI
+photo, at most (megapixels)** sets it). A big photo takes a few seconds; the button waits meanwhile,
+and the rest of the app keeps working. **Copy the color list** gives you the
 parts and their paints (brand number and name) to take to the store. **Save a color card** on the
 **Designs** tab makes one picture of both: the painted photo, then each painted part with its
 paint's swatch, brand number, name and hex.

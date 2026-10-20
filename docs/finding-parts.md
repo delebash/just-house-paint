@@ -36,7 +36,9 @@ finder's engine can't run on the computer, the card says so instead, and nothing
 computer with a graphics card the finder uses the card; finding the parts of one photo takes under a
 minute (a little longer the first time, while the model loads); its progress shows under the
 house's name while it works — the part it is looking for and how far along it is ("Trim · 40%") — with
-**Cancel**.
+**Cancel**. While it works, the **Brush**, the **Eraser**, the **Box**, **Undo** and **Redo** are off:
+the parts it finds replace the outlines when it's done, and Undo starts over from them. Open the house again — or reload the window — while it works,
+and its progress shows there again, and the new parts load when it's done.
 
 If the finder recognizes no house in the photo, the **Parts** tab says **No parts found on this
 photo**: a photo with the house in full view, from the front, works best — or press **Find the parts

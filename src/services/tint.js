@@ -96,20 +96,82 @@ export function maskedBlur(values, mask, w, h, radius) {
 }
 
 /**
+ * The box around a mask's pixels (any above 0), grown by `margin` on each side and kept inside the
+ * photo: { x0, y0, w, h } (photo pixels); null for an empty mask.
+ */
+export function maskBox(mask, width, height, margin = 0) {
+  let x0 = width;
+  let y0 = height;
+  let x1 = -1;
+  let y1 = -1;
+  for (let y = 0; y < height; y++) {
+    const row = y * width;
+    let first = -1;
+    let last = -1;
+    for (let x = 0; x < width; x++) {
+      if (!mask[row + x]) continue;
+      if (first < 0) first = x;
+      last = x;
+    }
+    if (first < 0) continue;
+    if (y0 === height) y0 = y;
+    y1 = y;
+    if (first < x0) x0 = first;
+    if (last > x1) x1 = last;
+  }
+  if (x1 < 0) return null;
+  const left = Math.max(0, x0 - margin);
+  const top = Math.max(0, y0 - margin);
+  return { x0: left, y0: top, w: Math.min(width - 1, x1 + margin) - left + 1, h: Math.min(height - 1, y1 + margin) - top + 1 };
+}
+
+/** `values` (w×h) cut to `box` (maskBox's) — a new array of the same kind, box.w × box.h. */
+function crop(values, width, box) {
+  const out = new values.constructor(box.w * box.h);
+  for (let y = 0; y < box.h; y++) out.set(values.subarray((box.y0 + y) * width + box.x0, (box.y0 + y) * width + box.x0 + box.w), y * box.w);
+  return out;
+}
+
+/**
+ * maskedBlur of `values` worked out only in `box` (maskBox's, grown by more than the radius — what
+ * lies past it is outside the mask and adds nothing): the same numbers inside the box as the whole
+ * photo's blur, in a box-sized array. A part's blur per Texture step was the whole photo's (2.2 s for
+ * 15 parts at 2048 px, measured).
+ */
+function boxBlur(values, mask, width, box, radius) {
+  return maskedBlur(crop(values, width, box), crop(mask, width, box), box.w, box.h, radius);
+}
+
+/** The values (Y) of a part's pixels (mask ≥ 128), in the photo's order, read inside its box. */
+function insideValues(values, mask, width, box) {
+  const inside = [];
+  if (!box) return inside;
+  for (let y = box.y0; y < box.y0 + box.h; y++)
+    for (let i = y * width + box.x0, end = i + box.w; i < end; i++) if (mask[i] >= 128) inside.push(values[i]);
+  return inside;
+}
+
+/**
  * What one part needs, computed once per photo and part: its pixels, its normally lit level and
- * (when texture < 1) its blurred lighting. `mask` is a Uint8Array (0–255) the photo's size.
- * `calmY`: the part's calmed lighting already worked out for this photo and mask (calmFinish doesn't
- * depend on the texture, so a texture change keeps it). `exposure`: the photo's bright end (photoExposure)
- * — how dark a finish is, is judged against it, so a light house photographed dark isn't taken for a dark one.
+ * (when texture < 1) its blurred lighting — worked out in the box around the part (`box`: the mask's
+ * box grown by the blur's radius; `blurred` is that box's size). `mask` is a Uint8Array (0–255) the
+ * photo's size. `calmY`: the part's calmed lighting already worked out for this photo and mask
+ * (calmFinish doesn't depend on the texture, so a texture change keeps it). `exposure`: the photo's
+ * bright end (photoExposure) — how dark a finish is, is judged against it, so a light house
+ * photographed dark isn't taken for a dark one.
  */
 export function preparePart({ Y, mask, width, height, texture = 1, blurRadius = 0, calmY = null, exposure = 1 }) {
-  const inside = [];
-  for (let i = 0; i < mask.length; i++) if (mask[i] >= 128) inside.push(Y[i]);
-  const base = Math.max(1e-4, percentile(inside, 75));
   const radius = blurRadius || Math.max(2, Math.round(Math.min(width, height) / 150));
-  const blurred = texture < 1 ? maskedBlur(Y, mask, width, height, radius) : null;
-  return { mask, base, texture, blurred, radius, pixels: inside.length, Y, width, height, calmY, exposure };
+  // past the radius (and one more: the blur's running sum reads a pixel ahead) nothing reaches the part
+  const box = maskBox(mask, width, height, Math.max(1, Math.round(radius)) + 1);
+  const inside = insideValues(Y, mask, width, box);
+  const base = Math.max(1e-4, percentile(inside, 75));
+  const blurred = texture < 1 && box ? boxBlur(Y, mask, width, box, radius) : null;
+  return { mask, base, texture, blurred, box, radius, pixels: inside.length, Y, width, height, calmY, exposure };
 }
+
+/** A box-sized array (`blurred`) read by the photo's pixel index. */
+const boxReader = (values, width, box) => (i) => values[(((i / width) | 0) - box.y0) * box.w + (i % width) - box.x0];
 
 /** The photo's bright end: the 95th percentile of its luminance (a sample of it) — the sky, white trim. Not
  *  the 99th: a dim photo's lamps or lit windows (1% of it) moved that, and the light houses read dark. */
@@ -269,15 +331,13 @@ export function calmStrength(part, hex, current = null) {
 /** The part's calmed lighting, computed the first time a paint needs it and kept with the part. */
 function calmed(part) {
   if (!part.calm) {
-    const { Y, mask, width, height, texture, radius } = part;
+    const { Y, mask, width, height, texture, radius, box } = part;
     const cY = part.calmY || calmFinish({ Y, mask, width, height });
     part.calmY = cY;
-    const inside = [];
-    for (let i = 0; i < mask.length; i++) if (mask[i] >= 128) inside.push(cY[i]);
     part.calm = {
       Y: cY,
-      base: Math.max(1e-4, percentile(inside, 75)),
-      blurred: texture < 1 ? maskedBlur(cY, mask, width, height, radius) : null,
+      base: Math.max(1e-4, percentile(insideValues(cY, mask, width, box), 75)),
+      blurred: texture < 1 && box ? boxBlur(cY, mask, width, box, radius) : null,
     };
   }
   return part.calm;
@@ -289,14 +349,16 @@ function calmed(part) {
  * texture setting, with the old finish calmed by calmStrength.
  */
 export function partLight(part, hex, current = null) {
-  const { Y, base, texture, blurred } = part;
+  const { Y, base, texture, width, box } = part;
+  const blurred = part.blurred && boxReader(part.blurred, width, box);
   const s = calmStrength(part, hex, current);
-  if (s <= 0) return blurred ? (i) => (texture * Y[i] + (1 - texture) * blurred[i]) / base : (i) => Y[i] / base;
+  if (s <= 0) return blurred ? (i) => (texture * Y[i] + (1 - texture) * blurred(i)) / base : (i) => Y[i] / base;
   const cal = calmed(part);
   const level = base ** (1 - s) * cal.base ** s;
   const lit = s >= 1 ? (i) => cal.Y[i] : (i) => Y[i] ** (1 - s) * cal.Y[i] ** s;
   if (!blurred) return (i) => lit(i) / level;
-  return (i) => (texture * lit(i) + (1 - texture) * ((1 - s) * blurred[i] + s * cal.blurred[i])) / level;
+  const calBlurred = boxReader(cal.blurred, width, box);
+  return (i) => (texture * lit(i) + (1 - texture) * ((1 - s) * blurred(i) + s * calBlurred(i))) / level;
 }
 
 /**

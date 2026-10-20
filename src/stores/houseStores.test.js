@@ -136,6 +136,75 @@ describe("the paints store", () => {
     expect(calls.filter((c) => c[1].startsWith("/v1/paints/behr"))).toHaveLength(0);
   });
 
+  test("a brand's colors loaded again, imported or removed leave the cache: the next lookup asks the server", async () => {
+    const SNOW = { id: "behr:1", brand: "behr", name: "Snow", hex: "#ffffff" };
+    const NAVY = { id: "valspar:9", brand: "valspar", name: "Navy", hex: "#1f2a44" };
+    answer("GET /v1/paints/behr%3A1", SNOW);
+    answer("GET /v1/paints/valspar%3A9", NAVY);
+    answer("GET /v1/paints/behr%3AGONE", () => {
+      throw Object.assign(new Error("Not Found"), { status: 404 });
+    });
+    answer("GET /v1/brands", []);
+    const p = usePaintsStore();
+    await p.paints(["behr:1", "valspar:9", "behr:GONE"]);
+    expect(Object.keys(p.byId)).toEqual(["behr:1", "valspar:9"]);
+    expect(p.missing).toEqual({ "behr:GONE": true });
+    const asked = () => calls.filter((c) => c[1].startsWith("/v1/paints/")).map((c) => decodeURIComponent(c[1]));
+    // the brand removed: its paints and its missing marks go — the other brand's stay
+    answer("DELETE /v1/brands/behr", null);
+    await p.clearBrand("behr");
+    expect(Object.keys(p.byId)).toEqual(["valspar:9"]);
+    expect(p.missing).toEqual({});
+    expect(p.brandsChanged).toBe(1);
+    // looked up again, the server says it is gone now: marked missing, never painted from the cache
+    answer("GET /v1/paints/behr%3A1", () => {
+      throw Object.assign(new Error("Not Found"), { status: 404 });
+    });
+    calls.length = 0;
+    expect(await p.paints(["behr:1", "valspar:9"])).toEqual([null, NAVY]);
+    expect(asked()).toEqual(["/v1/paints/behr:1"]);
+    expect(p.missing).toEqual({ "behr:1": true });
+    // loaded again (a new list): its marks go, and the paint comes back as the server has it now
+    answer("POST /v1/brands/behr/load", { id: "j1", state: "done", result: { paints: 2 } });
+    answer("GET /v1/paints/behr%3A1", { ...SNOW, hex: "#fefefe" });
+    await p.loadFeed("behr", "Loading Behr");
+    expect(p.missing).toEqual({});
+    expect(p.brandsChanged).toBe(2);
+    expect((await p.paints(["behr:1"]))[0].hex).toBe("#fefefe");
+    // a palette file imported for it: the same
+    answer("POST /v1/paints/import", { brand: "behr", paintCount: 3, lost: [] });
+    await p.importFile("behr", new File(["x"], "behr.csv"));
+    expect(Object.keys(p.byId)).toEqual(["valspar:9"]);
+    expect(p.brandsChanged).toBe(3);
+  });
+
+  test("a lookup that began before its brand was loaded again or removed doesn't put the old paint back", async () => {
+    const SNOW = { id: "behr:1", brand: "behr", name: "Snow", hex: "#ffffff" };
+    const NAVY = { id: "valspar:9", brand: "valspar", name: "Navy", hex: "#1f2a44" };
+    const held = [];
+    const hold = (value, fail = false) => () => new Promise((resolve, reject) => held.push(() => (fail ? reject(value) : resolve(value))));
+    answer("GET /v1/paints/behr%3A1", hold(SNOW));
+    answer("GET /v1/paints/behr%3AGONE", hold(Object.assign(new Error("Not Found"), { status: 404 }), true));
+    answer("GET /v1/paints/valspar%3A9", hold(NAVY));
+    answer("GET /v1/paints?", hold({ total: 1, rows: [{ ...SNOW, id: "behr:2" }] }));
+    answer("DELETE /v1/brands/behr", null);
+    answer("GET /v1/brands", []);
+    const p = usePaintsStore();
+    const looking = p.paints(["behr:1", "behr:GONE", "valspar:9"]);
+    const searching = p.search({ brand: "behr" });
+    await vi.waitFor(() => expect(held).toHaveLength(4));
+    // the brand removed while they wait; then the server's answers from before arrive
+    await p.clearBrand("behr");
+    for (const answerNow of held) answerNow();
+    expect(await looking).toEqual([null, null, NAVY]);
+    await searching;
+    expect(Object.keys(p.byId)).toEqual(["valspar:9"]);
+    expect(p.missing).toEqual({});
+    // a lookup begun after it: kept as usual
+    answer("GET /v1/paints/behr%3A1", SNOW);
+    expect(await p.paints(["behr:1"])).toEqual([SNOW]);
+  });
+
   test("out of the box the brands load by themselves: the empty ones set to load, one after another, a failure doesn't stop the rest", async () => {
     answer("GET /v1/brands", [
       { key: "sherwin-williams", label: "Sherwin-Williams", feed: true, paintCount: 0 },

@@ -31,6 +31,7 @@ export const SETTINGS = {
   "photos.thumbMax": T.Integer({ minimum: 128, maximum: 1024 }),
   "photos.jpegQuality": T.Integer({ minimum: 50, maximum: 100 }),
   "photos.maxMegabytes": T.Integer({ minimum: 1, maximum: 200 }),
+  "photos.fullSizeMaxMegapixels": T.Integer({ minimum: 1, maximum: 200 }),
   "designs.maxPerHouse": T.Integer({ minimum: 1, maximum: 200 }),
   "paints.maxImportMegabytes": T.Integer({ minimum: 1, maximum: 200 }),
   // Which brands' colors the app loads by itself ({ brand: true | false }; a brand missing counts as

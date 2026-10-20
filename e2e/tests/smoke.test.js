@@ -11,7 +11,9 @@
 // the app's root.
 
 import { strict as assert } from "node:assert";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync, rmSync, statSync } from "node:fs";
+import os from "node:os";
+import path from "node:path";
 import { after, before, test } from "node:test";
 import { Driver, waitFor } from "../lib/driver.js";
 
@@ -135,4 +137,25 @@ test("a photo is added through the window, kept by the server, the house opens, 
   await d.navigate("#/");
   await waitFor(async () => (await page.locator(".houses__name").count()) === 2, { what: "two house cards" });
   assert.deepEqual((await page.locator(".houses__name").allTextContents()).map((s) => s.trim()), ["second", "my house"]);
+});
+
+// Save image paints in a module worker loaded from app:// (2026-10-20: the full-size paint left the main
+// thread) — the worker must load there and write a real JPEG where the Save dialog says (stubbed in main)
+test("Save image paints in its worker and writes the JPEG where the dialog says", async () => {
+  const out = path.join(os.tmpdir(), `just-house-paint-e2e-${Date.now()}.jpg`);
+  await d.app.evaluate(({ dialog }, file) => {
+    dialog.showSaveDialog = async () => ({ canceled: false, filePath: file });
+  }, out);
+  await d.navigate("#/");
+  await page.locator(".houses__card").first().click();
+  await page.waitForURL(/#\/house\/[A-Za-z0-9-]+$/);
+  const save = page.locator("button", { hasText: "Save image" });
+  await waitFor(async () => !(await save.isDisabled()), { what: "Save image ready" });
+  await save.click();
+  try {
+    await waitFor(async () => existsSync(out) && statSync(out).size > 100, { what: "the saved JPEG", timeout: 30_000 });
+    assert.deepEqual([...readFileSync(out).subarray(0, 3)], [0xff, 0xd8, 0xff], "a JPEG");
+  } finally {
+    rmSync(out, { force: true });
+  }
 });

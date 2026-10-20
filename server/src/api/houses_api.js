@@ -10,7 +10,7 @@ import { ApiError, notFound, RequestValidationError } from "@delebash/core/platf
 import { houseNotFound } from "./refusals.js";
 import { createHouse, deleteHouse, getHouse, listHouses, renameHouse, setCurrentPaints } from "../database/houses.js";
 import { addingHouseDir, displayPath, houseAdded, originalPath, removeHouseDir, thumbPath } from "../files.js";
-import { ingestPhoto, NotAnImage } from "../images.js";
+import { ingestPhoto, NotAnImage, TooManyPixels } from "../images.js";
 import { CurrentPaintsIn, HousePatch, IdParams, ImageQuery } from "../schemas/houses.js";
 import { getState } from "../app_state.js";
 
@@ -66,6 +66,7 @@ export function router(ctx = getState()) {
       made = createHouse(ctx.db, { id, name, ...facts });
     } catch (e) {
       await (ctx.removeHouseDir ?? removeHouseDir)(ctx.dataDir, id);
+      if (e instanceof TooManyPixels) throw new ApiError(413, "photo-too-large", "Photo too large", e.message);
       if (e instanceof NotAnImage) throw new ApiError(415, "not-a-photo", "Not a photo", e.message);
       throw e;
     }

@@ -29,7 +29,7 @@ import {
 import VueKonva from "vue-konva";
 import { i18n } from "../i18n/index.js";
 import { hasDoc, loadDoc, titleForSlug } from "../services/helpDocs.js";
-import { hasShell, openPath, openUrl, saveFile, shellServerUrl } from "../services/native.js";
+import { hasShell, openPath, openUrl, saveFile, saveFromUrl, shellServerUrl } from "../services/native.js";
 import { useUiStore } from "../stores/ui.js";
 
 // The registered ports (app-structure §1): the dev server's — the same number as quasar.config.js
@@ -61,6 +61,8 @@ async function boot({ app, router, store: pinia }) {
   configureFileSave({
     save: (blob, { filename, title, filterName, filterExt, defaultDir }) =>
       saveFile({ blob, suggestedName: filename, title, filterName, filterExt, defaultDir }),
+    saveUrl: (url, { filename, headers, title, filterName, filterExt, defaultDir }) =>
+      saveFromUrl({ url, headers, suggestedName: filename, title, filterName, filterExt, defaultDir }),
     available: hasShell,
   });
   configureHelp({ loadDoc, hasDoc, titleForSlug });

@@ -37,8 +37,20 @@ vi.mock("../services/maskImage.js", () => ({
   pngOf: async () => new Blob(["png"], { type: "image/png" }),
   drawPixels: (_rgba, width, height) => ({ width, height }),
 }));
+// Save image's painting runs in a Web Worker (jsdom has none): what the page hands it is recorded, and
+// it answers when the test says (`saving.finish`)
+const saving = vi.hoisted(() => ({ asked: [], finish: null }));
+vi.mock("../services/fullSizeImage.js", async (importOriginal) => ({
+  ...(await importOriginal()),
+  paintFullSize: (params) => {
+    saving.asked.push(params);
+    return new Promise((resolve) => {
+      saving.finish = () => resolve(new Blob(["jpeg"], { type: "image/jpeg" }));
+    });
+  },
+}));
 vi.mock("../components/HouseCanvas.vue", () => ({
-  default: { name: "HouseCanvas", props: ["photo", "painted", "overlay", "before", "split", "tool", "sideBySide"], render: () => h("div", { class: "house-canvas-stub" }) },
+  default: { name: "HouseCanvas", props: ["photo", "painted", "overlay", "before", "split", "tool", "sideBySide", "version"], render: () => h("div", { class: "house-canvas-stub" }) },
 }));
 
 const { default: HousePage } = await import("./HousePage.vue");
@@ -55,6 +67,7 @@ const PARTS = [
   { key: "trim", paintable: true, area: 24, score: 0.8, source: "auto", position: 1 },
 ];
 const PAINT = { id: "behr:S1", brand: "behr", code: "S1", name: "Sea Blue", displayName: "Behr Sea Blue S1", hex: "#3366aa", exterior: true };
+const RENDER = { id: "r9", houseId: "h1", designId: null, deltaE: 1.1, seconds: 42, createdAt: "2026-10-17T10:00:00.000Z" };
 const WHITE = { id: "behr:W1", brand: "behr", code: "W1", name: "Chalk White", displayName: "Behr Chalk White W1", hex: "#f4f2ea", exterior: true };
 
 function fakeFetch(input, init = {}) {
@@ -63,7 +76,7 @@ function fakeFetch(input, init = {}) {
   const p = url.pathname;
   server.calls.push(`${method} ${p}`);
   if (p === "/v1/houses/h1" && server.gone) return Promise.resolve(json({ type: "about:blank", title: "Not Found", status: 404, detail: "no house h1" }, 404));
-  if (p === "/v1/houses/h1") return Promise.resolve(json({ ...HOUSE, partsFoundAt: server.partsFoundAt ?? null, currentPaints: server.currentPaints }));
+  if (p === "/v1/houses/h1") return Promise.resolve(json({ ...HOUSE, ...server.house, partsFoundAt: server.partsFoundAt ?? null, currentPaints: server.currentPaints }));
   if (p === "/v1/houses/h1/current-paints" && method === "PUT") {
     server.currentPaints = JSON.parse(init.body);
     return Promise.resolve(json({ ...HOUSE, currentPaints: server.currentPaints }));
@@ -77,6 +90,10 @@ function fakeFetch(input, init = {}) {
     return Promise.resolve(json(d, 201));
   }
   if (p === "/v1/houses/h1/renders") return Promise.resolve(json(server.renders || []));
+  // the house's jobs running now (started before the window reloaded, or in another window)
+  if (p === "/v1/houses/h1/jobs") return Promise.resolve(json(server.jobs || []));
+  if (p === "/v1/jobs/j-ai" && server.holdAi) return Promise.resolve(json({ id: "j-ai", kind: "aiphoto", key: "h1", state: "running", progress: 0.5, message: "" }));
+  if (p === "/v1/jobs/j-ai") return Promise.resolve(json({ id: "j-ai", kind: "aiphoto", key: "h1", state: "done", progress: 1, result: RENDER }));
   if (p === "/v1/houses/h1/image" && server.photoMissing)
     return Promise.resolve(json({ type: "about:blank", title: "Not Found", status: 404, detail: "the display copy of house h1 is missing" }, 404));
   if (p === "/v1/houses/h1/image") return Promise.resolve(new Response(new Blob(["jpeg"])));
@@ -94,6 +111,7 @@ function fakeFetch(input, init = {}) {
     return Promise.resolve(
       json({
         "finder.parts": [],
+        "photos.fullSizeMaxMegapixels": 16,
         "schemes.roleParts": { body: ["body"], trim: ["trim", "soffit", "windowTrim"], accent: [] },
         "paints.colorOrder": { grayChroma: 8, bandDegrees: 30, families: [{ key: "reds", from: 333 }, { key: "blues", from: 181 }] },
       }),
@@ -117,6 +135,9 @@ function fakeFetch(input, init = {}) {
     server.parts = PARTS;
     return Promise.resolve(json({ id: "j-find", state: "done", progress: 1, result: { parts: 2 } }));
   }
+  // its brand removed (or its new list dropped it): the server has no paint for the id any more
+  if (decodeURIComponent(p) === `/v1/paints/${PAINT.id}` && server.paintGone)
+    return Promise.resolve(json({ type: "about:blank", title: "Not Found", status: 404, detail: `no paint ${PAINT.id}` }, 404));
   if (decodeURIComponent(p) === `/v1/paints/${PAINT.id}`) return Promise.resolve(json(PAINT));
   // a color its brand's new list dropped: the server has no paint for the id
   if (decodeURIComponent(p) === "/v1/paints/behr:GONE-1") {
@@ -405,6 +426,70 @@ test("passing through a slider's number box by Tab leaves its value: Texture sta
   await type("1");
   await leave();
   expect(readPref("texture")).toBe(1);
+});
+
+test("the Texture slider moves while it is dragged and applies the texture when it is let go — not at every step", async () => {
+  server.parts = PARTS;
+  await mountPage();
+  const range = wrapper
+    .findAllComponents({ name: "UiSlider" })
+    .find((c) => c.props("ariaLabel") === "Texture")
+    .findComponent(quasar.QSlider);
+  const drawn = canvas().props("version");
+  // a drag: each step moves the slider (QSlider's update:model-value), nothing is painted again
+  range.vm.$emit("update:modelValue", 0.6);
+  range.vm.$emit("update:modelValue", 0.5);
+  await flushPromises();
+  expect(range.props("modelValue")).toBe(0.5);
+  expect(canvas().props("version")).toBe(drawn);
+  expect(readPref("texture", 1)).toBe(1);
+  // let go (QSlider's change): the texture is applied, once
+  range.vm.$emit("change", 0.5);
+  await flushPromises();
+  expect(canvas().props("version")).toBe(drawn + 1);
+  expect(readPref("texture")).toBe(0.5);
+  // back to the default, for the tests after this one (the kit's prefs are one document per app)
+  range.vm.$emit("change", 1);
+  await flushPromises();
+  expect(readPref("texture")).toBe(1);
+  expect(range.props("modelValue")).toBe(1);
+});
+
+test("Save image paints at most the setting's megapixels, in a worker, the button waiting meanwhile", async () => {
+  // a 48 MP original (its display copy is the 8 × 6 the canvas shows)
+  server.house = { width: 8000, height: 6000 };
+  server.parts = PARTS;
+  saving.asked.length = 0;
+  const saved = [];
+  vi.stubGlobal("URL", Object.assign(URL, { createObjectURL: () => "blob:saved", revokeObjectURL() {} }));
+  const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function () {
+    saved.push(this.download);
+  });
+  await mountPage();
+  await paintBody();
+  const save = byText("button", "Save image");
+  await click(save);
+  expect(saving.asked).toHaveLength(1);
+  const [asked] = saving.asked;
+  // 48 MP down to the setting's 16, the same shape
+  expect(asked.width * asked.height).toBeLessThanOrEqual(16e6);
+  expect(asked.width / asked.height).toBeCloseTo(8000 / 6000, 3);
+  expect(server.calls).toContain("GET /v1/houses/h1/image");
+  expect(asked.photo).toBeInstanceOf(Blob);
+  // the outlines at the display size (scaled in the worker), the screen's paint, light and texture
+  expect([asked.maskWidth, asked.maskHeight]).toEqual([W, H]);
+  expect(asked.masks.map((m) => m.key)).toEqual(["body", "trim"]);
+  expect(asked.masks[0].mask).toHaveLength(W * H);
+  expect(asked).toMatchObject({ colors: { body: PAINT.hex }, order: ["body", "trim"], light: 1, texture: 1, quality: 0.92 });
+  // while it paints: the button waits (keeps its focus), a second press starts nothing
+  expect(save.getAttribute("aria-disabled")).toBe("true");
+  await click(save);
+  expect(saving.asked).toHaveLength(1);
+  saving.finish();
+  await flushPromises();
+  expect(saved).toEqual(["Main street — painted.jpg"]);
+  expect(save.hasAttribute("aria-disabled")).toBe(false);
+  clickSpy.mockRestore();
 });
 
 test("an AI photo's row is named by what tells it apart: its design, when, and its ΔE", async () => {
@@ -738,6 +823,95 @@ test("finding the parts shows its progress on the page — not twice in the glob
   expect(document.activeElement).toBe(find);
 }, 20000);
 
+test("a page opened while its parts are being found follows the run: its progress, the outline tools off, then the new outlines", async () => {
+  // the outlines from before the run; the window reloaded while it runs
+  server.parts = [PARTS[0]];
+  server.holdFind = true;
+  server.jobs = [{ id: "j-find", kind: "find-parts", key: "h1", state: "running", progress: 0.2, message: "" }];
+  await mountPage();
+  // asked before the house's parts are read: a run that ends in between is still followed
+  expect(server.calls.indexOf("GET /v1/houses/h1/jobs")).toBeLessThan(server.calls.indexOf("GET /v1/houses/h1/parts"));
+  await new Promise((r) => setTimeout(r, 450));
+  await flushPromises();
+  const strip = document.querySelector(".q-page .sts");
+  expect(strip?.textContent).toContain("Finding the parts of Main street");
+  expect(strip?.textContent).toContain("Trim · 40%");
+  expect(server.calls).not.toContain("POST /v1/houses/h1/find-parts");
+  expect(byText("button", "Find the parts again").getAttribute("aria-disabled")).toBe("true");
+  // the brush, the eraser and the box are off, saying why; a stroke changes and saves nothing
+  const brush = byText(".ui-seg button", "Brush");
+  expect(brush.getAttribute("aria-disabled")).toBe("true");
+  expect(brush.getAttribute("title")).toContain("Off while the parts are being found");
+  await click(brush);
+  expect(canvas().props("tool")).toBe("look");
+  canvas().vm.$emit("stroke", { points: [1, 1, 3, 1], radius: 2, mode: "add" });
+  canvas().vm.$emit("box", { x0: 0, y0: 0, x1: 4, y1: 4 });
+  await new Promise((r) => setTimeout(r, 700));
+  await flushPromises();
+  expect(server.calls.filter((c) => c.startsWith("PUT ") || c.endsWith("/box"))).toEqual([]);
+  // a color may still be picked, but Undo and Redo are off — the buttons and Ctrl+Z alike
+  await paintBody();
+  expect(text()).toContain("Behr Sea Blue S1");
+  expect(byText("button", "Undo").disabled).toBe(true);
+  window.dispatchEvent(new KeyboardEvent("keydown", { key: "z", ctrlKey: true }));
+  await flushPromises();
+  expect(text()).toContain("Behr Sea Blue S1");
+  // the run ends: the new parts and every outline read again, the tools back
+  server.calls.length = 0;
+  server.partsFoundAt = "2026-10-20T10:00:00.000Z";
+  server.holdFind = false;
+  await settle();
+  expect(document.querySelector(".q-page .sts")).toBeNull();
+  expect(server.calls).toContain("GET /v1/houses/h1/parts/body/mask");
+  expect(server.calls).toContain("GET /v1/houses/h1/parts/trim/mask");
+  expect([...document.body.querySelectorAll(".parts__row .parts__name")].map((n) => n.textContent.trim())).toHaveLength(2);
+  expect(byText(".ui-seg button", "Brush").hasAttribute("aria-disabled")).toBe(false);
+}, 20000);
+
+test("while the parts are being found here, Undo can't put an outline back: Ctrl+Z and the button are off", async () => {
+  server.parts = PARTS;
+  await mountPage();
+  // a stroke on the body, saved
+  await click(byText(".ui-seg button", "Brush"));
+  canvas().vm.$emit("stroke", { points: [1, 1, 3, 1], radius: 2, mode: "add" });
+  await new Promise((r) => setTimeout(r, 700));
+  await flushPromises();
+  expect(server.calls.filter((c) => c === "PUT /v1/houses/h1/parts/body/mask")).toHaveLength(1);
+  expect(byText("button", "Undo").disabled).toBe(false);
+  // finding the parts again, held running
+  server.holdFind = true;
+  await click(byText("button", "Find the parts again"));
+  await click(byText(".q-dialog button", "Find the parts again"));
+  await vi.waitFor(() => expect(document.querySelector(".q-page .sts")).not.toBeNull(), { timeout: 3000 });
+  const undo = byText("button", "Undo");
+  expect(undo.disabled).toBe(true);
+  expect(undo.getAttribute("title")).toContain("Off while the parts are being found");
+  window.dispatchEvent(new KeyboardEvent("keydown", { key: "z", ctrlKey: true }));
+  window.dispatchEvent(new KeyboardEvent("keydown", { key: "y", ctrlKey: true }));
+  await new Promise((r) => setTimeout(r, 100));
+  await flushPromises();
+  expect(server.calls.filter((c) => c === "PUT /v1/houses/h1/parts/body/mask")).toHaveLength(1);
+  server.holdFind = false;
+  await settle();
+}, 20000);
+
+test("a page opened while its AI photo is being made follows it, and shows the photo when it's done", async () => {
+  server.parts = PARTS;
+  server.holdAi = true;
+  server.jobs = [{ id: "j-ai", kind: "aiphoto", key: "h1", state: "running", progress: 0.3, message: "" }];
+  await mountPage();
+  await new Promise((r) => setTimeout(r, 450));
+  await flushPromises();
+  expect(document.querySelector(".q-page .sts")?.textContent).toContain("AI photo of Main street");
+  expect(server.calls).not.toContain("POST /v1/houses/h1/aiphoto");
+  server.holdAi = false;
+  await settle();
+  expect(document.querySelector(".q-page .sts")).toBeNull();
+  expect(text()).toContain(i18n.global.t("aiPhoto.note"));
+  await click(byText(".q-tab", "Designs"));
+  expect(document.body.querySelectorAll(".designs__render")).toHaveLength(1);
+}, 20000);
+
 // ── a design saved before the house had some trim-group parts ───────────────
 // "AI scheme 1" colors the body and the trim; the house has since gained soffits and window trim
 const TRIM_PARTS = [
@@ -768,6 +942,28 @@ test("a part whose color its brand no longer has says so, instead of looking unp
   await click(byText(".q-tab", "Parts"));
   expect(byText(".parts__row", "Trim").querySelector(".parts__paint").textContent.trim()).toBe("Behr GONE-1 — not in the loaded colors");
   expect(byText(".parts__row", "Soffits").querySelector(".parts__paint").textContent.trim()).toBe("No color");
+});
+
+test("a brand's colors removed while a house shows one: its part says the color is gone and isn't painted with it", async () => {
+  server.parts = PARTS;
+  server.designs = [DESIGN];
+  await mountPage();
+  await click(byText(".q-tab", "Designs"));
+  await click(byText(".designs__open", "Blue body"));
+  await click(byText(".q-tab", "Parts"));
+  const paintOf = () => document.body.querySelector(".parts__row .parts__paint").textContent.trim();
+  expect(paintOf()).toBe("Behr Sea Blue S1");
+  expect(document.body.querySelector(".parts__row").textContent).toContain("ΔE");
+  const drawn = canvas().props("version");
+  // removed on the Colors page (the paints store's clearBrand): the server has no paint for it now
+  server.paintGone = true;
+  await usePaintsStore().clearBrand("behr");
+  await flushPromises();
+  expect(server.calls.filter((c) => c === `GET /v1/paints/${encodeURIComponent(PAINT.id)}`)).toHaveLength(2);
+  expect(paintOf()).toBe("Behr S1 — not in the loaded colors");
+  // painted again without it: no ΔE for a paint that isn't there
+  expect(canvas().props("version")).toBeGreaterThan(drawn);
+  expect(document.body.querySelector(".parts__row").textContent).not.toContain("ΔE");
 });
 
 test("an old design's trim-group parts with no color are offered the trim's color, and painted only on the click", async () => {

@@ -38,6 +38,13 @@
   folder. **Require a token on this computer too** no longer leaves the window unable to do anything.
 - A backup restored from an older version gets this one's settings at once, and a restored house's
   first **Find the parts** or **AI photo** no longer fails.
+- **Quicker with big photos**: **Texture** applies when you let go (about four times faster);
+  **Save image** works in the background — the window stays responsive — and saves at most 16 megapixels,
+  as the AI photo works (**App Settings → General → Photos**); a backup goes straight to disk however many
+  photos it holds.
+- A page opened or reloaded while the parts are found or an AI photo is drawn follows that work; a brand
+  reloaded or removed takes its colors with it; a photo with transparency shows white there everywhere; a
+  photo too big for the app says its size.
 - A house whose parts were found before keeps them: **Find the parts again** (with **Keep the parts
   you changed by hand** ticked) gives it the new ones. A part you changed by hand stays as you drew
   it — if that is **Trim**, the door casings go with the walls: untick **Keep**, or add them to Trim

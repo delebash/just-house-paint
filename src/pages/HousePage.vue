@@ -46,6 +46,7 @@ import PartsTab from "../components/PartsTab.vue";
 import SchemesTab from "../components/SchemesTab.vue";
 import { drawColorCard } from "../services/colorCard.js";
 import { useHouseHistory } from "../services/houseHistory.js";
+import { exportSize, paintFullSize } from "../services/fullSizeImage.js";
 import { drawPixels, maskOf, pixelsOf, pngOf } from "../services/maskImage.js";
 import { outlinePixels } from "../services/outlines.js";
 import { createPainter } from "../services/painter.js";
@@ -99,6 +100,13 @@ const texture = computed({
   get: () => ui.texture,
   set: (v) => ui.setTexture(v),
 });
+// where the Texture slider is while it is dragged: the texture itself is applied when the slider is let
+// go or its number box left (QSlider's `change` — quasar.dev/vue-components/slider), as each texture
+// prepares every part again (~0.6 s for 15 parts at 2048 px, measured), too slow for every drag step
+const textureShown = ref(ui.texture);
+watch(texture, (v) => {
+  textureShown.value = v;
+});
 // the Light: a brighter or duller day over the whole picture (1 = the photo's own light)
 const light = computed({
   get: () => ui.light,
@@ -148,6 +156,10 @@ async function load() {
   compareWith.value = "off";
   history.reset();
   try {
+    // this house's work the server is doing now (finding its parts, an AI photo — started before this
+    // window reloaded, or in another one), asked before the house is read: a run that ends meanwhile is
+    // still followed to its end and its parts read again, never left showing the outlines from before it
+    const running = await house.runningJobs(route.params.id).catch(() => []);
     const opening = house.open(route.params.id).catch((e) => {
       if (e?.status === 404 && seq === loadSeq) houseGone.value = true;
       throw e;
@@ -155,15 +167,15 @@ async function load() {
     await Promise.all([opening, paints.loadBrands(), engines.loadStatus(), settings.load()]);
     // another house was asked for meanwhile: its own load() shows it
     if (seq !== loadSeq || house.house?.id !== route.params.id) return;
-    // the paints the house names: its colors, its paints now and its designs' (Compare draws them at once)
-    const designPaints = house.designs.flatMap((d) => Object.values(d.colors));
-    await paints.paints([...Object.values(house.colors), ...Object.values(house.house.currentPaints || {}), ...designPaints]);
+    await paints.paints(housePaints());
     await loadPhoto();
     const masks = await loadMasks(house.parts.map((p) => p.key));
     history.reset({ colors: house.colors, designId: house.designId, masks });
     photographed.value = {};
     refreshPhotographed();
     repaint();
+    // still this house (another may have been asked for while its photo and outlines loaded)
+    if (seq === loadSeq && house.house?.id === route.params.id) follow(running);
   } catch (e) {
     if (seq === loadSeq) loadFailed.value = e;
   } finally {
@@ -171,6 +183,22 @@ async function load() {
   }
 }
 onMounted(load);
+/** The paints the house names: its colors, its paints now and its designs' (Compare draws them at once). */
+function housePaints() {
+  const designPaints = house.designs.flatMap((d) => Object.values(d.colors));
+  return [...Object.values(house.colors), ...Object.values(house.house?.currentPaints || {}), ...designPaints];
+}
+// a brand's colors loaded again or removed (stores/paints.js forgetBrand): the house's paints are looked up
+// again — one its brand no longer has is marked so (the Parts tab says it) and no longer painted, a changed
+// one paints in its new color
+watch(
+  () => paints.brandsChanged,
+  async () => {
+    if (!house.house) return;
+    await paints.paints(housePaints());
+    repaint();
+  },
+);
 // leaving with colors on screen that no design holds: asked first, as opening another design is
 async function confirmLeave() {
   if (!house.house || !house.dirty || !Object.keys(house.colors).length) return true;
@@ -422,6 +450,7 @@ onBeforeUnmount(() => {
 });
 
 async function onStroke({ points, radius, mode }) {
+  if (finding.value) return;
   const key = house.selectedPart;
   const mask = key && painter?.mask(key);
   if (!mask) return;
@@ -435,7 +464,7 @@ async function onStroke({ points, radius, mode }) {
 }
 
 async function onBox(box) {
-  if (!house.selectedPart) return;
+  if (!house.selectedPart || finding.value) return;
   try {
     const changed = await house.box(house.selectedPart, box, "add");
     const masks = await loadMasks(changed);
@@ -478,8 +507,8 @@ onKeyStroke(["z", "Z", "y", "Y"], (e) => {
   if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
   if (typing(e.target) || document.querySelector('.q-dialog, [aria-modal="true"]')) return;
   e.preventDefault();
-  if (e.key.toLowerCase() === "z" && !e.shiftKey) history.undo();
-  else history.redo();
+  if (e.key.toLowerCase() === "z" && !e.shiftKey) undo();
+  else redo();
 });
 
 /** The finder's progress in words: the part it is looking for now (the job's message is its key),
@@ -496,8 +525,30 @@ function findProgress(job, n) {
 // turns `loading` into `disabled`). The work's function ignores a press meanwhile.
 const waiting = (on) => (on ? { "aria-disabled": "true", class: "is-disabled" } : {});
 
+/** Work on this house the server was already doing as the page opened (a reload, another window): followed
+ *  here as if this page had started it — its progress on the strip, then the new parts or the AI photo. */
+function follow(jobs) {
+  for (const job of Array.isArray(jobs) ? jobs : []) {
+    if (job?.state !== "running") continue;
+    if (job.kind === "find-parts" && !finding.value) runFind({ job });
+    else if (job.kind === "aiphoto" && !busy.value.ai && !photoTask.value) runAiPhoto(job);
+  }
+}
+
+// while the parts are being found the outlines aren't edited (the brush, the eraser, the box): the run
+// replaces them as it ends, and a stroke on the outline from before it would be saved over the new one
+const finding = computed(() => busy.value.find || !!findTask.value);
+const EDIT_TOOLS = ["brush", "eraser", "box"];
+// Undo and Redo too, all of them: a step can put an outline back (and save it), and the run's end starts
+// the history over from the parts it found anyway (reloadParts)
+const undo = () => !finding.value && history.undo();
+const redo = () => !finding.value && history.redo();
+watch(finding, (on) => {
+  if (on && EDIT_TOOLS.includes(tool.value)) tool.value = "look";
+});
+
 async function findParts() {
-  if (busy.value.find || findTask.value) return;
+  if (finding.value) return;
   if (!engines.finderInstalled) {
     tab.value = "parts";
     return;
@@ -514,10 +565,15 @@ async function findParts() {
   } else if (house.parts.length) {
     if (!(await confirmDialog(ask))) return;
   }
+  await runFind({ keepEdited });
+}
+
+/** Finding the parts — started here (`keepEdited`) or one already running followed (`job`); the new
+ *  parts' outlines load when the house's partsFoundAt changes (reloadParts). */
+async function runFind(options) {
   busy.value.find = true;
   try {
-    // the new parts' outlines load when the house's partsFoundAt changes (reloadParts)
-    await house.findParts(t("house.find.task", { name: house.house.name }), findProgress, { keepEdited });
+    await house.findParts(t("house.find.task", { name: house.house.name }), findProgress, options);
   } catch (e) {
     if (e?.name !== "AbortError") reportError(e);
   } finally {
@@ -531,9 +587,14 @@ async function aiPhoto() {
     aiDialog.value = { render: null };
     return;
   }
+  await runAiPhoto();
+}
+
+/** The AI photo of the colors on screen — or `job`, one already being made, followed; shown when done. */
+async function runAiPhoto(job = null) {
   busy.value.ai = true;
   try {
-    const render = await house.aiPhoto(t("house.ai.task", { name: house.house.name }));
+    const render = await house.aiPhoto(t("house.ai.task", { name: house.house.name }), { job });
     aiDialog.value = { render };
   } catch (e) {
     if (e?.name !== "AbortError") reportError(e);
@@ -542,20 +603,28 @@ async function aiPhoto() {
   }
 }
 
-/** The painted photo at full size: the original, the masks scaled up, the same paint. */
+/** The painted photo at full size — the original, at most the `photos.fullSizeMaxMegapixels` setting
+ *  (Settings → General), the outlines scaled up, the same paint — painted in a Web Worker
+ *  (services/fullSizeImage.js): the page stays responsive meanwhile, the button waiting. */
 async function saveImage() {
-  if (busy.value.export) return;
+  if (busy.value.export || !painter) return;
   busy.value.export = true;
   try {
     const { width: W, height: H, name } = house.house;
-    const big = createPainter({ rgba: await pixelsOf(await requestBlob(imagePath("original")), W, H), width: W, height: H });
-    for (const key of order.value) {
-      const mask = painter.mask(key);
-      if (mask) big.setMask(key, await maskOf(await pngOf(mask, painter.width, painter.height), W, H), texture.value);
-    }
-    const { rgba } = big.paint(hexOf(house.colors), order.value, { light: light.value, current: currentHex() });
-    const canvas = drawPixels(rgba, W, H);
-    const out = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.92));
+    const masks = order.value.map((key) => ({ key, mask: painter.mask(key) })).filter((m) => m.mask);
+    const out = await paintFullSize({
+      photo: await requestBlob(imagePath("original")),
+      ...exportSize(W, H, settings.values["photos.fullSizeMaxMegapixels"]),
+      masks,
+      maskWidth: painter.width,
+      maskHeight: painter.height,
+      colors: hexOf(house.colors),
+      order: [...order.value],
+      light: light.value,
+      current: currentHex(),
+      texture: texture.value,
+      quality: 0.92,
+    });
     await saveBlob(out, `${name} — ${t("house.export.suffix")}.jpg`, { title: t("house.export.save"), filterName: "JPEG", filterExt: "jpg" });
   } catch (e) {
     reportError(e);
@@ -616,7 +685,7 @@ const aiPhotoWhyNot = computed(() => {
 function onAiPhotoInstalled() {
   aiDialog.value = null;
   // only when it can run now: the card isn't busy with this house's parts, the install really landed
-  const busyHere = busy.value.find || !!findTask.value || busy.value.ai || !!photoTask.value;
+  const busyHere = finding.value || busy.value.ai || !!photoTask.value;
   if (engines.aiphotoInstalled && !busyHere && house.paintableParts.length && hasColors.value) aiPhoto();
 }
 
@@ -625,11 +694,13 @@ const failedReason = computed(() => {
   const { title, detail } = errorMessage(loadFailed.value);
   return [title, detail].filter(Boolean).join(" — ");
 });
+// the outline tools, off (dimmed, saying why) while the parts are being found
+const editTool = (tool) => (finding.value ? { ...tool, title: t("house.tools.offWhileFinding"), disabled: true } : tool);
 const tools = computed(() => [
   { value: "look", label: t("house.tools.look"), title: t("house.tools.lookHint") },
-  { value: "brush", label: t("house.tools.brush"), title: t("house.tools.brushHint") },
-  { value: "eraser", label: t("house.tools.eraser"), title: t("house.tools.eraserHint") },
-  { value: "box", label: t("house.tools.box"), title: t("house.tools.boxHint") },
+  editTool({ value: "brush", label: t("house.tools.brush"), title: t("house.tools.brushHint") }),
+  editTool({ value: "eraser", label: t("house.tools.eraser"), title: t("house.tools.eraserHint") }),
+  editTool({ value: "box", label: t("house.tools.box"), title: t("house.tools.boxHint") }),
   { value: "pick", label: t("house.tools.pick"), title: t("house.tools.pickHint") },
 ]);
 const outlineOptions = computed(() => [
@@ -654,7 +725,7 @@ const canRevert = computed(() => !!house.design && house.dirty);
     <PaneHeader :eyebrow="t('houses.title')" :title="house.house?.name || ''" help-key="painting">
       <UiButton intent="ghost" :label="t('house.back')" @click="router.push('/')" />
       <UiButton
-        intent="secondary" :disabled="!house.house" v-bind="waiting(busy.find || !!findTask)"
+        intent="secondary" :disabled="!house.house" v-bind="waiting(finding)"
         :label="house.parts.length ? t('house.find.again') : t('house.find.button')" @click="findParts"
       />
       <UiButton
@@ -686,8 +757,8 @@ const canRevert = computed(() => !!house.design && house.dirty);
             <UiSlider v-model="brushSize" :min="2" :max="120" :step="1" width="short" :aria-label="t('house.tools.size')" />
           </label>
           <span class="house__tool">
-            <UiButton intent="secondary" size="small" :disabled="!history.canUndo.value" :label="t('house.undo')" :title="t('house.undoHint')" @click="history.undo()" />
-            <UiButton intent="secondary" size="small" :disabled="!history.canRedo.value" :label="t('house.redo')" :title="t('house.redoHint')" @click="history.redo()" />
+            <UiButton intent="secondary" size="small" :disabled="finding || !history.canUndo.value" :label="t('house.undo')" :title="finding ? t('house.undoOffWhileFinding') : t('house.undoHint')" @click="undo()" />
+            <UiButton intent="secondary" size="small" :disabled="finding || !history.canRedo.value" :label="t('house.redo')" :title="finding ? t('house.undoOffWhileFinding') : t('house.redoHint')" @click="redo()" />
             <UiMenu
               :label="t('house.reset.label')" trigger-class="ui-btn ui-btn--secondary ui-btn--small"
               :disabled="!hasColors && !canRevert"
@@ -716,7 +787,10 @@ const canRevert = computed(() => !!house.design && house.dirty);
           <UiSlider v-if="compareWith !== 'off' && !sideBySide" v-model="split" :min="0" :max="1" :step="0.01" width="short" :show-number="false" :aria-label="t('house.tools.split')" />
           <label class="house__tool">
             <span>{{ t("house.tools.texture") }}</span>
-            <UiSlider v-model="texture" :min="0" :max="1" :step="0.05" width="short" :aria-label="t('house.tools.texture')" />
+            <UiSlider
+              :model-value="textureShown" :min="0" :max="1" :step="0.05" width="short" :aria-label="t('house.tools.texture')"
+              @update:model-value="(v) => (textureShown = v)" @change="(v) => (texture = v)"
+            />
           </label>
           <label class="house__tool" :title="t('house.tools.lightHint')">
             <span>{{ t("house.tools.light") }}</span>
@@ -742,11 +816,11 @@ const canRevert = computed(() => !!house.design && house.dirty);
             <EngineInstallCard v-if="!engines.finderInstalled" kind="finder" />
             <EmptyState
               v-else-if="!house.parts.length && house.house.partsFoundAt" icon="Sparkle" :title="t('house.find.noneTitle')"
-              :message="t('house.find.noneMessage')" :action-label="busy.find || findTask ? '' : t('house.find.again')" @action="findParts"
+              :message="t('house.find.noneMessage')" :action-label="finding ? '' : t('house.find.again')" @action="findParts"
             />
             <EmptyState
               v-else-if="!house.parts.length" icon="Sparkle" :title="t('house.find.emptyTitle')" :message="t('house.find.emptyMessage')"
-              :action-label="busy.find || findTask ? '' : t('house.find.button')" @action="findParts"
+              :action-label="finding ? '' : t('house.find.button')" @action="findParts"
             />
           </template>
           <ColorsTab v-else-if="tab === 'colors'" :tones="tones" />

@@ -2,10 +2,11 @@
 // /v1/houses/:id/parts — the parts the finder found (or the user drew): their masks, finding them
 // (a job), a box whose contents move into a part, a mask fixed by the brush, a part added by hand.
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { Hono, input, uploadLimit } from "@delebash/core/platform";
 import { ApiError, conflict, notFound, RequestValidationError } from "@delebash/core/platform/errors";
+import { getLogger } from "@delebash/core/platform/log";
 import { houseNotFound } from "./refusals.js";
 import { getHouse, getPart, listParts, replaceParts, updatePartMask } from "../database/houses.js";
 import { maskPath, removeHouseFile } from "../files.js";
@@ -14,6 +15,8 @@ import { BoxIn, FindPartsIn, IdParams, PartNew, PartParams } from "../schemas/ho
 import { area, assignRegion, subtractRegion } from "../shared/masks.js";
 import { getState } from "../app_state.js";
 import { assertGpuFree } from "../jobs.js";
+
+const log = getLogger("just_house_paint.parts");
 
 /**
  * `ctx`: { db, dataDir, jobs, finder } — `finder` is the part finder (segment/):
@@ -29,20 +32,37 @@ export function router(ctx = getState()) {
   };
   const readMask = async (house, key) => {
     const file = maskPath(ctx.dataDir, house.id, key);
-    if (!existsSync(file)) return new Uint8Array(house.displayWidth * house.displayHeight);
-    return pngToMask(readFileSync(file), house.displayWidth, house.displayHeight);
+    const empty = () => new Uint8Array(house.displayWidth * house.displayHeight);
+    if (!existsSync(file)) return empty();
+    try {
+      return await pngToMask(readFileSync(file), house.displayWidth, house.displayHeight);
+    } catch (e) {
+      // an outline that can't be read (a file an older version left cut short) is an empty one — never a
+      // Box, a Keep or an AI photo that fails for the whole house
+      log.warning(`the outline of ${key} on house ${house.id} can't be read (${String(e?.message || e).split("\n")[0]}); taken as empty`);
+      return empty();
+    }
   };
   /** Outlines saved (`masks`: [[key, mask]]): the PNGs made first, then in one step the house checked, the
    *  files written and `rows()` run (the parts' rows), whose value comes back — a house deleted or reset while
    *  the PNGs were made is a 404, never files written into a folder going away or half the outlines saved;
-   *  a job stopped meanwhile (`signal`) saves nothing. The masks folder is made if it is missing (a backup
-   *  keeps no empty folder: a house restored before its parts were found has none). */
+   *  a job stopped meanwhile (`signal`) saves nothing. Each file is written beside its place and renamed in
+   *  only once every one is written: a disk that fills meanwhile leaves the old outlines whole (a write in
+   *  place truncated one). The masks folder is made if it is missing (a backup keeps no empty folder: a
+   *  house restored before its parts were found has none). */
   const saveMasks = async (house, masks, rows = () => null, signal = null) => {
     const pngs = await Promise.all(masks.map(([, mask]) => maskToPng(mask, house.displayWidth, house.displayHeight)));
     signal?.throwIfAborted();
     if (!getHouse(ctx.db, house.id)) throw houseNotFound(house.id);
     if (masks.length) mkdirSync(path.dirname(maskPath(ctx.dataDir, house.id, masks[0][0])), { recursive: true });
-    masks.forEach(([key], i) => writeFileSync(maskPath(ctx.dataDir, house.id, key), pngs[i]));
+    const files = masks.map(([key]) => maskPath(ctx.dataDir, house.id, key));
+    try {
+      files.forEach((file, i) => writeFileSync(`${file}.saving`, pngs[i]));
+    } catch (e) {
+      for (const file of files) rmSync(`${file}.saving`, { force: true });
+      throw e;
+    }
+    for (const file of files) renameSync(`${file}.saving`, file);
     return rows();
   };
 

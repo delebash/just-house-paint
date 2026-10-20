@@ -117,6 +117,7 @@ export function createAiPhoto(ctx) {
           surfaceLabel: surfaceWords(s.key),
         })),
         outPath: out,
+        maxPixels: ctx.settings.fullSizeMaxPixels?.() ?? null,
         size: ctx.settings.workingSize(),
         compose: ctx.settings.compose(),
         templates: ctx.settings.templates(),

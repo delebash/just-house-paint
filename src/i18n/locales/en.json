@@ -38,7 +38,7 @@
     "general": {
       "photos": {
         "title": "Photos",
-        "hint": "The copies made when a photo is added: the one the screen paints on, the card in Your houses, and how big a photo may be."
+        "hint": "The copies made when a photo is added: the one the screen paints on, the card in Your houses, how big a photo may be, and the most pixels Save image and the AI photo work at — a bigger photo is scaled down to it."
       },
       "designs": {
         "title": "Designs and paint files",
@@ -57,7 +57,8 @@
           "displayMax": "Screen copy, longest side (px)",
           "thumbMax": "Card copy, longest side (px)",
           "jpegQuality": "JPEG quality",
-          "maxMegabytes": "Largest photo (MB)"
+          "maxMegabytes": "Largest photo (MB)",
+          "fullSizeMaxMegapixels": "Save image and the AI photo, at most (megapixels)"
         },
         "designs": {
           "maxPerHouse": "Designs per house"
@@ -194,7 +195,8 @@
       "save": "Save image",
       "suffix": "painted",
       "copyList": "Copy the color list",
-      "copied": "Color list copied"
+      "copied": "Color list copied",
+      "failed": "The image couldn't be painted"
     },
     "tools": {
       "label": "Tool",
@@ -206,6 +208,7 @@
       "eraserHint": "Take some of the photo out of the selected part",
       "box": "Box",
       "boxHint": "Draw a box around something the selected part should take in",
+      "offWhileFinding": "Off while the parts are being found — their new outlines replace these when it's done",
       "size": "Brush size",
       "outlines": "Outlines",
       "split": "Where the before ends",
@@ -237,6 +240,7 @@
     "undoHint": "Undo (Ctrl+Z)",
     "redo": "Redo",
     "redoHint": "Redo (Ctrl+Y)",
+    "undoOffWhileFinding": "Off while the parts are being found — the history starts over from the parts it finds",
     "reset": {
       "button": "Reset",
       "label": "Reset the colors",

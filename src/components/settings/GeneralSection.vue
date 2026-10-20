@@ -17,7 +17,7 @@ const settings = useSettingsStore();
 
 // [card, [[key, kind, step?]]] — the words are settings.general.<card>.* and settings.general.fields.<key>
 const GROUPS = [
-  ["photos", [["photos.displayMax", "number"], ["photos.thumbMax", "number"], ["photos.jpegQuality", "number"], ["photos.maxMegabytes", "number"]]],
+  ["photos", [["photos.displayMax", "number"], ["photos.thumbMax", "number"], ["photos.jpegQuality", "number"], ["photos.maxMegabytes", "number"], ["photos.fullSizeMaxMegapixels", "number"]]],
   ["designs", [["designs.maxPerHouse", "number"], ["paints.maxImportMegabytes", "number"]]],
   ["finder", [["finder.useGpu", "toggle"], ["finder.idleMinutes", "number"], ["finder.houseMargin", "number", 0.01], ["finder.houseMinShare", "number", 0.05]]],
   ["aiphoto", [["aiphoto.workingPixels", "number"], ["aiphoto.sharedGpuNoteMb", "number"]]],

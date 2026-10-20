@@ -117,12 +117,21 @@ describe("ensureModels with a fake downloader", () => {
 
   it("cancelCheck stops between files (and reaches the downloader)", async () => {
     let n = 0;
-    const cancelCheck = () => n++ >= 2; // false for the first file's checks, then true
+    // false through checking the two present-file candidates and the first file's download, then true
+    const cancelCheck = () => n++ >= 4;
     const calls = [];
     await expect(ensureModels(dir, { files, download: fakeDownload({}, calls), cancelCheck })).rejects.toBeInstanceOf(ModelDownloadCancelled);
     expect(calls.map((c) => c.name)).toEqual(["a.onnx"]);
     const r = await ensureModels(dir, { files, download: fakeDownload() });
     expect(r.files.map((f) => f.status)).toEqual(["present", "downloaded"]);
+  });
+
+  it("Cancel answers while a present file is checked, not after it (a 3 GB hash took minutes)", async () => {
+    await writeFile(path.join(dir, "a.onnx"), payload["a.onnx"]); // present, no stamp: it would be hashed
+    const calls = [];
+    await expect(ensureModels(dir, { files, download: fakeDownload({}, calls), cancelCheck: () => true })).rejects.toBeInstanceOf(ModelDownloadCancelled);
+    expect(calls).toEqual([]);
+    await expect(sha256File(path.join(dir, "a.onnx"), () => true)).rejects.toBeInstanceOf(ModelDownloadCancelled);
   });
 
   it("needs a downloader and a folder", async () => {

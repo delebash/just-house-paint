@@ -8,7 +8,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import sharp from "sharp";
 import { describe, expect, test } from "vitest";
-import { aiRepaint } from "../../src/aiphoto/edit.js";
+import { aiRepaint, cappedSize } from "../../src/aiphoto/edit.js";
 import { DEFAULT_COMPOSE, featherMask, readMask, readRgb } from "../../src/aiphoto/pixels.js";
 import { argOf, fakeSpawn } from "./helpers.js";
 
@@ -324,4 +324,14 @@ describe("a surface whose paint now is known (the light on it)", () => {
     });
     expect(plain.surfaces[0]).toMatchObject({ litHex: "#ad2c34", litMedian: "#ad2c34", gain: [1, 1, 1] });
   });
+});
+
+// Settings → General photos.fullSizeMaxMegapixels: a 48 MP photo held 6 GB composing at full size (2026-10-20)
+test("the photo is read at most at the full-size cap, its aspect kept", async () => {
+  const photo = await sharp({ create: { width: 4000, height: 3000, channels: 3, background: "#888" } }).png().toBuffer();
+  expect(await cappedSize(photo, null)).toBeNull();
+  expect(await cappedSize(photo, 16e6)).toBeNull(); // 12 MP: its own size
+  const s = await cappedSize(photo, 1e6);
+  expect(s.width * s.height).toBeLessThanOrEqual(1e6);
+  expect(s.width / s.height).toBeCloseTo(4 / 3, 2);
 });

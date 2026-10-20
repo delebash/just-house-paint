@@ -104,12 +104,19 @@ export const useHouseStore = defineStore("house", {
       for (const k of keys) next[k] = (next[k] || 0) + 1;
       this.maskVersions = next;
     },
+    /** This house's jobs running on the server now (finding its parts, an AI photo) — started before the
+     *  window reloaded, or in another window: [job snapshot…], as `GET /v1/jobs/:id` answers each. */
+    runningJobs(id = this.house.id) {
+      return get(hp(id, "/jobs"));
+    },
     /** Find the parts (a server job on the task strip); `label` names it there. */
     /** `describe(job, percent)` words its progress (the part being found) — see services/jobs.js;
-     *  `keepEdited` keeps the parts changed by hand as they are (the found ones are cut around them). */
-    async findParts(label, describe, { keepEdited = false } = {}) {
+     *  `keepEdited` keeps the parts changed by hand as they are (the found ones are cut around them);
+     *  `job`: a run already going (runningJobs) to follow instead of starting one. */
+    async findParts(label, describe, { keepEdited = false, job = null } = {}) {
       const id = this.house.id;
-      await runServerJob({ start: () => post(hp(id, "/find-parts"), { keepEdited }), feature: "parts.find", label, meta: { houseId: id }, describe });
+      const start = job ? async () => job : () => post(hp(id, "/find-parts"), { keepEdited });
+      await runServerJob({ start, feature: "parts.find", label, meta: { houseId: id }, describe });
       // another house opened meanwhile: this one's parts are on the server, read when it opens again
       if (this.house?.id !== id) return;
       const [house, parts] = await Promise.all([get(hp(id)), get(hp(id, "/parts"))]);
@@ -225,10 +232,12 @@ export const useHouseStore = defineStore("house", {
       this.designs = this.designs.filter((x) => x.id !== id);
       if (this.designId === id) this.designId = null;
     },
-    /** An AI photo of the colors on screen (a server job). Resolves with the kept render. */
-    async aiPhoto(label) {
+    /** An AI photo of the colors on screen (a server job) — or `job`, one already being made (runningJobs),
+     *  followed. Resolves with the kept render. */
+    async aiPhoto(label, { job = null } = {}) {
       const id = this.house.id;
-      const render = await runServerJob({ start: () => post(hp(id, "/aiphoto"), { colors: this.colors }), feature: "aiphoto.render", label, meta: { houseId: id } });
+      const start = job ? async () => job : () => post(hp(id, "/aiphoto"), { colors: this.colors });
+      const render = await runServerJob({ start, feature: "aiphoto.render", label, meta: { houseId: id } });
       // kept with its house on the server; listed here only while that house is open
       if (this.house?.id === id) this.renders = [render, ...this.renders];
       return render;

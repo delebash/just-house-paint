@@ -12,6 +12,9 @@ const query = (params) => {
   return q.toString();
 };
 
+/** A paint's brand: its own field, else its id's "brand:" (idParts). */
+const paintBrand = (id, p = null) => p?.brand || String(id).split(":", 1)[0];
+
 // the start-up loads in flight (autoLoadBrands), so a second call joins them
 let autoLoading = null;
 
@@ -23,6 +26,12 @@ export const usePaintsStore = defineStore("paints", {
     byId: {},
     // ids the server has no paint for (its brand's new list dropped it, or the brand was removed)
     missing: {},
+    // bumps when a brand's colors were loaded again or removed (forgetBrand): a screen showing paints
+    // looks them up again — one may be gone, or its color changed
+    brandsChanged: 0,
+    // how many times each brand was forgotten: a lookup that began before the latest time answers what
+    // the server had then — kept out of the cache (forgetBrand)
+    forgotten: {},
     // the start-up loads are running (the Colors and Schemes tabs say "loading", not "add a brand")
     autoLoadingBrands: false,
   }),
@@ -31,11 +40,32 @@ export const usePaintsStore = defineStore("paints", {
     ready: (s) => s.brands.filter((b) => b.paintCount > 0),
   },
   actions: {
-    remember(rows) {
+    /** Each brand's forgetBrand count now — taken as a lookup begins (remember's `since`). */
+    generations() {
+      return { ...this.forgotten };
+    },
+    /** Paints the server answered, into the cache — not those whose brand was forgotten after the lookup
+     *  began (`since`, generations()): its colors were loaded again or removed meanwhile. */
+    remember(rows, since = null) {
+      if (since) rows = rows.filter((p) => !this.forgottenSince(paintBrand(p.id, p), since));
       const next = { ...this.byId };
       for (const p of rows) next[p.id] = p;
       this.byId = next;
       if (rows.some((p) => this.missing[p.id])) this.missing = Object.fromEntries(Object.entries(this.missing).filter(([id]) => !next[id]));
+    },
+    /** A brand's colors loaded again or removed: what this keeps of them (its paints, its missing
+     *  marks) goes, so the next lookup asks the server — a color the brand no longer has is marked
+     *  missing again, instead of painting on from here. */
+    forgetBrand(brand) {
+      const theirs = (id, p) => p?.brand === brand || paintBrand(id) === brand;
+      this.byId = Object.fromEntries(Object.entries(this.byId).filter(([id, p]) => !theirs(id, p)));
+      this.missing = Object.fromEntries(Object.entries(this.missing).filter(([id]) => !theirs(id)));
+      this.forgotten = { ...this.forgotten, [brand]: (this.forgotten[brand] || 0) + 1 };
+      this.brandsChanged++;
+    },
+    /** `brand` forgotten since the generations `since` were taken. */
+    forgottenSince(brand, since) {
+      return (this.forgotten[brand] || 0) !== (since[brand] || 0);
     },
     /** A paint id's brand (its label) and code — for a color that isn't loaded ("brand:code"). */
     idParts(id) {
@@ -57,6 +87,8 @@ export const usePaintsStore = defineStore("paints", {
       try {
         return await runServerJob({ start: () => post(`/v1/brands/${encodeURIComponent(brand)}/load`), feature: "paints.load", label, meta: { brand } });
       } finally {
+        // loaded, failed or cancelled: what the server has of the brand now is what counts
+        this.forgetBrand(brand);
         await this.loadBrands().catch(() => {});
       }
     },
@@ -90,28 +122,34 @@ export const usePaintsStore = defineStore("paints", {
       form.append("file", file, file.name);
       form.append("brand", brand);
       const result = await postForm("/v1/paints/import", form);
+      // the brand's colors are the file's now
+      this.forgetBrand(brand);
       await this.loadBrands();
       return result;
     },
     async clearBrand(brand) {
       await del(`/v1/brands/${encodeURIComponent(brand)}`);
+      this.forgetBrand(brand);
       await this.loadBrands();
     },
     /** One page of the search: { total, rows } — `order` "color" or "name", `colorFamily` a family key. */
     async search({ brand, q, family, colorFamily, order, exterior = true, archived = false, limit = 120, offset = 0 } = {}) {
+      const since = this.generations();
       const page = await get(`/v1/paints?${query({ brand, q, family, colorFamily, order, exterior, archived, limit, offset })}`);
-      this.remember(page.rows);
+      this.remember(page.rows, since);
       return page;
     },
     async paint(id) {
       if (this.byId[id]) return this.byId[id];
+      const since = this.generations();
       try {
         const p = await get(`/v1/paints/${encodeURIComponent(id)}`);
-        this.remember([p]);
+        this.remember([p], since);
         return p;
       } catch (e) {
-        // a color the server no longer has: the part says so, instead of looking unpainted
-        if (e?.status === 404) this.missing = { ...this.missing, [id]: true };
+        // a color the server no longer has: the part says so, instead of looking unpainted (unless its
+        // brand was loaded again meanwhile — the answer is from before)
+        if (e?.status === 404 && !this.forgottenSince(paintBrand(id), since)) this.missing = { ...this.missing, [id]: true };
         throw e;
       }
     },

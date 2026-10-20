@@ -234,7 +234,10 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         suspected: on macOS the data folder could land inside the app (beside Contents/MacOS) and go with an
         update; small: the tray item is "Quit Just House Paint", Install shows its size, models carry "(QAT)";
         gaps: Windows' firewall prompt, finding the network address, where the app's folder is.
-        Failure paths and real size (an agent's, measured with the app's own modules at 2048×1536, 15 parts): each
+        The help's findings: all FIXED (the kit's data folder, token and proxy fixes; the words) — RESEARCH §13.
+        Failure paths and size: all FIXED, measured again (RESEARCH §13) — Undo/Redo off during a part search too,
+        a paint lookup racing a brand's removal kept out of the cache. As reported (an agent's, measured
+        with the app's own modules at 2048×1536, 15 parts): each
         Texture slider step re-prepares every part — 2.2 s (2.7 with a calmed body) per step, arrays 69 → ~280 MB;
         Save image paints the full original on the main thread (12 MP: 2.3 s, 268 MB; 0.5 texture + dark body 11 s,
         1.06 GB; 48 MP 47 s, 4.2 GB; a 192 MP photo is accepted); the AI photo composes at the original's size in the

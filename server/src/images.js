@@ -12,6 +12,27 @@ export const ACCEPTED_FORMATS = { jpeg: "jpg", png: "png", webp: "webp" };
 
 export class NotAnImage extends Error {}
 
+/** A photo past sharp's pixel limit (268 million — libvips' guard against decompression bombs). */
+export class TooManyPixels extends Error {
+  constructor(width, height) {
+    const mp = (n) => Math.round(n / 1e6);
+    super(`the photo has ${mp(width * height)} million pixels (${width} × ${height}); the most is ${mp(PIXEL_LIMIT)} million — scale it down first`);
+  }
+}
+// sharp's own default limitInputPixels
+const PIXEL_LIMIT = 0x3fff * 0x3fff;
+const pastPixelLimit = (e) => /pixel limit/i.test(String(e?.message || e));
+
+/** The refusal for a photo sharp stopped at its pixel limit, with the photo's size read from its header. */
+async function tooManyPixels(buffer) {
+  try {
+    const { width, height } = await sharp(buffer, { limitInputPixels: false }).metadata();
+    return new TooManyPixels(width, height);
+  } catch {
+    return new NotAnImage("not an image file");
+  }
+}
+
 /** An HEIC/HEIF photo (an iPhone's default): an ISO-BMFF `ftyp` box naming an HEVC brand. sharp's
  *  prebuilt libvips reads AVIF but not HEVC (patents), so these get their own words. */
 export function isHeic(buffer) {
@@ -34,7 +55,8 @@ export async function inspectPhoto(buffer) {
   let meta;
   try {
     meta = await sharp(buffer).metadata();
-  } catch {
+  } catch (e) {
+    if (pastPixelLimit(e)) throw await tooManyPixels(buffer);
     throw new NotAnImage("not an image file");
   }
   const ext = ACCEPTED_FORMATS[meta.format];
@@ -63,15 +85,23 @@ export async function ingestPhoto(buffer, dataDir, houseId, limits) {
   let display;
   let thumb;
   try {
-    // The original upright, so every later step reads the same orientation. Only a photo its
-    // camera stored sideways is re-encoded (a JPEG or WebP at high quality; a PNG losslessly — a
+    // The original upright, so every later step reads the same orientation, and flattened onto white
+    // when it has transparency — the screen copy, Save image and the AI photo then all see the same
+    // pixels (the AI photo read the colors hidden under a transparent area while the screen showed
+    // black). Only such a photo is re-encoded (a JPEG or WebP at high quality; a PNG losslessly — a
     // `quality` would turn on its 256-color palette); every other one is kept byte for byte.
-    const { orientation } = await sharp(buffer).metadata();
-    upright = orientation > 1 ? await sharp(buffer).rotate().toFormat(ext === "jpg" ? "jpeg" : ext, ext === "png" ? {} : { quality: 95 }).toBuffer() : buffer;
+    const { orientation, hasAlpha } = await sharp(buffer).metadata();
+    if (orientation > 1 || hasAlpha) {
+      let img = sharp(buffer);
+      if (orientation > 1) img = img.rotate();
+      if (hasAlpha) img = img.flatten({ background: "#ffffff" });
+      upright = await img.toFormat(ext === "jpg" ? "jpeg" : ext, ext === "png" ? {} : { quality: 95 }).toBuffer();
+    } else upright = buffer;
     display = await sharp(upright).resize(d.width, d.height).jpeg({ quality: limits.jpegQuality }).toBuffer();
     thumb = await sharp(upright).resize(t.width, t.height).jpeg({ quality: limits.jpegQuality }).toBuffer();
   } catch (e) {
-    // its header read, its pixels didn't: a file cut off part-way, or one past sharp's pixel limit
+    if (pastPixelLimit(e)) throw await tooManyPixels(buffer);
+    // its header read, its pixels didn't: a file cut off part-way
     throw new NotAnImage(`this photo can't be read (${String(e?.message || e).split("\n")[0]})`);
   }
   // the three copies written only once all three were made (a disk error is the disk's, not "not a photo"),

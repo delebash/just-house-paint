@@ -71,6 +71,8 @@ export function createServices({ db, dataDir }, overrides = {}) {
         workingSize: () => setting("aiphoto.workingPixels"),
         compose: () => setting("aiphoto.compose"),
         templates: () => setting("aiphoto.templates"),
+        // the most pixels the AI photo composes at (Settings → General, as Save image)
+        fullSizeMaxPixels: () => setting("photos.fullSizeMaxMegapixels") * 1e6,
       },
     });
 

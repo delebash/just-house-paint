@@ -1,14 +1,15 @@
 // SPDX-License-Identifier: MIT
 // /v1/houses, /v1/designs, /v1/jobs and the parts routes (app-structure §18: each route's happy
 // path, one 422 from its schema, one refusal).
-import { closeSync, existsSync, mkdirSync, openSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import { closeSync, existsSync, mkdirSync, openSync, readdirSync, readFileSync, renameSync, rmSync, utimesSync, writeFileSync } from "node:fs";
 import path from "node:path";
+import zlib from "node:zlib";
 import sharp from "sharp";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { nameFromFile } from "../src/api/houses_api.js";
 import { ingestPhoto, isHeic } from "../src/images.js";
 import { createHouse, deleteHouse } from "../src/database/houses.js";
-import { addingHouseDir, displayPath, housesRoot, maskPath, removeAllHouseDirs, removeHouseDir, sweepHouseDirs } from "../src/files.js";
+import { addingHouseDir, displayPath, housesRoot, maskPath, removeAllHouseDirs, removeHouseDir, sweepHouseDirs, sweepRenders } from "../src/files.js";
 import { fakeFinder, jpeg, LIMITS, makeServer } from "./domain_helpers.js";
 
 let s;
@@ -26,6 +27,43 @@ describe("houses", () => {
     expect(thumb.headers.get("content-type")).toBe("image/jpeg");
     expect((await sharp(Buffer.from(await thumb.arrayBuffer())).metadata()).width).toBe(64);
     expect((await (await s.app.request("/v1/houses")).json()).map((h) => h.id)).toEqual([house.id]);
+  });
+
+  test("a photo with transparency is flattened onto white: the screen, Save image and the AI photo see the same pixels", async () => {
+    s = makeServer();
+    // left half transparent over a hidden green, right half red
+    const px = Buffer.alloc(100 * 80 * 4);
+    for (let i = 0; i < 100 * 80; i++) px.set(i % 100 < 50 ? [0, 255, 0, 0] : [200, 30, 30, 255], i * 4);
+    const png = await sharp(px, { raw: { width: 100, height: 80, channels: 4 } }).png().toBuffer();
+    const house = await (await s.upload(png, "clear.png")).json();
+    const original = sharp(readFileSync(path.join(s.dataDir, "houses", house.id, "original.png")));
+    expect((await original.metadata()).hasAlpha).toBe(false);
+    const { data } = await original.raw().toBuffer({ resolveWithObject: true });
+    expect([data[0], data[1], data[2]]).toEqual([255, 255, 255]); // white, not the hidden green
+    const { data: shown } = await sharp(readFileSync(displayPath(s.dataDir, house.id))).raw().toBuffer({ resolveWithObject: true });
+    expect(shown[0]).toBeGreaterThan(240); // and the screen copy agrees (it was black)
+  });
+
+  test("a photo past the pixel limit says its size, not 'not an image'", async () => {
+    s = makeServer();
+    // a PNG whose header says 20000 × 15000 (300 million pixels; sharp stops at 268)
+    const chunk = (type, data) => {
+      const len = Buffer.alloc(4);
+      len.writeUInt32BE(data.length);
+      const td = Buffer.concat([Buffer.from(type, "latin1"), data]);
+      const crc = Buffer.alloc(4);
+      crc.writeUInt32BE(zlib.crc32(td) >>> 0);
+      return Buffer.concat([len, td, crc]);
+    };
+    const ihdr = Buffer.alloc(13);
+    ihdr.writeUInt32BE(20000, 0);
+    ihdr.writeUInt32BE(15000, 4);
+    ihdr[8] = 8;
+    ihdr[9] = 2;
+    const png = Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk("IHDR", ihdr), chunk("IDAT", zlib.deflateSync(Buffer.alloc(10))), chunk("IEND", Buffer.alloc(0))]);
+    const r = await s.upload(png, "huge.png");
+    expect(r.status).toBe(413);
+    expect((await r.json()).detail).toMatch(/300 million pixels \(20000 × 15000\); the most is 268 million/);
   });
 
   test("a name can be given; a sideways phone photo is turned upright", async () => {
@@ -172,6 +210,21 @@ describe("houses", () => {
     expect(readdirSync(housesRoot(s.dataDir))).toEqual([]);
   });
 
+  test("a killed AI photo's picture without a row goes at start, and its day-old work folder", async () => {
+    s = makeServer();
+    const renders = path.join(s.dataDir, "houses", "h1", "renders");
+    mkdirSync(renders, { recursive: true });
+    writeFileSync(path.join(renders, "kept.png"), "x");
+    writeFileSync(path.join(renders, "half-written.png"), "x");
+    const tmp = path.join(s.dataDir, "tmp");
+    for (const name of ["aiphoto-old", "aiphoto-now", "someone-else"]) mkdirSync(path.join(tmp, name), { recursive: true });
+    const dayAgo = (Date.now() - 25 * 3600_000) / 1000;
+    utimesSync(path.join(tmp, "aiphoto-old"), dayAgo, dayAgo);
+    expect(await sweepRenders(s.dataDir, new Map([["h1", new Set(["kept.png"])]]), { tmp })).toBe(1);
+    expect(readdirSync(renders)).toEqual(["kept.png"]);
+    expect(readdirSync(tmp).sort()).toEqual(["aiphoto-now", "someone-else"]); // another copy may be drawing in a new one
+  });
+
   test("a reset while a photo is read: its files still land, in the new houses folder", async () => {
     s = makeServer();
     addingHouseDir(s.dataDir, "racing");
@@ -307,6 +360,28 @@ describe("parts", () => {
     expect((await (await s.app.request(`/v1/houses/${house.id}`)).json()).partsFoundAt).toBeTruthy();
   });
 
+  test("a house's running jobs are listed, so a page opened or reloaded meanwhile attaches to them", async () => {
+    s = makeServer();
+    const house = await (await s.upload(await jpeg(400, 300))).json();
+    const find = fakeFinder.find;
+    let finish;
+    fakeFinder.find = function (...args) {
+      return new Promise((r) => (finish = () => r(find.apply(this, args))));
+    };
+    try {
+      const job = await (await s.json("POST", `/v1/houses/${house.id}/find-parts`)).json();
+      const listed = await (await s.app.request(`/v1/houses/${house.id}/jobs`)).json();
+      expect(listed).toMatchObject([{ id: job.id, kind: "find-parts", state: "running" }]);
+      await vi.waitFor(() => expect(finish).toBeTypeOf("function"));
+      finish();
+      await s.settle(job.id);
+    } finally {
+      fakeFinder.find = find;
+    }
+    expect(await (await s.app.request(`/v1/houses/${house.id}/jobs`)).json()).toEqual([]);
+    expect((await s.app.request("/v1/houses/nope/jobs")).status).toBe(404);
+  });
+
   test("a house restored before its parts were found has no masks folder (a backup keeps no empty one): finding them works", async () => {
     s = makeServer();
     const house = await (await s.upload(await jpeg(400, 300))).json();
@@ -317,6 +392,16 @@ describe("parts", () => {
     const other = await (await s.upload(await jpeg(400, 300))).json();
     rmSync(path.join(s.dataDir, "houses", other.id, "masks"), { recursive: true, force: true });
     expect((await s.json("POST", `/v1/houses/${other.id}/parts`, { key: "fence" })).status).toBe(201);
+  });
+
+  test("an outline that can't be read is taken as empty: a Box on the house still works; saves leave no temp file", async () => {
+    s = makeServer();
+    const house = await (await s.upload(await jpeg(400, 300))).json();
+    await s.settle((await (await s.json("POST", `/v1/houses/${house.id}/find-parts`)).json()).id);
+    writeFileSync(maskPath(s.dataDir, house.id, "roof"), Buffer.from([137, 80, 78, 71])); // cut short
+    const r = await s.json("POST", `/v1/houses/${house.id}/parts/trim/box`, { x0: 10, y0: 10, x1: 14, y1: 14 });
+    expect(r.status).toBe(200);
+    expect(readdirSync(path.join(s.dataDir, "houses", house.id, "masks")).filter((f) => f.endsWith(".saving"))).toEqual([]);
   });
 
   test("a house deleted while a box was outlined: a 404, and no outline written", async () => {

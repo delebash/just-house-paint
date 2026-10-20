@@ -8,7 +8,8 @@
 //   <dataDir>/houses/<id>/masks/<part>.png one 8-bit mask per part, display size
 //   <dataDir>/houses/<id>/renders/<id>.png AI photos
 
-import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { cp, rm } from "node:fs/promises";
 import path from "node:path";
 import { getLogger } from "@delebash/core/platform/log";
@@ -141,6 +142,34 @@ export async function removeAllHouseDirs(dataDir, { rename = renameSync } = {}) 
 
 // the file naming a restore's copy a start couldn't put back yet
 const PUT_BACK = ".houses-put-back";
+
+/**
+ * At start: an AI photo whose job stopped mid-write (the app killed) leaves its picture without a row, and the
+ * engine's work folder (`aiphoto-*`) in the temp folder — both go; a work folder only once it is a day old
+ * (another copy of the app, on its own data, may be drawing in one). `keep`: houseId → the files its rows name.
+ */
+export async function sweepRenders(dataDir, keep, { tmp = tmpdir(), now = Date.now() } = {}) {
+  let gone = 0;
+  for (const [id, files] of keep) {
+    const dir = path.join(houseDir(dataDir, id), "renders");
+    for (const name of existsSync(dir) ? readdirSync(dir) : []) {
+      if (files.has(name)) continue;
+      if (await removeHouseFile(path.join(dir, name))) gone++;
+    }
+  }
+  for (const name of existsSync(tmp) ? readdirSync(tmp) : []) {
+    if (!name.startsWith("aiphoto-")) continue;
+    const dir = path.join(tmp, name);
+    try {
+      if (now - statSync(dir).mtimeMs < 24 * 3600_000) continue;
+    } catch {
+      continue;
+    }
+    await rm(dir, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 }).catch(() => {});
+  }
+  if (gone) log.info(`removed ${gone} AI photo file(s) no AI photo row names`);
+  return gone;
+}
 
 /** A restore's copy `name` (beside the data) made the houses folder: renamed into place, else — a file in it
  *  held — copied, file by file, into it (a houses folder there already keeps what it has). True when done. */

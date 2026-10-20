@@ -27,6 +27,12 @@ export class JobRegistry {
     return null;
   }
 
+  /** The running jobs for `key` (a house), as the wire shows them — a page opened or reloaded while they run
+   *  attaches to them. */
+  runningFor(key) {
+    return [...this.jobs.values()].filter((j) => j.key === key && j.state === "running").map(snapshot);
+  }
+
   /** A running job of any of these kinds (for any house), or null. */
   busy(kinds) {
     for (const j of this.jobs.values()) if (kinds.includes(j.kind) && j.state === "running") return j;

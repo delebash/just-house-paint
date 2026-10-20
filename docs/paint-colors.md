@@ -30,8 +30,9 @@ app keeps each paint by its number: colors in a file without one are left out, a
 how many.
 
 **Remove** takes a brand's colors off this computer; it asks first, and names the designs that use
-them. Those parts show no color until the brand is added again — the design keeps which color it
-was, so it comes back with the brand.
+them. Those parts show no color until the brand is added again — a house open at the time too: its
+**Parts** tab says "not in the loaded colors" — and the design keeps which color it was, so it comes
+back with the brand.
 
 When **Load again** or an imported file brings a list without some colors a design uses (a brand
 retires colors), the app names those designs. On the house's **Parts** tab such a part says

@@ -21,7 +21,8 @@ says so and offers nothing to install.
 Pick colors for the parts, then press **AI photo**. Until it can run, the button is off and the
 reason shows beside the buttons — **AI photo: Find the parts first**, for instance, or **Give a part
 a color first**. It takes from about 20 seconds to a minute on an
-RTX 2070-class card; its progress shows under the house's name while it runs, with **Cancel**. Before it starts, the app frees the
+RTX 2070-class card; its progress shows under the house's name while it runs, with **Cancel** — also
+when you open the house again, or reload the window, while it runs. Before it starts, the app frees the
 graphics card — the part finder and a local AI model let go of it, and load again when next needed.
 The picture opens when it is done, with **Save image**, how far its painted parts are from the paint
 chips (**ΔE … from the chips**) and how long it took (**made in … s**) — and, when other programs held

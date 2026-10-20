@@ -17,6 +17,7 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import sharp from "sharp";
 import {
   colorLock,
   DEFAULT_COMPOSE,
@@ -57,6 +58,15 @@ function surfacesOf({ surfaces, mask, colorHex, colorName, surfaceLabel, current
     // light on it from that (lightGain) and paints the new color in that light
     return { mask: s.mask, colorHex: s.colorHex.toLowerCase(), colorName: s.colorName ?? null, surfaceLabel: label, currentHex: s.currentHex ?? null };
   });
+}
+
+/** The size the photo is read at: its own, or scaled down (aspect kept) to `maxPixels`; null = its own. */
+export async function cappedSize(photo, maxPixels) {
+  if (!maxPixels) return null;
+  const { width, height } = await sharp(photo).metadata();
+  if (!width || !height || width * height <= maxPixels) return null;
+  const s = Math.sqrt(maxPixels / (width * height));
+  return { width: Math.max(1, Math.floor(width * s)), height: Math.max(1, Math.floor(height * s)) };
 }
 
 function sizeFor(size, width, height, rule) {
@@ -102,6 +112,7 @@ export async function aiRepaint(opts) {
     keepWork = false,
     logPath = null,
     onOutput = null,
+    maxPixels = null,
     spawn,
   } = opts;
   const t0 = performance.now();
@@ -119,9 +130,10 @@ export async function aiRepaint(opts) {
 
   const work = await mkdtemp(join(workDir ?? tmpdir(), "aiphoto-"));
   try {
-    // 1. Prepare: the photo at full size, each mask at full size, the working-size inputs.
+    // 1. Prepare: the photo at full size, each mask at full size, the working-size inputs. Full size is at
+    // most `maxPixels` (Settings → General, photos.fullSizeMaxMegapixels): a 48 MP photo held 6 GB composing.
     report("prepare", 0);
-    const full = await readRgb(photo);
+    const full = await readRgb(photo, await cappedSize(photo, maxPixels));
     const W = full.width;
     const H = full.height;
     const ws = sizeFor(size, W, H, workingSizeRule);

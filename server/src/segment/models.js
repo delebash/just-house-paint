@@ -53,9 +53,13 @@ export class ModelDownloadCancelled extends Error {
 }
 
 /** SHA-256 of a file, streamed. */
-export async function sha256File(file) {
+export async function sha256File(file, cancelCheck = null) {
   const h = createHash("sha256");
-  for await (const chunk of createReadStream(file, { highWaterMark: 4 * 1024 * 1024 })) h.update(chunk);
+  for await (const chunk of createReadStream(file, { highWaterMark: 4 * 1024 * 1024 })) {
+    // Cancel answers while a 3 GB file is checked, not when the check ends
+    if (cancelCheck?.()) throw new ModelDownloadCancelled();
+    h.update(chunk);
+  }
   return h.digest("hex");
 }
 
@@ -76,7 +80,7 @@ async function writeStamps(dir, stamps) {
 
 /** Is `file` on disk with the right size and hash? Hashes once, then trusts the stamp while the
  * size and mtime are unchanged. */
-async function isValid(dir, f, stamps) {
+async function isValid(dir, f, stamps, cancelCheck = null) {
   let st;
   try {
     st = await stat(path.join(dir, f.name));
@@ -86,7 +90,7 @@ async function isValid(dir, f, stamps) {
   if (!st.isFile() || st.size !== f.size) return false;
   const s = stamps[f.name];
   if (s && s.size === st.size && s.mtimeMs === st.mtimeMs && s.sha256 === f.sha256) return true;
-  const sha = await sha256File(path.join(dir, f.name));
+  const sha = await sha256File(path.join(dir, f.name), cancelCheck);
   if (sha !== f.sha256) return false;
   stamps[f.name] = { size: st.size, mtimeMs: st.mtimeMs, sha256: sha };
   return true;
@@ -108,7 +112,8 @@ export async function ensureModels(modelDir, { download, onProgress, cancelCheck
   const status = new Map();
   const missing = [];
   for (const f of files) {
-    if (await isValid(modelDir, f, stamps)) status.set(f.name, "present");
+    if (cancelCheck?.()) throw new ModelDownloadCancelled();
+    if (await isValid(modelDir, f, stamps, cancelCheck)) status.set(f.name, "present");
     else missing.push(f);
   }
   await writeStamps(modelDir, stamps);
