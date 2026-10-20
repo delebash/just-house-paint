@@ -378,6 +378,23 @@ REVIEWS (2026-10-19, independent agents, each finding checked and settled): the 
         JustHousePaint; Library via Go → Go to Folder). Right: the gate (503, shutdown exempt, refused writes not
         counted), the journal's crash points inside the swap, the snapshot for this app's writers, no caller left on
         PUT current-paints, the docs' refusal words and setting name, the draft release.
+        Left open for hours or days (an agent's, the headless server on a temp folder driven by fetch, real Edge and
+        Playwright; being fixed): after any server restart the first stroke, Box or Find is refused "changed in
+        another window" (the outline versions are a new random series each start; one window's rev reads 0 before
+        and after) and the Undo history goes; a plain restart is taken for a restore — every window reloads
+        (unsaved colors on screen lost), or keeps the old epoch and reloads at the next ordinary change, or misses
+        changes (the count restarts at 0); a job's poll gives up at the first failed request (a tablet asleep during
+        Find, a Wi-Fi drop, a restart — then a raw "no job <uuid>"), and the window never learns the result (the
+        job's end counts as its own change); no Page Visibility anywhere — a hidden or minimized window polls 15 a
+        minute (21,600 a day), a hidden house page re-reads and repaints for every other window's change; every
+        write counts as a change (prefs, a harmony calculation, client logs, AI runs, other houses) — 6 GETs and a
+        300 ms repaint each; keep-running hides the window, the page and its arrays alive for days; the
+        connection page probes every 2 s forever; a removed token leaves the tab alive on 403s; the AI tasks panel
+        ticks at 500 ms hidden; the update check runs only at start; work folders and .saving files swept only at
+        the next start or operation; the outline and window-id maps never shrink; llm_usage never pruned. Right:
+        an idle server costs nothing, logs bounded (500 lines, 30 days), 1,200 strokes and 150 houses add/delete
+        level off, no WAL growth, the finder and the local model let go when idle, the renderer frees its URLs,
+        bitmaps, worker and listeners, Undo keeps 50, waking makes one request.
 NEXT (mine): the reviews until a fresh angle finds nothing; then, only when nothing is open, the release (v0.1.3) and
         the installed 0.1.2 updating to it (the silent Restart now).
 
