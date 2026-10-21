@@ -264,6 +264,16 @@ GenRoom, FacadeColorizer — vendors claim ~20–40 s a render, no exact color).
   ai.google.dev/gemini-api/docs/pricing · ai.google.dev/gemini-api/docs/image-generation.
 - Gemini image editing has no mask parameter — region edits are prompt-only. Every generated image
   carries a SynthID watermark. — *agent, 2026-10-17* · ai.google.dev/gemini-api/docs/image-generation.
+- A key whose project has no billing is refused image output: `gemini-nano-banana-2.1` answers 429
+  "limit: 0 input tokens per minute on Free Tier" (`GET models/gemini-nano-banana-2.1` still answers:
+  "Nano Banana 2.1", version 3.0). Image edits go to `POST v1beta/interactions` — `input` blocks
+  `{type: "image", mime_type, data}`, `response_format: {type: "image", aspect_ratio, image_size: "1K"}`.
+  — *measured, 2026-10-21* · ai.google.dev/gemini-api/docs/image-generation.
+- Round 2's local FLUX render (house1 → Positive Red, the body mask) scored by today's app code
+  (`aiRepaint`, `DEFAULT_COMPOSE`): the AI's own lit color ΔE 10.69, 0.31 after the lock, the whole wall
+  17.56. Outside the mask the render differs from the photo by 14.53/255 mean (PSNR 20.8 dB); 10.56 of
+  that (PSNR 23.0 dB) is the 1024×768 working size alone (the photo sent through unchanged), so any
+  model at that size needs the paste-back. — *measured, 2026-10-21*.
 - Latency: Nano Banana 2 median 8.6 s, Pro 16.4 s (Artificial Analysis, text-to-image); one user
   report puts Nano Banana 2.1 edits at ~13 s (1K) and ~25 s (2K). — *agent, 2026-10-17* ·
   artificialanalysis.ai/image/models.

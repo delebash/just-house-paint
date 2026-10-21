@@ -80,7 +80,11 @@ STATE:  ROUNDS 1 AND 2 DONE 2026-10-17 — the user's go: "so yes go do your tes
 OPEN:   a cloud render (needs a Gemini key with billing on — the API has no free tier for image output), with
         `gemini-nano-banana-2.1` at 1K (mine, 2026-10-21: Google's default image model, $0.034 an image; Nano Banana 2
         alone has a published color score, but it costs twice as much and the probe measures ΔE itself; Pro costs 4×
-        and is slower). (The dark-to-light grain: FIXED 2026-10-19 — "Fix the weak spots" below.)
+        and is slower). TRIED 2026-10-21 with the user's key (App Settings' Gemini row): refused, 429 "limit: 0 … on
+        Free Tier" — the key's project has no billing; nothing billed. The harness (the app's aiRepaint with Gemini in
+        sd-cli's place, scored by the app's own lock and ΔE) and the free baselines are done (RESEARCH §7); the run
+        waits on billing for that project (8 calls planned, under $0.50). (The dark-to-light grain: FIXED 2026-10-19 —
+        "Fix the weak spots" below.)
 
 ## Build it all — the go [2026-10-18]
 GO:     the user, verbatim: "keep going finihs it all i want all this done and a complete working app
