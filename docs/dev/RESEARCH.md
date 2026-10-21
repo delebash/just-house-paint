@@ -255,10 +255,13 @@ GenRoom, FacadeColorizer — vendors claim ~20–40 s a render, no exact color).
 ## 7 · Generative edits in the cloud
 
 - Gemini API prices per output image (standard tier): Nano Banana 2.1 `gemini-nano-banana-2.1`
-  $0.0336 1K / $0.0504 2K / $0.113 4K; Nano Banana 2 `gemini-3.1-flash-image` $0.067 1K; Nano
-  Banana Pro `gemini-3-pro-image` $0.134 1K–2K / $0.24 4K. No free tier for image output in the
-  API. `gemini-2.5-flash-image` shut down 2026-10-02. — *web, 2026-10-17* ·
-  ai.google.dev/gemini-api/docs/pricing.
+  $0.0336 1K / $0.0504 2K / $0.113 4K, the image-generation page's default for most uses; Nano
+  Banana 2 Lite `gemini-3.1-flash-lite-image` $0.0336, 1K only; Nano Banana 2
+  `gemini-3.1-flash-image` (now "previous generation") $0.045 0.5K / $0.067 1K / $0.101 2K /
+  $0.151 4K; Nano Banana Pro `gemini-3-pro-image` $0.134 1K–2K / $0.24 4K, the page's pick for
+  the highest quality. No free tier for image output in the API. `gemini-2.5-flash-image` shut
+  down 2026-10-02. — *web, 2026-10-17; rechecked 2026-10-21 (pricing page updated 2026-10-19)* ·
+  ai.google.dev/gemini-api/docs/pricing · ai.google.dev/gemini-api/docs/image-generation.
 - Gemini image editing has no mask parameter — region edits are prompt-only. Every generated image
   carries a SynthID watermark. — *agent, 2026-10-17* · ai.google.dev/gemini-api/docs/image-generation.
 - Latency: Nano Banana 2 median 8.6 s, Pro 16.4 s (Artificial Analysis, text-to-image); one user

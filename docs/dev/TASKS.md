@@ -77,7 +77,10 @@ STATE:  ROUNDS 1 AND 2 DONE 2026-10-17 — the user's go: "so yes go do your tes
         Cross-platform engines only (TensorRT deferred by the user). Results: RESEARCH §9 and §10's
         round-2 entries (finding parts, ONNX Runtime on the CPU, tint v2, a dark house, masked AI).
         Throwaway: inputs and outputs in `data/probe/` (gitignored).
-OPEN:   a cloud render (needs a Gemini key). (The dark-to-light grain: FIXED 2026-10-19 — "Fix the weak spots" below.)
+OPEN:   a cloud render (needs a Gemini key with billing on — the API has no free tier for image output), with
+        `gemini-nano-banana-2.1` at 1K (mine, 2026-10-21: Google's default image model, $0.034 an image; Nano Banana 2
+        alone has a published color score, but it costs twice as much and the probe measures ΔE itself; Pro costs 4×
+        and is slower). (The dark-to-light grain: FIXED 2026-10-19 — "Fix the weak spots" below.)
 
 ## Build it all — the go [2026-10-18]
 GO:     the user, verbatim: "keep going finihs it all i want all this done and a complete working app
@@ -137,7 +140,7 @@ RULE:   the user, verbatim (2026-10-19): "why are we doing a release, i said do 
 FOUND by the dry run (39339201987, the new start check): the Linux AppImage never starts — sharp's libvips
         (`libvips-cpp.so.8.18.7`) stays inside app.asar (only `*.node` is unpacked; a `.so.<n>` name isn't seen as a
         library), so the server exits at its first import; v0.1.0–v0.1.2's Linux file is broken (left on those
-        releases unless the user says otherwise). onnxruntime-node's `libonnxruntime.so.1` is the same case. macOS
+        releases; since 2026-10-21 each one's notes open with a line saying so, linking the latest release). onnxruntime-node's `libonnxruntime.so.1` is the same case. macOS
         answered in 9.4 s (the first time it ever ran), Windows in 1.6 s.
 FIXED (2026-10-19): sharp and onnxruntime-node unpacked (sharp's documented Electron setting), each installer
         with its own platform's runtime only; then the AppImage opened as a Linux user does on Ubuntu 24.04 (a new
