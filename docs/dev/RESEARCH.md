@@ -286,6 +286,17 @@ GenRoom, FacadeColorizer — vendors claim ~20–40 s a render, no exact color).
   developers.cloudflare.com/changelog/post/2026-01-15-flux-2-klein-4b-workers-ai ·
   huggingface.co/docs/inference-providers/pricing · alibabacloud.com/help/en/model-studio/new-free-quota ·
   docs.cloud.google.com/free/docs/free-cloud-features.
+- AA-Image-Editing v2.1 (Elo, Oct 2026): GPT Image 2.5 Sunburst 1199; Nano Banana 2.1, MAI-Image-2.6,
+  Krea 3 Ultra 1151; Seedream 5.0 Pro 1131; Nano Banana 2 1123. Open weights, tied within their
+  intervals: Fibo 2.0 (Bria, 2026-10-20, 8B, CC BY-NC 4.0) 1088; Qwen-Image-2.1 (2026-09-20, 7B, Qwen
+  Research licence — research or evaluation only, no API) 1081; FLUX 3 Image Klein (BFL, 2026-10-13,
+  5.6B, FLUX Kommunity licence — free commercial use under $5M yearly revenue; BFL API $0.009 an image,
+  no free credits) 1072. The app's FLUX.2 [klein] 4B: 938. stable-diffusion.cpp runs all three
+  (docs/edit.md: `fibo2`, FLUX.3 Klein under `flux2`, Qwen Image 2.1); files: FLUX 3 Klein GGUF Q4_K
+  3.51 GB / Q8_0 6.15 GB (leejet/flux-3-image-klein-GGUF, 16 steps, Qwen3-VL-4B encoder), Qwen-Image-2.1
+  GGUF Q4_K 4.20 / Q8_0 7.69 GB, Fibo 2.0 Edit Turbo int8 8.41 GB (4 steps). Speed and paint-color
+  accuracy on this PC: not measured. — *web + HF API, 2026-10-24* ·
+  artificialanalysis.ai/image/leaderboard/editing · github.com/leejet/stable-diffusion.cpp/blob/master/docs/edit.md.
 - Latency: Nano Banana 2 median 8.6 s, Pro 16.4 s (Artificial Analysis, text-to-image); one user
   report puts Nano Banana 2.1 edits at ~13 s (1K) and ~25 s (2K). — *agent, 2026-10-17* ·
   artificialanalysis.ai/image/models.
