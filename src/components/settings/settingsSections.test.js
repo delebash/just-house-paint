@@ -175,7 +175,7 @@ describe("Storage", () => {
     expect(text()).toContain("D:/hp-data");
     expect(text()).toContain("your houses and their photos"); // what this app saves, in the kit's sentence
     expect(button("Change folder")).toBeUndefined();
-    expect(text()).toMatch(/\d(\.\d)? GB/); // the models cache, 2e9 bytes
+    expect(text()).toMatch(/\d(\.\d)? GB/); // the models cache, 2e9 bytes (the kit's fmtBytes: a no-break space)
   });
 
   test("Change folder asks first, then hands the folder to the shell; No moves nothing", async () => {
@@ -237,7 +237,7 @@ describe("Storage", () => {
     await mountSettings("storage");
     expect(text()).toContain("Old copy");
     expect(text()).toContain("C:\\App\\data");
-    expect(text()).toMatch(/1[12](\.\d)? GB/);
+    expect(text()).toMatch(/1[12](\.\d)? GB/);
     removeOld().click();
     await flushPromises();
     expect(text()).toContain("This deletes the copy of the data that stayed in C:\\App\\data");

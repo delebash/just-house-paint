@@ -11,8 +11,8 @@
 
 import { existsSync, statSync } from "node:fs";
 import { rm } from "node:fs/promises";
-import { createRequire } from "node:module";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { ApiError } from "@delebash/core/platform/errors";
 import { getLogger } from "@delebash/core/platform/log";
 import * as hardware from "@delebash/core/runner/hardware";
@@ -72,7 +72,7 @@ export const ORT_VC_DLLS = Object.freeze(["MSVCP140.dll", "MSVCP140_1.dll", "MSV
 /** Where onnxruntime-node keeps this computer's native files (its binding loads them from there). */
 function ortBinDir() {
   try {
-    const pkg = createRequire(import.meta.url).resolve("onnxruntime-node/package.json");
+    const pkg = fileURLToPath(import.meta.resolve("onnxruntime-node/package.json")); // the ES-module resolve (no require)
     return path.join(path.dirname(pkg), "bin", "napi-v6", process.platform, process.arch);
   } catch {
     return null;

@@ -4,6 +4,17 @@
 > docs keep history. Decisions are recorded as the exact text the user approved. A tracker line is
 > a claim, not evidence. Facts live in [`RESEARCH.md`](RESEARCH.md).
 
+## The AI photo and the part finder onto the kit, the way llama.cpp is [2026-10-24]
+STATE:  OPEN — the kit's plan `../just-core/docs/plans/2026-10-24-engines-the-llama-way.md` (its TASKS item
+        "Every engine the llama.cpp way…" carries the user's go). Found 2026-10-24: both engines were built inside
+        this app (`server/src/aiphoto/`, `server/src/segment/`, `finder.js`) while the kit had no image/vision
+        standard — the app's own v1 plan called them "the family's engine pattern", which they were not. This
+        app's part: rounds A2 (F1–F6), B (the AI photo on the kit's sd.cpp runtime), C (the finder on the kit's
+        onnx runtime), D (the kit's jobs), then a release only when nothing is open. Done here 2026-10-24: the
+        ES-modules rule (`finder.js` on `import.meta.resolve`, `scripts/node24.js` and `e2e/lib/driver.js` on ES
+        imports, the Capacitor config marked as the documented CommonJS exception) and the two new family rules
+        in AGENTS.md.
+
 ## Direction — decided 2026-10-17
 STATE:  DECIDED 2026-10-17 (the first session). The user's words, verbatim:
         - The request, whole: "i want an ai house paint visualizer web app using quasar js framework,

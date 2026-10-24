@@ -93,7 +93,7 @@ test("not enough room is said in the unit the Install button's size is in (the k
   engines.install = vi.fn(async () => {
     throw Object.assign(new Error("Not enough room on the drive"), { status: 507, problem });
   });
-  expect(install().textContent).toContain("Install (8.9 GB)"); // 9.6e9 bytes, the kit's fmtBytes
+  expect(install().textContent).toContain("Install (8.9 GB)"); // 9.6e9 bytes, the kit's fmtBytes (a no-break space)
   install().click();
   for (let i = 0; i < 3; i++) await flushPromises();
   const said = document.querySelector('[data-live-announcer] [aria-live="assertive"]')?.textContent || "";
