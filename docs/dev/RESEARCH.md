@@ -274,6 +274,18 @@ GenRoom, FacadeColorizer — vendors claim ~20–40 s a render, no exact color).
   17.56. Outside the mask the render differs from the photo by 14.53/255 mean (PSNR 20.8 dB); 10.56 of
   that (PSNR 23.0 dB) is the 1024×768 working size alone (the photo sent through unchanged), so any
   model at that size needs the paste-back. — *measured, 2026-10-21*.
+- Free tiers for image edits: none for a Nano Banana-class model. Google's $300 Cloud trial credit
+  can't pay for the Gemini API in AI Studio. Cloudflare Workers AI gives 10,000 Neurons a day: FLUX.2
+  [klein] 4B ≈ 126 per 1024×768 edit (~79 a day, the model the app already runs, steps fixed at 4),
+  klein 9B ≈ 1,215 (~8), FLUX.2 [dev] 225 per step (~2 a day at 20 steps); every input image must be
+  under 512×512. Hugging Face Inference Providers: $0.10 a month for free users. Alibaba Model Studio
+  (Singapore): a per-model new-user quota for 90 days, image-edit models not confirmed. NVIDIA's
+  build.nvidia.com hosts FLUX.1 Kontext [dev] (non-commercial licence), free credits for it not
+  confirmed. ModelScope's 2,000 free calls a day may have become a paid balance (a 2026-09 report).
+  — *web, 2026-10-24* · developers.cloudflare.com/workers-ai/platform/pricing ·
+  developers.cloudflare.com/changelog/post/2026-01-15-flux-2-klein-4b-workers-ai ·
+  huggingface.co/docs/inference-providers/pricing · alibabacloud.com/help/en/model-studio/new-free-quota ·
+  docs.cloud.google.com/free/docs/free-cloud-features.
 - Latency: Nano Banana 2 median 8.6 s, Pro 16.4 s (Artificial Analysis, text-to-image); one user
   report puts Nano Banana 2.1 edits at ~13 s (1K) and ~25 s (2K). — *agent, 2026-10-17* ·
   artificialanalysis.ai/image/models.
