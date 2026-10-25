@@ -6,9 +6,9 @@
 // to the brand's nearest paints, each with its ΔE2000, so a color seen elsewhere becomes a paint you
 // can buy. Only brands with colors on this computer are offered; adding one is the Paint colors
 // page's (the app ships no brand data).
+import { controlsAsSpaces } from "@delebash/core/platform/text";
 import { announce, EmptyState, reportError, schemaRules, UiButton, UiColorPicker, UiField, UiInput, UiSegmented, UiSelect, UiTag, UiToggle } from "@delebash/ui";
 import { NearestQuery } from "just-house-paint-server/schemas/paints.js";
-import { controlsAsSpaces } from "just-house-paint-server/shared/text.js";
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, useId, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";

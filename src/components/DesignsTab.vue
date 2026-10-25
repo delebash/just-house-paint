@@ -110,7 +110,7 @@ function renderLabel(r) {
     <EmptyState v-if="!house.designs.length" icon="Palette" compact :message="t('designs.none')" />
     <q-list v-else class="designs__list" dense>
       <!-- the row isn't a button (rename and delete would be inside one): opening the design is —
-           stretched over the row (app.scss .row-action), the open one aria-current — its buttons beside it -->
+           stretched over the row (the kit's common/app.css .row-action), the open one aria-current — its buttons beside it -->
       <q-item v-for="d in house.designs" :key="d.id" class="designs__row" :class="{ 'designs__row--on': d.id === house.designId }">
         <q-item-section>
           <q-btn

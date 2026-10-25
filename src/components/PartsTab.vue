@@ -69,7 +69,7 @@ async function addPart() {
     <h3 class="parts__group">{{ t("partsTab.toPaint") }}</h3>
     <q-list class="parts__list" dense>
       <!-- the row isn't a button (its own buttons would be inside one): its main action is — selecting
-           the part, pressed while selected — stretched over the row (app.scss .row-action), the
+           the part, pressed while selected — stretched over the row (the kit's common/app.css .row-action), the
            as-photographed swatch beside it -->
       <q-item v-for="p in toPaint" :key="p.key" class="parts__row" :class="{ 'parts__row--on': house.selectedPart === p.key }">
         <q-item-section avatar class="parts__swatch">

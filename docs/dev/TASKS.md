@@ -13,7 +13,12 @@ STATE:  OPEN — the kit's plan `../just-core/docs/plans/2026-10-24-engines-the-
         onnx runtime), D (the kit's jobs), then a release only when nothing is open. Done here 2026-10-24: the
         ES-modules rule (`finder.js` on `import.meta.resolve`, `scripts/node24.js` and `e2e/lib/driver.js` on ES
         imports, the Capacitor config marked as the documented CommonJS exception) and the two new family rules
-        in AGENTS.md.
+        in AGENTS.md. Round A2 DONE here 2026-10-24: the other windows' counter, its route and watcher are the
+        kit's (`changes.js`, `api/sync_api.js`, `services/otherWindows.js` gone), the settings upgrade is the
+        kit's (`previous_defaults.js` keeps only the earlier fingerprints; the test holds every setting's), the
+        text helpers are the kit's `platform/text.js` (`shared/text.js` gone), a reset's and a restore's folder
+        renames retry while Windows holds a file (the kit's `renameHeld`), and the family's page looks come from
+        the kit's `common/app.css` (`app.scss` keeps the swatch and the houses looks). Next: round B.
 
 ## Direction — decided 2026-10-17
 STATE:  DECIDED 2026-10-17 (the first session). The user's words, verbatim:

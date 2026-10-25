@@ -574,9 +574,6 @@
     "leftOutMore": "{shown}; and {more} more",
     "fileOnly": "From its palette file"
   },
-  "windows": {
-    "replaced": "The data was replaced in another window (a backup restored, or a reset) — this window shows it as it is now."
-  },
   "jobs": {
     "failed": "The work stopped with an error.",
     "gone": "The app's server started again, and this work stopped. Start it again.",

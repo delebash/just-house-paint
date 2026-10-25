@@ -5,7 +5,7 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { createServer, migrate, openDatabase } from "@delebash/core/platform";
+import { ChangeCounter, createServer, makeSyncRevRouter, migrate, openDatabase } from "@delebash/core/platform";
 import sharp from "sharp";
 import { router as designsRouter } from "../src/api/designs_api.js";
 import { router as enginesRouter } from "../src/api/engines_api.js";
@@ -14,11 +14,10 @@ import { router as jobsRouter } from "../src/api/jobs_api.js";
 import { router as paintsRouter } from "../src/api/paints_api.js";
 import { router as partsRouter } from "../src/api/parts_api.js";
 import { router as schemesAiRouter } from "../src/api/schemes_ai_api.js";
-import { router as syncRouter } from "../src/api/sync_api.js";
+import { DATA_WRITES } from "../src/app.js";
 import { MIGRATIONS } from "../src/database/schema.js";
 import { SETTING_DEFAULTS } from "../src/database/seed.js";
-import { getSetting } from "../src/database/settings.js";
-import { ChangeCounter } from "../src/changes.js";
+import { getSetting, setSetting } from "../src/database/settings.js";
 import { JobRegistry } from "../src/jobs.js";
 import { Outlines } from "../src/outlines.js";
 
@@ -90,7 +89,7 @@ export function makeServer({ fetch = async () => new Response("offline", { statu
   const db = openDatabase(path.join(dataDir, "app.db"), { foreignKeys: true });
   migrate(db, MIGRATIONS);
   // as services.js and app.js wire them: a job's end is its window's change; each window's writes counted apart
-  const changes = new ChangeCounter({ db });
+  const changes = new ChangeCounter({ db, writes: DATA_WRITES, getSetting, setSetting });
   const jobs = new JobRegistry({ onFinish: (job) => changes.note(job.clientId) });
   const ctx = { db, dataDir, jobs, changes, outlines: new Outlines({ db }), checkSeconds: () => 3, fetch, finder: fakeFinder, limits: () => LIMITS, maxDesignsPerHouse: () => 3, harmony: () => ({}), maxImportBytes: () => 5_000_000,
     // read as services.js reads it: the row, else the seed's value
@@ -120,7 +119,7 @@ export function makeServer({ fetch = async () => new Response("offline", { statu
   };
   const app = createServer({ typeBase: "https://just-house-paint.local/errors/" });
   app.use("*", changes.middleware());
-  for (const r of [syncRouter(ctx), housesRouter(ctx), designsRouter(ctx), jobsRouter(ctx), partsRouter(ctx), paintsRouter(ctx), schemesAiRouter(ctx), enginesRouter(ctx)]) app.route("/", r);
+  for (const r of [makeSyncRevRouter(changes, { pollSeconds: ctx.checkSeconds }), housesRouter(ctx), designsRouter(ctx), jobsRouter(ctx), partsRouter(ctx), paintsRouter(ctx), schemesAiRouter(ctx), enginesRouter(ctx)]) app.route("/", r);
   const close = () => {
     jobs.cancelAll();
     db.raw.close();

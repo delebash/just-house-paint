@@ -17,7 +17,7 @@ const isAbort = (e) => e?.name === "AbortError" || e?.code === "ABORT_ERR";
 
 export class JobRegistry {
   /** `onFinish(job)`: a job ended (done, failed or cancelled) — the window that started it changed something
-   *  (changes.js counts it as that window's). */
+   *  (the kit's ChangeCounter counts it as that window's). */
   constructor({ keepMs = 10 * 60_000, onFinish = null } = {}) {
     this.keepMs = keepMs;
     this.jobs = new Map();

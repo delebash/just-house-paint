@@ -231,13 +231,14 @@ describe("a server started again", () => {
     s = makeServer();
     const house = await houseWithParts();
     const { Outlines } = await import("../src/outlines.js");
-    const { ChangeCounter } = await import("../src/changes.js");
+    const { ChangeCounter } = await import("@delebash/core/platform");
+    const { getSetting, setSetting } = await import("../src/database/settings.js");
     // a server started again: the same version, so the page's next stroke lands
     expect(new Outlines({ db: s.db }).etag(house.id)).toBe(house.outlines);
     expect((await as(A, "PUT", `/v1/houses/${house.id}/parts/trim/mask`, await rows(house, 0, 4), house.outlines)).status).toBe(200);
     // the data's epoch is the database's; the rev carries this process's boot id
     const before = await (await as(B, "GET", "/v1/sync/rev")).json();
-    const again = new ChangeCounter({ db: s.db });
+    const again = new ChangeCounter({ db: s.db, getSetting, setSetting });
     expect(again.epoch).toBe(before.epoch);
     expect(again.boot).not.toBe(before.rev.split(":")[0]);
     // what isn't data: no change

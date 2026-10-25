@@ -1309,7 +1309,7 @@ test("another window's change: the page reads the house again in place, and foll
   server.parts = PARTS;
   await mountPage();
   await click(byText(".ui-seg button", "Brush"));
-  const { otherWindows } = await import("../services/otherWindows.js");
+  const { otherWindows } = await import("@delebash/ui");
   // the other window started finding the parts and saved a design
   server.jobs = [{ id: "j-find", kind: "find-parts", key: "h1", state: "running", progress: 0.2, message: "" }];
   server.holdFind = true;

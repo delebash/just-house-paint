@@ -27,12 +27,12 @@ import {
   serverNeedsToken,
   startWarmOnBoot,
   tooltipDirective,
+  watchOtherWindows,
 } from "@delebash/ui";
 import VueKonva from "vue-konva";
 import { i18n } from "../i18n/index.js";
 import { hasDoc, loadDoc, titleForSlug } from "../services/helpDocs.js";
 import { hasShell, openPath, openUrl, saveFile, saveFromUrl, shellServerUrl } from "../services/native.js";
-import { watchOtherWindows } from "../services/otherWindows.js";
 import { useUiStore } from "../stores/ui.js";
 
 // The registered ports (app-structure §1): the dev server's — the same number as quasar.config.js
@@ -54,7 +54,7 @@ async function boot({ app, router, store: pinia }) {
     // the window signs in at the kit's token page (its Server panel keeps a token) when the server requires one
     // even on this computer
     askTokenOnThisComputer: true,
-    // every request carries this window's id: the server counts the changes other windows make (services/otherWindows.js)
+    // every request carries this window's id: the server counts the changes other windows make (the kit's watchOtherWindows)
     sendClientId: true,
     // no embedding features in this app
     capabilities: { embeddings: false },

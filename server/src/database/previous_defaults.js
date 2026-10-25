@@ -1,23 +1,13 @@
 // SPDX-License-Identifier: MIT
-// The earlier defaults of the settings whose default has changed — each one's fingerprint (the first
-// 16 hex digits of the SHA-256 of its canonical JSON: object keys sorted), taken from git history.
-// upgradeSettings (seed.js) gives a setting that still holds one of these — so its owner never edited
-// it — today's default: a better default (a new part, a better word) reaches an install made before
-// it, and a value the owner changed is never touched.
+// The earlier defaults of the settings whose default has changed — each one's fingerprint (the kit's
+// `fingerprint`: the first 16 hex digits of the SHA-256 of its canonical JSON, object keys sorted), taken
+// from git history. upgradeSettings (seed.js, on the kit's platform/settings_upgrade.js) gives a setting
+// that still holds one of these — so its owner never edited it — today's default: a better default (a
+// new part, a better word) reaches an install made before it, and a value the owner changed is never
+// touched.
 //
 // When a default in SETTING_DEFAULTS changes, add the OUTGOING default's fingerprint here (the test
-// tests/settings_upgrade.test.js holds today's fingerprints and fails until you do).
-import { createHash } from "node:crypto";
-
-/** JSON with every object's keys sorted, so two equal values always print the same. */
-export function canonicalJson(value) {
-  return JSON.stringify(value, (_k, v) =>
-    v && typeof v === "object" && !Array.isArray(v) ? Object.fromEntries(Object.keys(v).sort().map((k) => [k, v[k]])) : v,
-  );
-}
-
-/** A value's fingerprint: the first 16 hex digits of the SHA-256 of its canonical JSON. */
-export const fingerprint = (value) => createHash("sha256").update(canonicalJson(value)).digest("hex").slice(0, 16);
+// tests/settings_upgrade.test.js holds today's fingerprint of every setting and fails until you do).
 
 export const PREVIOUS_DEFAULTS = Object.freeze({
   "finder.parts": Object.freeze([

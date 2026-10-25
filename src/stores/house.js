@@ -3,7 +3,7 @@
 // the screen, its saved designs and its AI photos. The server owns all of it (family rule 2); the
 // colors on screen are a draft until saved as a design.
 //
-// Other windows change the same house (services/otherWindows.js): a design is saved as the parts this
+// Other windows change the same house (the kit's otherWindows): a design is saved as the parts this
 // window changed (JSON Merge Patch — another window's parts stay), and an outline write carries the
 // outlines' version the page holds (If-Match, the server's outlines.js) — one made on outlines another
 // window changed since is refused (412) and the page reads them again.

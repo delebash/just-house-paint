@@ -81,7 +81,7 @@ export const usePaintsStore = defineStore("paints", {
       this.brands = await get("/v1/brands");
       this.brandsLoaded = true;
     },
-    /** The brands read again after another window changed something (services/otherWindows.js): a brand whose
+    /** The brands read again after another window changed something (the kit's otherWindows): a brand whose
      *  colors were loaded again or removed there is forgotten here too — its paints looked up anew. */
     async refreshBrands() {
       const mark = (b) => `${b.paintCount}|${b.loadedAt}`;

@@ -3,6 +3,7 @@
 
 import { Hono, input } from "@delebash/core/platform";
 import { ApiError, RequestValidationError } from "@delebash/core/platform/errors";
+import { cleanName, nameKey, nameProblem } from "@delebash/core/platform/text";
 import { designNotFound, houseNotFound } from "./refusals.js";
 
 // a name another design of the house has: the name field's own error (a 422 lands under its field, §15)
@@ -10,7 +11,6 @@ const nameTaken = (name) => new RequestValidationError([{ loc: ["body", "name"],
 import { createDesign, deleteDesign, getDesign, getHouse, listDesigns, updateDesign } from "../database/houses.js";
 import { DesignIn, DesignPatch, IdParams } from "../schemas/houses.js";
 import { getState } from "../app_state.js";
-import { cleanName, nameKey, nameProblem } from "../shared/text.js";
 
 /** A design's longest name — its schema's (DesignIn, DesignPatch: schemas/houses.js). */
 const NAME_MAX = 60;
@@ -26,7 +26,7 @@ export function router(ctx = getState()) {
     if (!d) throw designNotFound(id);
     return d;
   };
-  // compared as a person sees them: composed, invisible characters ignored, any case (shared/text.js nameKey)
+  // compared as a person sees them: composed, invisible characters ignored, any case (the kit's platform/text.js nameKey)
   const sameName = (houseId, name, except = null) => listDesigns(ctx.db, houseId).some((d) => d.id !== except && nameKey(d.name) === nameKey(name));
   /** The name kept (cleanName); one that shows nothing, or that its composed form made too long, refused as the
    *  schema refuses them. */

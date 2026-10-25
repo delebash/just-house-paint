@@ -26,7 +26,6 @@ import { APP_TABLES } from "./database/schema.js";
 import { SETTING_DEFAULTS, seedWorkspace } from "./database/seed.js";
 import { deleteSetting, getSetting, setSetting } from "./database/settings.js";
 import { meaningProblem } from "./api/settings_api.js";
-import { renewEpoch } from "./changes.js";
 import { HOUSE_ID, housesRoot, removeAllHouseDirs, renderFileId } from "./files.js";
 import { PART_KEY } from "./schemas/houses.js";
 import { SETTINGS } from "./schemas/settings.js";
@@ -125,7 +124,7 @@ async function teardown() {
   }
 }
 
-/** The data replaced: every window reloads (changes.js — the data's epoch) — only once it has been (a refused restore
+/** The data replaced: every window reloads (the kit's ChangeCounter — the data's epoch) — only once it has been (a refused restore
  *  changed nothing: no window reloads for it). */
 function replaced() {
   getState().changes?.replaced();
@@ -147,7 +146,7 @@ export async function resetWorkspace() {
   if (auth !== undefined) setSetting(db, "auth", auth);
   seedWorkspace(db);
   // the data's new epoch before anything can ask (no await since the tables were made again)
-  renewEpoch(db);
+  getState().changes.renewEpoch(db);
   await removeAllHouseDirs(getState().dataDir);
   replaced();
   log.info("workspace reset to its first-run state");
@@ -165,7 +164,7 @@ export const router = (dataDir, { gate } = {}) =>
     // settings an older backup holds that don't fit this version set back to their defaults, named in the answer
     afterCopy: (h) => {
       keepAuth.afterCopy(h);
-      renewEpoch(h);
+      getState().changes.renewEpoch(h);
       return { resetSettings: resetUnfitSettings(h) };
     },
     // a backup from an older version: its settings get what this one's seed adds and upgrades (as at start)

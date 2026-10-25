@@ -3,8 +3,8 @@
 // whole on every load or import (the brand's list is the source of truth); a paint's id is
 // `<brand>:<code>`, so a design that names one survives a reload.
 
+import { visibleText } from "@delebash/core/platform/text";
 import { BRANDS, COLOR_ORDER_DEFAULTS, displayName, familySpan, NEUTRALS } from "../paints/index.js";
-import { visibleText } from "../shared/text.js";
 
 /** The current UTC time as stored (ISO-8601). */
 const nowIso = () => new Date().toISOString();
@@ -129,7 +129,7 @@ const HUE = "mod(degrees(atan2(lab_b, lab_a)) + 360, 360)";
 // the hue measured from a start angle (a bound parameter), 0–360
 const HUE_FROM = `mod(${HUE} - ? + 360, 360)`;
 
-/** Text as search compares it: as it shows (shared/text.js visibleText — a pasted TAB a space, a zero-width space
+/** Text as search compares it: as it shows (the kit's platform/text.js visibleText — a pasted TAB a space, a zero-width space
  *  nothing: the twentieth review), its accents off ("Cafè" → "cafe", "Crème" → "creme") — the canonical
  *  decomposition (String.prototype.normalize("NFD") —
  *  developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String/normalize) without its

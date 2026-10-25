@@ -7,8 +7,8 @@
 // and user templates are the kit's `feature_prompts` row (seed_feature_prompts.js, seeded from
 // SCHEMES_PROMPT), edited and tried in the AI Lab; this code fills the row's {{variables}}.
 
+import { cutToLength } from "@delebash/core/platform/text";
 import { displayName, nearestPaints } from "./paints/index.js";
-import { cutToLength } from "./shared/text.js";
 
 export const SCHEMES_FEATURE = "schemes.suggest";
 

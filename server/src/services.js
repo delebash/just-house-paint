@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 // What the house-paint routes share, on the app state (app_state.js): the job registry, the other
-// windows' changes (changes.js), the houses' outline versions (outlines.js), the part
+// windows' changes (the kit's ChangeCounter), the houses' outline versions (outlines.js), the part
 // finder (SAM 3), the AI photo (stable-diffusion.cpp), the brands' public lists (the kit's fetch), the
 // downloads (the kit's streamDownload), the AI run path (the kit's runAction), and readers of the
 // settings they use — read on every call, so a change in Settings applies to the next run without
@@ -8,6 +8,7 @@
 
 import path from "node:path";
 import { buildLlmConfig, resolveRoute, runAction, stores } from "@delebash/core/llm";
+import { ChangeCounter } from "@delebash/core/platform";
 import * as http from "@delebash/core/platform/http";
 import { streamDownload } from "@delebash/core/runner/download";
 import * as hardware from "@delebash/core/runner/hardware";
@@ -17,7 +18,6 @@ import { createAiPhoto, sharedGpuNote, surfaceWords } from "./aiphoto_service.js
 import { SETTING_DEFAULTS } from "./database/seed.js";
 import { getSetting } from "./database/settings.js";
 import { bestDmlAdapter, createFinder, DEFAULT_PROVIDERS } from "./finder.js";
-import { ChangeCounter } from "./changes.js";
 import { JobRegistry } from "./jobs.js";
 import { Outlines } from "./outlines.js";
 

@@ -8,11 +8,12 @@
 //   <dataDir>/houses/<id>/masks/<part>.png one 8-bit mask per part, display size
 //   <dataDir>/houses/<id>/renders/<id>.png AI photos
 
-import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { cp, rm } from "node:fs/promises";
 import path from "node:path";
 import { getLogger } from "@delebash/core/platform/log";
+import { renameHeld } from "@delebash/core/platform/rename_held";
 
 const log = getLogger("just_house_paint.files");
 
@@ -106,7 +107,7 @@ export async function removeHouseDir(dataDir, id, { remove = rm } = {}) {
  * with it. Held: each house's folder is marked, and the next start's sweep finishes. Returns whether all
  * of it went now.
  */
-export async function removeAllHouseDirs(dataDir, { rename = renameSync } = {}) {
+export async function removeAllHouseDirs(dataDir, { rename = renameHeld } = {}) {
   const root = housesRoot(dataDir);
   // a restore's old or staged copy Windows held (the kit's data_api): the reset takes it too
   const leftovers = existsSync(dataDir) ? readdirSync(dataDir).filter((n) => /^houses\.(replaced|restoring)-/.test(n)) : [];
@@ -121,9 +122,10 @@ export async function removeAllHouseDirs(dataDir, { rename = renameSync } = {}) 
   }
   const aside = `${root}${ASIDE}${Date.now()}`;
   try {
-    rename(root, aside);
+    // retried while a file in it is held a moment (an antivirus, the indexer — the kit's renameHeld)
+    await rename(root, aside);
   } catch (e) {
-    // held as a whole: house by house instead, each with its retries (a held one is marked for the start)
+    // still held as a whole: house by house instead, each with its retries (a held one is marked for the start)
     log.warning(`the houses folder couldn't be moved aside (${e.code || e.message}); removing its houses one by one`);
     let names = [];
     try {
@@ -201,7 +203,7 @@ async function putBack(dataDir, name) {
   const root = housesRoot(dataDir);
   if (!existsSync(root)) {
     try {
-      renameSync(from, root);
+      await renameHeld(from, root);
       return true;
     } catch {
       // held: copied instead

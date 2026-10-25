@@ -7,13 +7,13 @@ import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { Hono, input, uploadLimit } from "@delebash/core/platform";
 import { ApiError, notFound, RequestValidationError } from "@delebash/core/platform/errors";
+import { cleanName, cutToLength, nameKey, nameProblem } from "@delebash/core/platform/text";
 import { houseNotFound } from "./refusals.js";
 import { createHouse, deleteHouse, getHouse, listHouses, patchCurrentPaints, renameHouse, setCurrentPaints } from "../database/houses.js";
 import { addingHouseDir, displayPath, houseAdded, originalPath, removeHouseDir, thumbPath } from "../files.js";
 import { ingestPhoto, NotAnImage, TooManyPixels } from "../images.js";
 import { CurrentPaintsIn, CurrentPaintsPatch, HousePatch, IdParams, ImageQuery } from "../schemas/houses.js";
 import { getState } from "../app_state.js";
-import { cleanName, cutToLength, nameKey, nameProblem } from "../shared/text.js";
 
 const CONTENT_TYPES = { jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp" };
 

@@ -11,6 +11,7 @@ import {
   errorMessage,
   Icon,
   isolate,
+  otherWindows,
   pageFlow,
   PaneHeader,
   pushToast,
@@ -27,7 +28,6 @@ import {
 } from "@delebash/ui";
 import { computed, onMounted, ref, useId, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import { otherWindows } from "../services/otherWindows.js";
 import { usePaintsStore } from "../stores/paints.js";
 import { useSettingsStore } from "../stores/settings.js";
 
@@ -51,7 +51,7 @@ async function load() {
   }
 }
 onMounted(load);
-// a brand loaded, imported or removed in another window (services/otherWindows.js)
+// a brand loaded, imported or removed in another window (the kit's otherWindows)
 watch(
   () => otherWindows.changes,
   () => paints.refreshBrands().catch(() => {}),

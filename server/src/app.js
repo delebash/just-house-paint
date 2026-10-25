@@ -20,6 +20,7 @@ import { installLlm, runnerRouter } from "@delebash/core/llm";
 import {
   bearerAuth,
   CAPACITOR_ORIGINS,
+  ChangeCounter,
   createServer,
   csrfOrigin,
   installFileLog,
@@ -28,6 +29,7 @@ import {
   MaintenanceGate,
   makeLogsRouter,
   makeShutdownRouter,
+  makeSyncRevRouter,
   resourceIsolation,
   SHUTDOWN_PATH,
   serveUi,
@@ -46,12 +48,11 @@ import { router as prefsRouter } from "./api/prefs_api.js";
 import { router as schemesAiRouter } from "./api/schemes_ai_api.js";
 import { router as serverAuthRouter } from "./api/server_auth_api.js";
 import { router as settingsRouter } from "./api/settings_api.js";
-import { router as syncRouter } from "./api/sync_api.js";
-import { AppState, setState } from "./app_state.js";
+import { AppState, getState, setState } from "./app_state.js";
 import { readAuth } from "./auth.js";
-import { ChangeCounter, DATA_WRITES } from "./changes.js";
 import { router as dataRouter } from "./data_admin.js";
 import { openAppDatabase } from "./database/index.js";
+import { getSetting, setSetting } from "./database/settings.js";
 import { FEATURE_CATALOG } from "./feature_catalog.js";
 import { defaultDataDir, SOURCE_ROOT } from "./paths.js";
 import { DEFAULT_FEATURE_PROMPTS } from "./seed_feature_prompts.js";
@@ -68,6 +69,11 @@ import { aiphotoEngineDir, aiphotoModelDir, createServices, finderModelDir } fro
 import { PRODUCT } from "./version.js";
 
 const log = getLogger("just_house_paint.app");
+
+// the writes that change what another window shows: the houses, their parts, designs, paints now and AI photos; the
+// brands and their colors; the app's settings; the engines (the house page offers or uses them). Not one: a window's
+// own prefs, a scheme worked out, a log line, a cancel (the job's end is counted), an AI run, the tokens.
+export const DATA_WRITES = /^\/v1\/(houses|designs|renders|brands|paints|settings|segment\/install|aiphoto\/install)(\/|$)/;
 
 /** The problem-type prefix of every error answer (`type`: `<base><slug>`, app-structure §15). */
 export const TYPE_BASE = "https://just-house-paint.local/errors/";
@@ -160,9 +166,9 @@ export async function createApp(dataDir = null, { services = {} } = {}) {
   // only the app's data writes: a slow AI run or a brand's download never holds a restore up
   const gate = new MaintenanceGate({ exempt: [SHUTDOWN_PATH], isDataWrite: (c) => DATA_WRITES.test(c.req.path) });
   app.use("*", gate.middleware());
-  // Each window's writes that succeed are counted apart (changes.js — its X-Client-Id), so the other windows'
+  // Each window's writes that succeed are counted apart (the kit's ChangeCounter — its X-Client-Id), so the other windows'
   // pages read again (GET /v1/sync/rev); a restore and a reset are everyone's change (data_admin.js).
-  const changes = new ChangeCounter();
+  const changes = new ChangeCounter({ writes: DATA_WRITES, getSetting, setSetting });
   app.use("*", changes.middleware());
 
   // 4. The database and the app state the routes read: the house-paint services ride on it.
@@ -179,7 +185,7 @@ export async function createApp(dataDir = null, { services = {} } = {}) {
   app.route("/", makeShutdownRouter());
   app.route("/", serverAuthRouter());
   app.route("/", prefsRouter());
-  app.route("/", syncRouter());
+  app.route("/", makeSyncRevRouter(changes, { pollSeconds: () => getState().checkSeconds() }));
   app.route("/", makeLogsRouter(PRODUCT));
   // Settings → Storage's sizes: the kit's buckets plus this app's own stores — the houses' photos,
   // the part finder's model, the AI photo's models and engine (they live outside the kit's cache)

@@ -5,17 +5,19 @@
 //
 //   - the shared LLM stack's rows (providers, the model catalog, the engine presets, the routing):
 //     the kit's seedLlm, which reads the feature data installLlm registered;
-//   - this app's settings defaults (family rule 1: a value a user might change is a row, seeded);
+//   - this app's settings defaults (family rule 1: a value a user might change is a row, seeded) — and a
+//     setting still at an earlier default upgraded to today's (previous_defaults.js, the kit's upgradeSettings);
 //   - the provider registry, loaded from the seeded rows.
 
 import { loadFromConfigs, seedLlm, stores } from "@delebash/core/llm";
+import { upgradeSettings as upgradeToToday } from "@delebash/core/platform";
 import { getLogger } from "@delebash/core/platform/log";
 import { DEFAULT_COMPOSE, DEFAULT_WORKING_SIZE } from "../aiphoto/pixels.js";
 import { DEFAULT_PROMPT_TEMPLATES } from "../aiphoto/prompts.js";
 import { DEFAULT_PART_PRIORITY } from "../finder.js";
 import { BRANDS, COLOR_ORDER_DEFAULTS, HARMONY_DEFAULTS } from "../paints/index.js";
 import { DEFAULT_PARTS } from "../segment/parts.js";
-import { fingerprint, PREVIOUS_DEFAULTS } from "./previous_defaults.js";
+import { PREVIOUS_DEFAULTS } from "./previous_defaults.js";
 import { getSetting, insertSettingIfMissing, setSetting } from "./settings.js";
 
 const log = getLogger("just_house_paint.seed");
@@ -77,15 +79,7 @@ export function seedSettings(db) {
  * the owner changed is left alone. Returns the keys it upgraded.
  */
 export function upgradeSettings(db) {
-  const upgraded = [];
-  db.tx(() => {
-    for (const [key, earlier] of Object.entries(PREVIOUS_DEFAULTS)) {
-      const stored = getSetting(db, key);
-      if (stored === undefined || !earlier.includes(fingerprint(stored))) continue;
-      setSetting(db, key, SETTING_DEFAULTS[key]);
-      upgraded.push(key);
-    }
-  });
+  const upgraded = upgradeToToday(db, { defaults: SETTING_DEFAULTS, previous: PREVIOUS_DEFAULTS, getSetting, setSetting });
   if (upgraded.length) log.info(`settings still at an earlier default, now today's: ${upgraded.join(", ")}`);
   return upgraded;
 }

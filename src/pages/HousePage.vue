@@ -16,7 +16,9 @@ import {
   confirmDialog,
   EmptyState,
   errorMessage,
+  holdChangesWhile,
   isolate,
+  otherWindows,
   pageFill,
   PaneHeader,
   promptDialog,
@@ -51,7 +53,6 @@ import { drawColorCard } from "../services/colorCard.js";
 import { useHouseHistory } from "../services/houseHistory.js";
 import { exportSize, paintFullSize } from "../services/fullSizeImage.js";
 import { drawPixels, maskOf, pixelsOf, pngOf } from "../services/maskImage.js";
-import { holdChangesWhile, otherWindows } from "../services/otherWindows.js";
 import { outlinePixels } from "../services/outlines.js";
 import { createPainter } from "../services/painter.js";
 import { partName } from "../services/partNames.js";
@@ -545,7 +546,7 @@ function cancelSave(key) {
   clearTimeout(saveTimers.get(key)?.timer);
   saveTimers.delete(key);
 }
-// Another window changed something on the server (services/otherWindows.js): the house, its parts, designs, AI
+// Another window changed something on the server (the kit's otherWindows): the house, its parts, designs, AI
 // photos and running work read again in place — the zoom, the tool and the colors on screen stay; outlines that
 // changed are read again (the history starts over), a find or an AI photo started there is followed here (the
 // tools off while the parts are found), a brand's colors loaded again or removed there are looked up again. Never
