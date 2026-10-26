@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // End to end on the real 3.4 GB SAM 3 bundle and a real photo. Off unless HP_REAL_SAM3=1.
 //   HP_SAM3_DIR       the bundle (default: the probe's copy)
-//   HP_TOKENIZER_DIR  CLIP tokenizer.json + tokenizer_config.json (default: HP_SAM3_DIR, else the probe's)
+//   HP_TOKENIZER_DIR  CLIP tokenizer.json + tokenizer_config.json (default: HP_SAM3_DIR, else the app's data/models/sam3)
 //   HP_PHOTO          the photo (default: the probe's house1)
 //   HP_EP             executionProvider: a name or per-model JSON (default "auto")
 import { existsSync } from "node:fs";
@@ -18,7 +18,7 @@ const TOKENIZER_DIR =
   process.env.HP_TOKENIZER_DIR ??
   (existsSync(path.join(MODEL_DIR, "tokenizer.json"))
     ? MODEL_DIR
-    : "C:/Users/danel/AppData/Local/Temp/claude/E--Dev-Web/e638ccef-5272-43ac-aac9-5a06611adc13/scratchpad/tokenizer-clip");
+    : path.resolve(import.meta.dirname, "../../../data/models/sam3").replaceAll("\\", "/"));
 const EP = process.env.HP_EP?.startsWith("{") ? JSON.parse(process.env.HP_EP) : (process.env.HP_EP ?? "auto");
 const PHOTO = process.env.HP_PHOTO ?? `${PROBE}/photos/house1-white-shutters.jpg`;
 

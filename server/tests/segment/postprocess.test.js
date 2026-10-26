@@ -22,11 +22,11 @@ import {
   upscaleMask,
 } from "../../src/segment/postprocess.js";
 
-// CLIP's tokenizer.json lives with the models (models.js); point HP_TOKENIZER_DIR at a folder that
-// has it to run the real-tokenizer checks.
+// CLIP's tokenizer.json lives with the models (models.js): by default the app's install in this
+// checkout's data folder (gitignored); HP_TOKENIZER_DIR points at another folder that has it.
+// Without one the real-tokenizer checks skip.
 const TOKENIZER_DIR =
-  process.env.HP_TOKENIZER_DIR ??
-  "C:/Users/danel/AppData/Local/Temp/claude/E--Dev-Web/e638ccef-5272-43ac-aac9-5a06611adc13/scratchpad/tokenizer-clip";
+  process.env.HP_TOKENIZER_DIR ?? path.resolve(import.meta.dirname, "../../../data/models/sam3");
 const hasTokenizer = existsSync(path.join(TOKENIZER_DIR, "tokenizer.json"));
 
 describe("tokens", () => {
