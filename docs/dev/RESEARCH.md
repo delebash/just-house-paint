@@ -680,6 +680,12 @@ re-run by this session; code in the app's `server/src/aiphoto/`; outputs in sess
   try again when it's done"). The local model is busy while it answers (the kit's `setLocalBusyGuard`). SAM 3 on
   the processor (`executionProvider: "cpu"`) books no card memory and never waits. `finder_status.test.js` and the
   finder's own download count went with its install: the kit's model status counts what is left to download.
+  **Measured 2026-10-28 on this PC** (8b6b0da, kit c1b95b8): the real app's first start on the checkout's data
+  folder moved `data/models/sam3` (7 files, the old `.verified.json` vouching — no re-hash) and FLUX's 3 files into
+  the kit's cache in about 0.1 s (renames on one drive), and the old sd.cpp build into the kit's folder. The cache in
+  use was the family's shared one (`justwrite-app/data/ai-cache`: no cache chosen here, so a sibling's is used —
+  the kit's 2026-10-06 decision). `tests/segment/real.test.js` through the kit's ONNX runtime: passed, 60 s with
+  the model's load (DirectML for the image encoder).
 
 ## 11 · The app, run for real (2026-10-18)
 

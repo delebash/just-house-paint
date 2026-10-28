@@ -44,9 +44,15 @@ STATE:  OPEN — the kit's plan `../just-core/docs/plans/2026-10-24-engines-the-
         the release's start check on the kit's `/v1/ai/runtimes/onnx/engine/check`; the docs; the tests. The
         settings carry over through the kit's `retireSettings` at each seed (`database/seed.js`
         `moveRetiredSettings`); the old files move at start (`segment/migrate.js`, vouched by `.verified.json`).
-        OPEN from round C: the real SAM 3 through the kit on this PC (`HP_REAL_SAM3=1 HP_REAL_CACHE=…`
-        `tests/segment/real.test.js`); the screens checked by eye in the running app (the Parts tab's banner, the
-        Vision tab, Routing's Part finder preset) — both with round B's.
+        CHECKED 2026-10-28 on this PC (8b6b0da + kit c1b95b8): the real app on the real data folder moved SAM 3's 7
+        files and FLUX's 3 into the kit's cache at start (vouched, no re-hash) and the old sd.cpp build into its
+        folder; `data/models` gone; the two finder settings carried over; parts.find ready (DirectML, "Fits"); the
+        real SAM 3 through the kit's runtime passed (`tests/segment/real.test.js`, 60 s with the load); by eye in
+        the built app on that server: the Vision tab, Routing's Find the parts pane (Runs on), the house's Parts tab
+        (no banner, Box on), App Settings → General and Storage; on a fresh folder (`npm run screenshots`) the
+        Parts tab's banner with Download the model (3.1 GB) and its "Fits" chip.
+        OPEN from round B: the real AI photo through the kit — the engine's newer build (master-1004, 865 MB on
+        this PC's CUDA) has to be installed first: a download, waiting for the user's word.
 
 ## Direction — decided 2026-10-17
 STATE:  DECIDED 2026-10-17 (the first session). The user's words, verbatim:
