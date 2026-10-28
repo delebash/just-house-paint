@@ -4,7 +4,7 @@
 // Konva, painted by services/painter.js — the ratio tint in linear light, docs/dev/RESEARCH.md),
 // the tools above it, and the side panel's tabs: Parts, Colors, Schemes, Designs. The colors on
 // screen are a draft until saved as a design (stores/house.js). Long work — finding the parts, an
-// engine's download, the AI photo — runs as server jobs on the task strip (services/jobs.js).
+// AI photo — runs as server jobs on the task strip (the kit's runServerJob).
 // Undo / Redo (Ctrl+Z, Ctrl+Y) cover the colors and the outline edits (services/houseHistory.js);
 // Reset takes every paint off, or goes back to the open design. The page fills its area
 // (pageFill): the canvas and the panel each scroll on their own.

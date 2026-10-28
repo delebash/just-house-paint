@@ -2,9 +2,8 @@
 // The paint colors: the brands (loaded from a public list, or imported from a palette file), the
 // search the Colors tab runs, and the schemes. The server keeps every color (family rule 2); this
 // keeps the brand list, the screen's search and the paints a house's colors name.
-import { del, get, post, postForm } from "@delebash/ui";
+import { del, get, post, postForm, runServerJob } from "@delebash/ui";
 import { defineStore } from "pinia";
-import { runServerJob } from "../services/jobs.js";
 
 const query = (params) => {
   const q = new URLSearchParams();

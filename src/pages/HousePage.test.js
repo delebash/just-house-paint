@@ -208,7 +208,7 @@ const nestedControls = () =>
       .filter((el) => el.parentElement.closest(CONTROL) && row.contains(el.parentElement.closest(CONTROL)))
       .map((el) => `${el.className} in ${el.parentElement.closest(CONTROL).className}`),
   );
-/** A server job polls every 400 ms (services/jobs.js): let the clock run. */
+/** A server job polls every 400 ms (the kit's runServerJob): let the clock run. */
 const settle = async () => {
   for (let i = 0; i < 6; i++) {
     await new Promise((r) => setTimeout(r, 450));

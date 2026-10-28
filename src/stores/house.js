@@ -7,9 +7,8 @@
 // window changed (JSON Merge Patch — another window's parts stay), and an outline write carries the
 // outlines' version the page holds (If-Match, the server's outlines.js) — one made on outlines another
 // window changed since is refused (412) and the page reads them again.
-import { del, get, patch as patchJson, post, request } from "@delebash/ui";
+import { del, get, jobEndedAway, patch as patchJson, post, request, runServerJob } from "@delebash/ui";
 import { defineStore } from "pinia";
-import { jobEndedAway, runServerJob } from "../services/jobs.js";
 
 const hp = (id, rest = "") => `/v1/houses/${encodeURIComponent(id)}${rest}`;
 
@@ -199,7 +198,7 @@ export const useHouseStore = defineStore("house", {
       return get(hp(id, "/jobs"));
     },
     /** Find the parts (a server job on the task strip); `label` names it there. */
-    /** `describe(job, percent)` words its progress (the part being found) — see services/jobs.js;
+    /** `describe(job, percent)` words its progress (the part being found) — see the kit's runServerJob;
      *  `keepEdited` keeps the parts changed by hand as they are (the found ones are cut around them);
      *  `job`: a run already going (runningJobs) to follow instead of starting one. */
     async findParts(label, describe, { keepEdited = false, job = null } = {}) {

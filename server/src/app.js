@@ -27,6 +27,7 @@ import {
   installFileLog,
   installLogRing,
   makeDiskRouter,
+  makeJobsRouter,
   MaintenanceGate,
   makeLogsRouter,
   makeShutdownRouter,
@@ -216,6 +217,9 @@ export async function createApp(dataDir = null, { services = {} } = {}) {
   app.route("/", housesRouter());
   app.route("/", partsRouter());
   app.route("/", designsRouter());
+  // a long job's state and its Cancel (the kit's, over the app's registry — the engines plan's K9), and a house's
+  // running ones (the app's)
+  app.route("/", makeJobsRouter(() => getState().jobs));
   app.route("/", jobsRouter());
   app.route("/", paintsRouter());
   app.route("/", schemesAiRouter());

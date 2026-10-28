@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
-// The renderer's stores (houses, paints, the open house) and the server-job helper, over a mocked
-// kit transport — what each action asks the server, and what the screen then holds.
+// The renderer's stores (houses, paints, the open house), over a mocked kit transport — what each action asks the
+// server, and what the screen then holds. The server-job helper is the kit's (runServerJob, tested there).
 import { createPinia, setActivePinia } from "pinia";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
@@ -34,12 +34,22 @@ vi.mock("@delebash/ui", () => ({
     // the kit's own rule (services/appTask.js): `{ result }` is unwrapped
     return out && typeof out === "object" && "result" in out ? out.result : out;
   },
+  // the kit's server-job runner (services/serverJob.js, tested in the kit) over this transport: one task, the job
+  // read until it ends
+  runServerJob: async ({ start, feature, label }) => {
+    calls.push(["TASK", feature, label]);
+    let job = await start();
+    while (job.state === "running") job = await reply("GET", `/v1/jobs/${job.id}`);
+    if (job.state === "cancelled") throw Object.assign(new Error("cancelled"), { name: "AbortError" });
+    if (job.state === "error") throw Object.assign(new Error(job.error?.message || "failed"), { status: job.error?.status || 500, problem: { title: job.error?.title || "" } });
+    return job.result;
+  },
+  jobEndedAway: (state) => Object.assign(new Error(`ended away: ${state}`), { name: "JobEnded", state }),
 }));
 
 const { useHousesStore } = await import("./houses.js");
 const { usePaintsStore } = await import("./paints.js");
 const { schemeColors, useHouseStore } = await import("./house.js");
-const { jobError, runServerJob } = await import("../services/jobs.js");
 
 beforeEach(() => {
   setActivePinia(createPinia());
@@ -48,87 +58,6 @@ beforeEach(() => {
 });
 
 const HOUSE = { id: "h1", name: "Home", updatedAt: "2026-10-18T10:00:00Z", displayWidth: 4, displayHeight: 2 };
-
-describe("runServerJob", () => {
-  test("a poll that fails on the way (a laptop waking, a server starting again) is tried again; a job the server no longer has is JobGone", async () => {
-    let n = 0;
-    answer("GET /v1/jobs/j1", () => {
-      n++;
-      if (n === 1) throw new Error("Failed to fetch"); // no answer at all
-      if (n === 2) throw Object.assign(new Error("503"), { status: 503 });
-      return { id: "j1", state: "done", result: 7 };
-    });
-    expect(await runServerJob({ start: async () => ({ id: "j1", state: "running", progress: 0 }), feature: "x", label: "x", pollMs: 1 })).toBe(7);
-    expect(n).toBe(3);
-    answer("GET /v1/jobs/j2", () => {
-      throw Object.assign(new Error("404"), { status: 404 });
-    });
-    await expect(runServerJob({ start: async () => ({ id: "j2", state: "running", progress: 0 }), feature: "x", label: "x", pollMs: 1 })).rejects.toMatchObject({ name: "JobGone" });
-    // ended while the window slept, then forgotten: how it ended, never "the server started again"
-    answer("GET /v1/jobs/j3", () => {
-      throw Object.assign(new Error("410"), { status: 410, problem: { state: "done" } });
-    });
-    await expect(runServerJob({ start: async () => ({ id: "j3", state: "running", progress: 0 }), feature: "x", label: "x", pollMs: 1 })).rejects.toMatchObject({ name: "JobEnded", state: "done" });
-  }, 10000);
-
-  test("a job that ended unseen without finishing is said as that, never as the server starting again", async () => {
-    // the eighteenth review: a find that failed while the computer slept was told "the app's server started again"
-    const { jobEndedAway } = await import("../services/jobs.js");
-    expect(jobEndedAway("error").message).toBe("This work ended while the app wasn't looking, without finishing. Start it again.");
-    expect(jobEndedAway("cancelled").message).toBe("This work was cancelled while the app wasn't looking.");
-    expect(jobEndedAway("error").message).not.toMatch(/started again/);
-  });
-
-  test("its waits between polls leave no listener behind on the task's signal", async () => {
-    let n = 0;
-    answer("GET /v1/jobs/j1", () => (++n < 4 ? { id: "j1", state: "running", progress: n / 4 } : { id: "j1", state: "done", result: 1 }));
-    const added = [];
-    const removed = [];
-    const real = AbortSignal.prototype.addEventListener;
-    const realRemove = AbortSignal.prototype.removeEventListener;
-    AbortSignal.prototype.addEventListener = function (type, fn, o) {
-      if (type === "abort") added.push(fn);
-      return real.call(this, type, fn, o);
-    };
-    AbortSignal.prototype.removeEventListener = function (type, fn, o) {
-      if (type === "abort") removed.push(fn);
-      return realRemove.call(this, type, fn, o);
-    };
-    try {
-      await runServerJob({ start: async () => ({ id: "j1", state: "running", progress: 0 }), feature: "x", label: "x", pollMs: 1 });
-    } finally {
-      AbortSignal.prototype.addEventListener = real;
-      AbortSignal.prototype.removeEventListener = realRemove;
-    }
-    // one for the job's own cancel, one per wait — every wait's taken off again
-    expect(added.length - 1).toBe(4);
-    expect(removed.length).toBe(4);
-  });
-
-  test("polls the job until it ends and resolves with its result", async () => {
-    let n = 0;
-    answer("GET /v1/jobs/j1", () => (++n < 2 ? { id: "j1", state: "running", progress: 0.5 } : { id: "j1", state: "done", result: { parts: 3 } }));
-    const r = await runServerJob({ start: async () => ({ id: "j1", state: "running", progress: 0.1 }), feature: "parts.find", label: "Find parts", pollMs: 1 });
-    expect(r).toEqual({ parts: 3 });
-    expect(calls.find((c) => c[0] === "PROGRESS")[1]).toEqual([
-      [10, 100],
-      [50, 100],
-    ]);
-  });
-
-  test("a failed job throws an error the screen can report; a cancelled one an AbortError", async () => {
-    answer("GET /v1/jobs/j2", { id: "j2", state: "error", error: { message: "model file damaged", status: 500 } });
-    await expect(runServerJob({ start: async () => ({ id: "j2", state: "running" }), feature: "x", label: "x", pollMs: 1 })).rejects.toMatchObject({
-      message: "model file damaged",
-      status: 500,
-    });
-    await expect(runServerJob({ start: async () => ({ id: "j3", state: "cancelled" }), feature: "x", label: "x" })).rejects.toMatchObject({ name: "AbortError" });
-    expect(jobError({ error: null }).status).toBe(500);
-    // the server's title for what failed is the screen's heading; its words the detail
-    const err = jobError({ error: { message: "sd-cli failed (exit 3)", status: null, title: "The AI photo didn't finish" } });
-    expect(err.problem).toEqual({ title: "The AI photo didn't finish", detail: "sd-cli failed (exit 3)" });
-  });
-});
 
 describe("the houses store", () => {
   test("load sorts newest first; add, rename and remove keep the list", async () => {

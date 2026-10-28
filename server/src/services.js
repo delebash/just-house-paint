@@ -7,14 +7,13 @@
 // `fetch` or `run`.
 
 import { buildLlmConfig, runAction, stores } from "@delebash/core/llm";
-import { ChangeCounter } from "@delebash/core/platform";
+import { ChangeCounter, JobRegistry } from "@delebash/core/platform";
 import * as http from "@delebash/core/platform/http";
 import * as hardware from "@delebash/core/runner/hardware";
 import { createAiPhoto, sharedGpuNote, surfaceWords } from "./aiphoto_service.js";
 import { SETTING_DEFAULTS } from "./database/seed.js";
 import { getSetting } from "./database/settings.js";
 import { createFinder } from "./finder.js";
-import { JobRegistry } from "./jobs.js";
 import { Outlines } from "./outlines.js";
 
 const MB = 1e6;

@@ -1,39 +1,22 @@
 // SPDX-License-Identifier: MIT
-// /v1/jobs/:id — what a long job is doing (the screen polls it inside the kit's withAiTask), and
-// DELETE to stop it; /v1/houses/:id/jobs — a house's running ones.
+// /v1/houses/:id/jobs — a house's running jobs (finding its parts, an AI photo). A job's own state and its Cancel
+// are the kit's /v1/jobs/:id (makeJobsRouter, mounted in app.js — the engines plan's K9).
 
 import { Hono, input } from "@delebash/core/platform";
-import { ApiError, notFound } from "@delebash/core/platform/errors";
 import { getState } from "../app_state.js";
 import { getHouse } from "../database/houses.js";
 import { IdParams } from "../schemas/houses.js";
 import { houseNotFound } from "./refusals.js";
 
-/** `ctx`: { jobs } — the app's JobRegistry. */
+/** `ctx`: { db, jobs } — the app's database and its JobRegistry (the kit's). */
 export function router(ctx = getState()) {
   const app = new Hono();
-  app.get("/v1/jobs/:id", input({ params: IdParams }), (c) => {
-    const id = c.req.valid("param").id;
-    const job = ctx.jobs.get(id);
-    if (job) return c.json(job);
-    // ended a while ago and forgotten: 410 Gone (RFC 9110 §15.5.11) with how it ended — the window reads what it
-    // left; unknown (the server started again since): 404
-    const ended = ctx.jobs.ended?.get(id);
-    if (ended) throw new ApiError(410, "job-ended", "This work ended a while ago", `it ended as ${ended.state}`, { state: ended.state, kind: ended.kind });
-    throw notFound(`no job ${id}`);
-  });
   // A house's running jobs (finding its parts, an AI photo): a page opened or reloaded while one runs
   // attaches to it instead of showing the house as it was before
   app.get("/v1/houses/:id/jobs", input({ params: IdParams }), (c) => {
     const id = c.req.valid("param").id;
     if (!getHouse(ctx.db, id)) throw houseNotFound(id);
     return c.json(ctx.jobs.runningFor(id));
-  });
-  app.delete("/v1/jobs/:id", input({ params: IdParams }), (c) => {
-    const job = ctx.jobs.get(c.req.valid("param").id);
-    if (!job) throw notFound(`no job ${c.req.valid("param").id}`);
-    ctx.jobs.cancel(job.id);
-    return c.json(ctx.jobs.get(job.id));
   });
   return app;
 }

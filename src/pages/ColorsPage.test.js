@@ -43,7 +43,7 @@ const brands = () => [
   brandRow("hgtv-home", "HGTV Home by Sherwin-Williams", loaded(900)),
   brandRow("dutch-boy", "Dutch Boy", loaded(1340)),
 ];
-// the job's snapshot (server/src/jobs.js snapshot())
+// the job's snapshot (the kit's platform/jobs.js snapshot())
 const job = (key, fields = {}) => ({
   id: `j-${key}`,
   kind: "load-brand",
@@ -137,7 +137,7 @@ const autoSwitch = (label) =>
   [...document.querySelectorAll('[role="switch"][aria-label="Load automatically"]')].find(
     (s) => document.getElementById(s.getAttribute("aria-describedby"))?.textContent === label,
   );
-/** A server job polls every 400 ms (services/jobs.js): let the clock run. */
+/** A server job polls every 400 ms (the kit's runServerJob): let the clock run. */
 const settle = async () => {
   for (let i = 0; i < 6; i++) {
     await new Promise((r) => setTimeout(r, 450));

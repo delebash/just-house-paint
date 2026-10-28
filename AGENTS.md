@@ -55,8 +55,8 @@ and `npm run build:unpacked && npm test`.
 - **AI calls go through the kit's runners** (`runAiFeature`, `withAiTask`, the server's `runAction`)
   — never the task store directly. A new AI feature is a `feature_catalog.js` row + a prompt row +
   a preset, registered the day it calls the engine. Long server work (finding parts, the AI photo) is a
-  job (`jobs.js`, `GET /v1/jobs/:id`), shown by the renderer's `services/jobs.js`
-  inside `withAiTask`.
+  job on the kit's `JobRegistry` (`services.js`; `GET /v1/jobs/:id` is the kit's `makeJobsRouter`), shown by the
+  kit's `runServerJob` inside `withAiTask`.
 - **The engines are the kit's.** The AI photo (stable-diffusion.cpp + FLUX.2 [klein]) and the part finder
   (ONNX Runtime + SAM 3) are kit runtimes: their models are `runtimeModels` rows (`seed_presets.js`), their
   features routed by presets, their downloads the kit's (nothing downloads until the user presses the button),

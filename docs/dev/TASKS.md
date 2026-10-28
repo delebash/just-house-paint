@@ -51,6 +51,10 @@ STATE:  OPEN — the kit's plan `../just-core/docs/plans/2026-10-24-engines-the-
         the built app on that server: the Vision tab, Routing's Find the parts pane (Runs on), the house's Parts tab
         (no banner, Box on), App Settings → General and Storage; on a fresh folder (`npm run screenshots`) the
         Parts tab's banner with Download the model (3.1 GB) and its "Fits" chip.
+        Round D BUILT 2026-10-28 (the kit's K9): the jobs are the kit's — `JobRegistry` and `makeJobsRouter` from
+        `@delebash/core/platform`, `runServerJob` and its errors from `@delebash/ui`; `server/src/jobs.js`,
+        `src/services/jobs.js`, the registry's test and the `jobs.*` words went to the kit; `/v1/houses/:id/jobs`
+        stays the app's.
         OPEN from round B: the real AI photo through the kit — the engine's newer build (master-1004, 865 MB on
         this PC's CUDA) has to be installed first: a download, waiting for the user's word.
 

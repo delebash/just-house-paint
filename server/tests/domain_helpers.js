@@ -5,7 +5,7 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { ChangeCounter, createServer, makeSyncRevRouter, migrate, openDatabase } from "@delebash/core/platform";
+import { ChangeCounter, createServer, JobRegistry, makeJobsRouter, makeSyncRevRouter, migrate, openDatabase } from "@delebash/core/platform";
 import sharp from "sharp";
 import { router as designsRouter } from "../src/api/designs_api.js";
 import { router as enginesRouter } from "../src/api/engines_api.js";
@@ -18,7 +18,6 @@ import { DATA_WRITES } from "../src/app.js";
 import { MIGRATIONS } from "../src/database/schema.js";
 import { SETTING_DEFAULTS } from "../src/database/seed.js";
 import { getSetting, setSetting } from "../src/database/settings.js";
-import { JobRegistry } from "../src/jobs.js";
 import { Outlines } from "../src/outlines.js";
 
 export const LIMITS = { displayMax: 256, thumbMax: 64, jpegQuality: 85, maxPhotoBytes: 2_000_000 };
@@ -98,7 +97,7 @@ export function makeServer({ fetch = async () => new Response("offline", { statu
   if (removeHouseDir) ctx.removeHouseDir = removeHouseDir;
   const app = createServer({ typeBase: "https://just-house-paint.local/errors/" });
   app.use("*", changes.middleware());
-  for (const r of [makeSyncRevRouter(changes, { pollSeconds: ctx.checkSeconds }), housesRouter(ctx), designsRouter(ctx), jobsRouter(ctx), partsRouter(ctx), paintsRouter(ctx), schemesAiRouter(ctx), enginesRouter(ctx)]) app.route("/", r);
+  for (const r of [makeSyncRevRouter(changes, { pollSeconds: ctx.checkSeconds }), housesRouter(ctx), designsRouter(ctx), makeJobsRouter(jobs), jobsRouter(ctx), partsRouter(ctx), paintsRouter(ctx), schemesAiRouter(ctx), enginesRouter(ctx)]) app.route("/", r);
   const close = () => {
     jobs.cancelAll();
     db.raw.close();

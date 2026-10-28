@@ -524,13 +524,6 @@
     "leftOutMore": "{shown}; and {more} more",
     "fileOnly": "From its palette file"
   },
-  "jobs": {
-    "failed": "The work stopped with an error.",
-    "gone": "The app's server started again, and this work stopped. Start it again.",
-    "endedAway": "This work ended while the app wasn't looking, without finishing. Start it again.",
-    "cancelledAway": "This work was cancelled while the app wasn't looking.",
-    "percent": "{n}%"
-  },
   "colorCard": {
     "onScreen": "Colors on screen",
     "note": "Colors on a screen are close to the paint, never the same — check a real paint chip before you buy.",
