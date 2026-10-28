@@ -20,6 +20,7 @@ import { makeDataRouter, schemaProblem } from "@delebash/core/platform";
 import { sortedTables } from "@delebash/core/platform/data_api";
 import { getLogger } from "@delebash/core/platform/log";
 import * as lifecycle from "@delebash/core/runner/lifecycle";
+import { stopRuntimeServers } from "@delebash/core/runner/runtime_service";
 import { getDb, getState } from "./app_state.js";
 import { dbPath, recreateAppTables } from "./database/index.js";
 import { APP_TABLES } from "./database/schema.js";
@@ -105,7 +106,8 @@ export function resetUnfitSettings(h) {
   return reset;
 }
 
-/** Cancel the jobs and wait for them to end, let the part finder and the local AI model go — best effort by design:
+/** Cancel the jobs and wait for them to end, let the part finder, the local AI model and the kit's other engines (the
+ * AI photo's sd-server — Windows keeps a running server's files locked) go — best effort by design:
  * a reset or restore never fails on its teardown. Before a restore replaces anything (beforeReplace) and after it
  * (onReplaced). */
 async function teardown() {
@@ -122,6 +124,7 @@ async function teardown() {
   } catch {
     // nothing running
   }
+  await stopRuntimeServers();
 }
 
 /** The data replaced: every window reloads (the kit's ChangeCounter — the data's epoch) — only once it has been (a refused restore

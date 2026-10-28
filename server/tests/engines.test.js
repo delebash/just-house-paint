@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 // The part finder's adapter (finder.js) and the engine routes: overlaps resolved by priority, the
-// encoded photo reused for boxes, the GPU released; installing (jobs); the AI photo of a house
-// (a job — with fake engines; the real ones are tested gated in tests/segment and tests/aiphoto).
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+// encoded photo reused for boxes, the GPU released; installing (jobs); the AI photo of a house (a job — with a fake
+// image feature: its engine and model are the kit's, tested there; the real ones gated in tests/segment and
+// tests/aiphoto).
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { createAiPhoto, sharedGpuNote, surfaceWords } from "../src/aiphoto_service.js";
-import { ENGINE_RELEASES, MODEL_FILES as SD_FILES, selectEngineAsset } from "../src/aiphoto/engine.js";
 import { createFinder, resolveOverlaps } from "../src/finder.js";
 import { MODEL_FILES as SAM_FILES } from "../src/segment/models.js";
 import { fakeFinder, jpeg, makeServer } from "./domain_helpers.js";
@@ -144,43 +144,42 @@ describe("createFinder", () => {
 });
 
 describe("the engine routes", () => {
-  const GPU = { gpus: [{ vendor: "nvidia", vram_mb: 8192 }] };
-  // installed = the pinned release, for the backend this computer's card picks
-  const PINNED = selectEngineAsset(ENGINE_RELEASES.pinned, { platform: process.platform, arch: process.arch, gpu: GPU });
-  function aiphotoFactory(calls, { tag = PINNED.tag } = {}) {
-    return (ctx) => {
-      const engineDir = scratch();
-      const modelDir = scratch();
-      mkdirSync(path.join(engineDir, tag, PINNED.backend), { recursive: true });
-      // installed: the marker and sd-cli beside it (the engine's files are checked, not the marker alone)
-      writeFileSync(path.join(engineDir, tag, PINNED.backend, ".aiphoto-engine.json"), JSON.stringify({ files: [PINNED.exe] }));
-      writeFileSync(path.join(engineDir, tag, PINNED.backend, PINNED.exe), "exe");
-      for (const m of Object.values(SD_FILES)) writeFileSync(path.join(modelDir, m.file), "x");
-      return createAiPhoto({
+  // the AI photo's service on a fake image feature: `ready` what the kit's readiness answers
+  function aiphotoFactory(calls, { ready = true } = {}) {
+    return (ctx) =>
+      createAiPhoto({
         dataDir: ctx.dataDir,
-        engineDir,
-        modelDir,
         finder: ctx.finder,
-        stopLocalModel: async () => calls.push("stopLocalModel"),
-        detectGpu: async () => GPU,
         settings: { templates: () => undefined, compose: () => undefined, workingSize: () => ({ width: 320, height: 240 }) },
-        ensureEngine: async () => "C:/engine/sd-cli.exe",
-        ensureModels: async () => ({ diffusion: "d", llm: "l", vae: "v" }),
+        readiness: () =>
+          ready
+            ? { feature: "aiphoto.render", ready: true, need: "", runtime: "sdcpp", model: "flux2-klein-4b" }
+            : { feature: "aiphoto.render", ready: false, need: "model-not-downloaded", runtime: "sdcpp", model: "flux2-klein-4b", modelState: { name: "FLUX.2 [klein] 4B" } },
         aiRepaint: async (args) => {
           calls.push(["aiRepaint", args.surfaces.map((x) => [x.surfaceLabel, x.colorHex, x.currentHex])]);
+          expect(args.generate).toBeTypeOf("function"); // the kit's image feature draws
           args.onProgress({ fraction: 0.5, stage: "generate" });
           writeFileSync(args.outPath, "png");
           return { deltaE: 0.3 };
         },
       });
-    };
   }
 
-  test("an engine of an older release isn't the installed one: Install offers the pinned one", async () => {
-    s = makeServer({ aiphoto: aiphotoFactory([], { tag: "master-1-old" }) });
-    const st = await (await s.app.request("/v1/aiphoto/status")).json();
-    expect(st.engineInstalled).toBe(false);
-    expect(st.downloadBytes).toBeGreaterThan(0);
+  test("not ready (the kit's readiness): the AI photo's job ends saying what to install — nothing drawn", async () => {
+    const calls = [];
+    s = makeServer({ aiphoto: aiphotoFactory(calls, { ready: false }) });
+    const house = await (await s.upload(await jpeg(200, 150))).json();
+    await s.settle((await (await s.json("POST", `/v1/houses/${house.id}/find-parts`)).json()).id);
+    const form = new FormData();
+    form.append("file", new Blob(["code,name,hex\nX-1,Brick Red,#a33a2f"]), "p.csv");
+    form.append("brand", "behr");
+    await s.app.request("/v1/paints/import", { method: "POST", body: form });
+    const job = await (await s.json("POST", `/v1/houses/${house.id}/aiphoto`, { colors: { body: "behr:X-1" } })).json();
+    const done = await s.settle(job.id);
+    expect(done.state).toBe("error");
+    expect(done.error).toMatchObject({ status: 409 });
+    expect(JSON.stringify(done.error)).toMatch(/download its model first \(FLUX\.2 \[klein\] 4B\)/);
+    expect(calls).toEqual([]);
   });
 
   test("a design deleted while its AI photo is drawn: the AI photo is kept, without the link; a second one waits", async () => {
@@ -214,14 +213,12 @@ describe("the engine routes", () => {
     expect((await (await s.app.request(`/v1/houses/${house.id}/renders`)).json()).map((r) => r.id)).toEqual([done.result.id]);
   });
 
-  test("status and install of both engines", async () => {
+  test("the part finder's status and install (the AI photo's are the kit's /v1/ai/runtimes)", async () => {
     s = makeServer({ aiphoto: aiphotoFactory([]) });
     expect(await (await s.app.request("/v1/segment/status")).json()).toEqual({ installed: true, downloadBytes: 3_364_167_120 });
     const job = await (await s.json("POST", "/v1/segment/install")).json();
     expect((await s.settle(job.id)).state).toBe("done");
-    const st = await (await s.app.request("/v1/aiphoto/status")).json();
-    expect(st).toMatchObject({ engineInstalled: true, modelsInstalled: true });
-    expect(st.downloadBytes).toBeGreaterThan(8e9);
+    expect((await s.app.request("/v1/aiphoto/status")).status).toBe(404); // gone: the kit's routes say it
   });
 
   test("not installed, the finder's status says whether its runtime loads here; the start check asks it too", async () => {
@@ -260,28 +257,12 @@ describe("the engine routes", () => {
     expect(loads).toBe(1);
   });
 
-  test("removing an engine: its files go; never while it works", async () => {
-    let dirs;
-    s = makeServer({
-      aiphoto: (ctx) => {
-        const made = aiphotoFactory([])(ctx);
-        return {
-          ...made,
-          uninstall: async () => {
-            dirs = "removed";
-            await made.uninstall();
-          },
-        };
-      },
-    });
+  test("removing the part finder: its files go; never while it works", async () => {
+    s = makeServer({ aiphoto: aiphotoFactory([]) });
     // the part finder: the GPU let go and the model removed (the fake records it)
     fakeFinder.calls.length = 0;
     expect((await s.app.request("/v1/segment/install", { method: "DELETE" })).status).toBe(204);
     expect(fakeFinder.calls).toContainEqual(["uninstall"]);
-    // the AI photo: both folders go, so the status says not installed
-    expect((await s.app.request("/v1/aiphoto/install", { method: "DELETE" })).status).toBe(204);
-    expect(dirs).toBe("removed");
-    expect(await (await s.app.request("/v1/aiphoto/status")).json()).toMatchObject({ engineInstalled: false, modelsInstalled: false });
     // not while it works: a running job of the engine's kind refuses with a 409
     let release;
     s.ctx.jobs.start({ kind: "find-parts", key: "h" }, () => new Promise((r) => (release = r)));
@@ -304,9 +285,8 @@ describe("the engine routes", () => {
     expect((await s.settle((await r.json()).id)).state).toBe("done");
   });
 
-  test("while an engine is being removed, nothing installs it or runs on it", async () => {
-    let finishAiphoto;
-    s = makeServer({ aiphoto: (ctx) => ({ ...aiphotoFactory([])(ctx), uninstall: () => new Promise((r) => (finishAiphoto = r)) }) });
+  test("while the part finder is being removed, nothing installs it or runs on it", async () => {
+    s = makeServer({ aiphoto: aiphotoFactory([]) });
     const house = await (await s.upload(await jpeg(200, 150))).json();
     await s.settle((await (await s.json("POST", `/v1/houses/${house.id}/find-parts`)).json()).id);
     const refused = async (r, title) => {
@@ -329,13 +309,6 @@ describe("the engine routes", () => {
       fakeFinder.uninstall = real;
     }
     expect((await s.json("POST", `/v1/houses/${house.id}/parts/trim/box`, { x0: 10, y0: 10, x1: 14, y1: 14 })).status).toBe(200); // done: it works again
-    // the AI photo
-    const removing = s.app.request("/v1/aiphoto/install", { method: "DELETE" });
-    await vi.waitFor(() => expect(finishAiphoto).toBeTypeOf("function"));
-    await refused(await s.app.request("/v1/aiphoto/install", { method: "POST" }), "The AI photo is being removed");
-    await refused(await s.json("POST", `/v1/houses/${house.id}/aiphoto`, { colors: { body: "behr:X-1" } }), "The AI photo is being removed");
-    finishAiphoto();
-    expect((await removing).status).toBe(204);
   });
 
   test("the AI photo paints the design's paintable parts, frees the GPU first, and is kept", async () => {
@@ -360,7 +333,6 @@ describe("the engine routes", () => {
       ["body", "#a33a2f", "#f4f4f2"],
       ["trim", "#f4f4f2", null],
     ]);
-    expect(calls).toContain("stopLocalModel");
     expect(fakeFinder.calls.some((c) => c[0] === "releaseGpu")).toBe(true);
     const renders = await (await s.app.request(`/v1/houses/${house.id}/renders`)).json();
     expect(renders).toHaveLength(1);

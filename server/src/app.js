@@ -62,18 +62,20 @@ import {
   DEFAULT_ENGINE_PRESETS,
   DEFAULT_FEATURE_PRESETS,
   DEFAULT_PRESET_ID,
+  FLUX2_KLEIN,
   MODEL_CATALOG,
 } from "./seed_presets.js";
 import { housesRoot } from "./files.js";
-import { aiphotoEngineDir, aiphotoModelDir, createServices, finderModelDir } from "./services.js";
+import { createServices, finderModelDir } from "./services.js";
 import { PRODUCT } from "./version.js";
 
 const log = getLogger("just_house_paint.app");
 
 // the writes that change what another window shows: the houses, their parts, designs, paints now and AI photos; the
-// brands and their colors; the app's settings; the engines (the house page offers or uses them). Not one: a window's
-// own prefs, a scheme worked out, a log line, a cancel (the job's end is counted), an AI run, the tokens.
-export const DATA_WRITES = /^\/v1\/(houses|designs|renders|brands|paints|settings|segment\/install|aiphoto\/install)(\/|$)/;
+// brands and their colors; the app's settings; the engines (the house page offers or uses them — the part finder's
+// install, the kit's runtimes': the AI photo's engine and model). Not one: a window's own prefs, a scheme worked out,
+// a log line, a cancel (the job's end is counted), an AI run, the tokens.
+export const DATA_WRITES = /^\/v1\/(houses|designs|renders|brands|paints|settings|segment\/install|ai\/runtimes)(\/|$)/;
 
 /** The problem-type prefix of every error answer (`type`: `<base><slug>`, app-structure §15). */
 export const TYPE_BASE = "https://just-house-paint.local/errors/";
@@ -124,6 +126,10 @@ const llmArgs = (db, dataDir) => ({
   modelCatalogExtra: MODEL_CATALOG,
   classTunesSeed: CLASS_TUNES,
   classTuneIdentity: CLASS_TUNE_IDENTITY,
+  // The AI photo's engine is the kit's stable-diffusion.cpp runtime, its model FLUX.2 [klein] 4B (seed_presets.js):
+  // the kit installs, downloads, rates and runs them (the engines plan, H1); the AI page shows them on its Images tab.
+  runtimes: ["sdcpp"],
+  runtimeModels: [FLUX2_KLEIN],
 });
 
 /**
@@ -187,14 +193,14 @@ export async function createApp(dataDir = null, { services = {} } = {}) {
   app.route("/", prefsRouter());
   app.route("/", makeSyncRevRouter(changes, { pollSeconds: () => getState().checkSeconds() }));
   app.route("/", makeLogsRouter(PRODUCT));
-  // Settings → Storage's sizes: the kit's buckets plus this app's own stores — the houses' photos,
-  // the part finder's model, the AI photo's models and engine (they live outside the kit's cache)
+  // Settings → Storage's sizes: the kit's buckets (the AI photo's engine and model are the kit's — its engine builds
+  // and models cache) plus this app's own stores — the houses' photos, the part finder's model (outside the kit's
+  // cache until round C)
   app.route(
     "/",
     makeDiskRouter(dataDir, {
       houses: housesRoot(dataDir),
       partFinder: finderModelDir(dataDir),
-      aiPhoto: [aiphotoModelDir(dataDir), aiphotoEngineDir(dataDir)],
     }),
   );
   app.route("/", dataRouter(dataDir, { gate }));

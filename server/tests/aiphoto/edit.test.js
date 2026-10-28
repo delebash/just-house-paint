@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
-// aiRepaint end to end with a fake sd-cli: the fake reads the working-size inputs it was
-// given and writes a "render" that is off-color inside the mask and drifted everywhere else
-// (as the real VAE round trip drifts) — the paste-back must restore every outside pixel and
-// the lock must hit the paint.
+// aiRepaint end to end with a fake image feature (the kit's runImageFeature takes `{prompt, width, height, init, refs,
+// mask}` as PNG Buffers and answers a PNG): the fake reads the working-size inputs it was given and draws a "render"
+// that is off-color inside the mask and drifted everywhere else (as the real VAE round trip drifts) — the paste-back
+// must restore every outside pixel and the lock must hit the paint.
 import { mkdtempSync, readdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -10,12 +10,10 @@ import sharp from "sharp";
 import { describe, expect, test } from "vitest";
 import { aiRepaint, cappedSize } from "../../src/aiphoto/edit.js";
 import { DEFAULT_COMPOSE, featherMask, readMask, readRgb } from "../../src/aiphoto/pixels.js";
-import { argOf, fakeSpawn } from "./helpers.js";
 
 const W = 640;
 const H = 480;
 const tmp = () => mkdtempSync(join(tmpdir(), "aiphoto-edit-"));
-const models = { diffusion: "d.gguf", llm: "l.gguf", vae: "v.safetensors" };
 
 /** A house-ish photo: sky, a white wall lit from the left with a shadow band, a dark door. */
 async function photoPng() {
@@ -43,41 +41,42 @@ function rectMask(rects, w = W, h = H) {
 const WALL = [[0, 121, 640, 440]];
 const DOOR = [[421, 301, 499, 440]];
 
-/** The fake sd-cli: inside the mask a dull pinkish brown keeping the init's shading; outside +9 drift. */
-function fakeSd(chunks = PROGRESS_CHUNKS, extra = {}) {
+/**
+ * The fake image feature: reports its four steps, honours the signal (`pauseAt`: it waits at that step until
+ * cancelled), and draws `paint(init, mask, i, x)` — by default a dull pinkish brown inside the mask keeping the
+ * init's shading, +9 drift outside. `seen` keeps what it was given; `calls` counts the runs.
+ */
+function fakeImage({ pauseAt = null, paint = null } = {}) {
   const seen = {};
-  const fake = fakeSpawn({
-    chunks,
-    ...extra,
-    onStart: async (argv) => {
-      seen.argv = argv;
-      const w = Number(argOf(argv, "-W"));
-      const h = Number(argOf(argv, "-H"));
-      const init = await sharp(argOf(argv, "-i")).raw().toBuffer({ resolveWithObject: true });
-      const mask = await sharp(argOf(argv, "--mask")).greyscale().raw().toBuffer();
-      seen.init = init.info;
-      seen.maskWhite = mask.reduce((s, v) => s + (v > 127 ? 1 : 0), 0);
-      const out = Buffer.alloc(w * h * 3);
-      for (let i = 0; i < w * h; i++) {
-        const shade = (init.data[i * 3] + init.data[i * 3 + 1] + init.data[i * 3 + 2]) / (3 * 235);
-        const c = mask[i] > 127 ? [136 * shade, 72 * shade, 66 * shade] : [0, 1, 2].map((k) => init.data[i * 3 + k] + 9);
-        out.set(c.map((v) => Math.max(0, Math.min(255, Math.round(v)))), i * 3);
+  const fake = { seen, calls: 0, cancelled: false };
+  fake.generate = async (request, { onProgress, signal }) => {
+    fake.calls++;
+    Object.assign(seen, request);
+    const { width: w, height: h } = request;
+    const init = await sharp(request.init).raw().toBuffer({ resolveWithObject: true });
+    const mask = await sharp(request.mask).greyscale().raw().toBuffer();
+    seen.initInfo = init.info;
+    seen.maskWhite = mask.reduce((s, v) => s + (v > 127 ? 1 : 0), 0);
+    for (let step = 1; step <= 4; step++) {
+      if (step === pauseAt && !signal?.aborted) {
+        await new Promise((resolve) => signal.addEventListener("abort", resolve, { once: true }));
       }
-      await sharp(out, { raw: { width: w, height: h, channels: 3 } }).png().toFile(argOf(argv, "-o"));
-    },
-  });
-  return { ...fake, seen };
+      if (signal?.aborted) {
+        fake.cancelled = true;
+        throw Object.assign(new Error("the image was cancelled"), { name: "AbortError" });
+      }
+      onProgress?.({ step, steps: 4, fraction: step / 4 });
+    }
+    const out = Buffer.alloc(w * h * 3);
+    for (let i = 0; i < w * h; i++) {
+      const shade = (init.data[i * 3] + init.data[i * 3 + 1] + init.data[i * 3 + 2]) / (3 * 235);
+      const c = paint ? paint(init, mask, i, (i % w) * (W / w), shade) : mask[i] > 127 ? [136 * shade, 72 * shade, 66 * shade] : [0, 1, 2].map((k) => init.data[i * 3 + k] + 9);
+      out.set(c.map((v) => Math.max(0, Math.min(255, Math.round(v)))), i * 3);
+    }
+    return sharp(out, { raw: { width: w, height: h, channels: 3 } }).png().toBuffer();
+  };
+  return fake;
 }
-
-const PROGRESS_CHUNKS = [
-  "[I] loading diffusion model from 'd.gguf' --- diffusion_engine.cpp:738\n",
-  "[I] generate_image 320x240 --- image.cpp:814\n",
-  "[I] encode_first_stage completed, taking 1.40s --- image.cpp:398\n",
-  "[I] get_learned_condition completed, taking 1.77s --- image.cpp:529\n",
-  ...[1, 2, 3, 4].map((s) => `  |=====>    | ${s}/4 - 2.61s/it\x1b[K`),
-  "[I] sampling completed, taking 12.12s --- image.cpp:899\n",
-  "[I] decode_first_stage completed, taking 1.11s --- image.cpp:624\n",
-].map((text) => ({ stream: "stdout", text }));
 
 /** Count the bytes outside the feathered masks that differ from the photo. */
 async function outsideDiffers(photo, outPath, masks) {
@@ -103,11 +102,10 @@ describe("aiRepaint", () => {
     const dir = tmp();
     const photo = await photoPng();
     const mask = await rectMask(WALL);
-    const sd = fakeSd();
+    const sd = fakeImage();
     const events = [];
     const r = await aiRepaint({
-      engine: { bin: "C:/engine/sd-cli.exe" },
-      models,
+      generate: sd.generate,
       photo,
       mask,
       colorHex: "#AD2C34",
@@ -117,14 +115,14 @@ describe("aiRepaint", () => {
       unlockedPath: join(dir, "unlocked.png"),
       size: { width: 320, height: 240 },
       onProgress: (e) => events.push(e),
-      spawn: sd.spawn,
     });
-    expect(sd.seen.argv[0]).toBe("C:/engine/sd-cli.exe");
-    expect(sd.seen.init).toMatchObject({ width: 320, height: 240 });
-    expect(argOf(sd.seen.argv, "-p")).toBe(
+    expect(sd.seen).toMatchObject({ width: 320, height: 240 });
+    expect(sd.seen.initInfo).toMatchObject({ width: 320, height: 240 });
+    expect(sd.seen.prompt).toBe(
       "Repaint only the siding of this house in Positive Red, color #AD2C34 exterior paint. Keep everything else in the photo exactly the same, including the lighting.",
     );
-    expect(argOf(sd.seen.argv, "-r")).toBe(argOf(sd.seen.argv, "-i"));
+    expect(sd.seen.refs).toHaveLength(1);
+    expect(sd.seen.refs[0].equals(sd.seen.init)).toBe(true); // the photo is both init and reference
     expect(r.workingSize).toEqual({ width: 320, height: 240 });
     expect(r.size).toEqual({ width: W, height: H });
     expect(r.deltaE).toBeLessThan(0.5);
@@ -139,21 +137,19 @@ describe("aiRepaint", () => {
     const fr = events.map((e) => e.fraction);
     for (let i = 1; i < fr.length; i++) expect(fr[i]).toBeGreaterThanOrEqual(fr[i - 1]);
     expect(fr.at(-1)).toBe(1);
-    expect(events.filter((e) => e.sdStage === "sample" && e.step > 0).map((e) => e.step)).toEqual([1, 2, 3, 4]);
+    expect(events.filter((e) => e.stage === "generate" && e.step > 0).map((e) => e.step)).toEqual([1, 2, 3, 4]);
   });
 
   test("a mask of another size is stretched to the photo; the default working size is ~0.79 MP", async () => {
     const photo = await photoPng();
-    const sd = fakeSd();
+    const sd = fakeImage();
     const r = await aiRepaint({
-      engine: "sd-cli",
-      models,
+      generate: sd.generate,
       photo,
       mask: await rectMask([[0, 61, 320, 220]], 320, 240),
       colorHex: "#2f3d4c",
       surfaceLabel: "siding",
       outPath: join(tmp(), "o.png"),
-      spawn: sd.spawn,
     });
     expect(r.workingSize).toEqual({ width: 640, height: 480 }); // smaller than the budget: not upscaled
     expect(r.deltaE).toBeLessThan(0.5);
@@ -163,10 +159,9 @@ describe("aiRepaint", () => {
     const photo = await photoPng();
     const wall = await rectMask(WALL);
     const door = await rectMask(DOOR);
-    const sd = fakeSd();
+    const sd = fakeImage();
     const r = await aiRepaint({
-      engine: "sd-cli",
-      models,
+      generate: sd.generate,
       photo,
       surfaces: [
         { mask: wall, colorHex: "#ad2c34", colorName: "Positive Red", surfaceLabel: "siding" },
@@ -174,9 +169,8 @@ describe("aiRepaint", () => {
       ],
       outPath: join(tmp(), "o.png"),
       size: { width: 320, height: 240 },
-      spawn: sd.spawn,
     });
-    expect(argOf(sd.seen.argv, "-p")).toBe(
+    expect(sd.seen.prompt).toBe(
       "Repaint this house's exterior paint: the siding in Positive Red, color #AD2C34; the front door in Naval, color #2F3D4C. Keep everything else in the photo exactly the same, including the lighting.",
     );
     expect(sd.seen.maskWhite).toBeGreaterThan(320 * 150); // the wall (which holds the door)
@@ -194,23 +188,23 @@ describe("aiRepaint", () => {
     expect(at(100, 200)[0]).toBeGreaterThan(at(100, 200)[2]); // the wall is red
   });
 
-  test("an empty mask or a bad color is refused before sd-cli starts", async () => {
-    const sd = fakeSd();
-    const base = { engine: "sd-cli", models, photo: await photoPng(), surfaceLabel: "siding", outPath: join(tmp(), "o.png"), spawn: sd.spawn };
+  test("an empty mask or a bad color is refused before anything is drawn", async () => {
+    const sd = fakeImage();
+    const base = { generate: sd.generate, photo: await photoPng(), surfaceLabel: "siding", outPath: join(tmp(), "o.png") };
     await expect(aiRepaint({ ...base, mask: await rectMask([]), colorHex: "#ad2c34" })).rejects.toThrow(/siding mask is empty/);
     await expect(aiRepaint({ ...base, mask: await rectMask(WALL), colorHex: "red" })).rejects.toThrow(/#rrggbb/);
     await expect(aiRepaint({ ...base, mask: await rectMask(WALL), colorHex: "#ad2c34", surfaceLabel: " " })).rejects.toThrow(/surfaceLabel/);
-    expect(sd.calls).toHaveLength(0);
+    await expect(aiRepaint({ ...base, generate: undefined, mask: await rectMask(WALL), colorHex: "#ad2c34" })).rejects.toThrow(/generate/);
+    expect(sd.calls).toBe(0);
   });
 
-  test("cancel mid-sampling: sd-cli killed, AbortError, no output, work folder removed", async () => {
+  test("cancel mid-drawing: the drawing stops, AbortError, no output, work folder removed", async () => {
     const work = tmp();
     const out = join(tmp(), "o.png");
-    const sd = fakeSd(PROGRESS_CHUNKS, { pauseAfter: 6 });
+    const sd = fakeImage({ pauseAt: 3 });
     const ac = new AbortController();
     const run = aiRepaint({
-      engine: "sd-cli",
-      models,
+      generate: sd.generate,
       photo: await photoPng(),
       mask: await rectMask(WALL),
       colorHex: "#ad2c34",
@@ -219,13 +213,12 @@ describe("aiRepaint", () => {
       size: { width: 320, height: 240 },
       workDir: work,
       signal: ac.signal,
-      spawn: sd.spawn,
       onProgress: (e) => {
         if (e.step === 2) ac.abort();
       },
     });
     await expect(run).rejects.toMatchObject({ name: "AbortError" });
-    expect(sd.calls[0].proc.killedWith).toBe("SIGKILL");
+    expect(sd.cancelled).toBe(true);
     expect(readdirSync(work)).toEqual([]);
     expect(readdirSync(join(out, ".."))).toEqual([]);
   });
@@ -233,39 +226,24 @@ describe("aiRepaint", () => {
 
 describe("the lock covers only what the AI repainted (RESEARCH §10: the pink trim)", () => {
   // The fake AI paints the wall but leaves a white trim band (photo x 100–140) as it was.
-  function fakeSdKeepingTrim() {
-    return fakeSpawn({
-      chunks: PROGRESS_CHUNKS,
-      onStart: async (argv) => {
-        const w = Number(argOf(argv, "-W"));
-        const h = Number(argOf(argv, "-H"));
-        const init = await sharp(argOf(argv, "-i")).raw().toBuffer({ resolveWithObject: true });
-        const mask = await sharp(argOf(argv, "--mask")).greyscale().raw().toBuffer();
-        const out = Buffer.alloc(w * h * 3);
-        for (let i = 0; i < w * h; i++) {
-          const x = (i % w) * (W / w);
-          const keep = mask[i] <= 127 || (x >= 100 && x < 140);
-          const shade = (init.data[i * 3] + init.data[i * 3 + 1] + init.data[i * 3 + 2]) / (3 * 235);
-          const c = keep ? [0, 1, 2].map((k) => init.data[i * 3 + k]) : [136 * shade, 72 * shade, 66 * shade];
-          out.set(c.map((v) => Math.max(0, Math.min(255, Math.round(v)))), i * 3);
-        }
-        await sharp(out, { raw: { width: w, height: h, channels: 3 } }).png().toFile(argOf(argv, "-o"));
+  const keepingTrim = () =>
+    fakeImage({
+      paint: (init, mask, i, x, shade) => {
+        const keep = mask[i] <= 127 || (x >= 100 && x < 140);
+        return keep ? [0, 1, 2].map((k) => init.data[i * 3 + k]) : [136 * shade, 72 * shade, 66 * shade];
       },
     });
-  }
 
   async function run(compose) {
     const dir = tmp();
     const r = await aiRepaint({
-      engine: { bin: "C:/engine/sd-cli.exe" },
-      models,
+      generate: keepingTrim().generate,
       photo: await photoPng(),
       mask: await rectMask(WALL),
       colorHex: "#AD2C34",
       surfaceLabel: "siding",
       outPath: join(dir, "out.png"),
       size: { width: 320, height: 240 },
-      spawn: fakeSdKeepingTrim().spawn,
       ...(compose ? { compose } : {}),
     });
     const out = await readRgb(r.path);
@@ -289,11 +267,9 @@ describe("the lock covers only what the AI repainted (RESEARCH §10: the pink tr
 describe("a surface whose paint now is known (the light on it)", () => {
   test("the lock paints the new color in the light the paint now gives; its ΔE is to that", async () => {
     const photo = await photoPng();
-    const sd = fakeSd();
     // the wall is photographed ~#e6e3dc where lit: say it is white paint now — a dimmer, warmer light
     const r = await aiRepaint({
-      engine: "sd-cli",
-      models,
+      generate: fakeImage().generate,
       photo,
       mask: await rectMask(WALL),
       colorHex: "#AD2C34",
@@ -302,7 +278,6 @@ describe("a surface whose paint now is known (the light on it)", () => {
       currentHex: "#ffffff",
       outPath: join(tmp(), "o.png"),
       size: { width: 320, height: 240 },
-      spawn: sd.spawn,
     });
     const s = r.surfaces[0];
     expect(s.gain.every((g) => g < 1)).toBe(true);
@@ -312,15 +287,13 @@ describe("a surface whose paint now is known (the light on it)", () => {
     expect(s.deltaE).toBeLessThan(0.5);
     // the same run without it locks to the chip
     const plain = await aiRepaint({
-      engine: "sd-cli",
-      models,
+      generate: fakeImage().generate,
       photo,
       mask: await rectMask(WALL),
       colorHex: "#AD2C34",
       surfaceLabel: "siding",
       outPath: join(tmp(), "p.png"),
       size: { width: 320, height: 240 },
-      spawn: fakeSd().spawn,
     });
     expect(plain.surfaces[0]).toMatchObject({ litHex: "#ad2c34", litMedian: "#ad2c34", gain: [1, 1, 1] });
   });

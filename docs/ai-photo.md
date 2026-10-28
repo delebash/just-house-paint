@@ -11,22 +11,35 @@ preview"). The **Light** and **Texture** sliders don't change the AI photo.
 
 ## Installing it
 
-The first time, **AI photo** offers to download the engine (stable-diffusion.cpp) and the model, once:
-**Install (9.0 GB)** on Windows with an NVIDIA card, about 8.2 GB on most other computers. It checks first that the
-drive of the app's data folder has room — 9.5 GB on Windows with an NVIDIA card, about 8.5 GB on most others.
+The AI photo runs on the AI engine stable-diffusion.cpp with the model FLUX.2 [klein] 4B — the same engines the
+family's apps share, kept in the AI cache with the app's other AI models. The first time, **AI photo** says what it
+needs, one step at a time, each with its progress bar and **Cancel**:
 
-How fast it draws depends on the graphics card, and the card says so before you install:
+1. "The AI photo runs on stable-diffusion.cpp, which isn't installed on this computer yet" — **Install the engine
+   (865 MB)** on Windows with an NVIDIA card (a few dozen MB on most other computers).
+2. "The AI photo needs its model, FLUX.2 [klein] 4B, which isn't on this computer yet" — **Download the model
+   (8.1 GB)**, once.
 
-- **Windows with an NVIDIA card** (8 GB of its own memory) — about 20 seconds a picture.
-- **Other graphics cards** — AMD, Intel, Apple silicon, and NVIDIA on Linux — run a slower build: "on this
-  computer's graphics card one AI photo may take several minutes".
-- **No graphics card it can use** — "one AI photo would take about ten minutes".
+Before each download the app checks that the drive holding the AI engines and models has room for it, and says how
+much it needs and has if not. Nothing downloads until you press the button. Both are also on **AI Settings →
+Images**, which shows the engine and the model with **Remove** and **Delete**.
 
-It needs about 8 GB of the graphics card's own memory, which the app doesn't check. It does check the computer's
-memory — 12 GB with a graphics card of its own, 16 GB on a Mac or with the processor's own graphics — and with less
-the card says it "may be very slow, or not finish"; **Install** stays on. Where the engine has no build for the
-computer's system at all, or the system is too old (macOS before 26, a Linux before Ubuntu 24.04), the card says so
-and offers nothing to install.
+Beside the step, the model's chip says how it should run on this computer — the same chip the chat models have on
+**Providers & models**:
+
+- **Fits** or **Won't fit** — from the memory it takes: about 6.6 GB of the graphics card's own memory and 12 GB of
+  the computer's; on a computer with no graphics card it can use, all of it from the computer's. With too little,
+  it says the estimate finds too little memory; you can still try.
+- **~fast** … **~very slow** — the speed expected here: about 20 seconds a picture on Windows with an NVIDIA card,
+  about ten minutes with no graphics card it can use. On other graphics cards the app knows no figure yet and shows
+  none. After your first AI photo, the time this computer really took replaces the estimate (no "~").
+
+Where the engine has no build for the computer's system at all, or the system is too old (macOS before 26, a Linux
+before Ubuntu 24.04), it says so and offers nothing to install.
+
+**Updating from version 0.1.3 or earlier:** the model you already downloaded is moved into the AI cache when the app
+starts — nothing to download again. The engine needs one install of its newer version (**Install the engine**); the
+older one is removed when it's done.
 
 ## Making one
 
@@ -36,7 +49,8 @@ yet** (draw one with the brush or a box), or **AI photo: Give a part a color fir
 card it takes about 20 seconds; the first one after the app starts takes longer while the model loads (longer still
 when the app's data is on a hard disk). Its progress shows under the house's name while it runs, with **Cancel** —
 also when you open the house again, or reload the window, while it runs. Before it starts, the app frees the
-graphics card — the part finder and a local AI model let go of it, and load again when next needed.
+graphics card — the part finder lets go of it, and a local AI model is unloaded if the card needs the room; each
+loads again when next needed.
 
 When it is done, the picture opens — if the house page is still open; otherwise it waits on the **Designs** tab —
 with **Save image**, how far the painted parts are from the paint chips (**ΔE … from the chips**: the part furthest
@@ -57,5 +71,7 @@ photo waits. The app says the card is busy — try again when it's done. They ta
 where the part finder runs on the processor. Color schemes from an online provider never wait.
 
 The size the AI draws at (**Working size**), its prompts and how its picture is put back on your photo are in
-**App Settings → General** and **Advanced** (see [App Settings](settings.md)). **App Settings → Storage** shows how
-much space it takes; **Remove** there frees it (your AI photos stay) and Install brings it back.
+**App Settings → General** and **Advanced** (see [App Settings](settings.md)). How it draws — the model, the steps,
+the guidance, the seed — is its preset, **Draw the AI photo** under **AI Settings → Routing by feature** (see
+[The AI features](ai-features.md)). **AI Settings → Images** removes the engine and deletes the model (your AI
+photos stay); **App Settings → Storage** counts them with the AI cache.

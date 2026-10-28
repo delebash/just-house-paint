@@ -1,99 +1,0 @@
-[V] version: stable-diffusion.cpp version unknown, commit f0aac52 --- main.cpp:698
-ggml_cuda_init: found 1 CUDA devices (Total VRAM: 8191 MiB):
-  Device 0: NVIDIA GeForce RTX 2070 SUPER, compute capability 7.5, VMM: yes, VRAM: 8191 MiB
-load_backend: loaded CUDA backend from C:\Users\danel\AppData\Local\Temp\claude\E--Dev-Web\e638ccef-5272-43ac-aac9-5a06611adc13\scratchpad\hp-staging\real\engine\master-973-f0aac52\cuda12\ggml-cuda.dll
-load_backend: loaded CPU backend from C:\Users\danel\AppData\Local\Temp\claude\E--Dev-Web\e638ccef-5272-43ac-aac9-5a06611adc13\scratchpad\hp-staging\real\engine\master-973-f0aac52\cuda12\ggml-cpu-haswell.dll
-[V] System Info: 
-   SSE3 = 1 |    SSSE3 = 1 |    AVX = 1 |    AVX2 = 1 |    F16C = 1 |    FMA = 1 |    BMI2 = 1 |    OPENMP = 1 |    REPACK = 1 |  --- main.cpp:699
-[V] using 8 threads for model loading --- model_loader.cpp:190
-[I] loading diffusion model from 'E:/Dev/Web/just-house-paint/data/probe/models/flux2-klein/flux-2-klein-4b-Q8_0.gguf' --- diffusion_engine.cpp:738
-[I] load E:/Dev/Web/just-house-paint/data/probe/models/flux2-klein/flux-2-klein-4b-Q8_0.gguf using gguf format --- model_loader.cpp:216
-[V] init from 'E:/Dev/Web/just-house-paint/data/probe/models/flux2-klein/flux-2-klein-4b-Q8_0.gguf' --- model_loader.cpp:262
-[V] GGUF v3, tensor_count=149, metadata_kv_count=0 --- gguf_reader_ext.h:220
-[I] loading llm from 'E:/Dev/Web/just-house-paint/data/probe/models/flux2-klein/Qwen3-4B-Q8_0.gguf' --- diffusion_engine.cpp:795
-[I] load E:/Dev/Web/just-house-paint/data/probe/models/flux2-klein/Qwen3-4B-Q8_0.gguf using gguf format --- model_loader.cpp:216
-[V] init from 'E:/Dev/Web/just-house-paint/data/probe/models/flux2-klein/Qwen3-4B-Q8_0.gguf' --- model_loader.cpp:262
-[V] GGUF v3, tensor_count=398, metadata_kv_count=32 --- gguf_reader_ext.h:220
-[I] loading vae from 'E:/Dev/Web/just-house-paint/data/probe/models/flux2-klein/flux2-klein-vae.safetensors' --- diffusion_engine.cpp:809
-[I] load E:/Dev/Web/just-house-paint/data/probe/models/flux2-klein/flux2-klein-vae.safetensors using safetensors format --- model_loader.cpp:222
-[V] init from 'E:/Dev/Web/just-house-paint/data/probe/models/flux2-klein/flux2-klein-vae.safetensors', prefix = 'vae.' --- model_loader.cpp:290
-[I] Version: Flux.2 klein  --- diffusion_engine.cpp:1016
-[V] Found 2 backend devices: --- ggml_extend_backend.cpp:703
-[V] #0: CUDA0 --- ggml_extend_backend.cpp:706
-[V] #1: CPU --- ggml_extend_backend.cpp:706
-[V] Initializing backend: CUDA0 --- ggml_extend_backend.cpp:409
-[V] Initializing backend: CPU --- ggml_extend_backend.cpp:409
-[V] using 8 threads for model loading --- model_loader.cpp:190
-[I] Weight type stat:                      f32: 145  |    q8_0: 333  |     i32: 1    |    bf16: 319   --- diffusion_engine.cpp:1641
-[I] Conditioner weight type stat:          f32: 145  |    q8_0: 253   --- diffusion_engine.cpp:1642
-[I] Diffusion model weight type stat:     q8_0: 80   |    bf16: 69    --- diffusion_engine.cpp:1643
-[I] VAE weight type stat:                  i32: 1    |    bf16: 250   --- diffusion_engine.cpp:1644
-[V] llm: num_layers = 36, vocab_size = 151936, hidden_size = 2560, intermediate_size = 9728 --- llm.hpp:446
-[V] flux: depth = 5, depth_single_blocks = 20, guidance_embed = false, context_in_dim = 7680, hidden_size = 3072, num_heads = 24 --- flux.hpp:191
-[I] using VAE for encoding / decoding --- model_builders.cpp:657
-[I] vae decoder: ch = 128 --- auto_encoder_kl.hpp:529
-[I] flash attention auto: CUDA0 -> on (CUDA MMA) --- flash_attn.cpp:70
-[I] conv2d direct auto: CUDA0 -> on (implicit GEMM) --- conv_direct.cpp:87
-[I] conv3d direct auto: CUDA0 -> on (implicit GEMM) --- conv_direct.cpp:87
-[V] validating model metadata --- diffusion_engine.cpp:1320
-[V] model metadata validated; weights will be prepared lazily --- diffusion_engine.cpp:1390
-[I] total params memory size = 8338.27MB (VRAM 0.00MB, RAM 8338.27MB): text_encoders 4076.43MB(RAM), diffusion_model 4101.40MB(RAM), vae 160.43MB(RAM), controlnet 0.00MB(N/A), extensions 0.00MB(N/A) --- diffusion_engine.cpp:1451
-[I] running in Flux FLOW mode --- diffusion_engine.cpp:1587
-[I] preprocess init[0]: 1024x768 crop=(0,0,1024,768) resize=1024x768 pad=(0,0) output=1024x768 filter=auto(0) antialias=false --- image_preprocess.cpp:268
-[I] preprocess mask[0]: 1024x768 crop=(0,0,1024,768) resize=1024x768 pad=(0,0) output=1024x768 filter=auto(1) antialias=false --- image_preprocess.cpp:268
-[I] preprocess ref[0]: 1024x768 crop=(0,0,1024,768) resize=1024x768 pad=(0,0) output=1024x768 filter=auto(0) antialias=false --- image_preprocess.cpp:268
-[I] generate_image 1024x768 --- image.cpp:814
-[V] using 8 threads for model loading --- model_loader.cpp:190
-[I] Using 'flux2' preset for reference images --- diffusion_engine.cpp:3250
-[I] get_sigmas with Flux2 scheduler --- denoiser.hpp:1186
-[V] Flux2 scheduler: image_seq_len=3072, steps=4, mu=2.204 --- denoiser.hpp:882
-[I] sampling using Euler method --- request.cpp:422
-[I] IMG2IMG --- image.cpp:133
-[I] vae build cached graph cut plan done (taking 0 ms) --- ggml_graph_cut.cpp:1034
-[V] loading 108/251 tensors from E:/Dev/Web/just-house-paint/data/probe/models/flux2-klein/flux2-klein-vae.safetensors --- model_loader.cpp:1129
-  |#                                                 | 1/108 - 0.00MB/s[K  |##################################################| 108/108 - 315.68MB/s[K
-[I] loading tensors completed, taking 0.21s (read: 0.02s, memcpy: 0.00s, convert: 0.02s, copy_to_backend: 0.00s) --- model_loader.cpp:1401
-[V] model manager prepared params backend buffers ( 65.72 MB, 108 tensors, 1 blocks, RAM) on CUDA_Host --- model_manager.cpp:494
-[V] model manager staged compute params ( 65.72 MB, 108 tensors, 1 blocks) to CUDA0, taking 0.01s --- model_manager.cpp:623
-[V] vae compute buffer size: 1161.88 MB(VRAM) on CUDA0 (peak across 1 segment) --- ggml_runner.cpp:1022
-[V] computing vae encode graph completed, taking 0.72s --- vae.hpp:310
-[I] EDIT mode --- image.cpp:274
-[V] auto resize ref images --- image.cpp:284
-[V] resize vae ref image 0 from 768x1024 to 768x1024 --- image.cpp:313
-[V] model manager staged compute params ( 65.72 MB, 108 tensors, 1 blocks) to CUDA0, taking 0.01s --- model_manager.cpp:623
-[V] vae compute buffer size: 1161.88 MB(VRAM) on CUDA0 (peak across 1 segment) --- ggml_runner.cpp:1022
-[V] computing vae encode graph completed, taking 0.45s --- vae.hpp:310
-[I] encode_first_stage completed, taking 1.40s --- image.cpp:398
-[V] parse '<|im_start|>user\nRepaint only the siding of this house in Positive Red, color #AD2C34 exterior paint. Keep everything else in the photo exactly the same, including the lighting.<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n' to [['<|im_start|>user\n', 1], ['Repaint only the siding of this house in Positive Red, color #AD2C34 exterior paint. Keep everything else in the photo exactly the same, including the lighting.', 1], ['<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n', 1], ] --- conditioner.hpp:2182
-[V] split prompt "<|im_start|>user\n" to 3 tokens ["<|im_start|>", "user", "Ċ", ] --- bpe_tokenizer.cpp:245
-[V] split prompt "Repaint only the siding of this house in Positive Red, color #AD2C34 exterior paint. Keep everything else in the photo exactly the same, including the lighting." to 36 tokens ["Rep", "aint", "Ġonly", "Ġthe", "Ġsiding", "Ġof", "Ġthis", "Ġhouse", "Ġin", "ĠPositive", "ĠRed", ",", "Ġcolor", "Ġ#", "AD", "2", "C", "3", "4", "Ġexterior", "Ġpaint", ".", "ĠKeep", "Ġeverything", "Ġelse", "Ġin", "Ġthe", "Ġphoto", "Ġexactly", "Ġthe", "Ġsame", ",", "Ġincluding", "Ġthe", "Ġlighting", ".", ] --- bpe_tokenizer.cpp:245
-[V] split prompt "<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n" to 9 tokens ["<|im_end|>", "Ċ", "<|im_start|>", "assistant", "Ċ", "<think>", "ĊĊ", "</think>", "ĊĊ", ] --- bpe_tokenizer.cpp:245
-[I] qwen3 build cached graph cut plan done (taking 1 ms) --- ggml_graph_cut.cpp:1034
-[V] loading 298/398 tensors from E:/Dev/Web/just-house-paint/data/probe/models/flux2-klein/Qwen3-4B-Q8_0.gguf --- model_loader.cpp:1129
-  |#############                                     | 75/298 - 2.36GB/s[K  |########################                          | 140/298 - 2.63GB/s[K  |###################################               | 206/298 - 2.73GB/s[K  |##############################################    | 272/298 - 2.77GB/s[K  |##################################################| 298/298 - 2.97GB/s[K
-[I] loading tensors completed, taking 1.04s (read: 0.94s, memcpy: 0.00s, convert: 0.00s, copy_to_backend: 0.00s) --- model_loader.cpp:1401
-[V] model manager prepared params backend buffers (3155.85 MB, 298 tensors, 1 blocks, RAM) on CUDA_Host --- model_manager.cpp:494
-[V] model manager staged compute params (3155.85 MB, 298 tensors, 4 blocks) to CUDA0, taking 0.34s --- model_manager.cpp:623
-[V] qwen3 compute buffer size: 59.00 MB(VRAM) on CUDA0 (peak across 1 segment) --- ggml_runner.cpp:1022
-[V] computing condition graph completed, taking 1770 ms --- conditioner.hpp:3245
-[I] get_learned_condition completed, taking 1.77s --- image.cpp:529
-[I] generating image: 1/1 - seed 42 --- image.cpp:866
-[I] flux build cached graph cut plan done (taking 2 ms) --- ggml_graph_cut.cpp:1034
-[V] loading 149/149 tensors from E:/Dev/Web/just-house-paint/data/probe/models/flux2-klein/flux-2-klein-4b-Q8_0.gguf --- model_loader.cpp:1129
-  |#                                                 | 1/149 - 0.00MB/s[K  |#############                                     | 36/149 - 1.89GB/s[K  |#######################                           | 67/149 - 2.60GB/s[K  |############################                      | 82/149 - 2.20GB/s[K  |###################################               | 103/149 - 2.60GB/s[K  |###########################################       | 126/149 - 2.71GB/s[K  |################################################# | 146/149 - 2.75GB/s[K  |##################################################| 149/149 - 2.79GB/s[K
-[I] loading tensors completed, taking 1.44s (read: 1.32s, memcpy: 0.00s, convert: 0.00s, copy_to_backend: 0.00s) --- model_loader.cpp:1401
-[V] model manager prepared params backend buffers (4101.40 MB, 149 tensors, 1 blocks, RAM) on CUDA_Host --- model_manager.cpp:494
-[V] model manager staged compute params (4101.40 MB, 149 tensors, 5 blocks) to CUDA0, taking 0.44s --- model_manager.cpp:623
-[V] flux compute buffer size: 1524.50 MB(VRAM) on CUDA0 (peak across 1 segment) --- ggml_runner.cpp:1022
-  |============>                                     | 1/4 - 6.55s/it[K[V] flux using 27 segments --- ggml_runner.cpp:879
-[V] flux compute buffer size: 1488.58 MB(VRAM) on CUDA0 (peak across 27 segments) --- ggml_runner.cpp:1022
-  |=========================>                        | 2/4 - 3.25s/it[K[V] flux using 1 segment --- ggml_runner.cpp:879
-[V] model manager staged compute params (2710.15 MB, 99 tensors, 3 blocks) to CUDA0, taking 0.28s --- model_manager.cpp:623
-[W] model manager memory on CUDA0: reported free 0.00 MB / total 8191.69 MB, tracked weights 4101.40 MB / other runtime 0.00 MB / current runtime 0.00 MB --- model_manager.cpp:1753
-[E] flux segment 1/1 (graph) failed during workspace capacity check --- ggml_runner.cpp:899
-[W] model manager cannot make enough memory available on CUDA0: need 2036.50 MB device / 1524.50 MB budget, available 0.00 MB device / unlimited budget --- model_manager.cpp:1983
-[E] diffusion model compute failed --- diffusion_engine.cpp:2744
-[E] Diffusion model sampling failed --- diffusion_engine.cpp:2965
-[E] sampling for image 1/1 failed after 10.17s --- image.cpp:907
-[E] generate failed --- main.cpp:940
-[V] model manager released params backend buffers (7322.97 MB, 555 tensors, 3 blocks, RAM) from CUDA_Host --- model_manager.cpp:1264

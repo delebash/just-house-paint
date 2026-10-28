@@ -18,7 +18,21 @@ STATE:  OPEN — the kit's plan `../just-core/docs/plans/2026-10-24-engines-the-
         kit's (`previous_defaults.js` keeps only the earlier fingerprints; the test holds every setting's), the
         text helpers are the kit's `platform/text.js` (`shared/text.js` gone), a reset's and a restore's folder
         renames retry while Windows holds a file (the kit's `renameHeld`), and the family's page looks come from
-        the kit's `common/app.css` (`app.scss` keeps the swatch and the houses looks). Next: round B.
+        the kit's `common/app.css` (`app.scss` keeps the swatch and the houses looks). Round B DONE here
+        2026-10-27 (the kit's plan, "Round B decisions"): the AI photo is the feature `aiphoto.render` (kind image)
+        on its preset `p_aiphoto` (the old sd-cli recipe, now editable) and the kit's sd.cpp runtime with
+        FLUX.2 [klein] 4B as a `runtimeModels` row (`seed_presets.js`); `aiphoto/edit.js` draws through an injected
+        `generate` (the kit's `runImageFeature`) and keeps the paste-back and the lock; `aiphoto/engine.js`,
+        `aiphoto/sdcli.js`, the AI photo's install/status/removal routes, `stopLocalModel` and its Storage row are
+        gone; the dialog shows the kit's banner (`LuEngineNeeded`); an older install's model moves into the kit's
+        cache at start and its old engine build into the kit's folder (`aiphoto/migrate.js` — the kit's
+        `adoptModel`; the pinned build's install sweeps the old one). Kept as app settings, with the reason in the
+        kit's plan: `aiphoto.templates`, `aiphoto.compose`, `aiphoto.workingPixels`, `aiphoto.sharedGpuNoteMb`.
+        Kept until round C (the finder isn't on the kit's arbiter yet): `jobs.js` `assertGpuFree` and the finder's
+        `releaseGpu()` before a render.
+        OPEN from round B: the real render through the kit on this PC (`HP_REAL_SD=1 HP_REAL_CACHE=…`
+        `tests/aiphoto/real.test.js` — the GPU was held by another session's renders); the screens checked by eye in
+        the running app (the banner, the Images tab, the chip). Next: round C.
 
 ## Direction — decided 2026-10-17
 STATE:  DECIDED 2026-10-17 (the first session). The user's words, verbatim:

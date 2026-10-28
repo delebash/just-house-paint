@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // What the house-paint routes share, on the app state (app_state.js): the job registry, the other
 // windows' changes (the kit's ChangeCounter), the houses' outline versions (outlines.js), the part
-// finder (SAM 3), the AI photo (stable-diffusion.cpp), the brands' public lists (the kit's fetch), the
+// finder (SAM 3), the AI photo (the kit's stable-diffusion.cpp runtime), the brands' public lists (the kit's fetch), the
 // downloads (the kit's streamDownload), the AI run path (the kit's runAction), and readers of the
 // settings they use — read on every call, so a change in Settings applies to the next run without
 // a restart. Tests pass their own `finder`, `aiphoto`, `fetch`, `download` or `run`.
@@ -12,7 +12,6 @@ import { ChangeCounter } from "@delebash/core/platform";
 import * as http from "@delebash/core/platform/http";
 import { streamDownload } from "@delebash/core/runner/download";
 import * as hardware from "@delebash/core/runner/hardware";
-import * as lifecycle from "@delebash/core/runner/lifecycle";
 import { hfDownloadHeaders } from "@delebash/core/runner/models";
 import { createAiPhoto, sharedGpuNote, surfaceWords } from "./aiphoto_service.js";
 import { SETTING_DEFAULTS } from "./database/seed.js";
@@ -21,10 +20,9 @@ import { bestDmlAdapter, createFinder, DEFAULT_PROVIDERS } from "./finder.js";
 import { JobRegistry } from "./jobs.js";
 import { Outlines } from "./outlines.js";
 
-/** Where the engines and their models live, in the data folder (an uninstall takes them along). */
+/** Where the part finder's model lives, in the data folder (an uninstall takes it along) — the AI photo's engine and
+ *  model are the kit's, in its cache (aiphoto/migrate.js moved an older install's there). */
 export const finderModelDir = (dataDir) => path.join(dataDir, "models", "sam3");
-export const aiphotoModelDir = (dataDir) => path.join(dataDir, "models", "flux2-klein");
-export const aiphotoEngineDir = (dataDir) => path.join(dataDir, "engines", "sdcpp");
 
 const MB = 1e6;
 
@@ -32,18 +30,8 @@ const MB = 1e6;
 const kitDownload = (url, dest, opts = {}) =>
   streamDownload(url, dest, { ...opts, headers: url.startsWith("https://huggingface.co/") ? hfDownloadHeaders() : null });
 
-/** Stop the local AI model (best effort) — the AI photo needs the graphics card's memory. */
-async function stopLocalModel() {
-  try {
-    await lifecycle.getService().stop();
-  } catch {
-    // nothing running, or the runner never started — either way the memory is free
-  }
-}
-
 export function createServices({ db, dataDir }, overrides = {}) {
   const setting = (key) => getSetting(db, key) ?? SETTING_DEFAULTS[key];
-  const detectGpu = () => hardware.detect();
 
   const finder =
     overrides.finder ??
@@ -67,11 +55,7 @@ export function createServices({ db, dataDir }, overrides = {}) {
     overrides.aiphoto ??
     createAiPhoto({
       dataDir,
-      engineDir: aiphotoEngineDir(dataDir),
-      modelDir: aiphotoModelDir(dataDir),
       finder,
-      detectGpu,
-      stopLocalModel,
       settings: {
         // a number: the target pixel count (aiphoto/edit.js sizes the photo to it)
         workingSize: () => setting("aiphoto.workingPixels"),

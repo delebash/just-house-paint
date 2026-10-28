@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
-// The two local engines: the part finder (SAM 3) and the AI photo (stable-diffusion.cpp) — whether
-// each is installed, installing it (a job: ~3.4 GB / ~9 GB of downloads), the AI photo of a house
-// (a job), and the AI photos kept.
+// The part finder (SAM 3) — whether it is installed, installing it (a job: ~3.4 GB of downloads), removing it — and
+// the AI photo of a house (a job) and the AI photos kept. The AI photo's engine and model are the kit's: its
+// /v1/ai/runtimes routes install, download and remove them (the kit's engines plan, H1).
 
-import { existsSync, readFileSync, statSync } from "node:fs";
-import { statfs } from "node:fs/promises";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { assertGpuFree } from "../jobs.js";
 import { Hono, input } from "@delebash/core/platform";
+import { freeBytes, lacksRoom } from "@delebash/core/platform/disk_room";
 import { ApiError, notFound } from "@delebash/core/platform/errors";
 import { designNotFound, houseNotFound } from "./refusals.js";
 import { addRender, deleteRender, getDesign, getHouse, getRender, listParts, listRenders } from "../database/houses.js";
@@ -18,70 +18,26 @@ import { getState } from "../app_state.js";
 import { MODEL_FILES as FINDER_FILES } from "../segment/models.js";
 import { finderModelDir } from "../services.js";
 
-/** Room a drive keeps beyond what an install puts on it (the database, the logs) — as the kit's restore keeps. */
-const ROOM_MARGIN = 256 * 1024 * 1024;
-
-/** Free bytes for this user on the drive holding `dir` — fs.statfs's bavail × bsize
- *  (nodejs.org/api/fs.html#fspromisesstatfspath-options), asking the nearest folder that exists (an
- *  engine's own isn't made yet); Infinity when the drive doesn't answer (the install's own errors stand). */
-export async function freeBytes(dir) {
-  let d = path.resolve(dir);
-  for (;;) {
-    try {
-      const s = await statfs(d);
-      return s.bavail * s.bsize;
-    } catch (e) {
-      const up = path.dirname(d);
-      if (e?.code !== "ENOENT" || up === d) return Number.POSITIVE_INFINITY;
-      d = up;
-    }
-  }
-}
-
 const gb = (n) => `${(n / 1e9).toFixed(1)} GB`;
-
-/** The room an unfinished download already takes on the drive: the kit's streamDownload preallocates `<file>.part` at
- *  its full size (fh.truncate) and keeps it for resume. Windows allocates that whole (measured 2026-10-20: a 2 GiB
- *  truncate took 2.000 GiB of free space), so its size; macOS and Linux leave it sparse, so only the blocks written
- *  (stat(2)'s st_blocks, 512-byte units — the fifteenth review: the size counted room a sparse file never took). */
-export function partRoom(st, platform = process.platform) {
-  return platform === "win32" ? st.size : Math.min(st.size, (st.blocks ?? 0) * 512);
-}
-
-/** The bytes the install's own unfinished downloads already hold — `<file>.part` beside each of `files`, the files
- *  it fetches (never a leftover of another file or build) — they need no more room (a resumed install was refused
- *  507 — the fourteenth review). */
-export function partBytes(files, platform = process.platform) {
-  let n = 0;
-  for (const f of files) {
-    const st = statSync(`${f}.part`, { throwIfNoEntry: false });
-    if (st?.isFile()) n += partRoom(st, platform);
-  }
-  return n;
-}
 
 /** `ctx`: { db, dataDir, jobs, finder, aiphoto, download, sharedGpu?, freeBytes? } — `download` is the
  * kit's streamDownload; `sharedGpu()` what else holds the graphics card (services.js); `freeBytes(dir)`
- * a test's drive. */
+ * a test's drive (the kit's disk_room.js freeBytes). */
 export function router(ctx = getState()) {
   const app = new Hono();
-  // the engines being removed (Settings → Storage): nothing installs into, or runs from, a folder going away
+  // the part finder being removed (Settings → Storage): nothing installs into, or runs from, a folder going away
   const removing = (ctx.enginesRemoving ??= new Set());
   const notWhileRemoved = (engine, name) => {
     if (removing.has(engine)) throw new ApiError(409, "engine-busy", `${name} is being removed`, "try again when it's done");
   };
   /** An install that wouldn't fit the drive of the data folder is refused before anything downloads (a full
-   *  disk mid-download left a cut-off file and a raw ENOSPC — 3.3 GB / 9.6 GB, the thirteenth review). */
+   *  disk mid-download left a cut-off file and a raw ENOSPC — 3.3 GB / 9.6 GB, the thirteenth review) — the kit's
+   *  lacksRoom, what an unfinished download already holds counted. */
   const mustFit = async (name, bytes, files = []) => {
-    // what an unfinished download already holds on the drive needs no more room
-    bytes = Math.max(0, bytes - partBytes(files));
-    if (!bytes) return;
     const free = await (ctx.freeBytes || freeBytes)(ctx.dataDir);
-    if (bytes + ROOM_MARGIN > free) {
-      throw new ApiError(507, "disk-full", "Not enough room on the drive", `${name} needs ${gb(bytes + ROOM_MARGIN)} on the drive of the app's data folder; it has ${gb(free)} free — make room, or move the data folder to a bigger drive`, {
-        needBytes: bytes + ROOM_MARGIN,
-        freeBytes: free,
-      });
+    const short = lacksRoom({ dir: ctx.dataDir, bytes, files, free: () => free });
+    if (short) {
+      throw new ApiError(507, "disk-full", "Not enough room on the drive", `${name} needs ${gb(short.needBytes)} on the drive of the app's data folder; it has ${gb(short.freeBytes)} free — make room, or move the data folder to a bigger drive`, short);
     }
   };
 
@@ -132,38 +88,9 @@ export function router(ctx = getState()) {
     return c.body(null, 204);
   });
 
-  app.get("/v1/aiphoto/status", async (c) => c.json(await ctx.aiphoto.status()));
-
-  // Remove the AI photo's engine and models (Settings → Storage) — not while it draws or installs.
-  app.delete("/v1/aiphoto/install", async (c) => {
-    if (ctx.jobs.busy(["aiphoto", "install-aiphoto"])) {
-      throw new ApiError(409, "engine-busy", "The AI photo is busy", "wait until it has finished drawing or installing");
-    }
-    removing.add("aiphoto");
-    try {
-      await ctx.aiphoto.uninstall();
-    } finally {
-      removing.delete("aiphoto");
-    }
-    return c.body(null, 204);
-  });
-
-  app.post("/v1/aiphoto/install", async (c) => {
-    notWhileRemoved("aiphoto", "The AI photo");
-    // nothing downloads that couldn't run here (the system it needs), or wouldn't fit
-    const st = await ctx.aiphoto.status();
-    if (st.available === false) {
-      throw new ApiError(409, "cant-run-here", "The AI photo can't run on this computer", st.need?.detail || "this computer can't run its engine", { reason: st.need?.reason ?? null });
-    }
-    await mustFit("The AI photo", st.diskBytes ?? st.downloadBytes, (await ctx.aiphoto.downloadPaths?.()) ?? []);
-    const job = ctx.jobs.start({ kind: "install-aiphoto", key: "", failTitle: "The AI photo didn't install" }, ({ signal, progress }) => ctx.aiphoto.install({ download: ctx.download, signal, progress }));
-    return c.json(job, 202);
-  });
-
   app.post("/v1/houses/:id/aiphoto", input({ params: IdParams, body: AiPhotoIn }), (c) => {
     const house = getHouse(ctx.db, c.req.valid("param").id);
     if (!house) throw houseNotFound(c.req.valid("param").id);
-    notWhileRemoved("aiphoto", "The AI photo");
     const { designId, colors } = c.req.valid("json");
     let chosen = colors || {};
     if (designId) {

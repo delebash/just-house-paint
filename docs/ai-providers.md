@@ -1,9 +1,10 @@
 # Set up the AI
 
 Open **AI Settings** in the sidebar. The AI here suggests color schemes (**Suggest schemes** on a
-house's **Schemes** tab); the AI photo runs its own engine — see [The AI photo](ai-photo.md). The
-page's tabs are **Providers & models**, **Routing by feature** (see [The AI features](ai-features.md)),
-**Usage** and **AI engine console**.
+house's **Schemes** tab) and draws the AI photo ([The AI photo](ai-photo.md)). The page's tabs are
+**Providers & models**, **Images** (the AI photo's engine, stable-diffusion.cpp, and its model: **Install**
+and **Remove**, **Download** and **Delete**, each model with its fit-and-speed chip), **Routing by feature**
+(see [The AI features](ai-features.md)), **Usage** and **AI engine console**.
 
 Above the tabs, a strip shows this computer: **OS**, **CPU**, **Memory**, **GPU**, **Acceleration**,
 and how the graphics card's memory is used — **VRAM used** (**Memory used** where the graphics share

@@ -27,11 +27,24 @@ export const DEFAULT_ENGINE_PRESETS = [
     think: false,
     samplers: { min_p: "0.05" },
   },
+  // The AI photo: FLUX.2 [klein] 4B on the kit's sd.cpp runtime, with the recipe measured for it (RESEARCH §9–§10 —
+  // 4 steps, guidance 1, strength 1, euler, a fixed seed so a repeat of the same colors draws the same picture). It
+  // was a code constant (aiphoto/sdcli.js DEFAULT_SD_RECIPE) until the kit's image presets; editable on the AI page.
+  {
+    id: "p_aiphoto",
+    name: "AI photo",
+    provider_id: "local-sdcpp",
+    model: "flux2-klein-4b",
+    kind: "image",
+    params: { steps: 4, cfg: 1, strength: 1, sampler: "euler", seed: 42 },
+    position: 1,
+  },
 ];
 
 export const DEFAULT_FEATURE_PRESETS = {
   // Color schemes want some variety (temperature 0.7) and a quick answer (no thinking).
   "schemes.suggest": "p_general",
+  "aiphoto.render": "p_aiphoto",
 };
 
 export const DEFAULT_PRESET_ID = "p_general";
@@ -188,4 +201,47 @@ export const CLASS_TUNE_IDENTITY = {
   "gemma-4-26b-a4b-qat": { hf_repo: "unsloth/gemma-4-26B-A4B-it-qat-GGUF", quant: "UD-Q4_K_XL" },
   "gemma-4-12b-qat": { hf_repo: "unsloth/gemma-4-12B-it-qat-GGUF", quant: "UD-Q4_K_XL" },
   "gemma-4-e4b-qat": { hf_repo: "unsloth/gemma-4-E4B-it-qat-GGUF", quant: "UD-Q4_K_XL" },
+};
+
+// ── The AI photo's model, for the kit's stable-diffusion.cpp runtime (installLlm `runtimeModels` — the kit's
+// engines plan, H1): FLUX.2 [klein] 4B, a pinned file set the kit downloads into its models cache, rates (its fit and
+// speed band — measured beating the reference speeds here) and runs. The three files (all Apache-2.0) are pinned to
+// the Hugging Face commit they were checked at; `sha256` is the LFS object id the HF API lists, re-computed on the
+// probe's local copies (2026-10-17) — they match. What it takes: a render's peak 6.41 GB on the card, ~7.4 GB of the
+// computer's memory beside it plus the system and the app (RESEARCH §12); its reference speed per build in seconds
+// per image: CUDA 12 on an RTX 2070 15–20 s, the CPU build ~10 minutes (RESEARCH §9).
+export const FLUX2_KLEIN = {
+  runtime: "sdcpp",
+  id: "flux2-klein-4b",
+  name: "FLUX.2 [klein] 4B",
+  license: "Apache-2.0",
+  files: [
+    {
+      slot: "diffusion_model",
+      repo: "leejet/FLUX.2-klein-4B-GGUF",
+      revision: "3b1f5a9dc3abb32238b053aeb3d823c30afdacbd",
+      path: "flux-2-klein-4b-Q8_0.gguf",
+      sha256: "0bba6951258ec8f92d51114a8fa13e66828297bfff58a738f52729b3ef66fa28",
+      bytes: 4300629440,
+    },
+    {
+      slot: "llm",
+      repo: "unsloth/Qwen3-4B-GGUF",
+      revision: "22c9fc8a8c7700b76a1789366280a6a5a1ad1120",
+      path: "Qwen3-4B-Q8_0.gguf",
+      sha256: "eed555233267a33c7e8ee31682762cc7751b3f6d224039086e0e846f05fffa5d",
+      bytes: 4280405792,
+    },
+    {
+      slot: "vae",
+      repo: "black-forest-labs/FLUX.2-klein-4B",
+      revision: "e7b7dc27f91deacad38e78976d1f2b499d76a294",
+      path: "vae/diffusion_pytorch_model.safetensors",
+      sha256: "ca70d2202afe6415bdbcb8793ba8cd99fd159cfe6192381504d6c4d3036e0f04",
+      bytes: 168120878,
+    },
+  ],
+  peakVramMb: 6600,
+  minRamMb: 12 * 1024,
+  refSpeed: { cuda12: 20, cpu: 600 },
 };

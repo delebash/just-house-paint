@@ -34,16 +34,16 @@ The installers aren't signed with a publisher's certificate yet, so the first ti
 - **macOS** on Apple silicon (M1 and later). The AI photo needs macOS 26 or later.
 - **Linux**: Ubuntu 22.04 or newer (or a system as recent). The AI photo needs Ubuntu 24.04 or newer
   (glibc 2.38).
-- **For the AI photo**: 12 GB of memory with a graphics card of its own, 16 GB on a Mac or with the processor's own
-  graphics — with less, the card says it may be very slow or not finish — and about 8 GB of the graphics card's own
-  memory (the app doesn't check that one). It is quickest on Windows with an NVIDIA card: about 20 seconds on an
-  8 GB card. Other graphics cards — AMD, Intel, Apple silicon, and NVIDIA on Linux — run a slower build, and the
-  card says one picture may take several minutes; without a graphics card it takes about ten minutes. See
-  [The AI photo](ai-photo.md).
-- **Room on the data folder's drive**, as the app counts it: 3.4 GB for the part finder (**Install (3.1 GB)**);
-  for the AI photo 9.5 GB on Windows with an NVIDIA card (**Install (9.0 GB)**) and about 8.5 GB on most other
-  computers (**Install (8.2 GB)**), up to 9.7 GB with an AMD card on Linux. The app checks before it downloads,
-  and says what the computer lacks — the system, the memory, the room on the drive.
+- **For the AI photo**: about 6.6 GB of the graphics card's own memory and 12 GB of the computer's (all of it from
+  the computer's with no graphics card it can use) — its chip says **Won't fit** when the estimate finds too little.
+  It is quickest on Windows with an NVIDIA card: about 20 seconds on an 8 GB card; without a graphics card it takes
+  about ten minutes. On other graphics cards — AMD, Intel, Apple silicon, and NVIDIA on Linux — the app shows a speed
+  once it has measured one. See [The AI photo](ai-photo.md).
+- **Room on the drive**, as the app counts it: 3.4 GB on the data folder's drive for the part finder (**Install
+  (3.1 GB)**); for the AI photo, on the drive that holds the AI engines and models, about 2.2 GB for its engine on
+  Windows with an NVIDIA card (**Install the engine (865 MB)** — the download and its unpacked files at once; much
+  less on most other computers) and 8.4 GB for its model (**Download the model (8.1 GB)**). The app checks before it
+  downloads, and says what the computer lacks — the system, the room on the drive.
 
 **Updates:** the app looks for a new version when it starts, every 6 hours, and shortly after the computer wakes.
 **App Settings → Updates** shows it: **Download** fetches it, and it installs when you quit the app (or press

@@ -134,8 +134,8 @@ function fakeFetch(input, init = {}) {
   }
   if (p === "/v1/segment/status")
     return Promise.resolve(json({ installed: server.finderInstalled, downloadBytes: 3_364_167_120, ...(server.finderInstalled ? {} : { runtime: server.runtime || { ok: true } }) }));
-  if (p === "/v1/aiphoto/status")
-    return Promise.resolve(json(server.aiphotoStatus || { engineInstalled: false, modelsInstalled: false, backend: "cuda12", slow: false, downloadBytes: 9e9, available: true }));
+  // the kit's readiness for the AI photo's feature (its engine and model are the kit's sd.cpp runtime's)
+  if (p === "/v1/ai/features/aiphoto.render/readiness") return Promise.resolve(json(server.aiphotoReadiness || AIPHOTO_NOT_INSTALLED));
   if (p === "/v1/segment/install") return Promise.resolve(json({ id: "j-install", state: "running", progress: 0 }, 202));
   if (p === "/v1/houses/h1/find-parts") {
     server.findBody = init.body ? JSON.parse(init.body) : null;
@@ -656,6 +656,17 @@ test("the colors on screen are saved as a named design", async () => {
   expect(text()).toContain("Blue body");
 });
 
+const AIPHOTO_NOT_INSTALLED = {
+  feature: "aiphoto.render",
+  kind: "image",
+  ready: false,
+  need: "engine-not-installed",
+  runtime: "sdcpp",
+  model: "flux2-klein-4b",
+  engine: { id: "sdcpp", label: "stable-diffusion.cpp", installed: false, downloadBytes: 906941374, need: null, status: "", downloaded: 0, total: 0 },
+  modelState: { id: "flux2-klein-4b", name: "FLUX.2 [klein] 4B", bytes: 8749156110, onDisk: false, fit: "ok", speedBand: "fast", predSpeed: 20, measuredSpeed: null, speedUnit: "s/image", status: "" },
+};
+
 test("the AI photo says why it's off; where no engine exists, nothing is offered to install", async () => {
   server.parts = PARTS;
   await mountPage();
@@ -670,15 +681,15 @@ test("the AI photo says why it's off; where no engine exists, nothing is offered
   expect(byText("button", "AI photo").hasAttribute("aria-describedby")).toBe(false);
   wrapper.unmount();
   document.body.innerHTML = "";
-  server.aiphotoStatus = { engineInstalled: false, modelsInstalled: false, backend: null, slow: true, downloadBytes: 0, available: false };
+  // the kit's engine has no build for this computer: said, and nothing offered to install
+  server.aiphotoReadiness = { ...AIPHOTO_NOT_INSTALLED, need: "engine-cant-run-here", engine: { ...AIPHOTO_NOT_INSTALLED.engine, need: { reason: "no-build" } } };
   await mountPage();
   await click(byText(".q-tab", "Colors"));
   await click(byText(".chip", "Sea Blue"));
   await click(byText("button", "AI photo"));
-  expect(text()).toContain("has no build for this computer's system and processor");
-  expect(text()).not.toContain("one AI photo would take about ten minutes"); // not "slow": unavailable
-  expect(byText("button", "Install").getAttribute("aria-disabled")).toBe("true"); // off, focusable
-  expect(text()).not.toContain("a one-time download of"); // no size where nothing installs
+  await flushPromises();
+  expect(text()).toContain("This engine has no build for this computer.");
+  expect([...document.querySelectorAll("button")].some((b) => b.textContent.includes("Install the engine"))).toBe(false);
 });
 
 test("on the first start the Colors tab says the brands are loading, and takes the first one as it lands", async () => {
@@ -714,13 +725,16 @@ test("a missing photo file isn't a deleted house; a part added and not drawn say
   expect(text()).toContain("the display copy of house h1 is missing");
 });
 
-test("the AI photo offers its install first", async () => {
+test("the AI photo offers what it needs first — the kit's banner: its engine, with the model's fit and speed", async () => {
   server.parts = PARTS;
   await mountPage();
   await click(byText(".q-tab", "Colors"));
   await click(byText(".chip", "Sea Blue"));
   await click(byText("button", "AI photo"));
-  expect(text()).toContain("Install the AI photo");
+  await flushPromises();
+  expect(text()).toContain("The AI photo runs on stable-diffusion.cpp, which isn't installed on this computer yet.");
+  expect(byText("button", "Install the engine")).toBeTruthy();
+  expect(text()).toContain("FLUX.2 [klein] 4B on this computer:");
   expect(server.calls).not.toContain("POST /v1/houses/h1/aiphoto");
 });
 

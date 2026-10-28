@@ -109,14 +109,11 @@
       "saves": "your houses and their photos",
       "houses": "Your houses' photos",
       "partFinder": "The part finder",
-      "aiPhoto": "The AI photo",
       "remove": {
         "action": "Remove",
         "confirm": "Remove",
         "partFinderTitle": "Remove the part finder?",
-        "partFinderMessage": "This frees {size}. Your houses keep the parts already found; finding parts again needs the part finder installed again.",
-        "aiPhotoTitle": "Remove the AI photo?",
-        "aiPhotoMessage": "This frees {size}. Your AI photos stay; making a new one needs the AI photo installed again."
+        "partFinderMessage": "This frees {size}. Your houses keep the parts already found; finding parts again needs the part finder installed again."
       }
     },
     "about": {
@@ -487,6 +484,7 @@
   },
   "aiPhoto": {
     "title": "AI photo",
+    "featureName": "The AI photo",
     "note": "A picture the AI drew with your colors: the light and shadows look real, but small details can change. The instant preview stays the accurate one.",
     "alt": "The AI photo of {name}",
     "deltaE": "ΔE {n} from the chips",
@@ -513,23 +511,6 @@
       "task": "Installing the part finder",
       "cantRun": "The part finder can't run on this computer: its engine didn't load ({error}). Nothing was downloaded.",
       "filesMissing": "A file of the part finder's engine is missing from the app ({files}) — an antivirus may have quarantined it. Restore it from the antivirus, or install the app again. Nothing was downloaded."
-    },
-    "aiphoto": {
-      "title": "Install the AI photo",
-      "body": "The AI photo redraws your photo with the colors you chose, with real light and shadow. It runs on this computer: a one-time download of {size}.",
-      "bodyNoSize": "The AI photo redraws your photo with the colors you chose, with real light and shadow. It runs on this computer.",
-      "task": "Installing the AI photo",
-      "slow": "This computer has no graphics card the AI photo can use: one AI photo would take about ten minutes.",
-      "slowGpu": "The AI photo is quickest on an NVIDIA graphics card (about 20 seconds); on this computer's graphics card one AI photo may take several minutes.",
-      "lowMemory": "This computer has {have}\u00a0GB of memory, and one AI photo takes about {need}\u00a0GB: here it may be very slow, or not finish.",
-      "filesGone": "Files of the AI photo's engine are gone ({files}) — an antivirus may have removed them. Install puts them back.",
-      "unavailable": "The AI photo's engine has no build for this computer's system and processor, so it can't be installed here.",
-      "needs": {
-        "macos": "The AI photo's engine needs macOS {need} or later, and this Mac has macOS {have}: update macOS to use it. Nothing was downloaded.",
-        "macosUnknown": "The AI photo's engine needs macOS {need} or later: update macOS to use it. Nothing was downloaded.",
-        "glibc": "The AI photo's engine needs a Linux with glibc {need} or later (Ubuntu 24.04 and newer), and this one has glibc {have}. Nothing was downloaded.",
-        "glibcNone": "The AI photo's engine needs a Linux with glibc {need} or later (Ubuntu 24.04 and newer), and this one has none. Nothing was downloaded."
-      }
     },
     "needs": {
       "vcRuntime": "This computer doesn't have Microsoft's Visual C++ runtime (2015–2022), which this engine needs ({files} missing). Install it — {link} — then open the house again. Nothing was downloaded.",

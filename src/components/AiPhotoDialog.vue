@@ -1,19 +1,18 @@
 <script setup>
 // SPDX-License-Identifier: MIT
-// The AI photo (PRD F8, an option button beside the instant preview): either the engine to install
-// first (EngineInstallCard), or an AI photo — the image the server made and kept, how close its
+// The AI photo (PRD F8, an option button beside the instant preview): either what it needs first — the kit's
+// "needs its engine" banner (LuEngineNeeded: the engine, then the model, each with its bar), or an AI photo — the image the server made and kept, how close its
 // paint is to the chips (ΔE2000 after the lock), how long it took — and, when other programs held
 // the graphics card while it drew (the server's `sharedGpu`), which ones: they make it slower
 // (RESEARCH §12) — and Save image. It is a picture the AI drew: the instant preview stays the
 // accurate one, and the dialog says so.
 import { safeTitle } from "@delebash/core/platform/filename";
-import { AppModal, fmtBytes, isolate, reportError, requestBlob, saveBlob, UiButton, useServerImage } from "@delebash/ui";
+import { AppModal, fmtBytes, isolate, LuEngineNeeded, reportError, requestBlob, saveBlob, UiButton, useServerImage } from "@delebash/ui";
 import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import EngineInstallCard from "./EngineInstallCard.vue";
 
 const props = defineProps({
-  // the kept render ({ id, deltaE, seconds, … }), or null to offer the install
+  // the kept render ({ id, deltaE, seconds, … }), or null to offer what it needs first
   render: { type: Object, default: null },
   houseName: { type: String, default: "" },
 });
@@ -47,10 +46,10 @@ async function save() {
 </script>
 
 <template>
-  <!-- As wide as what it holds: the install card at a prose width, the card filling it — an 880 px dialog held
-       512 px of the card's content (the seventeenth review); the AI photo itself, the room a big picture needs. -->
+  <!-- As wide as what it holds: the banner at a prose width — an 880 px dialog held 512 px of the old install card's
+       content (the seventeenth review); the AI photo itself, the room a big picture needs. -->
   <AppModal ref="modal" :title="t('aiPhoto.title')" :max-width="render ? '1100px' : '38em'" @close="emit('close')">
-    <EngineInstallCard v-if="!render" kind="aiphoto" class="aiphoto__install" @installed="emit('installed')" />
+    <LuEngineNeeded v-if="!render" feature="aiphoto.render" :label="t('aiPhoto.featureName')" @ready="emit('installed')" />
     <template v-else>
       <p class="hint">{{ t("aiPhoto.note") }}</p>
       <img v-if="src" class="aiphoto__img" :src="src" :alt="t('aiPhoto.alt', { name: isolate(houseName) })" />
@@ -70,10 +69,6 @@ async function save() {
 </template>
 
 <style scoped>
-.aiphoto__install {
-  max-width: none;
-  margin-bottom: 0;
-}
 .aiphoto__shared {
   max-width: 60ch;
 }

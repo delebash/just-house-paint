@@ -115,7 +115,7 @@ async function removeEngine(kind, usage, run) {
     danger: true,
   });
   if (!yes) return;
-  await run(kind, () => del(kind === "partFinder" ? "/v1/segment/install" : "/v1/aiphoto/install"));
+  await run(kind, () => del("/v1/segment/install"));
 }
 
 // Updates — release notes from docs/whats-new.md, loaded when the section first opens; the
@@ -158,10 +158,11 @@ watch(
       </section>
 
       <StoragePanel v-else-if="active === 'storage'" :data-dir="health?.dataDir || ''" :shell="storageShell" :saves="t('settings.storage.saves')">
-        <!-- this app's own stores (the server's extra disk buckets): its houses, and the engines -->
+        <!-- this app's own stores (the server's extra disk buckets): its houses, and the part finder (the AI photo's
+             engine and model are the kit's: its buckets above, the AI page's Images tab) -->
         <template #extra="{ usage, size, busy, run }">
           <span class="lu-storage__label">{{ t("settings.storage.houses") }}</span><span>{{ size(usage?.extras?.houses) }}</span>
-          <template v-for="kind in ['partFinder', 'aiPhoto']" :key="kind">
+          <template v-for="kind in ['partFinder']" :key="kind">
             <span class="lu-storage__label">{{ t(`settings.storage.${kind}`) }}</span>
             <div class="lu-storage__row">
               <span>{{ size(usage?.extras?.[kind]) }}</span>

@@ -216,9 +216,9 @@ offered then). Meanwhile **Change folder…** isn't shown.
 - **Engine logs** — what the AI engine wrote while it ran; **Clear…** empties them.
 - **Engine builds** — the AI engine's program files.
 - **Your houses' photos** — every house's photos, outlines and AI photos.
-- **The part finder** and **The AI photo** — their downloaded engine and model. **Remove** frees the
-  space: your houses keep the parts already found and your AI photos stay; **Install** (on a house)
-  brings it back.
+- **The part finder** — its downloaded model. **Remove** frees the space: your houses keep the parts already
+  found; **Install** (on a house) brings it back. The AI photo's engine and model are counted with the AI engine's
+  builds and the models above; **AI Settings → Images** removes them (your AI photos stay).
 - **Database**, **Server logs**, **Total** and **Free disk space** on the data folder's drive.
 
 ## Where to keep the data folder

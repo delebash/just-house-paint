@@ -47,7 +47,9 @@ test("routing by feature lists exactly this app's features, each on its preset",
   expect(routing.statusCode).toBe(200);
   const keys = (routing.json().features || []).map((f) => f.key);
   expect(keys).toEqual(FEATURE_CATALOG.map((f) => f.key));
-  expect(keys).toEqual(["schemes.suggest"]);
+  expect(keys).toEqual(["schemes.suggest", "aiphoto.render"]);
+  // the AI photo is an image feature on its own preset (the kit's sd.cpp runtime)
+  expect(routing.json().features.find((f) => f.key === "aiphoto.render")).toMatchObject({ kind: "image" });
 });
 
 test("the house-paint routes are mounted on the app, its settings and its AI prompt seeded", async () => {
@@ -56,8 +58,11 @@ test("the house-paint routes are mounted on the app, its settings and its AI pro
   const segment = (await client.get("/v1/segment/status")).json();
   expect(segment.installed).toBe(false);
   expect(segment.downloadBytes).toBeGreaterThan(1e9);
-  const aiphoto = (await client.get("/v1/aiphoto/status")).json();
-  expect(aiphoto).toMatchObject({ engineInstalled: false, modelsInstalled: false });
+  // the AI photo's engine and model are the kit's runtime's: not here yet, its readiness says what comes first
+  const ready = (await client.get("/v1/ai/features/aiphoto.render/readiness")).json();
+  expect(ready).toMatchObject({ kind: "image", ready: false, runtime: "sdcpp", model: "flux2-klein-4b" });
+  expect(["engine-not-installed", "engine-cant-run-here"]).toContain(ready.need);
+  expect((await client.get("/v1/ai/runtimes/sdcpp/models")).json().models).toEqual([expect.objectContaining({ id: "flux2-klein-4b", onDisk: false })]);
   expect((await client.get("/v1/settings")).json()["finder.idleMinutes"]).toBe(10);
   // the color-scheme prompt is a prompt row the AI Lab edits, asking for JSON
   const prompt = (await client.get("/v1/ai/prompts/schemes.suggest")).json();
@@ -90,8 +95,8 @@ test("the disk route reports the data folder", async () => {
   const r = await client.get("/v1/disk/usage");
   expect(r.statusCode).toBe(200);
   expect(r.json().database).toBeGreaterThan(0); // the app's database file is measured
-  // this app's own stores, outside the kit's cache: empty in a fresh folder, but there
-  expect(r.json().extras).toEqual({ houses: 0, partFinder: 0, aiPhoto: 0 });
+  // this app's own stores, outside the kit's cache: empty in a fresh folder, but there (the AI photo's are the kit's)
+  expect(r.json().extras).toEqual({ houses: 0, partFinder: 0 });
 });
 
 test("health answers the family's base wire plus this app's extras", async () => {

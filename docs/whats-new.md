@@ -1,5 +1,20 @@
 # What's new
 
+## Next version
+
+- **The AI photo runs on the family's shared AI engine.** Its engine (stable-diffusion.cpp) and its model
+  (FLUX.2 [klein] 4B) live in the AI cache with the other AI models: **AI Settings → Images** shows them — **Install**
+  and **Remove**, **Download** and **Delete** — with the model's chip, whether it fits this computer and how fast it
+  draws here. The AI photo says what it needs first, one step at a time: the engine, then the model.
+- **Coming from v0.1.3:** the model you already downloaded is moved into the AI cache when the app starts — nothing
+  to download again. The engine needs one install of its newer version (865 MB on Windows with an NVIDIA card),
+  which can stop a drawing in the middle when you press **Cancel**; the older one is removed when it's installed.
+- **How the AI photo draws is a preset**: **Draw the AI photo** under **AI Settings → Routing by feature** — the
+  steps, the guidance, the strength, the sampler and the seed ([The AI features](ai-features.md)).
+- **Its speed is this computer's own**: after the first AI photo, the chip shows the time it really took here.
+- **App Settings → Storage** no longer lists the AI photo on its own: its engine and model are counted with the AI
+  engine's builds and the models.
+
 ## v0.1.3
 
 - **On a Mac, coming from v0.1.2: save your data before you replace the app.** v0.1.2 kept your houses

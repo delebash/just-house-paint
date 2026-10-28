@@ -6,6 +6,7 @@
 
 import { restoreUnfinished, sweepWorkFolders } from "@delebash/core/platform/data_api";
 import { getLogger } from "@delebash/core/platform/log";
+import { moveOldAiPhotoFiles } from "./aiphoto/migrate.js";
 import { dbPath } from "./database/index.js";
 import { listHouses, listRenders } from "./database/houses.js";
 import { isSafeName, sweepHouseDirs, sweepRenders, sweepSaving } from "./files.js";
@@ -31,6 +32,9 @@ export async function tidyAtStart(dataDir, db) {
   await sweepHouseDirs(dataDir, houses);
   await sweepSaving(dataDir, houses);
   await sweepRenders(dataDir, new Map(houses.map((id) => [id, new Set(listRenders(db, id).map((r) => r.file))])));
+  // an older install's AI photo files into the kit's cache — in the background: a copy to another drive never holds
+  // the start (aiphoto/migrate.js)
+  moveOldAiPhotoFiles(dataDir).catch((e) => log.warning(`the AI photo's files couldn't move into the kit's cache yet: ${e?.message || e}`));
 }
 
 /** While the server runs (a headless one up for weeks): the kit's work folders a stopped backup or restore left, once

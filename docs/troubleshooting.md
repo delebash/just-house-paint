@@ -127,30 +127,35 @@ Schemes from an online provider never wait. Wait for it, or press **Cancel** on 
 
 ## Installing the part finder and the AI photo
 
-**The part finder or the AI photo won't install** (**"The part finder didn't install"**, **"The AI photo didn't
-install"**). The **AI tasks** panel ([the AI tasks panel](ai-providers.md#the-ai-tasks-panel)) keeps the failed
-download with its reason. A cancelled or broken download resumes where it stopped the next time you press
-**Install**. A file that doesn't match its checksum is deleted and the install stops — press **Install** again
-to download it again.
+**The part finder won't install** (**"The part finder didn't install"**). The **AI tasks** panel ([the AI tasks
+panel](ai-providers.md#the-ai-tasks-panel)) keeps the failed download with its reason. A cancelled or broken
+download resumes where it stopped the next time you press **Install**. A file that doesn't match its checksum is
+deleted and the install stops — press **Install** again to download it again.
 
-**"Not enough room on the drive".** "This needs … on the drive of the app's data folder, which has … free". The
-part finder needs about 3.4 GB free; the AI photo about 9.5 GB on Windows with an NVIDIA graphics card and about
-8.5 GB on most other computers (up to 9.7 GB on Linux with AMD's ROCm). Make room, or move the data folder to a
-bigger drive (**App Settings → Storage → Change folder…**, see [Storage](settings.md#storage)).
+**The AI photo's engine or model won't download.** Its progress bar — under the step on the AI photo, or on **AI
+Settings → Images** — keeps the reason. A cancelled or broken download resumes where it stopped the next time you
+press the button; a file that doesn't match its checksum is deleted, so press it again to download it again.
 
-**"This computer doesn't have Microsoft's Visual C++ runtime (2015–2022)".** The part finder and the AI photo
-need it, and say so before anything downloads. Install it from the link it gives (**Microsoft's download**),
-then open the house again. **"… older than this engine needs"**: install the latest from the same link and
-start the app again — the part finder says this on its card; the AI photo finds it only when it draws ("The AI
-photo's engine couldn't start — a DLL on this computer is older than the engine needs"), then try again.
+**"Not enough room on the drive".** The part finder: "This needs … on the drive of the app's data folder, which has
+… free" — about 3.4 GB. The AI photo: "This needs … on the drive that holds the app's AI engines and models, which
+has … free" — about 2.2 GB for its engine on Windows with an NVIDIA graphics card (much less on most others) and
+8.4 GB for its model. Make room, or move the data folder to a bigger drive (**App Settings → Storage → Change
+folder…**, see [Storage](settings.md#storage)).
 
-**"A file of the part finder's engine is missing"** or **"Files of the AI photo's engine are gone".** An
-antivirus may have quarantined one of the engine's files. Restore it from the antivirus (and allow the app's
-folder), or press **Install** again for the AI photo — install the app again for the part finder.
+**"This computer doesn't have Microsoft's Visual C++ runtime (2015–2022)"** (the part finder) or **"Microsoft's
+Visual C++ runtime isn't on this computer"** (the AI photo). Both need it, and say so before anything downloads.
+Install it from the link it gives (**Microsoft's download**), then open the house again. **"… older than this engine
+needs"**: install the latest from the same link and start the app again — the part finder says this on its card;
+the AI photo finds it only when it draws ("stable-diffusion.cpp couldn't start — a DLL on this computer is older
+than stable-diffusion.cpp needs"), then try again.
 
-**"The part finder is busy"** or **"The AI photo is busy".** **Remove** in **App Settings → Storage** was
-pressed while it was finding the parts, drawing or installing: wait until it has finished, then remove it. **"The part finder is being removed"** /
-**"The AI photo is being removed"**: try again when the removal is done.
+**"A file of the part finder's engine is missing".** An antivirus may have quarantined one of the engine's files.
+Restore it from the antivirus (and allow the app's folder), or install the app again.
+
+**"The part finder is busy"** or **"The part finder is being removed".** **Remove** in **App Settings → Storage**
+was pressed while it was finding the parts or installing: wait until it has finished, then remove it; or try again
+when the removal is done. **"stable-diffusion.cpp is busy"** or **"FLUX.2 [klein] 4B is busy"** on **AI Settings →
+Images**: the AI photo is being drawn, downloading or being removed — try again once that has finished.
 
 ## The AI photo
 
@@ -161,27 +166,32 @@ box.
 **"Some colors aren't loaded any more".** A brand was removed, or loaded again without some colors, here or in
 another window. Load the brand again (**Paint colors**), or pick other colors for the parts it names.
 
-**"The AI photo's engine couldn't start".** The words after it say why:
+**"The AI photo isn't installed".** Its engine or its model isn't on this computer (removed on **AI Settings →
+Images**, or another window removed it): press **AI photo** again — it offers the step it needs.
 
-- **"a path is too long for the engine"** — move the data folder to a shorter path (**App Settings → Storage →
-  Change folder…**; the app's folder in it can be at most 180 characters).
-- **"a DLL it needs couldn't be found"** — an antivirus may have removed one of its files: press **Install**
-  again; if it still fails, install Microsoft's Visual C++ runtime from the link it gives.
-- **"files of the AI photo's engine are missing"** (or **"The AI photo's engine is missing files"**) — press
-  **Install** again (and allow the app's folder in the antivirus).
-- **"Microsoft's Visual C++ runtime … isn't on this computer"** or **"… is older than the engine needs"** — see
-  the Visual C++ entry above.
+**"stable-diffusion.cpp couldn't start".** The words after it say why:
 
-**When you install, the card warns it will be slow.** **"… on this computer's graphics card one AI photo may
-take several minutes"**: only an NVIDIA card on Windows runs the fast build (about 20 seconds); other cards run a
-slower one. **"This computer has no graphics card the AI photo can use"**: about ten minutes a picture.
-**"This computer has … GB of memory, and one AI photo takes about … GB: here it may be very slow, or not
-finish"**: you can still install it; close other programs before you draw.
+- **"a path is too long for stable-diffusion.cpp"** — move the data folder to a shorter path (**App Settings →
+  Storage → Change folder…**; the app's folder in it can be at most 180 characters).
+- **"a DLL it needs couldn't be found"** — an antivirus may have removed one of its files: install the engine again
+  (**AI Settings → Images**: **Remove**, then **Install**); if it still fails, install Microsoft's Visual C++
+  runtime from the link it gives.
+- **"Microsoft's Visual C++ runtime … isn't on this computer"** or **"… older than stable-diffusion.cpp needs"** —
+  see the Visual C++ entry above.
 
-**"The AI photo didn't finish"** — with "out of memory", or "sd-cli failed (exit …)" and the engine's last
-lines. It needs about 8 GB of graphics memory. The app lets go of the part finder and the local AI model first;
-close other programs that use the graphics card (games, video editors) and try again. Lower **App Settings →
-General → AI photo → Working size (pixels)** if it still fails. The whole story is in **App Settings → Logs**.
+**The chip says "Won't fit" or "~very slow".** "Won't fit": the estimate finds too little memory for the model
+here (about 6.6 GB of the graphics card's own and 12 GB of the computer's) — you can still try; close other
+programs before you draw. "~very slow": no graphics card it can use, about ten minutes a picture. On a graphics card
+the app has no figure for, the chip shows no speed until your first AI photo measures one.
+
+**"The AI photo didn't finish"** — with "out of memory", or "sd-server failed the job" and its reason. It needs
+about 6.6 GB of graphics memory. The app lets go of the part finder first and unloads a local AI model when the
+card needs the room; close other programs that use the graphics card (games, video editors) and try again. Lower
+**App Settings → General → AI photo → Working size (pixels)** if it still fails. The whole story is in **App
+Settings → Logs**.
+
+**"The graphics card is busy" with "another AI job"**: a local AI model is answering on the card (color schemes, in
+this or another app) and can't be unloaded mid-answer — try again when it's done.
 
 **The AI photo is slower some times than others.** It takes about 20 seconds on an 8 GB NVIDIA card on Windows
 with nothing else on it. Another program holding the card's memory — another app's AI model, even an idle one —

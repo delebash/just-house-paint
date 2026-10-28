@@ -1,9 +1,9 @@
 # The AI features
 
-Each AI feature is a row under **AI Settings → Routing by feature**; Just House Paint has one,
-**Suggest color schemes** (under **Color schemes**). A feature runs on an engine preset — the
-provider, the model and its settings. One model can serve every feature, or a feature can point at a
-stronger one.
+Each AI feature is a row under **AI Settings → Routing by feature**; Just House Paint has two:
+**Suggest color schemes** (under **Color schemes**) and **Draw the AI photo** (under **AI photo**). A
+feature runs on an engine preset — the provider, the model and its settings. One model can serve every
+chat feature, or a feature can point at a stronger one; the AI photo runs on an image model.
 
 ## Suggest color schemes
 
@@ -14,8 +14,15 @@ every color to the brand's nearest real exterior paint; unlike the harmony schem
 checked for how far the trim and the door stand out. It runs on the **General** preset (some variety,
 no thinking first).
 
-The AI photo isn't an AI feature in this sense: it runs its own image model on your computer — see
-[The AI photo](ai-photo.md).
+## Draw the AI photo
+
+**AI photo** on a house's page ([The AI photo](ai-photo.md)). It runs the image model FLUX.2 [klein] 4B on
+your computer, on the engine stable-diffusion.cpp (**AI Settings → Images** installs and removes them). Its
+preset, **AI photo**, holds the model and how it draws: **Steps** (4), **Guidance (CFG)** (1), **Strength**
+(1), **Sampler** (euler) and **Seed** (42 — the same colors draw the same picture again; −1 picks a new
+one each time). Select **Draw the AI photo** under **Routing by feature** to change them: **Save** keeps
+them, **Reset to the app's settings** brings the app's back. The prompts it fills in for each part are in
+**App Settings → Advanced** ([App Settings](settings.md)).
 
 ## Changing what a feature says or runs on
 

@@ -20,4 +20,15 @@ export const FEATURE_CATALOG = [
     hint: "Suggests exterior color schemes that suit the house's roof, stone and other parts that stay — Ask the AI on a house's Schemes tab.",
     group: "Color schemes",
   }),
+  // The house page's AI photo (POST /v1/houses/:id/aiphoto, a job): the kit's image runtime (stable-diffusion.cpp)
+  // repaints the chosen parts with this feature's preset — its model and recipe — then the app pastes the photo back
+  // and locks each part to its paint (aiphoto/edit.js). Kind "image": its presets are image presets (the kit's
+  // engines plan, H1).
+  FeatureCatalogEntry({
+    key: "aiphoto.render",
+    label: "Draw the AI photo",
+    hint: "Repaints the house's parts in the colors you chose, in the photo's own light — AI photo on a house's page.",
+    group: "AI photo",
+    kind: "image",
+  }),
 ];

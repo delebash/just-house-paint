@@ -786,7 +786,7 @@ async function runFind(options) {
 
 async function aiPhoto() {
   if (busy.value.ai || photoTask.value) return;
-  if (!engines.aiphotoInstalled) {
+  if (!engines.aiphotoReady) {
     aiDialog.value = { render: null };
     return;
   }
@@ -894,7 +894,7 @@ function onAiPhotoInstalled() {
   aiDialog.value = null;
   // only when it can run now: the card isn't busy with this house's parts, the install really landed
   const busyHere = finding.value || busy.value.ai || !!photoTask.value;
-  if (engines.aiphotoInstalled && !busyHere && house.paintableParts.length && hasColors.value) aiPhoto();
+  if (engines.aiphotoReady && !busyHere && house.paintableParts.length && hasColors.value) aiPhoto();
 }
 
 const failedReason = computed(() => {
