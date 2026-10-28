@@ -5,6 +5,7 @@
 // bearer guard and its lockout escape; CORS answering an Origin.
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { stores } from "@delebash/core/llm";
 import { getLogger } from "@delebash/core/platform/log";
 import { pyPath } from "@delebash/core/runner/cache_registry";
 import * as lifecycle from "@delebash/core/runner/lifecycle";
@@ -12,6 +13,7 @@ import { beforeEach, expect, test, vi } from "vitest";
 import { createApp } from "../src/app.js";
 import { getDb } from "../src/app_state.js";
 import { seedWorkspace } from "../src/database/seed.js";
+import { setSetting } from "../src/database/settings.js";
 import { FEATURE_CATALOG } from "../src/feature_catalog.js";
 import { PRODUCT } from "../src/version.js";
 import { testClient, tmpDir, useHermeticKit } from "./helpers.js";
@@ -47,23 +49,27 @@ test("routing by feature lists exactly this app's features, each on its preset",
   expect(routing.statusCode).toBe(200);
   const keys = (routing.json().features || []).map((f) => f.key);
   expect(keys).toEqual(FEATURE_CATALOG.map((f) => f.key));
-  expect(keys).toEqual(["schemes.suggest", "aiphoto.render"]);
-  // the AI photo is an image feature on its own preset (the kit's sd.cpp runtime)
+  expect(keys).toEqual(["schemes.suggest", "aiphoto.render", "parts.find"]);
+  // the AI photo is an image feature on its own preset (the kit's sd.cpp runtime), the part finder a vision one (the
+  // kit's ONNX runtime)
   expect(routing.json().features.find((f) => f.key === "aiphoto.render")).toMatchObject({ kind: "image" });
+  expect(routing.json().features.find((f) => f.key === "parts.find")).toMatchObject({ kind: "vision" });
 });
 
 test("the house-paint routes are mounted on the app, its settings and its AI prompt seeded", async () => {
   expect((await client.get("/v1/houses")).json()).toEqual([]);
-  // the engines are not installed in a fresh data folder, and the status says how much to download
-  const segment = (await client.get("/v1/segment/status")).json();
-  expect(segment.installed).toBe(false);
-  expect(segment.downloadBytes).toBeGreaterThan(1e9);
-  // the AI photo's engine and model are the kit's runtime's: not here yet, its readiness says what comes first
+  // the engines and models are the kit's runtimes': not here yet in a fresh data folder, the readiness says what comes
+  // first — the part finder's model (SAM 3, ~3.4 GB), the AI photo's engine and model
   const ready = (await client.get("/v1/ai/features/aiphoto.render/readiness")).json();
   expect(ready).toMatchObject({ kind: "image", ready: false, runtime: "sdcpp", model: "flux2-klein-4b" });
   expect(["engine-not-installed", "engine-cant-run-here"]).toContain(ready.need);
   expect((await client.get("/v1/ai/runtimes/sdcpp/models")).json().models).toEqual([expect.objectContaining({ id: "flux2-klein-4b", onDisk: false })]);
-  expect((await client.get("/v1/settings")).json()["finder.idleMinutes"]).toBe(10);
+  const parts = (await client.get("/v1/ai/features/parts.find/readiness")).json();
+  expect(parts).toMatchObject({ kind: "vision", ready: false, runtime: "onnx", model: "sam3" });
+  expect(["model-not-downloaded", "engine-cant-run-here"]).toContain(parts.need);
+  expect((await client.get("/v1/ai/runtimes/onnx/models")).json().models).toEqual([expect.objectContaining({ id: "sam3", onDisk: false })]);
+  expect((await client.get("/v1/segment/status")).statusCode).toBe(404); // the app's own install routes are gone
+  expect((await client.get("/v1/settings")).json()["finder.houseMargin"]).toBe(0.02);
   // the color-scheme prompt is a prompt row the AI Lab edits, asking for JSON
   const prompt = (await client.get("/v1/ai/prompts/schemes.suggest")).json();
   expect(prompt).toMatchObject({ feature: "schemes.suggest", jsonMode: true });
@@ -91,12 +97,38 @@ test("a renderer error posted to /v1/logs/client lands in the same log", async (
   expect((await client.get("/v1/logs/tail")).json().text).toContain("CLIENT-PROOF def456");
 });
 
+test("an older install's part finder settings move into the kit: off the card → its preset on the processor; its idle time → the ONNX runtime's", async () => {
+  const preset = () => stores.getEnginePresetStore().get("p_parts").params.executionProvider;
+  const idle = async () => (await client.get("/v1/ai/runtimes/onnx/engine/status")).json().idleSeconds;
+  expect(preset()).toBe("auto");
+  expect(await idle()).toBe(600);
+  setSetting(getDb(), "finder.useGpu", false);
+  setSetting(getDb(), "finder.idleMinutes", 25);
+  seedWorkspace(getDb()); // the next start (or a restore of an older backup)
+  expect(preset()).toBe("cpu");
+  expect(await idle()).toBe(1500);
+  const settings = (await client.get("/v1/settings")).json();
+  expect(settings).not.toHaveProperty("finder.useGpu");
+  expect(settings).not.toHaveProperty("finder.idleMinutes");
+  // the AI page's Routing tab sets it the same way (the kit's preset route, the vision kind's rules)
+  const p = stores.getEnginePresetStore().get("p_parts");
+  const put = await client.put("/v1/ai/engine-presets/p_parts", { json: { ...p, params: { executionProvider: "auto" } } });
+  expect(put.statusCode).toBe(200);
+  expect(preset()).toBe("auto");
+  expect((await client.put("/v1/ai/engine-presets/p_parts", { json: { ...p, params: { executionProvider: "cuda" } } })).statusCode).toBe(422);
+  // on the card stays the preset's own (auto), whatever it is now
+  stores.getEnginePresetStore().save({ ...stores.getEnginePresetStore().get("p_parts"), params: { executionProvider: "auto" } });
+  setSetting(getDb(), "finder.useGpu", true);
+  seedWorkspace(getDb());
+  expect(preset()).toBe("auto");
+});
+
 test("the disk route reports the data folder", async () => {
   const r = await client.get("/v1/disk/usage");
   expect(r.statusCode).toBe(200);
   expect(r.json().database).toBeGreaterThan(0); // the app's database file is measured
-  // this app's own stores, outside the kit's cache: empty in a fresh folder, but there (the AI photo's are the kit's)
-  expect(r.json().extras).toEqual({ houses: 0, partFinder: 0 });
+  // this app's own store, outside the kit's cache: empty in a fresh folder, but there (the engines' are the kit's)
+  expect(r.json().extras).toEqual({ houses: 0 });
 });
 
 test("health answers the family's base wire plus this app's extras", async () => {

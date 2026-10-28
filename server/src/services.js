@@ -1,52 +1,35 @@
 // SPDX-License-Identifier: MIT
 // What the house-paint routes share, on the app state (app_state.js): the job registry, the other
 // windows' changes (the kit's ChangeCounter), the houses' outline versions (outlines.js), the part
-// finder (SAM 3), the AI photo (the kit's stable-diffusion.cpp runtime), the brands' public lists (the kit's fetch), the
-// downloads (the kit's streamDownload), the AI run path (the kit's runAction), and readers of the
-// settings they use — read on every call, so a change in Settings applies to the next run without
-// a restart. Tests pass their own `finder`, `aiphoto`, `fetch`, `download` or `run`.
+// finder (SAM 3 on the kit's ONNX runtime), the AI photo (the kit's stable-diffusion.cpp runtime), the brands' public
+// lists (the kit's fetch), the AI run path (the kit's runAction), and readers of the settings they use — read on every
+// call, so a change in Settings applies to the next run without a restart. Tests pass their own `finder`, `aiphoto`,
+// `fetch` or `run`.
 
-import path from "node:path";
-import { buildLlmConfig, resolveRoute, runAction, stores } from "@delebash/core/llm";
+import { buildLlmConfig, runAction, stores } from "@delebash/core/llm";
 import { ChangeCounter } from "@delebash/core/platform";
 import * as http from "@delebash/core/platform/http";
-import { streamDownload } from "@delebash/core/runner/download";
 import * as hardware from "@delebash/core/runner/hardware";
-import { hfDownloadHeaders } from "@delebash/core/runner/models";
 import { createAiPhoto, sharedGpuNote, surfaceWords } from "./aiphoto_service.js";
 import { SETTING_DEFAULTS } from "./database/seed.js";
 import { getSetting } from "./database/settings.js";
-import { bestDmlAdapter, createFinder, DEFAULT_PROVIDERS } from "./finder.js";
+import { createFinder } from "./finder.js";
 import { JobRegistry } from "./jobs.js";
 import { Outlines } from "./outlines.js";
 
-/** Where the part finder's model lives, in the data folder (an uninstall takes it along) — the AI photo's engine and
- *  model are the kit's, in its cache (aiphoto/migrate.js moved an older install's there). */
-export const finderModelDir = (dataDir) => path.join(dataDir, "models", "sam3");
-
 const MB = 1e6;
-
-/** A download through the kit's resumable streamDownload; Hugging Face gets the user's token. */
-const kitDownload = (url, dest, opts = {}) =>
-  streamDownload(url, dest, { ...opts, headers: url.startsWith("https://huggingface.co/") ? hfDownloadHeaders() : null });
 
 export function createServices({ db, dataDir }, overrides = {}) {
   const setting = (key) => getSetting(db, key) ?? SETTING_DEFAULTS[key];
 
   const finder =
     overrides.finder ??
+    // SAM 3 on the kit's in-process ONNX runtime (the feature parts.find: its preset says where it runs, the AI page's
+    // Vision tab how long it stays in memory)
     createFinder({
       dataDir,
-      modelDir: finderModelDir(dataDir),
-      // read when the finder loads (after a release, the next use reads it again)
-      get providers() {
-        return { ...DEFAULT_PROVIDERS, image: setting("finder.useGpu") ? "auto" : "cpu" };
-      },
-      // DirectML on the adapter with the most memory of its own, not adapter 0 (often a laptop's integrated GPU)
-      dmlDeviceId: () => bestDmlAdapter(hardware.dxgiAdapters()),
       partsConfig: () => setting("finder.parts"),
       priority: () => setting("finder.priority"),
-      idleMs: () => setting("finder.idleMinutes") * 60_000,
       houseMargin: () => setting("finder.houseMargin"),
       houseMinShare: () => setting("finder.houseMinShare"),
     });
@@ -55,7 +38,6 @@ export function createServices({ db, dataDir }, overrides = {}) {
     overrides.aiphoto ??
     createAiPhoto({
       dataDir,
-      finder,
       settings: {
         // a number: the target pixel count (aiphoto/edit.js sizes the photo to it)
         workingSize: () => setting("aiphoto.workingPixels"),
@@ -79,7 +61,6 @@ export function createServices({ db, dataDir }, overrides = {}) {
     // the brands' lists through the kit's one HTTP client, as the downloads: it honours HTTPS_PROXY / NO_PROXY
     // (Node's own fetch ignores them — the brand lists failed behind a proxy the model downloads went through)
     fetch: overrides.fetch ?? ((...a) => http.fetch(...a)),
-    download: overrides.download ?? kitDownload,
     run: overrides.run ?? ((body, opts) => runAction(stores.getPromptStore(), buildLlmConfig(), body, opts)),
     limits: () => ({
       displayMax: setting("photos.displayMax"),
@@ -99,14 +80,6 @@ export function createServices({ db, dataDir }, overrides = {}) {
     maxDesignsPerHouse: () => setting("designs.maxPerHouse"),
     maxImportBytes: () => setting("paints.maxImportMegabytes") * MB,
     harmony: () => setting("schemes.harmony"),
-    // an AI feature runs on the bundled local model (it would load on the graphics card) — not a cloud one
-    usesLocalAi: (feature) => {
-      try {
-        return resolveRoute(buildLlmConfig(), feature, { action: feature })[0]?.provider_type === "local-llamacpp";
-      } catch {
-        return false; // not set up: the run fails on its own, with its own message
-      }
-    },
     colorOrder: () => setting("paints.colorOrder"),
     // the English the AI's prompt reads ("garageDoor" → "garage door")
     partLabel: surfaceWords,

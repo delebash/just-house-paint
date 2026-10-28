@@ -3,7 +3,9 @@
 Open **AI Settings** in the sidebar. The AI here suggests color schemes (**Suggest schemes** on a
 house's **Schemes** tab) and draws the AI photo ([The AI photo](ai-photo.md)). The page's tabs are
 **Providers & models**, **Images** (the AI photo's engine, stable-diffusion.cpp, and its model: **Install**
-and **Remove**, **Download** and **Delete**, each model with its fit-and-speed chip), **Routing by feature**
+and **Remove**, **Download** and **Delete**, each model with its fit-and-speed chip), **Vision** (the part
+finder's engine, ONNX Runtime — part of the app, nothing to install — and its model SAM 3: **Download** and
+**Delete**, and **Let go after idle (minutes)**), **Routing by feature**
 (see [The AI features](ai-features.md)), **Usage** and **AI engine console**.
 
 Above the tabs, a strip shows this computer: **OS**, **CPU**, **Memory**, **GPU**, **Acceleration**,
@@ -137,8 +139,7 @@ scrolling and **Resume** follows again.
 
 ## The AI tasks panel
 
-Long work shows here: finding a house's parts, an AI photo, installing the part finder or the AI
-photo, loading a brand's colors, the AI's schemes, and tests in AI Settings. Open it with the sparkle
+Long work shows here: finding a house's parts, an AI photo, loading a brand's colors, the AI's schemes, and tests in AI Settings. Open it with the sparkle
 button at the title bar's right, or **AI tasks** in the sidebar. The button shows how many tasks run;
 a red count means one failed ("1 AI task failed — open the queue").
 

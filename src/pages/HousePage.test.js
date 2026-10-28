@@ -5,7 +5,7 @@
 // shapes. jsdom has no canvas, so two things are stood in for: the image service (services/
 // maskImage.js — the photo's pixels and the masks as plain arrays) and the Konva canvas (its
 // events are what the page reacts to; the painter, the stores, the tabs and the kit are real). It
-// proves: the part finder's install offer and its job; the parts list; a color from the Colors tab
+// proves: the part finder's model offered by the kit's banner, and its download; the parts list; a color from the Colors tab
 // painting the selected part, with its ΔE; finding the parts again asks first; a design saved under
 // the route's own rules; the AI photo offering its install first; Undo / Redo and Reset; the
 // eyedropper and a part's color as photographed; Compare; the outlines' choice; an old design's
@@ -132,18 +132,17 @@ function fakeFetch(input, init = {}) {
       }),
     );
   }
-  if (p === "/v1/segment/status")
-    return Promise.resolve(json({ installed: server.finderInstalled, downloadBytes: 3_364_167_120, ...(server.finderInstalled ? {} : { runtime: server.runtime || { ok: true } }) }));
-  // the kit's readiness for the AI photo's feature (its engine and model are the kit's sd.cpp runtime's)
+  // the kit's readiness for the part finder's feature (SAM 3 on its ONNX runtime) and the AI photo's (its sd.cpp runtime)
+  if (p === "/v1/ai/features/parts.find/readiness") return Promise.resolve(json(server.finderReadiness || FINDER_READY));
   if (p === "/v1/ai/features/aiphoto.render/readiness") return Promise.resolve(json(server.aiphotoReadiness || AIPHOTO_NOT_INSTALLED));
-  if (p === "/v1/segment/install") return Promise.resolve(json({ id: "j-install", state: "running", progress: 0 }, 202));
+  // the model's download (the kit's route): done at the next read
+  if (p === "/v1/ai/runtimes/onnx/models/sam3/download" && method === "POST") {
+    server.finderReadiness = FINDER_READY;
+    return Promise.resolve(json({ status: "downloading" }, 202));
+  }
   if (p === "/v1/houses/h1/find-parts") {
     server.findBody = init.body ? JSON.parse(init.body) : null;
     return Promise.resolve(json({ id: "j-find", state: "running", progress: 0 }, 202));
-  }
-  if (p === "/v1/jobs/j-install") {
-    server.finderInstalled = true;
-    return Promise.resolve(json({ id: "j-install", state: "done", progress: 1, result: { installed: true } }));
   }
   if (p === "/v1/jobs/j-find" && server.holdFind) return Promise.resolve(json({ id: "j-find", state: "running", progress: 0.4, message: "trim" }));
   if (p === "/v1/jobs/j-find") {
@@ -218,7 +217,7 @@ const settle = async () => {
 };
 
 beforeEach(() => {
-  server = { calls: [], parts: [], designs: [], finderInstalled: true, currentPaints: {}, searches: [], ifMatch: [] };
+  server = { calls: [], parts: [], designs: [], currentPaints: {}, searches: [], ifMatch: [] };
   vi.stubGlobal("fetch", vi.fn(fakeFetch));
   vi.stubGlobal("ResizeObserver", class { observe() {} unobserve() {} disconnect() {} });
   vi.stubGlobal("matchMedia", vi.fn(() => ({ matches: false, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {} })));
@@ -229,21 +228,22 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-test("without the part finder: its install is offered, runs as a task, and then the parts can be found", async () => {
-  server.finderInstalled = false;
+test("without the part finder's model: the kit's banner offers it, it downloads, and then the parts can be found", async () => {
+  server.finderReadiness = FINDER_NOT_DOWNLOADED;
   await mountPage();
   expect(text()).toContain("Main street");
-  expect(text()).toContain("Install the part finder");
-  // Box asks the finder: off, saying why, until it is installed (the sixteenth review)
+  expect(text()).toContain("The part finder needs its model, SAM 3, which isn't on this computer yet.");
+  // Box asks the finder: off, saying why, until its model is here (the sixteenth review)
   const box = () => byText(".ui-seg button", "Box");
   expect(box().getAttribute("aria-disabled")).toBe("true");
   // its reason is its description (the kit's tooltip shows it on hover and focus — no native title any more)
   const reason = (el) => document.getElementById(el.getAttribute("aria-describedby"))?.textContent || "";
-  expect(reason(box())).toContain("Off until the part finder is installed");
-  await click(byText("button", "Install ("));
-  await settle();
-  expect(server.calls).toContain("POST /v1/segment/install");
-  expect(box().getAttribute("aria-disabled")).not.toBe("true");
+  expect(reason(box())).toContain("Off until the part finder's model is downloaded");
+  await click(byText("button", "Download the model ("));
+  expect(server.calls).toContain("POST /v1/ai/runtimes/onnx/models/sam3/download");
+  // the banner reads the readiness again, says it's ready, and goes; the page reads it too
+  await vi.waitFor(() => expect(box().getAttribute("aria-disabled")).not.toBe("true"), { timeout: 5000 });
+  expect(text()).not.toContain("needs its model");
   expect(text()).toContain("Find the parts first");
   await click(byText(".ui-empty button, .ui-empty .q-btn", "Find the parts"));
   await settle();
@@ -253,13 +253,13 @@ test("without the part finder: its install is offered, runs as a task, and then 
   expect(text()).toContain("Trim");
 }, 20000);
 
-test("with the part finder removed, the house's parts stay listed and paintable, the install beside them", async () => {
-  server.finderInstalled = false;
+test("with the part finder's model removed, the house's parts stay listed and paintable, the banner beside them", async () => {
+  server.finderReadiness = FINDER_NOT_DOWNLOADED;
   server.parts = PARTS;
   await mountPage();
   expect(text()).toContain("To paint");
   expect(text()).toContain("Body");
-  expect(text()).toContain("Install the part finder");
+  expect(text()).toContain("The part finder needs its model, SAM 3");
 });
 
 test("a search that found nothing says so; a deleted house says it's gone, with the way back", async () => {
@@ -291,37 +291,40 @@ test("a change to a house deleted meanwhile (another window, a reset) shows it's
   expect(text()).toContain("This house isn't here any more");
 });
 
-test("when the part finder's engine can't load here, the card says so and downloads nothing", async () => {
-  server.finderInstalled = false;
-  server.runtime = { ok: false, error: "libonnxruntime.so.1: cannot open shared object file" };
+test("when the part finder's engine can't load here, the banner says so and offers nothing to download", async () => {
+  server.finderReadiness = FINDER_CANT_LOAD;
   await mountPage();
-  expect(text()).toContain("The part finder can't run on this computer: its engine didn't load (libonnxruntime.so.1");
-  // off, but focusable (aria-disabled): Find the parts again brings the keyboard to it
-  expect(byText("button", "Install (").getAttribute("aria-disabled")).toBe("true");
-  await click(byText("button", "Install ("));
-  expect(server.calls).not.toContain("POST /v1/segment/install");
+  expect(text()).toContain("This engine didn't load on this computer (libonnxruntime.so.1: cannot open shared object file).");
+  expect([...document.querySelectorAll("button")].some((b) => b.textContent.includes("Download the model"))).toBe(false);
 });
 
-test("Find the parts again without the part finder: its card, its Install focused even while off, and why — by state", async () => {
-  server.finderInstalled = false;
+test("Find the parts again without the part finder's model: its banner, its Download focused even while off, and why — by state", async () => {
   server.parts = PARTS;
-  server.runtime = { ok: false, error: "libonnxruntime.so.1: cannot open shared object file" };
+  server.finderReadiness = FINDER_CANT_LOAD;
   await mountPage();
-  // it can't run here: said so, not "install it" (the twentieth review)
+  // it can't run here: said so, not "download it" (the twentieth review)
   await click(byText("button", "Find the parts again"));
   await flushPromises();
-  expect(document.activeElement).toBe(byText("button", "Install ("));
   await vi.waitFor(() => expect(document.querySelector("[data-live-announcer]").textContent).toMatch(/can't run on this computer yet/));
-  // still installing: said so
-  const { useEnginesStore } = await import("../stores/engines.js");
-  const engines = useEnginesStore();
-  engines.finder = { ...engines.finder, runtime: { ok: true } };
-  engines.installing = { ...engines.installing, finder: true };
-  await click(byText(".q-tab", "Colors"));
+  wrapper.unmount();
+  document.body.innerHTML = "";
+  // not here yet: its Download focused, and said
+  server.finderReadiness = FINDER_NOT_DOWNLOADED;
+  await mountPage();
   await click(byText("button", "Find the parts again"));
   await flushPromises();
-  expect(document.activeElement?.textContent).toContain("Installing");
-  await vi.waitFor(() => expect(document.querySelector("[data-live-announcer]").textContent).toMatch(/still installing/));
+  expect(document.activeElement).toBe(byText("button", "Download the model ("));
+  await vi.waitFor(() => expect(document.querySelector("[data-live-announcer]").textContent).toMatch(/needs the part finder's model/));
+  wrapper.unmount();
+  document.body.innerHTML = "";
+  // still downloading: its Download off but focused, and said
+  server.finderReadiness = { ...FINDER_NOT_DOWNLOADED, modelState: { ...FINDER_NOT_DOWNLOADED.modelState, status: "downloading", downloaded: 1e9, total: 3364167120 } };
+  await mountPage();
+  await click(byText("button", "Find the parts again"));
+  await flushPromises();
+  expect(document.activeElement).toBe(byText("button", "Download the model ("));
+  expect(document.activeElement.getAttribute("aria-disabled")).toBe("true");
+  await vi.waitFor(() => expect(document.querySelector("[data-live-announcer]").textContent).toMatch(/still downloading/));
   expect(server.calls).not.toContain("POST /v1/houses/h1/find-parts");
 });
 
@@ -655,6 +658,20 @@ test("the colors on screen are saved as a named design", async () => {
   expect(server.designs[0]).toMatchObject({ name: "Blue body", colors: { body: "behr:S1" } });
   expect(text()).toContain("Blue body");
 });
+
+const FINDER_READY = { feature: "parts.find", kind: "vision", ready: true, need: "", runtime: "onnx", model: "sam3" };
+const FINDER_NOT_DOWNLOADED = {
+  ...FINDER_READY,
+  ready: false,
+  need: "model-not-downloaded",
+  engine: { id: "onnx", label: "ONNX Runtime", inProcess: true, installed: true, downloadBytes: 0, need: null, status: "" },
+  modelState: { id: "sam3", name: "SAM 3", bytes: 3364167120, onDisk: false, fit: "ok", speedBand: "fast", predSpeed: 2, measuredSpeed: null, speedUnit: "s/image", status: "" },
+};
+const FINDER_CANT_LOAD = {
+  ...FINDER_NOT_DOWNLOADED,
+  need: "engine-cant-run-here",
+  engine: { ...FINDER_NOT_DOWNLOADED.engine, installed: false, need: { reason: "cant-load", detail: "libonnxruntime.so.1: cannot open shared object file" } },
+};
 
 const AIPHOTO_NOT_INSTALLED = {
   feature: "aiphoto.render",

@@ -1,13 +1,10 @@
 // SPDX-License-Identifier: MIT
-// The part finder (SAM 3) — whether it is installed, installing it (a job: ~3.4 GB of downloads), removing it — and
-// the AI photo of a house (a job) and the AI photos kept. The AI photo's engine and model are the kit's: its
-// /v1/ai/runtimes routes install, download and remove them (the kit's engines plan, H1).
+// The AI photo of a house (a job) and the AI photos kept. The engines and models — the AI photo's and the part
+// finder's — are the kit's: its /v1/ai/runtimes routes install, download and remove them, and its arbiter says the
+// graphics card is busy while another holds it (the kit's engines plan, H1 and round C).
 
 import { existsSync, readFileSync } from "node:fs";
-import path from "node:path";
-import { assertGpuFree } from "../jobs.js";
 import { Hono, input } from "@delebash/core/platform";
-import { freeBytes, lacksRoom } from "@delebash/core/platform/disk_room";
 import { ApiError, notFound } from "@delebash/core/platform/errors";
 import { designNotFound, houseNotFound } from "./refusals.js";
 import { addRender, deleteRender, getDesign, getHouse, getRender, listParts, listRenders } from "../database/houses.js";
@@ -15,79 +12,11 @@ import { paintsById } from "../database/paints.js";
 import { removeHouseFile, renderFileId, renderPath } from "../files.js";
 import { AiPhotoIn, IdParams } from "../schemas/houses.js";
 import { getState } from "../app_state.js";
-import { MODEL_FILES as FINDER_FILES } from "../segment/models.js";
-import { finderModelDir } from "../services.js";
 
-const gb = (n) => `${(n / 1e9).toFixed(1)} GB`;
-
-/** `ctx`: { db, dataDir, jobs, finder, aiphoto, download, sharedGpu?, freeBytes? } — `download` is the
- * kit's streamDownload; `sharedGpu()` what else holds the graphics card (services.js); `freeBytes(dir)`
- * a test's drive (the kit's disk_room.js freeBytes). */
+/** `ctx`: { db, dataDir, jobs, aiphoto, sharedGpu?, partLabel? } — `sharedGpu()` what else holds the graphics card
+ * (services.js). */
 export function router(ctx = getState()) {
   const app = new Hono();
-  // the part finder being removed (Settings → Storage): nothing installs into, or runs from, a folder going away
-  const removing = (ctx.enginesRemoving ??= new Set());
-  const notWhileRemoved = (engine, name) => {
-    if (removing.has(engine)) throw new ApiError(409, "engine-busy", `${name} is being removed`, "try again when it's done");
-  };
-  /** An install that wouldn't fit the drive of the data folder is refused before anything downloads (a full
-   *  disk mid-download left a cut-off file and a raw ENOSPC — 3.3 GB / 9.6 GB, the thirteenth review) — the kit's
-   *  lacksRoom, what an unfinished download already holds counted. */
-  const mustFit = async (name, bytes, files = []) => {
-    const free = await (ctx.freeBytes || freeBytes)(ctx.dataDir);
-    const short = lacksRoom({ dir: ctx.dataDir, bytes, files, free: () => free });
-    if (short) {
-      throw new ApiError(507, "disk-full", "Not enough room on the drive", `${name} needs ${gb(short.needBytes)} on the drive of the app's data folder; it has ${gb(short.freeBytes)} free — make room, or move the data folder to a bigger drive`, short);
-    }
-  };
-
-  // not installed yet: whether its runtime loads here, so the install card can say so before the download
-  app.get("/v1/segment/status", async (c) => {
-    const installed = ctx.finder.installed();
-    return c.json({ installed, downloadBytes: ctx.finder.downloadBytes(), ...(installed ? {} : { runtime: await ctx.finder.runtime() }) });
-  });
-
-  // The finder's runtime loads on this computer (the release's start check asks it on every runner).
-  app.get("/v1/segment/runtime", async (c) => {
-    const r = await ctx.finder.runtime();
-    if (!r.ok) throw new ApiError(503, "runtime-missing", "The part finder can't run on this computer", r.error);
-    return c.json(r);
-  });
-
-  app.post("/v1/segment/install", async (c) => {
-    notWhileRemoved("finder", "The part finder");
-    // nothing downloads that couldn't run here, or wouldn't fit
-    const runtime = await ctx.finder.runtime();
-    if (!runtime.ok) throw new ApiError(409, "runtime-missing", "The part finder can't run on this computer", runtime.error, runtime.reason ? { reason: runtime.reason } : null);
-    await mustFit(
-      "The part finder",
-      ctx.finder.downloadBytes(),
-      FINDER_FILES.map((f) => path.join(finderModelDir(ctx.dataDir), f.name)),
-    );
-    const job = ctx.jobs.start({ kind: "install-finder", key: "", failTitle: "The part finder didn't install" }, ({ signal, progress }) =>
-      ctx.finder.install({
-        download: ctx.download,
-        signal,
-        onProgress: (e) => progress(e.overallTotal ? e.overallDone / e.overallTotal : 0, e.name),
-      }),
-    );
-    return c.json(job, 202);
-  });
-
-  // Remove the part finder's model (Settings → Storage) — not while it finds parts or installs.
-  app.delete("/v1/segment/install", async (c) => {
-    if (ctx.jobs.busy(["find-parts", "install-finder"])) {
-      throw new ApiError(409, "engine-busy", "The part finder is busy", "wait until it has finished finding the parts or installing");
-    }
-    removing.add("finder");
-    try {
-      await ctx.finder.uninstall();
-    } finally {
-      removing.delete("finder");
-    }
-    return c.body(null, 204);
-  });
-
   app.post("/v1/houses/:id/aiphoto", input({ params: IdParams, body: AiPhotoIn }), (c) => {
     const house = getHouse(ctx.db, c.req.valid("param").id);
     if (!house) throw houseNotFound(c.req.valid("param").id);
@@ -115,7 +44,6 @@ export function router(ctx = getState()) {
     const surfaces = Object.entries(chosen)
       .filter(([key, id]) => id && paintable.has(key) && paints[id])
       .map(([key, id]) => ({ key, hex: paints[id].hex, name: paints[id].name, currentHex: paints[now[key]]?.hex ?? null }));
-    assertGpuFree(ctx.jobs, "aiphoto", house.id);
     const job = ctx.jobs.start({ kind: "aiphoto", key: house.id, label: house.name, failTitle: "The AI photo didn't finish", clientId: c.req.header("x-client-id") || null }, async ({ signal, progress }) => {
       const renderId = crypto.randomUUID();
       // what else holds the graphics card, measured beside the render (about a second on Windows)

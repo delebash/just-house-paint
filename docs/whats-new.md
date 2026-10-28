@@ -14,6 +14,17 @@
 - **Its speed is this computer's own**: after the first AI photo, the chip shows the time it really took here.
 - **App Settings → Storage** no longer lists the AI photo on its own: its engine and model are counted with the AI
   engine's builds and the models.
+- **The part finder runs on the family's shared AI engines too.** Its model (SAM 3) lives in the AI cache: a house's
+  **Parts** tab offers **Download the model**, and **AI Settings → Vision** shows it — **Download** and **Delete**,
+  and how long it stays in memory (**Let go after idle (minutes)**). Coming from v0.1.3, the part finder you
+  installed is moved into the AI cache when the app starts — nothing to download again.
+- **Where the part finder runs is its preset**: **Find the parts** under **AI Settings → Routing by feature** —
+  **Runs on: The graphics card, where it can** or **The processor only**. **Use the graphics card (Windows)** and
+  **Let go after (minutes idle)** leave **App Settings → General**; what you had set there is carried over.
+- **The AI engines take turns on the graphics card by themselves**: an idle one lets go when another needs the room;
+  a busy one makes the other say "The graphics card is busy" — finding the parts on the processor never waits for
+  the card now.
+- **App Settings → Storage** no longer lists the part finder: its model is counted with the AI cache's models.
 
 ## v0.1.3
 

@@ -50,12 +50,10 @@ export const SETTINGS = {
       maxItems: 24,
     }),
   }),
-  // The part finder: what it looks for (each part's prompts and threshold), which part keeps a
-  // pixel two parts claim, whether the graphics card does the photo's encode, and when it lets go.
+  // The part finder: what it looks for (each part's prompts and threshold) and which part keeps a pixel two parts
+  // claim — where it runs and when it lets go of its memory are the AI page's (its preset, the Vision tab).
   "finder.parts": T.Array(PartRule, { minItems: 1, maxItems: 40 }),
   "finder.priority": T.Array(PartKey, { maxItems: 40 }),
-  "finder.useGpu": T.Boolean(),
-  "finder.idleMinutes": T.Integer({ minimum: 1, maximum: 240 }),
   // How far past the house a part may reach, as a share of the photo's longer side (0 = no limit).
   "finder.houseMargin": T.Number({ minimum: 0, maximum: 0.2 }),
   // How much of a found piece must lie on the house for it to count (a car's door in front doesn't).

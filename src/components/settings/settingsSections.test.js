@@ -66,10 +66,6 @@ function fakeFetch(input, init = {}) {
   if (url.pathname === "/v1/disk/usage") return Promise.resolve(json(server.disk));
   if (url.pathname === "/v1/llm-runner/models-cache/clear") return Promise.resolve(json({ ok: true }));
   if (url.pathname === "/v1/data/restore") return Promise.resolve(json({ ...(server.restoreAnswer || {}), ok: true }));
-  if (url.pathname === "/v1/segment/install" && method === "DELETE") {
-    server.disk = { ...server.disk, extras: { ...server.disk.extras, partFinder: 0 } };
-    return Promise.resolve(new Response(null, { status: 204 }));
-  }
   return Promise.resolve(json({}));
 }
 
@@ -437,28 +433,13 @@ describe("Storage", () => {
   });
 });
 
-describe("Storage — this app's own rows", () => {
-  test("its houses and engines in sizes; Remove frees an installed engine after asking, and the sizes are read again", async () => {
-    server.disk = { ...server.disk, extras: { houses: 5e6, partFinder: 3.4e9, aiPhoto: 0 } };
+describe("Storage — this app's own row", () => {
+  test("its houses in a size; the engines and models are the kit's buckets (no Remove of the app's own)", async () => {
+    server.disk = { ...server.disk, extras: { houses: 5e6 } };
     await mountSettings("storage");
     expect(text()).toContain("Your houses' photos");
-    // the grid's own Remove buttons (the confirm's button says Remove too)
-    const removes = () => [...document.body.querySelectorAll(".lu-storage__grid button")].filter((b) => b.textContent.trim() === "Remove");
-    expect(removes()).toHaveLength(1); // the AI photo isn't installed: nothing to remove
-    removes()[0].click();
-    await flushPromises();
-    _resolveDialog(false);
-    await flushPromises();
-    expect(server.calls.some((c) => c[0] === "DELETE")).toBe(false);
-    removes()[0].click();
-    await flushPromises();
-    const reads = server.calls.filter((c) => c[1] === "/v1/disk/usage").length;
-    _resolveDialog(true);
-    // the Remove, then the sizes read again
-    for (let i = 0; i < 30 && server.calls.filter((c) => c[1] === "/v1/disk/usage").length === reads; i++) await flushPromises();
-    await flushPromises();
-    expect(server.calls.some((c) => c[0] === "DELETE" && c[1] === "/v1/segment/install")).toBe(true);
-    expect(removes()).toHaveLength(0);
+    expect(text()).not.toContain("The part finder");
+    expect([...document.body.querySelectorAll(".lu-storage__grid button")].filter((x) => x.textContent.trim() === "Remove")).toHaveLength(0);
   });
 });
 

@@ -106,16 +106,15 @@ export function resetUnfitSettings(h) {
   return reset;
 }
 
-/** Cancel the jobs and wait for them to end, let the part finder, the local AI model and the kit's other engines (the
- * AI photo's sd-server — Windows keeps a running server's files locked) go — best effort by design:
+/** Cancel the jobs and wait for them to end, let the local AI model and the kit's other engines go (the AI photo's
+ * sd-server — Windows keeps a running server's files locked —, the part finder's model in memory once its run ends) —
+ * best effort by design:
  * a reset or restore never fails on its teardown. Before a restore replaces anything (beforeReplace) and after it
  * (onReplaced). */
 async function teardown() {
   const state = getState();
   try {
     await state.jobs?.cancelAll();
-    // a CPU inference the finder is in the middle of: waited for, at most 30 s (the restore waits on this)
-    await Promise.race([state.finder?.releaseGpu(), new Promise((r) => setTimeout(r, 30_000).unref?.())]);
   } catch {
     // best effort, as below
   }

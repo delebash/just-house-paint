@@ -3,7 +3,6 @@
 // real paint, and the refusals (no paints, no parts, no AI set up, an unusable answer).
 import { afterEach, describe, expect, test } from "vitest";
 import { medianColor, parseSchemes, schemeVariables } from "../src/schemes_ai.js";
-import { assertGpuFree } from "../src/jobs.js";
 import { aiAnswer, jpeg, makeServer } from "./domain_helpers.js";
 import { syntheticPalette } from "./paints/fixtures/palette.js";
 
@@ -95,22 +94,8 @@ describe("POST /v1/schemes/ai", () => {
     expect(call.variables.mood).toBe("The owner would like: coastal");
   });
 
-  test("beside a running AI photo, the schemes wait only when they would run on the local model", async () => {
+  test("Cancel in the window stops the model's run (the twenty-first review: it ran on, holding the local model)", async () => {
     const house = await houseWithParts();
-    aiAnswer.text = JSON.stringify({ schemes: [{ name: "Harbor", body: "#5b7a8c", trim: "#f2efe6", accent: "#a33a2f" }] });
-    s.ctx.jobs.start({ kind: "aiphoto", key: house.id, label: "Main street" }, () => new Promise(() => {}));
-    s.ctx.usesLocalAi = () => false; // a cloud model: nothing to load on the card
-    expect((await s.json("POST", "/v1/schemes/ai", { houseId: house.id, brand: "behr" })).status).toBe(200);
-    s.ctx.usesLocalAi = (feature) => feature === "schemes.suggest";
-    const busy = await s.json("POST", "/v1/schemes/ai", { houseId: house.id, brand: "behr" });
-    expect(busy.status).toBe(409);
-    expect((await busy.json()).type).toMatch(/gpu-busy$/);
-    s.ctx.jobs.cancelAll();
-  });
-
-  test("Cancel in the window stops the model's run and frees the local AI for the AI photo (the twenty-first review)", async () => {
-    const house = await houseWithParts();
-    s.ctx.usesLocalAi = (feature) => feature === "schemes.suggest";
     aiAnswer.hang = true;
     const cancel = new AbortController();
     const asked = s.app.request("/v1/schemes/ai", {
@@ -120,14 +105,10 @@ describe("POST /v1/schemes/ai", () => {
       signal: cancel.signal,
     });
     await new Promise((r) => setTimeout(r, 50));
-    // while it runs, the local AI is held: an AI photo waits
-    expect(() => assertGpuFree(s.ctx.jobs, "aiphoto")).toThrow(/AI color schemes are being made/);
     cancel.abort();
     const answer = await asked.catch((e) => e);
     expect(aiAnswer.aborted).toBe(1);
     expect(answer?.status ?? 499).toBe(499);
-    // let go: the AI photo can run
-    expect(() => assertGpuFree(s.ctx.jobs, "aiphoto")).not.toThrow();
   });
 
   test("it needs the brand's colors and the house's parts", async () => {

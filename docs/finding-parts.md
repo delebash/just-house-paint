@@ -29,13 +29,21 @@ say. Only what lies on the house counts: a garden statue in front of it doesn't 
 a wall or a door can).
 A scheme paints them the trim's color; give them their own on the **Colors** tab.
 
-## The first time: installing the part finder
+## The first time: the part finder's model
 
-Until it is installed, a house's **Parts** tab offers the part finder: **Install (3.1 GB)** downloads
-it, once, after checking the drive of the app's data folder has room (3.4 GB). Its progress shows on the card
-while it downloads; **Cancel** there stops it, and the next **Install** goes on where it stopped. If the
-finder's engine can't run on the computer, the card says so instead, and nothing is downloaded. On a
-Windows computer with a graphics card the finder uses the card (on macOS and Linux it runs on the
+The part finder runs on ONNX Runtime, which is part of the app — nothing to install — with its model SAM 3, kept in
+the AI cache with the app's other AI models (the family's apps share it). Until the model is on this computer, a
+house's **Parts** tab says "The part finder needs its model, SAM 3, which isn't on this computer yet": **Download
+the model (3.1 GB)** downloads it, once. Before it downloads, the app checks that the drive holding the AI engines
+and models has room, and says how much it needs and has if not. Its progress bar shows there while it downloads;
+**Cancel** stops it, and the next download goes on where it stopped. Beside the step, the model's chip says whether
+it fits this computer. If ONNX Runtime can't run on the computer, the **Parts** tab says why instead and offers
+nothing to download. **AI Settings → Vision** shows the model too, with **Download** and **Delete**.
+
+**Updating from version 0.1.3 or earlier:** the part finder you already installed is moved into the AI cache when
+the app starts — nothing to download again.
+
+On a Windows computer with a graphics card the finder uses the card (on macOS and Linux it runs on the
 processor, which is slower); finding the parts of one photo takes about a minute on Windows with a graphics card
 (a little longer the first time, while the model loads), longer on the processor. Its progress shows under the
 house's name while it works — the part it is looking for and how far along it is ("Trim · 40%") — with
@@ -61,7 +69,7 @@ with the tools above the photo, on the part selected on the **Parts** tab:
   **Brush size** sits beside them.
 - **Box** — drag a box around something (a shutter, the fascia), or click one corner and then the
   other; the finder outlines what is inside it and gives it to the selected part, taking it from any
-  other part. **Escape** lets go of a box half drawn. Box is off until the part finder is installed.
+  other part. **Escape** lets go of a box half drawn. Box is off until the part finder's model is downloaded.
 - **Add the part** (under the list) — a part to paint that the finder knows but didn't find on this
   house: choose it, then draw it with the brush or a box.
 
@@ -88,13 +96,19 @@ it to have every part found again: a part you added that the finder doesn't find
 
 **App Settings → General → Part finder** (see [General](settings.md#general)):
 
-- **Use the graphics card (Windows)** — whether the graphics card helps; it takes effect the next time the finder
-  loads.
-- **Let go after (minutes idle)** — when the finder lets go of its memory.
 - **Parts reach past the house by (share of the photo)** — how far past the house a part may reach; 0 turns off
   both checks on the house, this one and the next.
 - **A piece counts when this share of it is on the house** — so a car parked in front isn't taken for a door.
 
-What the finder looks for — each part's words and threshold — is in **App Settings → Advanced**. **App Settings →
-Storage** shows how much space it takes; **Remove** there frees it (the parts already found stay) and Install
-brings it back.
+Where the finder runs is its preset: select **Find the parts** under **AI Settings → Routing by feature** (see
+[The AI features](ai-features.md)). **Runs on** is **The graphics card, where it can** at first — on Windows the
+photo's heaviest step runs on the graphics card and the rest on the processor; on macOS and Linux all of it on the
+processor — or **The processor only** (slower, and it never waits for the graphics card). It applies from the next
+find. How long the finder keeps its memory with nothing to do is **Let go after idle (minutes)** on **AI Settings →
+Vision** — 10 at first; 0 keeps it. After that it loads again when next needed, which takes a little longer.
+**Updating from version 0.1.3 or earlier:** your **Use the graphics card (Windows)** and **Let go after (minutes
+idle)** move there.
+
+What the finder looks for — each part's words and threshold — is in **App Settings → Advanced**. **AI Settings →
+Vision** deletes its model (the parts already found stay) and downloads it again; **App Settings → Storage** counts
+it with the AI cache.

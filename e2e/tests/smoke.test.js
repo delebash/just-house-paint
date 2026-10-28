@@ -2,8 +2,8 @@
 // The smoke suite — the REAL desktop app (Electron, the built UI from app://) driven through
 // Playwright (app-structure §10, §18). It asserts the CONTRACT, not pixels: the shell mounts, the
 // nav works, the AI status button and the AI-tasks toggle behave, a photo is added through the
-// window and reaches the server, the house opens and offers the part finder's install (a fresh data
-// folder has no engines), the once-ever AI offer comes once, Paint colors lists the launch brands,
+// window and reaches the server, the house opens and offers the part finder's model (a fresh data
+// folder has none — the kit's banner; ONNX Runtime loads in the built app), the once-ever AI offer comes once, Paint colors lists the launch brands,
 // Settings shows its sections in their order. Hermetic (lib/driver.js): a temp data folder, the
 // harness's own server, the shell's <ID>_DEV_NO_SERVER=1. One launch shared by the tests, in order.
 //
@@ -115,8 +115,10 @@ test("a photo is added through the window, kept by the server, the house opens, 
   await page.locator('.houses__picker input[type="file"]').setInputFiles({ name: "my-house.png", mimeType: "image/png", buffer: PHOTO });
   await page.waitForURL(/#\/house\/[A-Za-z0-9-]+$/);
   await page.locator(".pane-h1", { hasText: "my house" }).waitFor(); // the server names it from the file
-  // a fresh data folder has no part finder: the house offers its install
-  await page.locator(".engine h2", { hasText: "Install the part finder" }).waitFor();
+  // a fresh data folder has no part finder's model: the house offers it (the kit's banner) — not "can't run here":
+  // the built app loads its own ONNX Runtime (the kit's runtime check, the release's start check too)
+  await page.locator(".lu-needed", { hasText: "The part finder needs its model, SAM 3" }).waitFor();
+  assert.deepEqual(await d.api("/ai/runtimes/onnx/engine/check"), { ok: true });
 
   const houses = await d.api("/houses");
   assert.equal(houses.length, 1);

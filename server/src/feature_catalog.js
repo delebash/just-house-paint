@@ -31,4 +31,14 @@ export const FEATURE_CATALOG = [
     group: "AI photo",
     kind: "image",
   }),
+  // The house page's part finder (POST /v1/houses/:id/find-parts, a job; a Box): SAM 3 on the kit's in-process ONNX
+  // runtime finds each part of the app's recipe on the photo (finder.js, segment/) — its preset says where it runs.
+  // Kind "vision" (the kit's engines plan, round C / H2).
+  FeatureCatalogEntry({
+    key: "parts.find",
+    label: "Find the parts",
+    hint: "Outlines the body, the trim, the doors and the rest of the house on its photo — Find the parts and Box on a house's Parts tab.",
+    group: "Part finder",
+    kind: "vision",
+  }),
 ];

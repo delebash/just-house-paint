@@ -39,12 +39,25 @@ export const DEFAULT_ENGINE_PRESETS = [
     params: { steps: 4, cfg: 1, strength: 1, sampler: "euler", seed: 42 },
     position: 1,
   },
+  // The part finder: SAM 3 on the kit's in-process ONNX runtime. "auto" puts its image encoder on the graphics card
+  // (DirectML on Windows — 1.44 s an encode, RESEARCH §10) and keeps the language encoder and the decoder on the
+  // processor, the measured best; "cpu" keeps all of it there. It was the setting finder.useGpu until round C.
+  {
+    id: "p_parts",
+    name: "Part finder",
+    provider_id: "local-onnx",
+    model: "sam3",
+    kind: "vision",
+    params: { executionProvider: "auto" },
+    position: 2,
+  },
 ];
 
 export const DEFAULT_FEATURE_PRESETS = {
   // Color schemes want some variety (temperature 0.7) and a quick answer (no thinking).
   "schemes.suggest": "p_general",
   "aiphoto.render": "p_aiphoto",
+  "parts.find": "p_parts",
 };
 
 export const DEFAULT_PRESET_ID = "p_general";
@@ -244,4 +257,34 @@ export const FLUX2_KLEIN = {
   peakVramMb: 6600,
   minRamMb: 12 * 1024,
   refSpeed: { cuda12: 20, cpu: 600 },
+};
+
+// ── The part finder's model, for the kit's in-process ONNX runtime (installLlm `runtimeModels` — the kit's engines
+// plan, round C / H2): SAM 3, samexporter's published export (huggingface.co/nrl-ai/samexporter-onnx-models, folder
+// sam3/, from facebook/sam3 at opset 18, fp32; Meta's SAM License, shipped as its LICENSE file), and CLIP's tokenizer
+// (openai/clip-vit-base-patch32's tokenizer.json, which reproduces samexporter's test token ids — facebook/sam3's own
+// is gated). Pinned to a commit so the hashes can't drift: SAM 3's are the repo's CHECKSUMS.sha256 and its LFS oids
+// (they agree); the small files were hashed locally after their git blob ids matched the Hub's. The decoder's weights
+// sit in its `.data` file beside it (same folder in the cache — ONNX Runtime reads it from there). What it takes: the
+// image encoder holds ~5.7 GB of the card on DirectML; on the CPU a find peaks at 6.7 GiB of memory (RESEARCH §10).
+const SAM3_REPO = "nrl-ai/samexporter-onnx-models";
+const SAM3_REVISION = "5050a79cd4b912dd745fff83047c4ef6fbd97be5"; // main on 2026-10-17
+const CLIP_REPO = "openai/clip-vit-base-patch32";
+const CLIP_REVISION = "3d74acf9a28c67741b2f4f2ea7635f0aaf6f0268"; // main on 2026-10-17
+export const SAM3 = {
+  runtime: "onnx",
+  id: "sam3",
+  name: "SAM 3",
+  license: "SAM License",
+  files: [
+    { slot: "image", repo: SAM3_REPO, revision: SAM3_REVISION, path: "sam3/sam3_image_encoder.onnx", sha256: "2a11b1a774c3cbda35f493878b2e5610e5af8ec77412daca228a7d9b9307aa76", bytes: 1815749196 },
+    { slot: "language", repo: SAM3_REPO, revision: SAM3_REVISION, path: "sam3/sam3_language_encoder.onnx", sha256: "0cdc233d9655866fa09cc00699469ba029aeeebc869b8b28a3e5894fed531f1e", bytes: 1413353283 },
+    { slot: "decoder", repo: SAM3_REPO, revision: SAM3_REVISION, path: "sam3/sam3_decoder.onnx", sha256: "9819047760bac79fe90fec924e904f74c752038d3c828d50d8d1b53f4e08d5b6", bytes: 2416015 },
+    { slot: "decoder_data", repo: SAM3_REPO, revision: SAM3_REVISION, path: "sam3/sam3_decoder.onnx.data", sha256: "681ea5e117a0ead55f87ef55efc5c19fed37ebc2ba94728b3c1abe18669a4c92", bytes: 130416640 },
+    { slot: "license", repo: SAM3_REPO, revision: SAM3_REVISION, path: "sam3/LICENSE", sha256: "4dea99bfaa016e21bc860d73f344236bd1e5c4977d1a9a8fd32f822b500ae1be", bytes: 7353 },
+    { slot: "tokenizer", repo: CLIP_REPO, revision: CLIP_REVISION, path: "tokenizer.json", sha256: "b556ac8c99757ffb677208af34bc8c6721572114111a6e0aaf5fa69ff0b8d842", bytes: 2224041 },
+    { slot: "tokenizer_config", repo: CLIP_REPO, revision: CLIP_REVISION, path: "tokenizer_config.json", sha256: "34b7336e4bee12e0a9730eaf5189f582ef3c3eea5027f65730e5717256755aad", bytes: 592 },
+  ],
+  peakVramMb: 5800,
+  minRamMb: 6861,
 };

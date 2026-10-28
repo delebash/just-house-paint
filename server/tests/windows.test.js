@@ -173,21 +173,6 @@ describe("the AI photo and the paints another window removed", () => {
     expect(r.status).toBe(409);
     expect(await r.json()).toMatchObject({ title: "Some colors aren't loaded any more", parts: ["trim"] });
   });
-
-  test("the AI photo waits while AI color schemes run on the local model", async () => {
-    s = makeServer();
-    const house = await houseWithParts();
-    const form = new FormData();
-    form.append("file", new Blob(["code,name,hex\nX-1,Brick Red,#a33a2f"]), "p.csv");
-    form.append("brand", "behr");
-    await s.app.request("/v1/paints/import", { method: "POST", body: form });
-    const release = s.ctx.jobs.hold("local-ai", "AI color schemes");
-    const r = await s.json("POST", `/v1/houses/${house.id}/aiphoto`, { colors: { body: "behr:X-1" } });
-    expect(r.status).toBe(409);
-    expect(await r.json()).toMatchObject({ title: "The graphics card is busy" });
-    release();
-    expect(s.ctx.jobs.holds.size).toBe(0);
-  });
 });
 
 describe("outlines.js", () => {

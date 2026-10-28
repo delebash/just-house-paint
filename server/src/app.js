@@ -17,6 +17,7 @@
 import { statSync } from "node:fs";
 import path from "node:path";
 import { installLlm, runnerRouter } from "@delebash/core/llm";
+import { registerVisionAdapter } from "@delebash/core/llm/image_dispatch";
 import {
   bearerAuth,
   CAPACITOR_ORIGINS,
@@ -64,18 +65,20 @@ import {
   DEFAULT_PRESET_ID,
   FLUX2_KLEIN,
   MODEL_CATALOG,
+  SAM3,
 } from "./seed_presets.js";
+import { ortBinDir, sam3Adapter } from "./finder.js";
 import { housesRoot } from "./files.js";
-import { createServices, finderModelDir } from "./services.js";
+import { createServices } from "./services.js";
 import { PRODUCT } from "./version.js";
 
 const log = getLogger("just_house_paint.app");
 
 // the writes that change what another window shows: the houses, their parts, designs, paints now and AI photos; the
-// brands and their colors; the app's settings; the engines (the house page offers or uses them — the part finder's
-// install, the kit's runtimes': the AI photo's engine and model). Not one: a window's own prefs, a scheme worked out,
-// a log line, a cancel (the job's end is counted), an AI run, the tokens.
-export const DATA_WRITES = /^\/v1\/(houses|designs|renders|brands|paints|settings|segment\/install|ai\/runtimes)(\/|$)/;
+// brands and their colors; the app's settings; the engines (the house page offers or uses them — the kit's runtimes':
+// the AI photo's engine and model, the part finder's model). Not one: a window's own prefs, a scheme worked out, a log
+// line, a cancel (the job's end is counted), an AI run, the tokens.
+export const DATA_WRITES = /^\/v1\/(houses|designs|renders|brands|paints|settings|ai\/runtimes)(\/|$)/;
 
 /** The problem-type prefix of every error answer (`type`: `<base><slug>`, app-structure §15). */
 export const TYPE_BASE = "https://just-house-paint.local/errors/";
@@ -128,8 +131,12 @@ const llmArgs = (db, dataDir) => ({
   classTuneIdentity: CLASS_TUNE_IDENTITY,
   // The AI photo's engine is the kit's stable-diffusion.cpp runtime, its model FLUX.2 [klein] 4B (seed_presets.js):
   // the kit installs, downloads, rates and runs them (the engines plan, H1); the AI page shows them on its Images tab.
-  runtimes: ["sdcpp"],
-  runtimeModels: [FLUX2_KLEIN],
+  // The part finder's is the kit's in-process ONNX runtime, its model SAM 3 (round C, H2): ONNX Runtime is this app's
+  // onnxruntime-node package, handed to the kit (D2) with where its native files are (the kit's runtime check); the
+  // AI page shows it on its Vision tab.
+  runtimes: ["sdcpp", "onnx"],
+  runtimeModels: [FLUX2_KLEIN, SAM3],
+  onnx: { load: () => import("onnxruntime-node"), binDir: ortBinDir() },
 });
 
 /**
@@ -193,21 +200,16 @@ export async function createApp(dataDir = null, { services = {} } = {}) {
   app.route("/", prefsRouter());
   app.route("/", makeSyncRevRouter(changes, { pollSeconds: () => getState().checkSeconds() }));
   app.route("/", makeLogsRouter(PRODUCT));
-  // Settings → Storage's sizes: the kit's buckets (the AI photo's engine and model are the kit's — its engine builds
-  // and models cache) plus this app's own stores — the houses' photos, the part finder's model (outside the kit's
-  // cache until round C)
-  app.route(
-    "/",
-    makeDiskRouter(dataDir, {
-      houses: housesRoot(dataDir),
-      partFinder: finderModelDir(dataDir),
-    }),
-  );
+  // Settings → Storage's sizes: the kit's buckets (the AI photo's and the part finder's engines and models are the
+  // kit's — its engine builds and models cache) plus this app's own store, the houses' photos
+  app.route("/", makeDiskRouter(dataDir, { houses: housesRoot(dataDir) }));
   app.route("/", dataRouter(dataDir, { gate }));
 
   // 6. The AI stack: the host mounts the runner's process API, installLlm mounts the rest.
   app.route("/", runnerRouter());
   await installLlm(app, llmArgs(db, dataDir));
+  // SAM 3's own code (the samexporter port — the app's), built and held in memory by the kit's ONNX runtime
+  registerVisionAdapter(SAM3.id, sam3Adapter());
 
   // 7. The app's own routes.
   app.route("/", settingsRouter());

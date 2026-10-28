@@ -58,7 +58,7 @@
       },
       "finder": {
         "title": "Part finder",
-        "hint": "Whether the graphics card helps find the parts (on Windows — on macOS and Linux the finder runs on the processor), when the finder lets go of its memory, and how far past the house a part may reach — so a car parked in front isn't taken for a door."
+        "hint": "How far past the house a part may reach — so a car parked in front isn't taken for a door. Whether the graphics card helps, and when the finder lets go of its memory, are on the AI page: the Part finder preset, and the Vision tab."
       },
       "windows": {
         "title": "Other windows",
@@ -83,8 +83,6 @@
           "maxImportMegabytes": "Largest palette file (MB)"
         },
         "finder": {
-          "useGpu": "Use the graphics card (Windows)",
-          "idleMinutes": "Let go after (minutes idle)",
           "houseMargin": "Parts reach past the house by (share of the photo)",
           "houseMinShare": "A piece counts when this share of it is on the house"
         },
@@ -107,14 +105,7 @@
     "logsHint": "What the server and this window reported, newest last.",
     "storage": {
       "saves": "your houses and their photos",
-      "houses": "Your houses' photos",
-      "partFinder": "The part finder",
-      "remove": {
-        "action": "Remove",
-        "confirm": "Remove",
-        "partFinderTitle": "Remove the part finder?",
-        "partFinderMessage": "This frees {size}. Your houses keep the parts already found; finding parts again needs the part finder installed again."
-      }
+      "houses": "Your houses' photos"
     },
     "about": {
       "blurb": "See your house in real paint colors before you buy paint: its parts found on your computer, real brand paints in the photo's own light, color schemes, designs and an AI photo."
@@ -230,10 +221,10 @@
       "box": "Box",
       "boxHint": "Draw a box around something the selected part should take in — drag, or click one corner and then the other",
       "offWhileFinding": "Off while the parts are being found — their new outlines replace these when it's done",
-      "needsFinder": "Finding the parts needs the part finder: install it on the Parts tab.",
-      "finderInstalling": "The part finder is still installing — find the parts once it's in (its progress is on the Parts tab).",
+      "needsFinder": "Finding the parts needs the part finder's model: download it on the Parts tab.",
+      "finderInstalling": "The part finder's model is still downloading — find the parts once it's in (its progress is on the Parts tab).",
       "finderBlocked": "The part finder can't run on this computer yet — the Parts tab says why.",
-      "offNoFinder": "Off until the part finder is installed — it outlines what is inside the box (Install, on the Parts tab)",
+      "offNoFinder": "Off until the part finder's model is downloaded — it outlines what is inside the box (on the Parts tab)",
       "size": "Brush size",
       "outlines": "Outlines",
       "split": "Line — where the before ends",
@@ -244,6 +235,7 @@
       "light": "Light",
       "lightHint": "A brighter or duller day over the whole picture — 1 is the photo's own light"
     },
+    "finderName": "The part finder",
     "tabs": {
       "label": "House panel",
       "parts": "Parts",
@@ -494,29 +486,6 @@
     "save": "Save image",
     "suffix": "AI photo",
     "fallbackName": "House"
-  },
-  "engines": {
-    "install": "Install ({size})",
-    "installPlain": "Install",
-    "installing": "Installing…",
-    "noRoom": {
-      "title": "Not enough room on the drive",
-      "detail": "This needs {need} on the drive of the app's data folder, which has {free} free — make room, or move the data folder to a bigger drive (Settings → Storage).",
-      "nothing": "nothing"
-    },
-    "finder": {
-      "title": "Install the part finder",
-      "body": "The part finder outlines the body, the trim, the doors and the rest of the house on your photo. It runs on this computer: a one-time download of {size}.",
-      "bodyNoSize": "The part finder outlines the body, the trim, the doors and the rest of the house on your photo. It runs on this computer.",
-      "task": "Installing the part finder",
-      "cantRun": "The part finder can't run on this computer: its engine didn't load ({error}). Nothing was downloaded.",
-      "filesMissing": "A file of the part finder's engine is missing from the app ({files}) — an antivirus may have quarantined it. Restore it from the antivirus, or install the app again. Nothing was downloaded."
-    },
-    "needs": {
-      "vcRuntime": "This computer doesn't have Microsoft's Visual C++ runtime (2015–2022), which this engine needs ({files} missing). Install it — {link} — then open the house again. Nothing was downloaded.",
-      "dllTooOld": "Microsoft's Visual C++ runtime on this computer is older than this engine needs. Install the latest — {link} — then start the app again. Nothing was downloaded.",
-      "vcRuntimeLink": "Microsoft's download"
-    }
   },
   "paintColors": {
     "title": "Paint colors",

@@ -15,9 +15,8 @@ import { displayPath, maskPath } from "../files.js";
 import { pngToMask } from "../images.js";
 import { BRANDS } from "../paints/index.js";
 import { AiSchemesIn } from "../schemas/paints.js";
-import { houseFacts, SCHEMES_FEATURE, suggestWithAi } from "../schemes_ai.js";
+import { houseFacts, suggestWithAi } from "../schemes_ai.js";
 import { getState } from "../app_state.js";
-import { assertGpuFree } from "../jobs.js";
 
 /** A house's facts for the prompt: its display photo's pixels read inside each part's mask. */
 export async function factsFor(ctx, house) {
@@ -40,17 +39,9 @@ export function router(ctx = getState()) {
   const app = new Hono();
 
   app.post("/v1/schemes/ai", input({ body: AiSchemesIn }), async (c) => {
-    const { houseId, brand, mood, count } = c.req.valid("json");
-    // a local AI model would load on the graphics card beside the running one (a cloud one doesn't wait); while
-    // it runs, the AI photo (which stops the local model) waits for it
-    const local = ctx.jobs && ctx.usesLocalAi?.(SCHEMES_FEATURE);
-    if (local) assertGpuFree(ctx.jobs, "local-ai");
-    const release = local ? ctx.jobs.hold("local-ai", "AI color schemes") : () => {};
-    try {
-      return await suggest(c, { houseId, brand, mood, count });
-    } finally {
-      release();
-    }
+    // a local AI model's room on the graphics card is the kit's arbiter's: it lets an idle engine go, and the local
+    // model is busy (never let go) while it answers
+    return suggest(c, c.req.valid("json"));
   });
 
   const suggest = async (c, { houseId, brand, mood, count }) => {

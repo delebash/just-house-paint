@@ -54,12 +54,15 @@ and `npm run build:unpacked && npm test`.
   the user's content.
 - **AI calls go through the kit's runners** (`runAiFeature`, `withAiTask`, the server's `runAction`)
   — never the task store directly. A new AI feature is a `feature_catalog.js` row + a prompt row +
-  a preset, registered the day it calls the engine. Long server work (finding parts, downloads, the
-  AI photo) is a job (`jobs.js`, `GET /v1/jobs/:id`), shown by the renderer's `services/jobs.js`
+  a preset, registered the day it calls the engine. Long server work (finding parts, the AI photo) is a
+  job (`jobs.js`, `GET /v1/jobs/:id`), shown by the renderer's `services/jobs.js`
   inside `withAiTask`.
-- **The engines are heavy and optional.** Nothing downloads until the user presses Install; the
-  AI photo frees the GPU first (the finder's session, the local AI model). The routes take their
-  engines from the app state (`services.js`), so a test passes fakes (`tests/domain_helpers.js`).
+- **The engines are the kit's.** The AI photo (stable-diffusion.cpp + FLUX.2 [klein]) and the part finder
+  (ONNX Runtime + SAM 3) are kit runtimes: their models are `runtimeModels` rows (`seed_presets.js`), their
+  features routed by presets, their downloads the kit's (nothing downloads until the user presses the button),
+  the graphics card shared through the kit's arbiter. SAM 3's own code is the app's vision adapter
+  (`finder.js` `sam3Adapter`, `segment/`). The routes take the finder and the AI photo from the app state
+  (`services.js`), so a test passes fakes (`tests/domain_helpers.js`).
 - **Seeding is serve.js's**, not `createApp`'s: a test's `createApp(tmp)` starts empty.
 - **Server tests use `useHermeticKit()`** (`server/tests/helpers.js`): the kit's singletons, the fake
   hardware, `JUST_AI_HOME` in a temp folder.

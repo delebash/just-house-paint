@@ -105,57 +105,47 @@ boards are its weak spot. Select the part it belongs to and draw a **Box** aroun
 
 ## Finding the parts
 
-**"The part finder can't run on this computer".** Its engine (ONNX Runtime) didn't load here. The words after
-it say why; **App Settings → Logs** has the same line. Before the part finder is installed, its card says so
-and **Install** is off — nothing is downloaded. Once it is installed, **Find the parts** or a **Box** says so.
-Restart the app after fixing what it names.
+**"ONNX Runtime can't run on this computer"**, or the **Parts** tab saying why the part finder can't run here.
+Its engine, ONNX Runtime, didn't load. The words say why — Microsoft's Visual C++ runtime missing or too old, a
+file of the engine missing, or the engine's own message ("This engine didn't load on this computer (…)") — and
+**App Settings → Logs** has the same line. Nothing is downloaded while it can't run. Fix what it names (below),
+then restart the app.
 
-**"The part finder isn't installed".** It was removed (**App Settings → Storage**, maybe in another window):
-install it again on a house's **Parts** tab.
+**"The vision model isn't downloaded".** The part finder's model was deleted (**AI Settings → Vision**, maybe in
+another window): download it again on a house's **Parts** tab or on **AI Settings → Vision**.
 
-**"The graphics card is busy".** The words after it say what holds it — "an AI photo of … is being drawn", "the
-parts of … are being found", or "AI color schemes are being made on this computer's AI model". The app does one
-of these at a time (an 8 GB card holds one of their models), on every computer:
+**"The graphics card is busy"** ("… try again when it's done"). The app's AI engines take turns on the graphics
+card — an 8 GB card holds the part finder's model or the AI photo's, not both. When one needs the room, an idle
+one lets go of it (the part finder, the AI photo's engine, a local AI model); while one is working — the parts
+being found on the card, an AI photo being drawn, a local AI model answering — the other says the card is busy.
+Wait for it, or press **Cancel** on its progress, then try again. Finding the parts on the processor (on macOS and
+Linux, or with **Runs on: The processor only**) never waits for the card; schemes from an online provider never
+wait.
 
-- while an **AI photo** is drawn: finding the parts, a **Box**, AI schemes on this computer's AI model and
-  another AI photo wait;
-- while a house's **parts are found**: a **Box** (on any house), AI schemes on this computer's AI model, an AI
-  photo and finding another house's parts wait;
-- while **AI schemes** are made on this computer's AI model: only a new AI photo waits.
+## Downloading the part finder's model and the AI photo
 
-Schemes from an online provider never wait. Wait for it, or press **Cancel** on its progress.
+**A model or the AI photo's engine won't download.** Its progress bar — under the step on a house's **Parts** tab
+or the AI photo, or on **AI Settings → Vision** or **Images** — keeps the reason. A cancelled or broken download
+resumes where it stopped the next time you press the button; a file that doesn't match its checksum is deleted, so
+press it again to download it again.
 
-## Installing the part finder and the AI photo
+**"Not enough room on the drive".** "This needs … on the drive that holds the app's AI engines and models, which
+has … free" — about 3.1 GB for the part finder's model; for the AI photo, about 2.2 GB for its engine on Windows
+with an NVIDIA graphics card (much less on most others) and 8.4 GB for its model. Make room, or move the data
+folder to a bigger drive (**App Settings → Storage → Change folder…**, see [Storage](settings.md#storage)).
 
-**The part finder won't install** (**"The part finder didn't install"**). The **AI tasks** panel ([the AI tasks
-panel](ai-providers.md#the-ai-tasks-panel)) keeps the failed download with its reason. A cancelled or broken
-download resumes where it stopped the next time you press **Install**. A file that doesn't match its checksum is
-deleted and the install stops — press **Install** again to download it again.
+**"Microsoft's Visual C++ runtime isn't on this computer"**. The part finder and the AI photo both need it, and say
+so before anything downloads. Install it from the link it gives (**Microsoft's download**), then open the house
+again. **"… older than this engine needs"**: install the latest from the same link and start the app again — the
+part finder says this on the **Parts** tab; the AI photo finds it only when it draws ("stable-diffusion.cpp couldn't
+start — a DLL on this computer is older than stable-diffusion.cpp needs"), then try again.
 
-**The AI photo's engine or model won't download.** Its progress bar — under the step on the AI photo, or on **AI
-Settings → Images** — keeps the reason. A cancelled or broken download resumes where it stopped the next time you
-press the button; a file that doesn't match its checksum is deleted, so press it again to download it again.
+**"A file of this engine is missing from the app (onnxruntime.dll)"** (the part finder). An antivirus may have
+quarantined it. Restore it from the antivirus (and allow the app's folder), or install the app again.
 
-**"Not enough room on the drive".** The part finder: "This needs … on the drive of the app's data folder, which has
-… free" — about 3.4 GB. The AI photo: "This needs … on the drive that holds the app's AI engines and models, which
-has … free" — about 2.2 GB for its engine on Windows with an NVIDIA graphics card (much less on most others) and
-8.4 GB for its model. Make room, or move the data folder to a bigger drive (**App Settings → Storage → Change
-folder…**, see [Storage](settings.md#storage)).
-
-**"This computer doesn't have Microsoft's Visual C++ runtime (2015–2022)"** (the part finder) or **"Microsoft's
-Visual C++ runtime isn't on this computer"** (the AI photo). Both need it, and say so before anything downloads.
-Install it from the link it gives (**Microsoft's download**), then open the house again. **"… older than this engine
-needs"**: install the latest from the same link and start the app again — the part finder says this on its card;
-the AI photo finds it only when it draws ("stable-diffusion.cpp couldn't start — a DLL on this computer is older
-than stable-diffusion.cpp needs"), then try again.
-
-**"A file of the part finder's engine is missing".** An antivirus may have quarantined one of the engine's files.
-Restore it from the antivirus (and allow the app's folder), or install the app again.
-
-**"The part finder is busy"** or **"The part finder is being removed".** **Remove** in **App Settings → Storage**
-was pressed while it was finding the parts or installing: wait until it has finished, then remove it; or try again
-when the removal is done. **"stable-diffusion.cpp is busy"** or **"FLUX.2 [klein] 4B is busy"** on **AI Settings →
-Images**: the AI photo is being drawn, downloading or being removed — try again once that has finished.
+**"The model is busy"** or **"The engine is busy"** on **AI Settings → Vision** or **Images**: the part finder is
+finding parts, the AI photo is being drawn, or the model is downloading or being deleted — try again once that has
+finished.
 
 ## The AI photo
 

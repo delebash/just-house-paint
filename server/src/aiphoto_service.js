@@ -3,9 +3,9 @@
 // the photo is pasted back and the paint locked (aiphoto/). The engine and the model are the kit's — its
 // stable-diffusion.cpp runtime installs, downloads, rates and runs them (the kit's engines plan, H1); the drawing is
 // the app's `aiphoto.render` feature, run through the kit's runImageFeature (its preset holds the model and the
-// recipe). This service owns one render: it checks the feature can run (the kit's readiness), frees the part
-// finder's hold on the graphics card (not on the kit's arbiter until round C — the kit's arbiter makes the rest of
-// the room, the chat model's included), and composes the result.
+// recipe). This service owns one render: it checks the feature can run (the kit's readiness) and composes the
+// result; the room on the graphics card is the kit's arbiter's to make — it lets the part finder (SAM 3) or the chat
+// model go when idle, and says the card is busy while one works (the engines plan, round C).
 
 import { mkdirSync } from "node:fs";
 import path from "node:path";
@@ -39,7 +39,7 @@ function notReady(r) {
 }
 
 /**
- * `ctx`: { dataDir, finder (releaseGpu), settings: { templates(), compose(), workingSize(), fullSizeMaxPixels() } } —
+ * `ctx`: { dataDir, settings: { templates(), compose(), workingSize(), fullSizeMaxPixels() } } —
  * plus `aiRepaint`, `generate(request, {onProgress, signal})` (the kit's runImageFeature on the AI photo's feature)
  * and `readiness()` (the kit's imageFeatureReadiness) for tests.
  */
@@ -61,8 +61,6 @@ export function createAiPhoto(ctx) {
       if (!surfaces.length) throw new ApiError(422, "nothing-to-paint", "Pick colors first", "give at least one part a paint color");
       const ready = readiness();
       if (!ready.ready) throw notReady(ready);
-      progress(0.02, "freeing the GPU");
-      await ctx.finder.releaseGpu();
       signal?.throwIfAborted();
       const t0 = Date.now();
       const out = renderPath(ctx.dataDir, house.id, renderId);

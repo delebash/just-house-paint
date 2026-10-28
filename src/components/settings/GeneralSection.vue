@@ -19,7 +19,7 @@ const settings = useSettingsStore();
 const GROUPS = [
   ["photos", [["photos.displayMax", "number"], ["photos.thumbMax", "number"], ["photos.jpegQuality", "number"], ["photos.maxMegabytes", "number"], ["photos.fullSizeMaxMegapixels", "number"]]],
   ["designs", [["designs.maxPerHouse", "number"], ["paints.maxImportMegabytes", "number"]]],
-  ["finder", [["finder.useGpu", "toggle"], ["finder.idleMinutes", "number"], ["finder.houseMargin", "number", 0.01], ["finder.houseMinShare", "number", 0.05]]],
+  ["finder", [["finder.houseMargin", "number", 0.01], ["finder.houseMinShare", "number", 0.05]]],
   ["aiphoto", [["aiphoto.workingPixels", "number"], ["aiphoto.sharedGpuNoteMb", "number"]]],
   ["windows", [["windows.checkSeconds", "number"]]],
 ];

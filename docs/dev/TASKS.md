@@ -28,11 +28,25 @@ STATE:  OPEN — the kit's plan `../just-core/docs/plans/2026-10-24-engines-the-
         cache at start and its old engine build into the kit's folder (`aiphoto/migrate.js` — the kit's
         `adoptModel`; the pinned build's install sweeps the old one). Kept as app settings, with the reason in the
         kit's plan: `aiphoto.templates`, `aiphoto.compose`, `aiphoto.workingPixels`, `aiphoto.sharedGpuNoteMb`.
-        Kept until round C (the finder isn't on the kit's arbiter yet): `jobs.js` `assertGpuFree` and the finder's
-        `releaseGpu()` before a render.
         OPEN from round B: the real render through the kit on this PC (`HP_REAL_SD=1 HP_REAL_CACHE=…`
         `tests/aiphoto/real.test.js` — the GPU was held by another session's renders); the screens checked by eye in
         the running app (the banner, the Images tab, the chip). Next: round C.
+        Round C BUILT here 2026-10-28 (the kit's half: cd7c460, 4e2c434, 905bed9, and with this the kit's
+        retireSettings, ONNX Runtime's need words, the busy refusal's words, the vision preset pane on Routing, the
+        guard's handoff rule). This app's steps, all built: SAM 3 as an `onnx`
+        runtime model and the feature `parts.find` (kind vision) on its preset (`seed_presets.js`,
+        `feature_catalog.js`); `segment/segmenter.js` on the kit's `runner/onnx.js` pieces, registered as the
+        kit's vision adapter; `finder.js` on `runVisionFeature` (find, box; the encodings cached per model
+        instance); the segment routes, the room check, `segment/models.js`'s install, `assertGpuFree`/`GPU_KINDS`/
+        `hold` and `releaseGpu` gone (the arbiter); `finder.useGpu` → the preset's executionProvider and
+        `finder.idleMinutes` → the kit's `idle_seconds:onnx`, carried over at start; `data/models/sam3` adopted
+        (`aiphoto/migrate.js`'s way); the screens on the kit's banner and Vision tab (EngineInstallCard gone);
+        the release's start check on the kit's `/v1/ai/runtimes/onnx/engine/check`; the docs; the tests. The
+        settings carry over through the kit's `retireSettings` at each seed (`database/seed.js`
+        `moveRetiredSettings`); the old files move at start (`segment/migrate.js`, vouched by `.verified.json`).
+        OPEN from round C: the real SAM 3 through the kit on this PC (`HP_REAL_SAM3=1 HP_REAL_CACHE=…`
+        `tests/segment/real.test.js`); the screens checked by eye in the running app (the Parts tab's banner, the
+        Vision tab, Routing's Part finder preset) — both with round B's.
 
 ## Direction — decided 2026-10-17
 STATE:  DECIDED 2026-10-17 (the first session). The user's words, verbatim:

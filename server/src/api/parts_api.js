@@ -18,12 +18,12 @@ import { maskToPng, pngToMask } from "../images.js";
 import { BoxIn, FindPartsIn, IdParams, PartNew, PartParams } from "../schemas/houses.js";
 import { area, assignRegion, subtractRegion } from "../shared/masks.js";
 import { getState } from "../app_state.js";
-import { assertGpuFree } from "../jobs.js";
 
 const log = getLogger("just_house_paint.parts");
 
 /**
- * `ctx`: { db, dataDir, jobs, finder, outlines } — `finder` is the part finder (segment/):
+ * `ctx`: { db, dataDir, jobs, finder, outlines } — `finder` is the part finder (finder.js: SAM 3 on the kit's ONNX runtime;
+ *   the kit refuses — "The graphics card is busy" — while another engine works on the card):
  *   finder.find(house, { signal, progress }) → [{ key, paintable, score, mask }] at display size
  *   finder.box(house, { x0, y0, x1, y1 }) → a Uint8Array region at display size
  */
@@ -105,8 +105,6 @@ export function router(ctx = getState()) {
     if (running && (running.meta?.keepEdited === true) !== keepEdited) {
       throw new ApiError(409, "already-finding", "The parts are already being found", "another window started it, with its own choice about the hand edits — wait for it, or cancel it first");
     }
-    assertGpuFree(ctx.jobs, "find-parts", house.id);
-    if (ctx.enginesRemoving?.has("finder")) throw new ApiError(409, "engine-busy", "The part finder is being removed", "try again when it's done");
     const start = { kind: "find-parts", key: house.id, label: house.name, failTitle: "Finding the parts didn't finish", clientId: c.req.header("x-client-id") || null, meta: { keepEdited } };
     const job = ctx.jobs.start(start, async ({ signal, progress }) => {
       const found = await ctx.finder.find(house, { signal, progress });
@@ -224,8 +222,6 @@ export function router(ctx = getState()) {
     const house = mustHouse(c.req.valid("param").id);
     const key = c.req.valid("param").key;
     if (!getPart(ctx.db, house.id, key)) throw notFound(`house ${house.id} has no part ${key}`);
-    assertGpuFree(ctx.jobs, "box");
-    if (ctx.enginesRemoving?.has("finder")) throw new ApiError(409, "engine-busy", "The part finder is being removed", "try again when it's done");
     const { x0, y0, x1, y1, mode } = c.req.valid("json");
     const outside = [["x0", x0, house.displayWidth], ["x1", x1, house.displayWidth], ["y0", y0, house.displayHeight], ["y1", y1, house.displayHeight]].find(([, v, max]) => v > max);
     if (outside) throw new RequestValidationError([{ loc: ["body", outside[0]], msg: "Outside the photo", type: "value_error" }]);

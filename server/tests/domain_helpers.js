@@ -37,22 +37,6 @@ export function jpeg(w, h, top = [220, 220, 210], bottom = [120, 60, 40]) {
 /** A fake finder: "body" is the top half, "trim" the bottom-left quarter; a box selects itself. */
 export const fakeFinder = {
   calls: [],
-  installed: () => true,
-  downloadBytes: () => 3_364_167_120,
-  runtimeAnswer: { ok: true },
-  async runtime() {
-    return this.runtimeAnswer;
-  },
-  async install({ onProgress }) {
-    onProgress({ name: "sam3_image_encoder.onnx", overallDone: 1, overallTotal: 2 });
-    return { files: [] };
-  },
-  async releaseGpu() {
-    this.calls.push(["releaseGpu"]);
-  },
-  async uninstall() {
-    this.calls.push(["uninstall"]);
-  },
   async find(house, { progress }) {
     const w = house.displayWidth;
     const h = house.displayHeight;
@@ -112,11 +96,6 @@ export function makeServer({ fetch = async () => new Response("offline", { statu
   ctx.aiphoto = aiphoto ? aiphoto(ctx) : null;
   if (sharedGpu) ctx.sharedGpu = sharedGpu;
   if (removeHouseDir) ctx.removeHouseDir = removeHouseDir;
-  // an engine's install checks the drive: a test's has room unless the test says otherwise
-  ctx.freeBytes = async () => Number.POSITIVE_INFINITY;
-  ctx.download = async () => {
-    throw new Error("no network in tests");
-  };
   const app = createServer({ typeBase: "https://just-house-paint.local/errors/" });
   app.use("*", changes.middleware());
   for (const r of [makeSyncRevRouter(changes, { pollSeconds: ctx.checkSeconds }), housesRouter(ctx), designsRouter(ctx), jobsRouter(ctx), partsRouter(ctx), paintsRouter(ctx), schemesAiRouter(ctx), enginesRouter(ctx)]) app.route("/", r);

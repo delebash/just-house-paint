@@ -29,8 +29,6 @@ const TODAY = {
   "paints.colorOrder": "f6e43b5958b274a1",
   "finder.parts": "f8ba077756a487ab",
   "finder.priority": "97688972545dc716",
-  "finder.useGpu": "b5bea41b6c623f7c",
-  "finder.idleMinutes": "4a44dc15364204a8",
   "finder.houseMargin": "a7e46abf169710b3",
   "finder.houseMinShare": "d2cbad71ff333de6",
   "schemes.roleParts": "9815d5ff99ae7e7a",

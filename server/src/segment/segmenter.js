@@ -1,9 +1,12 @@
 // SPDX-License-Identifier: MIT
 // SAM 3 through ONNX Runtime in Node: samexporter's three-model bundle (image encoder, language
-// encoder, decoder — models.js) with onnxruntime-node, sharp for the image, and tokenizers.js for
-// CLIP's BPE. One encode per photo; every text prompt, box and point re-uses its embeddings.
+// encoder, decoder) with onnxruntime-node, sharp for the image, and tokenizers.js for CLIP's BPE. One
+// encode per photo; every text prompt, box and point re-uses its embeddings. The kit's in-process ONNX
+// runtime builds it (the vision adapter registered in app.js: the model's files by slot from the kit's
+// cache, the app's onnxruntime-node module) and lets it go when idle or evicted; the session pieces are the
+// kit's (runner/onnx.js — the engines plan, round C).
 //
-//   const seg = await createSegmenter({ modelDir });
+//   const seg = await createSegmenter({ files, ort });
 //   const h = await seg.encode("house.jpg");            // { id, width, height, encodeMs }
 //   const doors = await seg.findText(h, "garage door"); // [{ score, box, mask, area }]
 //   seg.release(h); await seg.dispose();
@@ -13,9 +16,8 @@
 // model (logged) and the call goes on. CPU sessions run with the memory arena off (the probe: peak
 // RSS 10.8 GiB with it, 6.7 GiB without — just-house-paint RESEARCH §10).
 import { readFile } from "node:fs/promises";
-import path from "node:path";
 import { Tokenizer } from "@huggingface/tokenizers";
-import ort from "onnxruntime-node";
+import { normalizeLog, openSlot, resolveProvider, runSlot, serial } from "@delebash/core/runner/onnx";
 import sharp from "sharp";
 import { maskToPng, pngToMask } from "./masks.js";
 import {
@@ -38,136 +40,51 @@ import {
 
 export { maskToPng, pngToMask };
 
-export const MODEL_NAMES = Object.freeze({
-  image: "sam3_image_encoder.onnx",
-  language: "sam3_language_encoder.onnx",
-  decoder: "sam3_decoder.onnx",
-});
-export const PROVIDERS = Object.freeze(["cpu", "dml", "webgpu"]);
 const EMBEDDINGS = ["vision_pos_enc_0", "vision_pos_enc_1", "vision_pos_enc_2", "backbone_fpn_0", "backbone_fpn_1", "backbone_fpn_2"];
 const NO_PHRASE = "visual"; // samexporter's default text when only geometry is given
 
-/** A logger from whatever the caller passed: an object with info/warn (or the kit's `warning`), a
- * function `(level, message)`, or nothing (silent). */
-export function normalizeLog(log) {
-  if (typeof log === "function") return { info: (m) => log("info", m), warn: (m) => log("warn", m) };
-  const pick = (...names) => {
-    for (const n of names) if (typeof log?.[n] === "function") return (m) => log[n](m);
-    return () => {};
-  };
-  return { info: pick("info"), warn: pick("warn", "warning") };
-}
-
-/** The provider each model asks for first. `executionProvider` is "auto", "cpu", "dml", "webgpu",
- * or `{ image, language, decoder }` with any of those per model. "auto" = dml on Windows, else cpu. */
+/** The provider each model asks for first. `executionProvider` is "auto", "cpu", "dml", "webgpu", or
+ * `{ image, language, decoder }` with any of those per model (the kit's resolveProvider: "auto" = dml on Windows). */
 export function resolveProviders(executionProvider = "auto", platform = process.platform) {
-  const one = (ep) => {
-    const v = ep ?? "auto";
-    if (v === "auto") return platform === "win32" ? "dml" : "cpu";
-    if (!PROVIDERS.includes(v)) throw new RangeError(`executionProvider must be "auto", ${PROVIDERS.map((p) => `"${p}"`).join(", ")}, not ${JSON.stringify(v)}`);
-    return v;
-  };
   if (executionProvider && typeof executionProvider === "object") {
-    return { image: one(executionProvider.image), language: one(executionProvider.language), decoder: one(executionProvider.decoder) };
+    return {
+      image: resolveProvider(executionProvider.image, platform),
+      language: resolveProvider(executionProvider.language, platform),
+      decoder: resolveProvider(executionProvider.decoder, platform),
+    };
   }
-  const ep = one(executionProvider);
+  const ep = resolveProvider(executionProvider, platform);
   return { image: ep, language: ep, decoder: ep };
 }
 
-/** Session options per provider. DirectML wants memory patterns off and sequential execution
- * (onnxruntime.ai/docs/execution-providers/DirectML-ExecutionProvider.html#configuration-options);
- * `dmlDeviceId` picks its adapter — onnxruntime-node's `{ name: "dml", deviceId }`, DirectX's adapter
- * index (DirectML's default is adapter 0, the one driving the main display). */
-export function sessionOptions(ep, { threads = 0, cpuMemArena = false, dmlDeviceId = null } = {}) {
-  const base = { graphOptimizationLevel: "all", enableCpuMemArena: cpuMemArena, logSeverityLevel: 3 };
-  if (threads > 0) base.intraOpNumThreads = threads;
-  if (ep === "dml") {
-    const dml = Number.isInteger(dmlDeviceId) ? { name: "dml", deviceId: dmlDeviceId } : "dml";
-    return { ...base, executionProviders: [dml], enableMemPattern: false, executionMode: "sequential" };
-  }
-  if (ep === "webgpu") return { ...base, executionProviders: ["webgpu"] };
-  return { ...base, executionProviders: ["cpu"] };
-}
+/** The preset's `executionProvider` (auto · cpu) as SAM 3 runs best: "auto" puts the image encoder on the card and
+ *  keeps the language encoder and the decoder on the processor (RESEARCH §10: 1.44 s an encode; the other two are
+ *  faster on the CPU); "cpu" keeps all three there. */
+export const SAM3_PROVIDERS = Object.freeze({ auto: Object.freeze({ image: "auto", language: "cpu", decoder: "cpu" }), cpu: "cpu" });
 
-const errText = (err) => String(err?.message ?? err).trim();
-
-/** One model's session: `ep` first, the CPU when that fails. Returns the slot `{ key, file, ep,
- * wanted, session, loadMs, fallback }` (fallback: why the wanted provider was dropped, or null). */
-export async function openSlot(ortApi, key, file, wanted, opts, log) {
-  const t0 = performance.now();
-  try {
-    const session = await ortApi.InferenceSession.create(file, sessionOptions(wanted, opts));
-    return { key, file, ep: wanted, wanted, session, loadMs: performance.now() - t0, fallback: null };
-  } catch (err) {
-    if (wanted === "cpu") throw err;
-    const why = `could not create the ${key} session on ${wanted}: ${errText(err)}`;
-    log.warn(`${why} — using the CPU`);
-    const session = await ortApi.InferenceSession.create(file, sessionOptions("cpu", opts));
-    return { key, file, ep: "cpu", wanted, session, loadMs: performance.now() - t0, fallback: why };
-  }
-}
-
-/** Run a slot; when a non-CPU provider throws, swap the slot to a CPU session and run again. */
-export async function runSlot(ortApi, slot, feeds, opts, log) {
-  try {
-    return await slot.session.run(feeds);
-  } catch (err) {
-    if (slot.ep === "cpu") throw err;
-    const why = `the ${slot.key} model failed to run on ${slot.ep}: ${errText(err)}`;
-    log.warn(`${why} — switching it to the CPU`);
-    try {
-      await slot.session.release();
-    } catch {
-      /* the failed session may already be unusable */
-    }
-    slot.session = await ortApi.InferenceSession.create(slot.file, sessionOptions("cpu", opts));
-    slot.ep = "cpu";
-    slot.fallback = why;
-    return slot.session.run(feeds);
-  }
-}
-
-/** A promise chain: one model call at a time (DirectML can't run one session from two threads, and
- * one at a time keeps peak memory to a single run). */
-function serial() {
-  let tail = Promise.resolve();
-  return (fn) => {
-    const next = tail.then(fn, fn);
-    tail = next.catch(() => {});
-    return next;
-  };
-}
 
 /**
- * Load the three SAM 3 models. `modelDir` holds the bundle (models.js MODEL_FILES); `tokenizerDir`
- * (default `modelDir`) holds CLIP's tokenizer.json + tokenizer_config.json. Options: `threads`
- * (ONNX Runtime intra-op threads, 0 = its default), `cpuMemArena` (default false), `dmlDeviceId`
- * (the DirectML adapter; DirectML's own default when absent), `log`.
+ * Load the three SAM 3 models. `files` the model's files by slot (seed_presets.js SAM3: image, language, decoder —
+ * its .data beside it —, tokenizer, tokenizer_config); `ort` the onnxruntime-node module (the kit hands it).
+ * `executionProvider` the preset's ("auto" · "cpu" — SAM3_PROVIDERS) or a per-model object. Options: `threads` (ONNX
+ * Runtime intra-op threads, 0 = its default), `cpuMemArena` (default false), `dmlDeviceId` (the DirectML adapter;
+ * DirectML's own default when absent), `log`.
  */
-export async function createSegmenter({
-  modelDir,
-  tokenizerDir = modelDir,
-  executionProvider = "auto",
-  log = null,
-  threads = 0,
-  cpuMemArena = false,
-  dmlDeviceId = null,
-  ortApi = ort, // tests inject a fake
-} = {}) {
-  if (!modelDir) throw new TypeError("createSegmenter needs { modelDir }");
+export async function createSegmenter({ files, ort, executionProvider = "auto", log = null, threads = 0, cpuMemArena = false, dmlDeviceId = null } = {}) {
+  if (!files?.image || !files.language || !files.decoder || !files.tokenizer || !files.tokenizer_config) throw new TypeError("createSegmenter needs { files: { image, language, decoder, tokenizer, tokenizer_config } }");
+  if (!ort?.InferenceSession) throw new TypeError("createSegmenter needs { ort }: onnxruntime-node");
+  const ortApi = ort;
   const logger = normalizeLog(log);
   const opts = { threads, cpuMemArena, dmlDeviceId };
-  const wanted = resolveProviders(executionProvider);
+  const wanted = resolveProviders(SAM3_PROVIDERS[executionProvider] ?? executionProvider);
 
-  const [tokJson, tokConfig] = await Promise.all(
-    ["tokenizer.json", "tokenizer_config.json"].map(async (f) => JSON.parse(await readFile(path.join(tokenizerDir, f), "utf8"))),
-  );
+  const [tokJson, tokConfig] = await Promise.all([files.tokenizer, files.tokenizer_config].map(async (f) => JSON.parse(await readFile(f, "utf8"))));
   const tokenizer = new Tokenizer(tokJson, tokConfig);
 
   const slots = {};
   try {
     for (const key of ["image", "language", "decoder"]) {
-      slots[key] = await openSlot(ortApi, key, path.join(modelDir, MODEL_NAMES[key]), wanted[key], opts, logger);
+      slots[key] = await openSlot(ortApi, key, files[key], wanted[key], opts, logger);
       logger.info(`SAM 3 ${key} model on ${slots[key].ep} (${Math.round(slots[key].loadMs)} ms)`);
     }
   } catch (err) {

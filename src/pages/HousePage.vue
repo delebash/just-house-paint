@@ -18,6 +18,7 @@ import {
   errorMessage,
   holdChangesWhile,
   isolate,
+  LuEngineNeeded,
   otherWindows,
   pageFill,
   PaneHeader,
@@ -45,7 +46,6 @@ import { onBeforeRouteLeave, onBeforeRouteUpdate, useRoute, useRouter } from "vu
 import AiPhotoDialog from "../components/AiPhotoDialog.vue";
 import ColorsTab from "../components/ColorsTab.vue";
 import DesignsTab from "../components/DesignsTab.vue";
-import EngineInstallCard from "../components/EngineInstallCard.vue";
 import HouseCanvas from "../components/HouseCanvas.vue";
 import PartsTab from "../components/PartsTab.vue";
 import SchemesTab from "../components/SchemesTab.vue";
@@ -78,6 +78,8 @@ const tab = ref("parts");
 // the side panel's scroller: another tab opens at its top (it kept the last tab's place — the Parts tab opened at its
 // end after a scroll down the Colors — the screens review, 2026-10-20)
 const panelScroller = ref(null);
+// the part finder's "needs its model" banner on the Parts tab (the kit's LuEngineNeeded), when it can't run yet
+const finderBanner = ref(null);
 watch(tab, () => {
   if (panelScroller.value) panelScroller.value.scrollTop = 0;
 });
@@ -739,19 +741,18 @@ watch(
 
 async function findParts() {
   if (finding.value) return;
-  // known not to be installed (before the status answers, the server says why if it must — as the Box tool does)
+  // known not to run yet (before the readiness answers, the server says why if it must — as the Box tool does)
   if (engines.finderMissing) {
-    // the part finder's install, shown and said: the Parts tab, its card brought into view and its Install focused
-    // (with parts listed the card was below them, out of view, and nothing happened — the nineteenth review) — off
-    // or not (focusable while off): still installing, or unable to run here, said so (it said "install it" while it
+    // the part finder's banner, shown and said: the Parts tab, the banner brought into view and its Download focused
+    // (with parts listed it was below them, out of view, and nothing happened — the nineteenth review) — off or not
+    // (focusable while off): still downloading, or unable to run here, said so (it said "install it" while it
     // installed, and moved no focus — the twentieth review)
     tab.value = "parts";
     await nextTick();
-    const card = document.querySelector(".house__tab .engine");
-    card?.scrollIntoView?.({ block: "nearest" });
-    card?.querySelector("button")?.focus();
-    const runtime = engines.finder?.runtime;
-    announce(t(engines.installing.finder ? "house.tools.finderInstalling" : runtime?.ok === false ? "house.tools.finderBlocked" : "house.tools.needsFinder"));
+    const banner = finderBanner.value?.$el;
+    banner?.scrollIntoView?.({ block: "nearest" });
+    banner?.querySelector?.("button")?.focus();
+    announce(t(engines.finderDownloading ? "house.tools.finderInstalling" : engines.finderBlocked ? "house.tools.finderBlocked" : "house.tools.needsFinder"));
     return;
   }
   // the parts changed by hand can stay as they are (on unless the user unticks it)
@@ -1034,10 +1035,10 @@ const canRevert = computed(() => !!house.design && house.dirty);
         <UiTabStrip v-model="tab" :tabs="tabs" :aria-label="t('house.tabs.label')" />
         <div ref="panelScroller" class="house__tab">
           <template v-if="tab === 'parts'">
-            <!-- the parts found stay listed (and paintable) when the finder was removed: it is needed only
+            <!-- the parts found stay listed (and paintable) when the finder's model was removed: it is needed only
                  to find them again or for a Box -->
             <PartsTab v-if="house.parts.length" :delta-e="deltaE" :photographed="photographed" @find-color="findColor" />
-            <EngineInstallCard v-if="!engines.finderInstalled" kind="finder" />
+            <LuEngineNeeded v-if="engines.finderMissing" ref="finderBanner" feature="parts.find" :label="t('house.finderName')" @ready="engines.loadStatus()" />
             <EmptyState
               v-else-if="!house.parts.length && house.house.partsFoundAt" icon="Sparkle" :title="t('house.find.noneTitle')"
               :message="t('house.find.noneMessage')" :action-label="finding ? '' : t('house.find.again')" @action="findParts"

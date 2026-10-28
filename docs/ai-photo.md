@@ -48,9 +48,9 @@ reason shows beside the buttons — **AI photo: Find the parts first**, **AI pho
 yet** (draw one with the brush or a box), or **AI photo: Give a part a color first**. On Windows with an 8 GB NVIDIA
 card it takes about 20 seconds; the first one after the app starts takes longer while the model loads (longer still
 when the app's data is on a hard disk). Its progress shows under the house's name while it runs, with **Cancel** —
-also when you open the house again, or reload the window, while it runs. Before it starts, the app frees the
-graphics card — the part finder lets go of it, and a local AI model is unloaded if the card needs the room; each
-loads again when next needed.
+also when you open the house again, or reload the window, while it runs. When it starts and the
+graphics card needs the room, an idle AI engine lets go of it — the part finder, a local AI model; each loads again
+when next needed.
 
 When it is done, the picture opens — if the house page is still open; otherwise it waits on the **Designs** tab —
 with **Save image**, how far the painted parts are from the paint chips (**ΔE … from the chips**: the part furthest
@@ -64,11 +64,12 @@ it. An AI photo made from colors not saved in a design — or whose design you d
 screen**. **Save image** saves it at most at the size **Save image and the AI photo, at most (megapixels)** sets
 (**App Settings → General → Photos**).
 
-The graphics card does one thing at a time — an 8 GB card holds the AI photo's model or the part finder, not both.
-While an AI photo is drawn, finding the parts, a **Box**, a local AI's color schemes and a second AI photo aren't
-started; while the parts are found, an AI photo waits too; and while a local AI model makes color schemes, a new AI
-photo waits. The app says the card is busy — try again when it's done. They take turns on macOS and Linux too,
-where the part finder runs on the processor. Color schemes from an online provider never wait.
+The AI engines take turns on the graphics card — an 8 GB card holds the AI photo's model or the part finder's, not
+both. When one needs the room, an idle one lets go of it; while one is working — an AI photo being drawn, the parts
+being found on the card, a local AI model making color schemes — the other says "The graphics card is busy": try
+again when it's done. **AI photo** pressed again on the same house while one is drawn follows that one. Finding the parts on the
+processor (on macOS and Linux, or with **Runs on: The processor only** — see [Finding the
+parts](finding-parts.md#settings)) and color schemes from an online provider never wait.
 
 The size the AI draws at (**Working size**), its prompts and how its picture is put back on your photo are in
 **App Settings → General** and **Advanced** (see [App Settings](settings.md)). How it draws — the model, the steps,

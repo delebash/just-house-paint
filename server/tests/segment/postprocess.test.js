@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: MIT
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
+import { snapshotFilePath } from "@delebash/core/runner/models";
 import { Tokenizer } from "@huggingface/tokenizers";
 import { describe, expect, it } from "vitest";
+import { SAM3 } from "../../src/seed_presets.js";
 import {
   binaryIoU,
   boxToCxcywh,
@@ -22,12 +24,13 @@ import {
   upscaleMask,
 } from "../../src/segment/postprocess.js";
 
-// CLIP's tokenizer.json lives with the models (models.js): by default the app's install in this
-// checkout's data folder (gitignored); HP_TOKENIZER_DIR points at another folder that has it.
-// Without one the real-tokenizer checks skip.
+// CLIP's tokenizer.json is one of the part finder's model files (seed_presets.js SAM3), in the kit's cache:
+// HP_REAL_CACHE names the cache (as the real tests), HP_TOKENIZER_DIR another folder that has it. Without one the
+// real-tokenizer checks skip.
+const clip = SAM3.files.find((f) => f.slot === "tokenizer");
 const TOKENIZER_DIR =
-  process.env.HP_TOKENIZER_DIR ?? path.resolve(import.meta.dirname, "../../../data/models/sam3");
-const hasTokenizer = existsSync(path.join(TOKENIZER_DIR, "tokenizer.json"));
+  process.env.HP_TOKENIZER_DIR ?? (process.env.HP_REAL_CACHE ? path.dirname(snapshotFilePath(process.env.HP_REAL_CACHE, clip.repo, clip.revision, clip.path)) : "");
+const hasTokenizer = !!TOKENIZER_DIR && existsSync(path.join(TOKENIZER_DIR, "tokenizer.json"));
 
 describe("tokens", () => {
   it("pads with 0 (not the end token) to 32", () => {

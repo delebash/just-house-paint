@@ -673,6 +673,13 @@ re-run by this session; code in the app's `server/src/aiphoto/`; outputs in sess
   second). The kit's runner arbiter (`packages/core/src/runner/arbiter.js`: kinds, busy, admission and
   eviction) is the family's GPU-sharing piece for its own runner's models; putting SAM 3 and sd-cli under it
   is the standard route if one-at-a-time ever has to become sharing.
+  **Superseded 2026-10-28 (the kit's engines plan, rounds B and C):** sd.cpp and SAM 3 (the kit's in-process ONNX
+  runtime) are booked with that arbiter — kinds `image` and `vision`, busy while they work — and `assertGpuFree`,
+  `GPU_KINDS`, the local-AI hold and the finder's `releaseGpu` are gone. When one needs the room the arbiter lets
+  an idle holder go; a busy one makes it refuse (409 "gpu-busy", "The graphics card is busy with another AI job —
+  try again when it's done"). The local model is busy while it answers (the kit's `setLocalBusyGuard`). SAM 3 on
+  the processor (`executionProvider: "cpu"`) books no card memory and never waits. `finder_status.test.js` and the
+  finder's own download count went with its install: the kit's model status counts what is left to download.
 
 ## 11 · The app, run for real (2026-10-18)
 

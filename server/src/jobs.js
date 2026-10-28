@@ -8,7 +8,6 @@
 // App-local until a second app needs it (the kit's TASKS: server-side jobs are a standards gap).
 
 import { randomUUID } from "node:crypto";
-import { ApiError } from "@delebash/core/platform/errors";
 import { getLogger } from "@delebash/core/platform/log";
 
 const log = getLogger("just_house_paint.jobs");
@@ -25,23 +24,6 @@ export class JobRegistry {
     // ended — not that the server started again (410 Gone; the thirteenth review)
     this.ended = new Map();
     this.onFinish = onFinish;
-    // work on the graphics card that isn't a job (AI color schemes on the local model): kind → { label, n }
-    this.holds = new Map();
-  }
-
-  /** Work of `kind` holds the graphics card until the returned release() — the AI photo, which stops the local
-   *  AI model to free the card, waits for it (assertGpuFree). */
-  hold(kind, label = "") {
-    const h = this.holds.get(kind) ?? { label, n: 0 };
-    h.n += 1;
-    this.holds.set(kind, h);
-    let released = false;
-    return () => {
-      if (released) return;
-      released = true;
-      h.n -= 1;
-      if (!h.n) this.holds.delete(kind);
-    };
   }
 
   /** The running job of this kind and key, if any. */
@@ -152,30 +134,6 @@ export class JobRegistry {
     let timer;
     const ended = Promise.all(running.map((j) => j.settled?.catch(() => {})));
     return Promise.race([ended, new Promise((r) => (timer = setTimeout(r, waitMs)))]).finally(() => clearTimeout(timer));
-  }
-}
-
-/** The jobs that hold the graphics card: the part finder (SAM 3) and the AI photo (sd-cli). */
-const GPU_KINDS = ["find-parts", "aiphoto"];
-
-/**
- * The graphics card does one of these at a time — an 8 GB card holds SAM 3 or the AI photo's model,
- * not both (RESEARCH §11), and the AI photo frees the finder when it starts. Throws a 409 when work
- * for `kind` on `key` would run beside a running one: `"aiphoto"` (any running GPU job, another AI
- * photo of the same house too — its colors would be ignored), `"find-parts"` (the AI photo, or the
- * parts of another house; the same house's run is answered by start()), `"box"` and `"local-ai"`
- * (any running GPU job). The AI photo also waits for AI color schemes on the local model (a hold — it would
- * stop the model under them: the eleventh review, 2026-10-20).
- */
-export function assertGpuFree(jobs, kind, key = "") {
-  if (kind === "aiphoto" && jobs.holds?.has("local-ai")) {
-    throw new ApiError(409, "gpu-busy", "The graphics card is busy", "AI color schemes are being made on this computer's AI model — try again when they're done");
-  }
-  for (const j of jobs.jobs.values()) {
-    if (j.state !== "running" || !GPU_KINDS.includes(j.kind)) continue;
-    if (kind === "find-parts" && j.kind === "find-parts" && j.key === key) continue;
-    const doing = j.kind === "aiphoto" ? `an AI photo of ${j.label || "a house"} is being drawn` : `the parts of ${j.label || "a house"} are being found`;
-    throw new ApiError(409, "gpu-busy", "The graphics card is busy", `${doing} — try again when it's done`);
   }
 }
 

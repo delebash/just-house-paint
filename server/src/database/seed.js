@@ -7,18 +7,22 @@
 //     the kit's seedLlm, which reads the feature data installLlm registered;
 //   - this app's settings defaults (family rule 1: a value a user might change is a row, seeded) — and a
 //     setting still at an earlier default upgraded to today's (previous_defaults.js, the kit's upgradeSettings);
+//   - the settings that moved into the kit carried there (the kit's retireSettings): the part finder's
+//     `finder.useGpu` and `finder.idleMinutes` (the kit's engines plan, round C);
 //   - the provider registry, loaded from the seeded rows.
 
 import { loadFromConfigs, seedLlm, stores } from "@delebash/core/llm";
-import { upgradeSettings as upgradeToToday } from "@delebash/core/platform";
+import { retireSettings, upgradeSettings as upgradeToToday } from "@delebash/core/platform";
 import { getLogger } from "@delebash/core/platform/log";
+import { idleKey } from "@delebash/core/runner/runtimes";
 import { DEFAULT_COMPOSE, DEFAULT_WORKING_SIZE } from "../aiphoto/pixels.js";
 import { DEFAULT_PROMPT_TEMPLATES } from "../aiphoto/prompts.js";
 import { DEFAULT_PART_PRIORITY } from "../finder.js";
 import { BRANDS, COLOR_ORDER_DEFAULTS, HARMONY_DEFAULTS } from "../paints/index.js";
+import { DEFAULT_FEATURE_PRESETS } from "../seed_presets.js";
 import { DEFAULT_PARTS } from "../segment/parts.js";
 import { PREVIOUS_DEFAULTS } from "./previous_defaults.js";
-import { getSetting, insertSettingIfMissing, setSetting } from "./settings.js";
+import { deleteSetting, getSetting, insertSettingIfMissing, setSetting } from "./settings.js";
 
 const log = getLogger("just_house_paint.seed");
 
@@ -44,8 +48,6 @@ export const SETTING_DEFAULTS = {
   "paints.colorOrder": plain(COLOR_ORDER_DEFAULTS),
   "finder.parts": plain(DEFAULT_PARTS),
   "finder.priority": [...DEFAULT_PART_PRIORITY],
-  "finder.useGpu": true,
-  "finder.idleMinutes": 10,
   // parts stay on the house: a parked car's doors aren't the front door (RESEARCH §11)
   "finder.houseMargin": 0.02,
   "finder.houseMinShare": 0.5,
@@ -84,6 +86,30 @@ export function upgradeSettings(db) {
   return upgraded;
 }
 
+/**
+ * The settings that moved into the kit (the engines plan, round C), carried over from an install or a backup made
+ * before: `finder.useGpu` off → the part finder's preset runs on the processor (its executionProvider "cpu";
+ * on stays the preset's "auto"); `finder.idleMinutes` → the kit's ONNX runtime idle time (AI Settings → Vision).
+ * Returns the keys moved.
+ */
+export function moveRetiredSettings(db) {
+  const moves = {
+    "finder.useGpu": (on) => {
+      if (on !== false) return;
+      const presets = stores.getEnginePresetStore();
+      const p = presets.get(DEFAULT_FEATURE_PRESETS["parts.find"]);
+      if (p) presets.save({ ...p, params: { ...p.params, executionProvider: "cpu" } });
+    },
+    "finder.idleMinutes": (minutes) => {
+      if (Number.isInteger(minutes) && minutes > 0) stores.getRunnerConfigStore().setSetting(idleKey("onnx"), String(minutes * 60));
+    },
+  };
+  const { moved, kept } = retireSettings(db, moves, { getSetting, deleteSetting });
+  if (moved.length) log.info(`settings now the AI stack's, carried over: ${moved.join(", ")}`);
+  for (const k of kept) log.warning(`the setting ${k.key} couldn't move into the AI stack yet: ${k.error?.message ?? k.error}`);
+  return moved;
+}
+
 /** The whole seed pass. Never throws: a failed step is logged and the server still starts. */
 export function seedWorkspace(db) {
   try {
@@ -96,6 +122,11 @@ export function seedWorkspace(db) {
     upgradeSettings(db);
   } catch (e) {
     log.warning(`the settings seed failed: ${e?.message ?? e}`);
+  }
+  try {
+    moveRetiredSettings(db);
+  } catch (e) {
+    log.warning(`the settings that moved into the AI stack didn't carry over: ${e?.message ?? e}`);
   }
   try {
     loadFromConfigs(stores.getProviderStore().list());

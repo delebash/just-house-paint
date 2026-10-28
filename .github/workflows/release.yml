@@ -140,9 +140,9 @@ jobs:
         run: |
           if [ "${{ matrix.target }}" = linux ]; then
             command -v xvfb-run >/dev/null || (sudo apt-get update && sudo apt-get install -y xvfb)
-            xvfb-run -a node scripts/start-packaged.js v1/segment/runtime
+            xvfb-run -a node scripts/start-packaged.js v1/ai/runtimes/onnx/engine/check
           else
-            node scripts/start-packaged.js v1/segment/runtime
+            node scripts/start-packaged.js v1/ai/runtimes/onnx/engine/check
           fi
 
       # The server on its own through the app's launcher, as the help tells a user to start it: no window
@@ -150,7 +150,7 @@ jobs:
       - name: Start the server on its own
         working-directory: app
         shell: bash
-        run: node scripts/start-packaged.js --headless v1/segment/runtime
+        run: node scripts/start-packaged.js --headless v1/ai/runtimes/onnx/engine/check
 
       # No data folder named: the window and the server on its own use the app's default — one folder (Windows'
       # and the unpacked Linux build's beside the executable; never inside a Mac app's bundle, which an update
@@ -220,12 +220,12 @@ jobs:
           echo "libfuse.so.2: $(ldconfig -p | grep -c 'libfuse.so.2') found"
           chmod +x dist/electron/Packaged/*.AppImage
           command -v xvfb-run >/dev/null || (sudo apt-get update && sudo apt-get install -y xvfb)
-          xvfb-run -a node scripts/start-packaged.js --appimage v1/segment/runtime
+          xvfb-run -a node scripts/start-packaged.js --appimage v1/ai/runtimes/onnx/engine/check
 
       - name: Start the AppImage's server on its own
         working-directory: app
         shell: bash
-        run: node scripts/start-packaged.js --appimage --headless v1/segment/runtime
+        run: node scripts/start-packaged.js --appimage --headless v1/ai/runtimes/onnx/engine/check
 
       - name: The AppImage and its server on its own share one data folder
         working-directory: app

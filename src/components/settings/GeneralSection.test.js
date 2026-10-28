@@ -30,8 +30,6 @@ const VALUES = {
   "windows.checkSeconds": 5,
   "designs.maxPerHouse": 30,
   "paints.maxImportMegabytes": 30,
-  "finder.useGpu": true,
-  "finder.idleMinutes": 10,
   "finder.houseMargin": 0.02,
   "finder.houseMinShare": 0.5,
   "aiphoto.workingPixels": 786432,
@@ -104,7 +102,9 @@ test("General: every label is a word, Save sends only the change, a 422 lands un
   await mountSection(GeneralSection);
   expect(text()).not.toMatch(/settings\.general/);
   expect(text()).toContain("Designs per house");
-  expect(text()).toContain("Use the graphics card");
+  expect(text()).toContain("Parts reach past the house by");
+  // where the part finder runs, and when it lets go, are the AI page's now (its preset, the Vision tab)
+  expect(text()).not.toContain("Use the graphics card");
 
   await type(document.body.querySelector("#setting-designs-maxPerHouse"), "12");
   await submit(byText(".form__actions button", "Save"));

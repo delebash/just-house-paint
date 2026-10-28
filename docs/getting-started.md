@@ -39,8 +39,8 @@ The installers aren't signed with a publisher's certificate yet, so the first ti
   It is quickest on Windows with an NVIDIA card: about 20 seconds on an 8 GB card; without a graphics card it takes
   about ten minutes. On other graphics cards — AMD, Intel, Apple silicon, and NVIDIA on Linux — the app shows a speed
   once it has measured one. See [The AI photo](ai-photo.md).
-- **Room on the drive**, as the app counts it: 3.4 GB on the data folder's drive for the part finder (**Install
-  (3.1 GB)**); for the AI photo, on the drive that holds the AI engines and models, about 2.2 GB for its engine on
+- **Room on the drive**, as the app counts it, on the drive that holds the AI engines and models: 3.1 GB for the
+  part finder's model (**Download the model (3.1 GB)**); for the AI photo, about 2.2 GB for its engine on
   Windows with an NVIDIA card (**Install the engine (865 MB)** — the download and its unpacked files at once; much
   less on most other computers) and 8.4 GB for its model (**Download the model (8.1 GB)**). The app checks before it
   downloads, and says what the computer lacks — the system, the room on the drive.
@@ -55,8 +55,8 @@ See [Updates](settings.md#updates).
 
 1. **Add a photo of your house** on **Your houses**: press **Add a photo**. A photo from the front,
    in daylight, with the whole house in the frame works best. See [Your houses](your-houses.md).
-2. **Install the part finder.** The house opens on its **Parts** tab, which offers the part finder:
-   press **Install (3.1 GB)** — a download, once. See [Finding the parts](finding-parts.md).
+2. **Download the part finder's model.** The house opens on its **Parts** tab, which says the part finder needs
+   its model, SAM 3: press **Download the model (3.1 GB)** — once. See [Finding the parts](finding-parts.md).
 3. **Find the parts.** Press **Find the parts**. It takes about a minute on Windows with a graphics card, longer
    on macOS and Linux, where it runs on the processor.
 4. **Paint colors load by themselves.** When the app opens, it loads each brand that has no colors here yet,

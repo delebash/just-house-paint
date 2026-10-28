@@ -8,7 +8,7 @@
 //   Appearance — the kit's AppearancePanel + LanguagePicker (JustVoice's rows, one shared surface);
 //   Backups    — the kit's DataManagement over the server's /v1/data;
 //   Storage    — the kit's StoragePanel (JustWrite's Data location + Disk usage), the shell's folder
-//                calls, and this app's own rows: its houses, and the engines Remove frees;
+//                calls, and this app's own row: its houses (the engines and models are the kit's buckets);
 //   Server     — the kit's ServerPanel (headless, access tokens, keep-running — kept by the ui store,
 //                told to the shell at once);
 //   Logs       — the kit's LogsPanel (the server's log and the renderer's errors);
@@ -18,10 +18,7 @@
 import {
   AboutPanel,
   AppearancePanel,
-  confirmDialog,
   DataManagement,
-  del,
-  fmtBytes,
   LanguagePicker,
   LogsPanel,
   PaneHeader,
@@ -32,7 +29,6 @@ import {
   SettingsShell,
   StoragePanel,
   safeRequest,
-  UiButton,
   UpdatesPanel,
 } from "@delebash/ui";
 import { computed, onMounted, ref, watch } from "vue";
@@ -95,8 +91,7 @@ async function keepRunning(v) {
   ui.setKeepServerRunning(v);
   await setKeepRunning(v);
 }
-// Storage: the shell's folder calls (each answers null outside the desktop app), and this app's own
-// rows' action — Remove an engine (the part finder or the AI photo); Install brings it back.
+// Storage: the shell's folder calls (each answers null outside the desktop app).
 const storageShell = {
   getRoot: storageGetRoot,
   pickDirectory,
@@ -106,18 +101,6 @@ const storageShell = {
   forgetOldCopy: storageForgetOldCopy,
   useDefault: storageUseDefault,
 };
-async function removeEngine(kind, usage, run) {
-  const size = fmtBytes(usage?.extras?.[kind]) || "0 MB";
-  const yes = await confirmDialog({
-    title: t(`settings.storage.remove.${kind}Title`),
-    message: t(`settings.storage.remove.${kind}Message`, { size }),
-    confirmLabel: t("settings.storage.remove.confirm"),
-    danger: true,
-  });
-  if (!yes) return;
-  await run(kind, () => del("/v1/segment/install"));
-}
-
 // Updates — release notes from docs/whats-new.md, loaded when the section first opens; the
 // desktop shell's updater (null in a browser; the app's GitHub releases, electron-main.js `updates`).
 const updater = desktopUpdater();
@@ -158,20 +141,10 @@ watch(
       </section>
 
       <StoragePanel v-else-if="active === 'storage'" :data-dir="health?.dataDir || ''" :shell="storageShell" :saves="t('settings.storage.saves')">
-        <!-- this app's own stores (the server's extra disk buckets): its houses, and the part finder (the AI photo's
-             engine and model are the kit's: its buckets above, the AI page's Images tab) -->
-        <template #extra="{ usage, size, busy, run }">
+        <!-- this app's own store (the server's extra disk bucket): its houses (the engines and models — the part
+             finder's, the AI photo's — are the kit's: its buckets above, the AI page's Vision and Images tabs) -->
+        <template #extra="{ usage, size }">
           <span class="lu-storage__label">{{ t("settings.storage.houses") }}</span><span>{{ size(usage?.extras?.houses) }}</span>
-          <template v-for="kind in ['partFinder']" :key="kind">
-            <span class="lu-storage__label">{{ t(`settings.storage.${kind}`) }}</span>
-            <div class="lu-storage__row">
-              <span>{{ size(usage?.extras?.[kind]) }}</span>
-              <UiButton
-                v-if="usage?.extras?.[kind]" intent="secondary" size="small" :disabled="!!busy"
-                :label="busy === kind ? t('kit.storagePanel.clearing') : t('settings.storage.remove.action')" @click="removeEngine(kind, usage, run)"
-              />
-            </div>
-          </template>
         </template>
       </StoragePanel>
 

@@ -1,9 +1,10 @@
 # The AI features
 
-Each AI feature is a row under **AI Settings → Routing by feature**; Just House Paint has two:
-**Suggest color schemes** (under **Color schemes**) and **Draw the AI photo** (under **AI photo**). A
-feature runs on an engine preset — the provider, the model and its settings. One model can serve every
-chat feature, or a feature can point at a stronger one; the AI photo runs on an image model.
+Each AI feature is a row under **AI Settings → Routing by feature**; Just House Paint has three:
+**Suggest color schemes** (under **Color schemes**), **Draw the AI photo** (under **AI photo**) and **Find the
+parts** (under **Part finder**). A feature runs on an engine preset — the provider, the model and its settings. One
+model can serve every chat feature, or a feature can point at a stronger one; the AI photo runs on an image model,
+the part finder on a vision model.
 
 ## Suggest color schemes
 
@@ -23,6 +24,15 @@ preset, **AI photo**, holds the model and how it draws: **Steps** (4), **Guidanc
 one each time). Select **Draw the AI photo** under **Routing by feature** to change them: **Save** keeps
 them, **Reset to the app's settings** brings the app's back. The prompts it fills in for each part are in
 **App Settings → Advanced** ([App Settings](settings.md)).
+
+## Find the parts
+
+**Find the parts** and **Box** on a house's **Parts** tab ([Finding the parts](finding-parts.md)). It runs the
+vision model SAM 3 on your computer, on ONNX Runtime, which is part of the app (**AI Settings → Vision** downloads
+and deletes the model, and sets how long it stays in memory). Its preset, **Part finder**, holds the model and where
+it runs: **Runs on** — **The graphics card, where it can** (the app's choice) or **The processor only**. Select
+**Find the parts** under **Routing by feature** to change it: **Save** keeps it, **Reset to the app's settings**
+brings the app's back. What it looks for is in **App Settings → Advanced** ([App Settings](settings.md)).
 
 ## Changing what a feature says or runs on
 

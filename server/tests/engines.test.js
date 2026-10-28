@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MIT
-// The part finder's adapter (finder.js) and the engine routes: overlaps resolved by priority, the
-// encoded photo reused for boxes, the GPU released; installing (jobs); the AI photo of a house (a job — with a fake
-// image feature: its engine and model are the kit's, tested there; the real ones gated in tests/segment and
-// tests/aiphoto).
+// The part finder (finder.js) and the AI photo's routes: overlaps resolved by priority, the encoded photo reused for
+// boxes, SAM 3's adapter for the kit; the AI photo of a house (a job — with a fake image feature). The engines and
+// models are the kit's — its ONNX and sd.cpp runtimes hold, book and refuse them, tested there; the real ones gated in
+// tests/segment and tests/aiphoto.
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { afterEach, describe, expect, test, vi } from "vitest";
+import { ApiError } from "@delebash/core/platform/errors";
+import { afterEach, describe, expect, test } from "vitest";
 import { createAiPhoto, sharedGpuNote, surfaceWords } from "../src/aiphoto_service.js";
-import { createFinder, resolveOverlaps } from "../src/finder.js";
-import { MODEL_FILES as SAM_FILES } from "../src/segment/models.js";
+import { createFinder, resolveOverlaps, sam3Adapter } from "../src/finder.js";
 import { fakeFinder, jpeg, makeServer } from "./domain_helpers.js";
 
 const dirs = [];
@@ -49,13 +49,14 @@ describe("resolveOverlaps", () => {
 describe("createFinder", () => {
   function fakeSegmenter() {
     const calls = [];
+    let encoded = 0;
     return {
       calls,
       factory: async () => ({
         providers: { image: "cpu" },
         async encode(file) {
           calls.push(["encode", path.basename(file)]);
-          return { id: 1, width: 4, height: 2 };
+          return { id: ++encoded, width: 4, height: 2 };
         },
         async findText(h, phrase) {
           calls.push(["text", phrase]);
@@ -66,7 +67,9 @@ describe("createFinder", () => {
           calls.push(["box", boxes[0]]);
           return [{ score: 0.8, mask: mask(8, (i) => i === 1) }];
         },
-        release() {},
+        release(h) {
+          calls.push(["release", h.id]);
+        },
         async dispose() {
           calls.push(["dispose"]);
         },
@@ -75,9 +78,15 @@ describe("createFinder", () => {
   }
   const house = { id: "h1", displayWidth: 4, displayHeight: 2 };
 
-  function finderWith(seg, { installed = true } = {}) {
-    const modelDir = scratch();
-    if (installed) for (const f of SAM_FILES) writeFileSync(path.join(modelDir, f.name), "x");
+  /** The finder on a stand-in for the kit's runVisionFeature: SAM 3's adapter builds one instance, which every run
+   *  gets (the kit's withModel holds it); `refuse` an error the kit answers instead. */
+  function finderWith(seg, { refuse = null } = {}) {
+    let instance = null;
+    const run = async (fn) => {
+      if (refuse) throw refuse;
+      instance ??= await sam3Adapter({ createSegmenter: seg.factory }).create({ files: {}, ort: {}, executionProvider: "cpu" });
+      return fn(instance);
+    };
     const config = [
       { key: "body", labelKey: "parts.body", prompts: ["house"], paintable: true, group: "walls", method: "subtract" },
       { key: "frontDoor", labelKey: "parts.frontDoor", prompts: ["door"], paintable: true, group: "doors" },
@@ -86,15 +95,9 @@ describe("createFinder", () => {
     ];
     return createFinder({
       dataDir: scratch(),
-      modelDir,
-      createSegmenter: seg.factory,
-      // the runtime loads, and is the app's (engine_needs.test.js checks the refusals)
-      loadRuntime: async () => ({}),
-      missingDlls: () => [],
-      modulePath: () => null,
+      run,
       partsConfig: () => config,
       priority: () => ["garageDoor", "frontDoor", "body"],
-      idleMs: () => 60_000,
     });
   }
 
@@ -114,32 +117,60 @@ describe("createFinder", () => {
     const region = await f.box(house, { x0: 0, y0: 0, x1: 2, y1: 2 });
     expect(Array.from(region)).toEqual([0, 255, 0, 0, 0, 0, 0, 0]);
     expect(seg.calls.filter((c) => c[0] === "encode")).toHaveLength(1);
-    await f.releaseGpu();
-    expect(seg.calls.at(-1)).toEqual(["dispose"]);
   });
 
-  test("the model is let go only once the box running on it is done", async () => {
+  test("the last two houses' photos stay encoded, for their next box; an older one is let go", async () => {
     const seg = fakeSegmenter();
-    const made = seg.factory;
-    let finishBox;
-    seg.factory = async (...args) => ({ ...(await made(...args)), findBoxes: () => new Promise((r) => (finishBox = () => r([{ score: 0.8, mask: mask(8, (i) => i === 1) }]))) });
     const f = finderWith(seg);
-    const box = f.box(house, { x0: 0, y0: 0, x1: 2, y1: 2 });
-    await vi.waitFor(() => expect(finishBox).toBeTypeOf("function"));
-    let released = false;
-    const release = f.releaseGpu().then(() => (released = true));
-    await new Promise((r) => setTimeout(r, 30));
-    expect(released).toBe(false); // the idle release, a removal, the AI photo: all wait for the box
-    expect(seg.calls).not.toContainEqual(["dispose"]);
-    finishBox();
-    expect(Array.from(await box)).toEqual([0, 255, 0, 0, 0, 0, 0, 0]);
-    await release;
-    expect(seg.calls.at(-1)).toEqual(["dispose"]);
+    for (const h of ["h1", "h2", "h1", "h3", "h1", "h2"]) await f.box({ ...house, id: h }, { x0: 0, y0: 0, x1: 2, y1: 2 });
+    // h1 and h2 encoded once each; h3 pushed h1 out (the oldest), and h2 out after h1 came back
+    expect(seg.calls.filter((c) => c[0] === "encode")).toHaveLength(5);
+    expect(seg.calls.filter((c) => c[0] === "release").map((c) => c[1])).toEqual([1, 2, 3]);
   });
 
-  test("not installed: a 409 that says to download the model", async () => {
-    const f = finderWith(fakeSegmenter(), { installed: false });
-    await expect(f.find(house, { progress: () => {} })).rejects.toMatchObject({ statusCode: 409, slug: "models-missing" });
+  test("a photo in use is never let go under its run: a find on one house while boxes run on two others", async () => {
+    const seg = fakeSegmenter();
+    let open;
+    const gate = new Promise((r) => (open = r));
+    const made = seg.factory;
+    // house h1's find waits at its first prompt until the boxes on h2 and h3 are done
+    seg.factory = async (...a) => {
+      const s = await made(...a);
+      const findText = s.findText;
+      return { ...s, findText: async (h, phrase) => (h.id === 1 && (await gate), findText(h, phrase)) };
+    };
+    const f = finderWith(seg);
+    const finding = f.find(house, { signal: new AbortController().signal, progress: () => {} });
+    await new Promise((r) => setTimeout(r, 5));
+    await f.box({ ...house, id: "h2" }, { x0: 0, y0: 0, x1: 2, y1: 2 });
+    await f.box({ ...house, id: "h3" }, { x0: 0, y0: 0, x1: 2, y1: 2 });
+    // three houses' photos, one in use: the oldest not in use (h2's) went, never h1's
+    expect(seg.calls.filter((c) => c[0] === "release").map((c) => c[1])).toEqual([2]);
+    open();
+    expect((await finding).map((p) => p.key)).toEqual(["body", "frontDoor", "garageDoor"]);
+    // a second run on a house being encoded waits for that encode — one encode each
+    await Promise.all([f.box({ ...house, id: "h4" }, { x0: 0, y0: 0, x1: 2, y1: 2 }), f.box({ ...house, id: "h4" }, { x0: 0, y0: 0, x1: 2, y1: 2 })]);
+    expect(seg.calls.filter((c) => c[0] === "encode")).toHaveLength(4);
+  });
+
+  test("the kit's refusal is the finder's: not downloaded, the card busy", async () => {
+    const notHere = new ApiError(409, "model-not-downloaded", "The vision model isn't downloaded", "sam3");
+    await expect(finderWith(fakeSegmenter(), { refuse: notHere }).find(house, { progress: () => {} })).rejects.toBe(notHere);
+    const busy = new ApiError(409, "gpu-busy", "The graphics card is busy", "stable-diffusion.cpp is working");
+    await expect(finderWith(fakeSegmenter(), { refuse: busy }).box(house, { x0: 0, y0: 0, x1: 2, y1: 2 })).rejects.toBe(busy);
+  });
+
+  test("SAM 3's adapter builds the segmenter from what the kit hands it", async () => {
+    const seen = [];
+    const seg = await sam3Adapter({ createSegmenter: async (o) => (seen.push(o), { dispose: async () => {} }) }).create({
+      files: { image: "i.onnx" },
+      ort: { InferenceSession: {} },
+      executionProvider: "auto",
+      dmlDeviceId: 1,
+      log: null,
+    });
+    expect(seen).toEqual([{ files: { image: "i.onnx" }, ort: { InferenceSession: {} }, executionProvider: "auto", dmlDeviceId: 1, log: null }]);
+    expect(seg.encodings).toBeInstanceOf(Map);
   });
 });
 
@@ -149,7 +180,6 @@ describe("the engine routes", () => {
     return (ctx) =>
       createAiPhoto({
         dataDir: ctx.dataDir,
-        finder: ctx.finder,
         settings: { templates: () => undefined, compose: () => undefined, workingSize: () => ({ width: 320, height: 240 }) },
         readiness: () =>
           ready
@@ -182,7 +212,7 @@ describe("the engine routes", () => {
     expect(calls).toEqual([]);
   });
 
-  test("a design deleted while its AI photo is drawn: the AI photo is kept, without the link; a second one waits", async () => {
+  test("a design deleted while its AI photo is drawn: the AI photo is kept, without the link; a second one joins it", async () => {
     let release;
     const calls = [];
     const factory = aiphotoFactory(calls);
@@ -200,10 +230,11 @@ describe("the engine routes", () => {
     await s.app.request("/v1/paints/import", { method: "POST", body: form });
     const design = await (await s.json("POST", `/v1/houses/${house.id}/designs`, { name: "Blue", colors: { body: "behr:X-1" } })).json();
     const job = await (await s.json("POST", `/v1/houses/${house.id}/aiphoto`, { designId: design.id })).json();
-    // a second AI photo, of this house or another, waits for the graphics card
+    // a second AI photo of this house is the running one (another house's waits for the card: the kit's sd.cpp
+    // runtime refuses while it works — tested in the kit)
     const again = await s.json("POST", `/v1/houses/${house.id}/aiphoto`, { designId: design.id });
-    expect(again.status).toBe(409);
-    expect((await again.json()).type).toMatch(/gpu-busy$/);
+    expect(again.status).toBe(202);
+    expect((await again.json()).id).toBe(job.id);
     expect((await s.app.request(`/v1/designs/${design.id}`, { method: "DELETE" })).status).toBe(204);
     while (!release) await new Promise((r) => setTimeout(r, 5));
     release();
@@ -213,63 +244,10 @@ describe("the engine routes", () => {
     expect((await (await s.app.request(`/v1/houses/${house.id}/renders`)).json()).map((r) => r.id)).toEqual([done.result.id]);
   });
 
-  test("the part finder's status and install (the AI photo's are the kit's /v1/ai/runtimes)", async () => {
+  test("the engines' routes are the kit's /v1/ai/runtimes: the part finder's and the AI photo's own are gone", async () => {
     s = makeServer({ aiphoto: aiphotoFactory([]) });
-    expect(await (await s.app.request("/v1/segment/status")).json()).toEqual({ installed: true, downloadBytes: 3_364_167_120 });
-    const job = await (await s.json("POST", "/v1/segment/install")).json();
-    expect((await s.settle(job.id)).state).toBe("done");
-    expect((await s.app.request("/v1/aiphoto/status")).status).toBe(404); // gone: the kit's routes say it
-  });
-
-  test("not installed, the finder's status says whether its runtime loads here; the start check asks it too", async () => {
-    s = makeServer({ aiphoto: aiphotoFactory([]) });
-    const installed = fakeFinder.installed;
-    fakeFinder.installed = () => false;
-    try {
-      expect(await (await s.app.request("/v1/segment/status")).json()).toEqual({ installed: false, downloadBytes: 3_364_167_120, runtime: { ok: true } });
-      expect((await s.app.request("/v1/segment/runtime")).status).toBe(200);
-      fakeFinder.runtimeAnswer = { ok: false, error: "libonnxruntime.so.1: cannot open shared object file" };
-      expect((await (await s.app.request("/v1/segment/status")).json()).runtime).toEqual(fakeFinder.runtimeAnswer);
-      const r = await s.app.request("/v1/segment/runtime");
-      expect(r.status).toBe(503);
-      expect(await r.json()).toMatchObject({ title: "The part finder can't run on this computer", detail: expect.stringMatching(/libonnxruntime/) });
-    } finally {
-      fakeFinder.installed = installed;
-      fakeFinder.runtimeAnswer = { ok: true };
-    }
-  });
-
-  test("the finder checks its runtime once, and a failure is its first line", async () => {
-    let loads = 0;
-    const finder = createFinder({
-      dataDir: scratch(),
-      modelDir: scratch(),
-      partsConfig: () => null,
-      priority: () => null,
-      idleMs: () => 60_000,
-      loadRuntime: async () => {
-        loads++;
-        throw new Error("libonnxruntime.so.1: cannot open shared object file\n    at dlopen");
-      },
-    });
-    expect(await finder.runtime()).toEqual({ ok: false, error: "libonnxruntime.so.1: cannot open shared object file" });
-    await finder.runtime();
-    expect(loads).toBe(1);
-  });
-
-  test("removing the part finder: its files go; never while it works", async () => {
-    s = makeServer({ aiphoto: aiphotoFactory([]) });
-    // the part finder: the GPU let go and the model removed (the fake records it)
-    fakeFinder.calls.length = 0;
-    expect((await s.app.request("/v1/segment/install", { method: "DELETE" })).status).toBe(204);
-    expect(fakeFinder.calls).toContainEqual(["uninstall"]);
-    // not while it works: a running job of the engine's kind refuses with a 409
-    let release;
-    s.ctx.jobs.start({ kind: "find-parts", key: "h" }, () => new Promise((r) => (release = r)));
-    const busy = await s.app.request("/v1/segment/install", { method: "DELETE" });
-    expect(busy.status).toBe(409);
-    expect((await busy.json()).type).toMatch(/engine-busy$/);
-    release();
+    for (const url of ["/v1/segment/status", "/v1/segment/runtime", "/v1/aiphoto/status"]) expect((await s.app.request(url)).status).toBe(404);
+    expect((await s.app.request("/v1/segment/install", { method: "POST" })).status).toBe(404);
   });
 
   test("a house restored before its first AI photo has no renders folder (a backup keeps no empty one): the AI photo works", async () => {
@@ -285,33 +263,7 @@ describe("the engine routes", () => {
     expect((await s.settle((await r.json()).id)).state).toBe("done");
   });
 
-  test("while the part finder is being removed, nothing installs it or runs on it", async () => {
-    s = makeServer({ aiphoto: aiphotoFactory([]) });
-    const house = await (await s.upload(await jpeg(200, 150))).json();
-    await s.settle((await (await s.json("POST", `/v1/houses/${house.id}/find-parts`)).json()).id);
-    const refused = async (r, title) => {
-      expect(r.status).toBe(409);
-      expect(await r.json()).toMatchObject({ title });
-    };
-    // the part finder
-    const real = fakeFinder.uninstall;
-    let finishFinder;
-    fakeFinder.uninstall = () => new Promise((r) => (finishFinder = r));
-    try {
-      const removing = s.app.request("/v1/segment/install", { method: "DELETE" });
-      await vi.waitFor(() => expect(finishFinder).toBeTypeOf("function"));
-      await refused(await s.app.request("/v1/segment/install", { method: "POST" }), "The part finder is being removed");
-      await refused(await s.json("POST", `/v1/houses/${house.id}/find-parts`), "The part finder is being removed");
-      await refused(await s.json("POST", `/v1/houses/${house.id}/parts/trim/box`, { x0: 10, y0: 10, x1: 14, y1: 14 }), "The part finder is being removed");
-      finishFinder();
-      expect((await removing).status).toBe(204);
-    } finally {
-      fakeFinder.uninstall = real;
-    }
-    expect((await s.json("POST", `/v1/houses/${house.id}/parts/trim/box`, { x0: 10, y0: 10, x1: 14, y1: 14 })).status).toBe(200); // done: it works again
-  });
-
-  test("the AI photo paints the design's paintable parts, frees the GPU first, and is kept", async () => {
+  test("the AI photo paints the design's paintable parts, and is kept", async () => {
     const calls = [];
     s = makeServer({ aiphoto: aiphotoFactory(calls) });
     const house = await (await s.upload(await jpeg(200, 150))).json();
@@ -333,7 +285,6 @@ describe("the engine routes", () => {
       ["body", "#a33a2f", "#f4f4f2"],
       ["trim", "#f4f4f2", null],
     ]);
-    expect(fakeFinder.calls.some((c) => c[0] === "releaseGpu")).toBe(true);
     const renders = await (await s.app.request(`/v1/houses/${house.id}/renders`)).json();
     expect(renders).toHaveLength(1);
     expect((await s.app.request(`/v1/renders/${renders[0].id}/image`)).headers.get("content-type")).toBe("image/png");

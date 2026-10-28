@@ -36,7 +36,7 @@ install`, and `cd ../just-core/packages/ui && npm install` for the fonts the kit
 | Validation and errors (§15) | `server/src/schemas/` (shared with the forms), the kit's `input()`, `notFound`, problem+json with request ids |
 | The AI half (§8) | `server/src/feature_catalog.js` (`schemes.suggest`), `seed_feature_prompts.js` (its prompt row, from `schemes_ai.js`), `seed_presets.js` (presets, JustWrite's three general Gemma rows and their class tunes) |
 | The chrome (§11) | `src/layouts/MainLayout.vue`, `src/components/TitleBar.vue`, `src/pages/{AiPage,SettingsPage,ConnectionErrorPage}.vue`, `src/components/settings/` (General and Advanced are this app's), `index.html`'s `#app-boot` plate |
-| The screens | `src/pages/{HomePage,HousePage,ColorsPage}.vue` (Your houses, the house, Paint colors); the house's tabs `src/components/{PartsTab,ColorsTab,SchemesTab,DesignsTab}.vue`; the canvas `HouseCanvas.vue` (Konva); `NameDialog`, `EngineInstallCard`, `AiPhotoDialog` |
+| The screens | `src/pages/{HomePage,HousePage,ColorsPage}.vue` (Your houses, the house, Paint colors); the house's tabs `src/components/{PartsTab,ColorsTab,SchemesTab,DesignsTab}.vue`; the canvas `HouseCanvas.vue` (Konva); `NameDialog`, `AiPhotoDialog` (the engines' banners are the kit's `LuEngineNeeded`) |
 | Start-up (§Q.4) | `src/boot/i18n.js`, `src/boot/justhousepaint.js` |
 | Services and stores | `src/services/{native,helpDocs,appearance,settingsSections}.js`; the painter `src/services/{tint,painter,maskImage,partNames,jobs,houseHistory,colorCard}.js`; `src/stores/{ui,settings,houses,house,paints,engines}.js` |
 | Tests (§18) | `server/tests/`, `src/**/*.test.js`, `src/boot.smoke.test.js`, `e2e/` |

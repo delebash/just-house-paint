@@ -5,7 +5,7 @@
 //
 // Hermetic like the smoke (lib/driver.js): a temp data folder with one example house, the harness's
 // own server, the shell's <ID>_DEV_NO_SERVER=1 — the shots never show or change your own data. (A
-// fresh folder has no engines and no brand colors: the house shows the part finder's install offer.)
+// fresh folder has no engines and no brand colors: the house shows the part finder's "needs its model" banner.)
 
 import fs from "node:fs";
 import path from "node:path";
@@ -23,7 +23,7 @@ const PHOTO = Buffer.from(
 
 const SURFACES = [
   { name: "your-houses", hash: "#/", ready: ".houses__card" },
-  { name: "house", hash: "#/house/{house}", ready: ".engine" },
+  { name: "house", hash: "#/house/{house}", ready: ".lu-needed" },
   { name: "paint-colors", hash: "#/colors", ready: ".ui-table-row" },
   { name: "ai", hash: "#/ai" },
   { name: "settings-general", hash: "#/settings/general" },

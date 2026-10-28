@@ -29,14 +29,10 @@ the houses already here keep their copies.
 - **Largest palette file (MB)** — 30 at first (1–200): a bigger file to import is refused — "File too
   large".
 
-**Part finder** — see [Finding the parts](finding-parts.md).
+**Part finder** — see [Finding the parts](finding-parts.md). Where it runs (the graphics card or the
+processor) and how long it keeps its memory are on the AI page now: its preset **Find the parts** under **AI
+Settings → Routing by feature**, and **AI Settings → Vision** ([its settings](finding-parts.md#settings)).
 
-- **Use the graphics card (Windows)** — on at first. On Windows the finder's heaviest step runs on the
-  graphics card; off, everything runs on the processor (slower). On macOS and Linux it always runs on
-  the processor. A change takes effect the next time the finder loads (after it let go of its memory,
-  or at the next start).
-- **Let go after (minutes idle)** — 10 at first (1–240): after this long with nothing to do, the finder
-  frees its memory; it loads again when it is next needed, which takes a little longer.
 - **Parts reach past the house by (share of the photo)** — 0.02 at first (0–0.2): how far past the
   house's own outline a part may reach, as a share of the photo's longer side; what lies further out
   is cut off. 0 turns this limit off, and the next setting with it.
@@ -216,9 +212,9 @@ offered then). Meanwhile **Change folder…** isn't shown.
 - **Engine logs** — what the AI engine wrote while it ran; **Clear…** empties them.
 - **Engine builds** — the AI engine's program files.
 - **Your houses' photos** — every house's photos, outlines and AI photos.
-- **The part finder** — its downloaded model. **Remove** frees the space: your houses keep the parts already
-  found; **Install** (on a house) brings it back. The AI photo's engine and model are counted with the AI engine's
-  builds and the models above; **AI Settings → Images** removes them (your AI photos stay).
+
+The part finder's model and the AI photo's engine and model are counted with the AI engine's builds and the models
+above; **AI Settings → Vision** and **Images** remove them (your houses keep their parts and AI photos).
 - **Database**, **Server logs**, **Total** and **Free disk space** on the data folder's drive.
 
 ## Where to keep the data folder
