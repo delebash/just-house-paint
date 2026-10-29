@@ -847,7 +847,10 @@ function paintedRows() {
   const rows = [];
   for (const part of house.paintableParts) {
     const p = paints.byId[house.colors[part.key]];
-    if (p) rows.push({ part: partName(part.key, { t, te }), paint: p.displayName, hex: p.hex });
+    // its finish beside the paint (the color list's and the color card's line): what the store asks for
+    const f = house.house?.finishes?.[part.key];
+    const finish = f ? (te(`finishes.${f}`) ? t(`finishes.${f}`) : f) : "";
+    if (p) rows.push({ part: partName(part.key, { t, te }), paint: finish ? `${p.displayName} — ${finish}` : p.displayName, hex: p.hex });
   }
   return rows;
 }

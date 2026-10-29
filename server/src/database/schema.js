@@ -146,6 +146,21 @@ export const MIGRATIONS = [
       ALTER TABLE renders ADD COLUMN worst_part TEXT;
     `,
   },
+  {
+    version: 5,
+    name: "each part's finish",
+    up: `
+      -- The finish a part's paint is to have (an id from the paints.finishes setting: satin, semigloss…), for the
+      -- color list and the color card (2026-10-28). Kept per house, as the paint on it now: the store asks for it
+      -- whatever the design.
+      CREATE TABLE part_finishes (
+        house_id TEXT NOT NULL REFERENCES houses(id) ON DELETE CASCADE,
+        key TEXT NOT NULL,
+        finish TEXT NOT NULL,
+        PRIMARY KEY (house_id, key)
+      );
+    `,
+  },
 ];
 
 /**

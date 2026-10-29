@@ -77,6 +77,8 @@ export function createServices({ db, dataDir }, overrides = {}) {
         return floor ? sharedGpuNote(await hardware.otherGpuHolders().catch(() => null), floor) : null;
       }),
     maxDesignsPerHouse: () => setting("designs.maxPerHouse"),
+    // the finishes a part's paint can have (PATCH /v1/houses/:id/finishes takes one of them)
+    finishes: () => setting("paints.finishes"),
     maxImportBytes: () => setting("paints.maxImportMegabytes") * MB,
     harmony: () => setting("schemes.harmony"),
     colorOrder: () => setting("paints.colorOrder"),

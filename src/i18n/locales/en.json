@@ -134,7 +134,8 @@
           "compose": "How the AI photo is put back on the photo"
         },
         "paints": {
-          "colorOrder": "How colors are ordered by color"
+          "colorOrder": "How colors are ordered by color",
+          "finishes": "The finishes a part's paint can have"
         }
       },
       "hints": {
@@ -151,7 +152,8 @@
           "compose": "The blend and the color lock after the AI draws."
         },
         "paints": {
-          "colorOrder": "grayChroma: below this CIE chroma a color is a near-gray (listed first, light to dark); bandDegrees: the hue bands the rest are listed in; families: the Color family filter, each from its hue (degrees) to the next one’s."
+          "colorOrder": "grayChroma: below this CIE chroma a color is a near-gray (listed first, light to dark); bandDegrees: the hue bands the rest are listed in; families: the Color family filter, each from its hue (degrees) to the next one’s.",
+          "finishes": "Each an id in small letters, dullest first; the Colors tab offers them for a part's paint, and the color list and card name them."
         }
       }
     }
@@ -341,6 +343,10 @@
     "loadingBrands": "The brands' colors are loading — a few seconds, this first time.",
     "addBrand": "Add paint colors",
     "forPart": "Colors for the {part}",
+    "finish": {
+      "label": "Finish for the {part}",
+      "none": "No finish chosen"
+    },
     "pickPart": "Select a part (Parts tab, or click it on the photo) to paint it.",
     "paints": "Paints",
     "brand": "Brand",
@@ -445,6 +451,14 @@
       "needParts": "Find the parts first: the AI reads the house's colors from them.",
       "tag": "AI"
     }
+  },
+  "finishes": {
+    "flat": "Flat",
+    "matte": "Matte",
+    "eggshell": "Eggshell",
+    "satin": "Satin",
+    "semigloss": "Semi-gloss",
+    "gloss": "Gloss"
   },
   "designs": {
     "copy": {

@@ -12,6 +12,10 @@ const nowIso = () => new Date().toISOString();
 const currentPaintsOf = (h, houseId) =>
   Object.fromEntries(h.all("SELECT key, paint_id FROM current_paints WHERE house_id = ? ORDER BY key", [houseId]).map((r) => [r.key, r.paint_id]));
 
+/** { partKey: finish } — the finish each part's paint is to have, where its owner said. */
+const finishesOf = (h, houseId) =>
+  Object.fromEntries(h.all("SELECT key, finish FROM part_finishes WHERE house_id = ? ORDER BY key", [houseId]).map((r) => [r.key, r.finish]));
+
 const house = (r) =>
   r && {
     id: r.id,
@@ -60,7 +64,20 @@ export function listHouses(h) {
 
 export function getHouse(h, id) {
   const one = house(h.one("SELECT * FROM houses WHERE id = ?", [id]));
-  return one && { ...one, currentPaints: currentPaintsOf(h, id) };
+  return one && { ...one, currentPaints: currentPaintsOf(h, id), finishes: finishesOf(h, id) };
+}
+
+/** Some parts' finishes changed (JSON Merge Patch, as patchCurrentPaints): `patch` ({ part: finish | null }) sets those
+ *  parts' (null: none) and leaves the others. */
+export function patchFinishes(h, id, patch) {
+  h.tx(() => {
+    for (const [key, finish] of Object.entries(patch)) {
+      h.run("DELETE FROM part_finishes WHERE house_id = ? AND key = ?", [id, key]);
+      if (finish) h.run("INSERT INTO part_finishes (house_id, key, finish) VALUES (?, ?, ?)", [id, key, finish]);
+    }
+    h.run("UPDATE houses SET updated_at = ? WHERE id = ?", [nowIso(), id]);
+  });
+  return getHouse(h, id);
 }
 
 /** Set the paint each part has now: `paints` ({ part: paintId }) replaces the house's whole map (PUT). */

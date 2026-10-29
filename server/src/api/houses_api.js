@@ -9,10 +9,10 @@ import { Hono, input, uploadLimit } from "@delebash/core/platform";
 import { ApiError, notFound, RequestValidationError } from "@delebash/core/platform/errors";
 import { cleanName, cutToLength, nameKey, nameProblem } from "@delebash/core/platform/text";
 import { houseNotFound } from "./refusals.js";
-import { createHouse, deleteHouse, getHouse, listHouses, patchCurrentPaints, renameHouse, setCurrentPaints } from "../database/houses.js";
+import { createHouse, deleteHouse, getHouse, listHouses, patchCurrentPaints, patchFinishes, renameHouse, setCurrentPaints } from "../database/houses.js";
 import { addingHouseDir, displayPath, houseAdded, originalPath, removeHouseDir, strayHouseDirs, thumbPath } from "../files.js";
 import { ingestPhoto, NotAnImage, TooManyPixels } from "../images.js";
-import { CurrentPaintsIn, CurrentPaintsPatch, HousePatch, IdParams, ImageQuery } from "../schemas/houses.js";
+import { CurrentPaintsIn, CurrentPaintsPatch, FinishesPatch, HousePatch, IdParams, ImageQuery } from "../schemas/houses.js";
 import { getState } from "../app_state.js";
 
 const CONTENT_TYPES = { jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp" };
@@ -127,6 +127,19 @@ export function router(ctx = getState()) {
   app.patch("/v1/houses/:id/current-paints", input({ params: IdParams, body: CurrentPaintsPatch }), (c) => {
     must(c.req.valid("param").id);
     return c.json(patchCurrentPaints(ctx.db, c.req.valid("param").id, c.req.valid("json")));
+  });
+
+  // Each part's finish (2026-10-28): only the parts named (JSON Merge Patch); a finish is one of the paints.finishes
+  // setting's — another is the field's own error (§15).
+  app.patch("/v1/houses/:id/finishes", input({ params: IdParams, body: FinishesPatch }), (c) => {
+    must(c.req.valid("param").id);
+    const patch = c.req.valid("json");
+    const known = new Set(ctx.finishes());
+    const wrong = Object.entries(patch).filter(([, f]) => f !== null && !known.has(f));
+    if (wrong.length) {
+      throw new RequestValidationError(wrong.map(([key, f]) => ({ loc: ["body", key], msg: `“${f}” isn't one of the finishes (App Settings → Advanced).`, type: "value_error.finish" })));
+    }
+    return c.json(patchFinishes(ctx.db, c.req.valid("param").id, patch));
   });
 
   app.delete("/v1/houses/:id", input({ params: IdParams }), async (c) => {

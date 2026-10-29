@@ -49,6 +49,13 @@ export const CurrentPaintsPatch = T.Record(T.String({ pattern: PART_KEY }), T.Un
   maxProperties: MAX_PARTS,
 });
 
+/** PATCH /v1/houses/:id/finishes — only the parts named: { part: finish | null } (the finish an id of the
+ *  paints.finishes setting, checked by the route), null takes a part's finish off. */
+export const FinishesPatch = T.Record(T.String({ pattern: PART_KEY }), T.Union([T.String({ minLength: 1, maxLength: 30 }), T.Null()]), {
+  additionalProperties: false,
+  maxProperties: MAX_PARTS,
+});
+
 /** { partKey: paintId | null } — a new design: null (or absent) leaves a part unpainted; a PATCH: only the parts
  *  named change (JSON Merge Patch, RFC 7396 — null takes a part's color off). */
 export const DesignColors = T.Record(T.String({ pattern: PART_KEY }), T.Union([T.String({ minLength: 1, maxLength: 120 }), T.Null()]), {

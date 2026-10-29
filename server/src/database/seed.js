@@ -46,6 +46,8 @@ export const SETTING_DEFAULTS = {
   "paints.autoLoad": Object.fromEntries(Object.keys(BRANDS).map((key) => [key, true])),
   // the color wall's order and the Color family filter (the cuts measured, RESEARCH §10)
   "paints.colorOrder": plain(COLOR_ORDER_DEFAULTS),
+  // the finishes the brands sell exterior paint in, dullest first — each part's choice goes on the color list and card
+  "paints.finishes": ["flat", "matte", "eggshell", "satin", "semigloss", "gloss"],
   "finder.parts": plain(DEFAULT_PARTS),
   "finder.priority": [...DEFAULT_PART_PRIORITY],
   // parts stay on the house: a parked car's doors aren't the front door (RESEARCH §11)

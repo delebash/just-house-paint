@@ -50,6 +50,9 @@ export const SETTINGS = {
       maxItems: 24,
     }),
   }),
+  // The finishes a part's paint can have (flat, satin, semi-gloss…), each an id the screen names (`finishes.<id>`, else
+  // the id): a part's finish is one of them — on the color list and the color card, for the store (2026-10-28).
+  "paints.finishes": T.Array(T.String({ pattern: "^[a-z][a-z0-9]*$", maxLength: 30 }), { minItems: 1, maxItems: 20 }),
   // The part finder: what it looks for (each part's prompts and threshold) and which part keeps a pixel two parts
   // claim — where it runs and when it lets go of its memory are the AI page's (its preset, the Vision tab).
   "finder.parts": T.Array(PartRule, { minItems: 1, maxItems: 40 }),

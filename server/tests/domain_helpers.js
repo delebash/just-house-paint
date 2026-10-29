@@ -67,7 +67,7 @@ export const fakeFinder = {
 /** `fetch`: the brands' public lists (a fake in tests). */
 /** `run`: the AI run path (a fake: answers with `aiAnswer.text`). */
 export const aiAnswer = { text: "{}", calls: [], error: null, hang: false, aborted: 0 };
-export function makeServer({ fetch = async () => new Response("offline", { status: 503 }), aiphoto = null, sharedGpu = null, removeHouseDir = null } = {}) {
+export function makeServer({ fetch = async () => new Response("offline", { status: 503 }), aiphoto = null, sharedGpu = null, removeHouseDir = null, finishes = null } = {}) {
   const dataDir = mkdtempSync(path.join(os.tmpdir(), "hp-test-"));
   const db = openDatabase(path.join(dataDir, "app.db"), { foreignKeys: true });
   migrate(db, MIGRATIONS);
@@ -77,6 +77,7 @@ export function makeServer({ fetch = async () => new Response("offline", { statu
   const ctx = { db, dataDir, jobs, changes, outlines: new Outlines({ db }), checkSeconds: () => 3, fetch, finder: fakeFinder, limits: () => LIMITS, maxDesignsPerHouse: () => 3, harmony: () => ({}), maxImportBytes: () => 5_000_000,
     // read as services.js reads it: the row, else the seed's value
     colorOrder: () => getSetting(db, "paints.colorOrder") ?? SETTING_DEFAULTS["paints.colorOrder"],
+    finishes: finishes ?? (() => getSetting(db, "paints.finishes") ?? SETTING_DEFAULTS["paints.finishes"]),
     partLabel: (k) => k.replace(/_/g, " "),
     run: async (body, { signal } = {}) => {
       aiAnswer.calls.push(body);

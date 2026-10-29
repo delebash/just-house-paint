@@ -92,6 +92,25 @@ describe("houses", () => {
     expect((await (await s.app.request("/v1/houses")).json()).length).toBe(0);
   });
 
+  test("a part's finish: set, kept with the house, cleared; one not on the list is refused", async () => {
+    // 2026-10-28: the store asks for the finish (trim semi-gloss, the body satin) — the color list and card carry it
+    s = makeServer({ finishes: () => ["flat", "satin", "semigloss"] });
+    const house = await (await s.upload(await jpeg(100, 80))).json();
+    const url = `/v1/houses/${house.id}/finishes`;
+    const set = await s.json("PATCH", url, { trim: "semigloss", body: "satin" });
+    expect(set.status).toBe(200);
+    expect((await set.json()).finishes).toEqual({ body: "satin", trim: "semigloss" });
+    expect((await (await s.app.request(`/v1/houses/${house.id}`)).json()).finishes).toEqual({ body: "satin", trim: "semigloss" });
+    // only the parts named (JSON Merge Patch): null takes one off, the others stay
+    expect((await (await s.json("PATCH", url, { trim: null })).json()).finishes).toEqual({ body: "satin" });
+    // a finish the list (a setting) doesn't have: the field's own error
+    const wrong = await s.json("PATCH", url, { body: "shiny" });
+    expect(wrong.status).toBe(422);
+    expect((await wrong.json()).errors[0].loc).toEqual(["body", "body"]);
+    expect((await s.json("PATCH", url, { "Bad Key": "satin" })).status).toBe(422);
+    expect((await s.json("PATCH", "/v1/houses/nope/finishes", { body: "satin" })).status).toBe(404);
+  });
+
   test("rename checks its schema; delete removes the files; an unknown house is a 404", async () => {
     s = makeServer();
     const house = await (await s.upload(await jpeg(100, 80))).json();

@@ -270,6 +270,13 @@ export const useHouseStore = defineStore("house", {
       const house = await patchJson(hp(id, "/current-paints"), { [key]: paintId || null });
       if (this.house?.id === id) this.house = { ...house, outlines: this.house.outlines };
     },
+    /** A part's finish (an id of the paints.finishes setting, null: none) — kept with the house, as the paint on it
+     *  now; on the color list and the color card (2026-10-28). */
+    async setFinish(key, finish) {
+      const id = this.house.id;
+      const house = await patchJson(hp(id, "/finishes"), { [key]: finish || null });
+      if (this.house?.id === id) this.house = { ...house, outlines: this.house.outlines };
+    },
     /** The colors on screen replaced whole, the design they belong to and the design's colors they started from
      *  (an Undo, a Redo — a step back to another design's draft takes that draft's merge base along). */
     setColors(colors, designId = this.designId, designBase = designId === this.designId ? this.designBase : null) {

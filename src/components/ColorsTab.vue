@@ -151,6 +151,16 @@ watch(
   },
   { immediate: true },
 );
+// The part's finish (2026-10-28): one of the paints.finishes setting's ids, named by `finishes.<id>` (else the id) —
+// kept with the house, on the color list and the color card for the store.
+const finishOptions = computed(() => [
+  { value: "", label: t("colors.finish.none") },
+  ...(settings.values["paints.finishes"] || []).map((id) => ({ value: id, label: te(`finishes.${id}`) ? t(`finishes.${id}`) : id })),
+]);
+const finish = computed({
+  get: () => house.house?.finishes?.[house.selectedPart] ?? "",
+  set: (v) => house.setFinish(house.selectedPart, v || null).catch(reportError),
+});
 const otherWords = (o) =>
   o.deltaE < VERY_CLOSE ? t("colors.others.deltaEClose", { n: o.deltaE.toFixed(1) }) : t("colors.others.deltaE", { n: o.deltaE.toFixed(1) });
 // the chip lit as chosen: the part's color, or (picking the paint on it now) that paint
@@ -358,6 +368,8 @@ async function match({ say = true } = {}) {
         <span>{{ current.displayName }}</span>
         <!-- an action, named as one ("No color" read as the part's state — the visual review, 2026-10-20) -->
         <UiButton intent="secondary" size="small" :label="t('colors.clear')" @click="house.setColor(house.selectedPart, null)" />
+        <!-- the finish the store will ask for: recorded for the color list and card, not drawn on the photo -->
+        <UiSelect v-model="finish" :options="finishOptions" width="fit" :aria-label="t('colors.finish.label', { part: selectedName })" />
       </div>
       <!-- what a click on a paint sets: the new color, or the paint the part has on it now -->
       <div class="colors__target">

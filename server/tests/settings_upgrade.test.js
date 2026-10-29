@@ -27,6 +27,7 @@ const TODAY = {
   "paints.maxImportMegabytes": "624b60c58c9d8bfb",
   "paints.autoLoad": "ccd3c5f361b4e770",
   "paints.colorOrder": "f6e43b5958b274a1",
+  "paints.finishes": "042d66cdfca32eff",
   "finder.parts": "f8ba077756a487ab",
   "finder.priority": "97688972545dc716",
   "finder.houseMargin": "a7e46abf169710b3",

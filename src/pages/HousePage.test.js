@@ -84,6 +84,11 @@ function fakeFetch(input, init = {}) {
     server.currentPaints = Object.fromEntries(Object.entries(merged).filter(([, v]) => v));
     return Promise.resolve(json({ ...HOUSE, currentPaints: server.currentPaints }));
   }
+  if (p === "/v1/houses/h1/finishes" && method === "PATCH") {
+    const merged = { ...(server.finishes || {}), ...JSON.parse(init.body) };
+    server.finishes = Object.fromEntries(Object.entries(merged).filter(([, v]) => v));
+    return Promise.resolve(json({ ...HOUSE, currentPaints: server.currentPaints, finishes: server.finishes }));
+  }
   if (p === "/v1/houses/h1/parts") return Promise.resolve(json(server.parts));
   if (p === "/v1/houses/h1/designs" && method === "GET") return Promise.resolve(json(server.designs));
   // every house (Use on another house's list), and a design copied to one
@@ -135,6 +140,7 @@ function fakeFetch(input, init = {}) {
         "photos.fullSizeMaxMegapixels": 16,
         "schemes.roleParts": { body: ["body"], trim: ["trim", "soffit", "windowTrim"], accent: [] },
         "paints.colorOrder": { grayChroma: 8, bandDegrees: 30, families: [{ key: "reds", from: 333 }, { key: "blues", from: 181 }] },
+        "paints.finishes": ["flat", "matte", "eggshell", "satin", "semigloss", "gloss"],
       }),
     );
   }
@@ -359,6 +365,26 @@ test("the same color in other brands: each one's nearest paint with its ΔE, and
   await click(close);
   await click(byText(".q-tab", "Parts"));
   expect(byText(".parts__row", "Body").textContent).toContain("Valspar Lake V1");
+});
+
+test("a part's finish: chosen on the Colors tab, kept with the house, and on the color list", async () => {
+  // 2026-10-28: the store asks for the finish — trim semi-gloss, the body satin
+  server.parts = PARTS;
+  await mountPage();
+  await click(byText(".q-tab", "Colors"));
+  await click(byText(".chip", "Sea Blue"));
+  // its select, named for the part; the finishes are the setting's (the test's settings: the seed's list)
+  expect(document.querySelector('[aria-label="Finish for the Body"]')).not.toBeNull();
+  const finish = wrapper.findAllComponents(UiSelect).find((c) => c.props("options").some((o) => o.value === "satin"));
+  expect(finish.props("options").map((o) => o.label)).toContain("Semi-gloss");
+  finish.vm.$emit("update:modelValue", "satin");
+  await flushPromises();
+  expect(server.finishes).toEqual({ body: "satin" });
+  const copied = [];
+  navigator.clipboard = { writeText: async (s) => copied.push(s) };
+  await click(byText("button", "Copy the color list"));
+  await flushPromises();
+  expect(copied[0]).toContain("Body: Behr Sea Blue S1 — Satin");
 });
 
 test("a color from the Colors tab paints the selected part, and the Parts tab shows it with its ΔE", async () => {

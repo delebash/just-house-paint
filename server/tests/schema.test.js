@@ -5,10 +5,12 @@ import { expect, test } from "vitest";
 import { APP_TABLES } from "../src/database/schema.js";
 
 test("every table the migration creates, with its DDL; a restore order puts parents first", () => {
-  expect(APP_TABLES.map((t) => t.name)).toEqual(["settings", "houses", "parts", "designs", "design_colors", "brands", "paints", "paint_coordinating", "renders", "current_paints"]);
+  expect(APP_TABLES.map((t) => t.name)).toEqual(["settings", "houses", "parts", "designs", "design_colors", "brands", "paints", "paint_coordinating", "renders", "current_paints", "part_finishes"]);
   const order = sortedTables(APP_TABLES);
   expect(order.indexOf("designs")).toBeLessThan(order.indexOf("design_colors"));
   expect(order.indexOf("houses")).toBeLessThan(order.indexOf("parts"));
   expect(order.indexOf("paints")).toBeLessThan(order.indexOf("paint_coordinating"));
   expect(order.indexOf("houses")).toBeLessThan(order.indexOf("current_paints"));
+  // each part's finish (migration 5) goes with its house in a backup and a restore
+  expect(order.indexOf("houses")).toBeLessThan(order.indexOf("part_finishes"));
 });
