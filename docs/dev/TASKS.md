@@ -88,3 +88,11 @@ PAUSED: the release — the user, in JustWrite's session (2026-10-29): "why whou
 OPEN:   - the release, with the family; the dry run 40823762045 green (6879a42, the kit at ddb1431; publish skipped).
         - the website's deploy after the release (its close-up pictures and words, fef4d64).
         - IDEAS.md: each entry done or removed before the release (the family rule).
+MY RECS (shown 2026-10-29, the family's item 5 — waiting on the user's word): IDEAS and the PRD's "Out of scope for v1".
+        Do: signed installers — Windows through the SignPath Foundation (free for open source; the owner applies; the
+        signing step in the template's release.yml, every app copies it; not holding the release for it); macOS's paid
+        Developer ID left out. Remove: the outlines reaching what stands in front (the Brush fills it — RESEARCH §14);
+        the cloud AI photo (needs billing to test, sends the photo out; re-add with billing); wide-color photos
+        (measured not worth it); live camera/AR; paint quantity and cost (a photo can't measure the house; the brands
+        have calculators); ordering samples; interior rooms; sharing designs online; the phone app; HEIC (an HEVC
+        decoder's patents — why sharp's builds leave it out; the app says how to send a JPEG).
