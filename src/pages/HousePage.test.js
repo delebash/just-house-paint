@@ -106,7 +106,7 @@ function fakeFetch(input, init = {}) {
   if (p === "/v1/houses/h1/renders") return Promise.resolve(json(server.renders || []));
   // the house's jobs running now (started before the window reloaded, or in another window)
   if (p === "/v1/houses/h1/jobs") return Promise.resolve(json(server.jobs || []));
-  if (p === "/v1/jobs/j-ai" && server.holdAi) return Promise.resolve(json({ id: "j-ai", kind: "aiphoto", key: "h1", state: "running", progress: 0.5, message: "" }));
+  if (p === "/v1/jobs/j-ai" && server.holdAi) return Promise.resolve(json({ id: "j-ai", kind: "aiphoto", key: "h1", state: "running", progress: 0.5, message: server.aiCloseUp ? "closeUp" : "", data: server.aiCloseUp ? { closeUp: server.aiCloseUp } : {} }));
   if (p === "/v1/jobs/j-ai") return Promise.resolve(json({ id: "j-ai", kind: "aiphoto", key: "h1", state: "done", progress: 1, result: RENDER }));
   if (p === "/v1/houses/h1/image" && server.photoMissing)
     return Promise.resolve(json({ type: "about:blank", title: "Not Found", status: 404, detail: "the display copy of house h1 is missing" }, 404));
@@ -1177,6 +1177,12 @@ test("a page opened while its AI photo is being made follows it, and shows the p
   await flushPromises();
   expect(document.querySelector(".q-page .sts")?.textContent).toContain("AI photo of Main street");
   expect(server.calls).not.toContain("POST /v1/houses/h1/aiphoto");
+  // a part the first drawing left as photographed, drawn again from a crop around it: named while it is
+  server.aiCloseUp = "trim";
+  await new Promise((r) => setTimeout(r, 450));
+  await flushPromises();
+  expect(document.querySelector(".q-page .sts")?.textContent).toContain("Trim up close · 50%");
+  server.aiCloseUp = null;
   server.holdAi = false;
   await settle();
   expect(document.querySelector(".q-page .sts")).toBeNull();

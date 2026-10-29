@@ -44,11 +44,11 @@ export function router(ctx = getState()) {
     const surfaces = Object.entries(chosen)
       .filter(([key, id]) => id && paintable.has(key) && paints[id])
       .map(([key, id]) => ({ key, hex: paints[id].hex, name: paints[id].name, currentHex: paints[now[key]]?.hex ?? null }));
-    const job = ctx.jobs.start({ kind: "aiphoto", key: house.id, label: house.name, failTitle: "The AI photo didn't finish", clientId: c.req.header("x-client-id") || null }, async ({ signal, progress }) => {
+    const job = ctx.jobs.start({ kind: "aiphoto", key: house.id, label: house.name, failTitle: "The AI photo didn't finish", clientId: c.req.header("x-client-id") || null }, async ({ signal, progress, update }) => {
       const renderId = crypto.randomUUID();
       // what else holds the graphics card, measured beside the render (about a second on Windows)
       const shared = (ctx.sharedGpu?.() ?? Promise.resolve(null)).catch(() => null);
-      const r = await ctx.aiphoto.render(house, surfaces, { renderId, signal, progress });
+      const r = await ctx.aiphoto.render(house, surfaces, { renderId, signal, progress, update });
       // the design deleted while it rendered: the AI photo stays, without the link
       const keepDesign = designId && getDesign(ctx.db, designId) ? designId : null;
       try {

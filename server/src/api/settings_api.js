@@ -50,6 +50,11 @@ const COMPOSE_LIMITS = {
   // floor a linear channel value (1: no paint gives a cast — or a reading)
   castLimit: [0, 1],
   signalFloor: [0, 1],
+  // the close-up (aiphoto/edit.js step 6): each one is another drawing, ~15 s — ten is already a long wait
+  closeUpDeltaE: [0, 200],
+  closeUpMaxShare: [0, 1],
+  closeUpMargin: [0, 10],
+  closeUpMaxParts: [0, 10],
 };
 
 function composeInRange(value) {

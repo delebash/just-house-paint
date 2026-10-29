@@ -55,8 +55,12 @@ when next needed.
 When it is done, the picture opens — if the house page is still open; otherwise it waits on the **Designs** tab —
 with **Save image**, how far the painted parts are from the paint chips (**ΔE … from the chips — furthest off:**
 and the part that is furthest off) and how long the drawing itself took (**made in … s**). The model sometimes leaves
-a small part as it was photographed — a door under a porch, say — and only what it repainted is locked to your
-paint, so that part is the one named, with a large ΔE; the painted photo on the house page shows it in its paint. When other programs held more than 1 GB of the
+a small part as it was photographed — a door under a porch, say. Then the AI photo draws that part again from a
+close-up crop around it, so the model sees it large; the progress names it (**Front door up close · 97%**), and it
+takes another drawing's time (about 15 seconds). The new drawing is kept only when the part comes out closer to its
+paint. Only small parts get a close-up, two at most — **App Settings → Advanced → How the AI photo is put back on the
+photo** sets which ones. Only what the model repainted is locked to your paint, so a part still left as
+photographed is the one named, with a large ΔE; the painted photo on the house page shows it in its paint. When other programs held more than 1 GB of the
 graphics card as it started, it names them too (programs holding 200 MB or more each; **App Settings → General →
 AI photo** sets that amount, 0 turns it off). That is measured only on Windows and on Linux with an NVIDIA card, and
 shown only when the picture first opens. They are the programs on the computer that draws it: the server's, when

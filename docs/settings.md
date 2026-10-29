@@ -103,7 +103,11 @@ doesn't allow is named under the box.
   photo is; **insideAt**, **basePercentile** and **litBand**: which pixels count as a part's normally
   lit wall (its ΔE is measured on them); **lockOnlyRepainted** and **repaintedRange**: only what the AI
   repainted is locked to the paint color; **sameColorDeltaE**: below this difference from the old
-  color the whole part is locked; **gainLimits**: the most the light from **On it now** may change it.
+  color the whole part is locked; **gainLimits**: the most the light from **On it now** may change it;
+  **closeUpDeltaE**, **closeUpMaxShare** and **closeUpMaxParts**: a part still this far from its paint after the
+  drawing, and at most this share of the photo, is drawn again up close — at most this many parts (0 turns it off;
+  each one takes another drawing's time); **closeUpMargin**: how much of the house around it the close-up shows, as a
+  share of the part's longer side.
 
 A setting you never changed takes a new version's better default when the app starts. One you edited
 keeps your edit — so an edited **What the part finder looks for**, **Which part keeps a pixel two parts

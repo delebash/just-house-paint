@@ -176,7 +176,8 @@ describe("createFinder", () => {
 
 describe("the engine routes", () => {
   // the AI photo's service on a fake image feature: `ready` what the kit's readiness answers
-  function aiphotoFactory(calls, { ready = true } = {}) {
+  // `closeUp`: the surface index the fake draws again up close (aiRepaint's close-up stage)
+  function aiphotoFactory(calls, { ready = true, closeUp = null } = {}) {
     return (ctx) =>
       createAiPhoto({
         dataDir: ctx.dataDir,
@@ -189,6 +190,7 @@ describe("the engine routes", () => {
           calls.push(["aiRepaint", args.surfaces.map((x) => [x.surfaceLabel, x.colorHex, x.currentHex])]);
           expect(args.generate).toBeTypeOf("function"); // the kit's image feature draws
           args.onProgress({ fraction: 0.5, stage: "generate" });
+          if (closeUp != null) args.onProgress({ fraction: 0.97, stage: "closeUp", closeUp });
           writeFileSync(args.outPath, "png");
           // each surface's ΔE, in the order they were given; the worst is the trim
           return { deltaE: 0.3, surfaces: args.surfaces.map((_, i) => ({ deltaE: i === 1 ? 0.3 : 0.1 })) };
@@ -298,6 +300,20 @@ describe("the engine routes", () => {
     expect((await s.app.request(`/v1/renders/${renders[0].id}/image`)).status).toBe(404);
     expect((await s.app.request(`/v1/renders/${renders[0].id}`, { method: "DELETE" })).status).toBe(204);
     expect(await (await s.app.request(`/v1/houses/${house.id}/renders`)).json()).toEqual([]);
+  });
+
+  test("a part drawn again up close is named on the job — its key, which the page words", async () => {
+    s = makeServer({ aiphoto: aiphotoFactory([], { closeUp: 1 }) });
+    const house = await (await s.upload(await jpeg(200, 150))).json();
+    await s.settle((await (await s.json("POST", `/v1/houses/${house.id}/find-parts`)).json()).id);
+    const form = new FormData();
+    form.append("file", new Blob(["code,name,hex\nX-1,Brick Red,#a33a2f\nX-2,Snow,#f4f4f2"]), "p.csv");
+    form.append("brand", "behr");
+    await s.app.request("/v1/paints/import", { method: "POST", body: form });
+    const r = await s.json("POST", `/v1/houses/${house.id}/aiphoto`, { colors: { body: "behr:X-1", trim: "behr:X-2" } });
+    const done = await s.settle((await r.json()).id);
+    expect(done.state).toBe("done");
+    expect(done.data).toMatchObject({ closeUp: "trim" });
   });
 
   test("the AI photo says what else held the graphics card while it drew", async () => {

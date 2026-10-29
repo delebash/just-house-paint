@@ -72,6 +72,9 @@ test("a value whose mistake would only show later is refused: the parts, the har
     [{ basePercentile: 101 }, /basePercentile/],
     [{ gainLimits: [4, 0.25] }, /gainLimits" is a range/],
     [{ litBand: [1, 1] }, /litBand" is a range/],
+    // the close-up: each one is another drawing — ten at most
+    [{ closeUpMaxParts: 50 }, /closeUpMaxParts" must be from 0 to 10/],
+    [{ closeUpMaxShare: 2 }, /closeUpMaxShare/],
   ]) {
     const r = await client.patch("/v1/settings", { json: { "aiphoto.compose": bad } });
     expect(r.statusCode, JSON.stringify(bad)).toBe(422);

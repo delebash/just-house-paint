@@ -212,6 +212,7 @@
     "ai": {
       "button": "AI photo",
       "task": "AI photo of {name}",
+      "closeUp": "{part} up close · {n}%",
       "needParts": "Find the parts first",
       "needOutline": "No part to paint has an outline yet — draw one with the brush or a box",
       "needColors": "Give a part a color first",

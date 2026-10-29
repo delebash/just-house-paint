@@ -1245,6 +1245,15 @@ at the app's display size, through the app's own code; scripts and overlays in s
   version), credited on every page. *Measured* on that design: the painted photo's ΔE per part 0.0–0.7; its AI photo
   23 s with ΔE 37.8 — the worst part, the front door under the porch, which the model left as photographed (only what
   it repaints is locked: §10, `lockOnlyRepainted`); the body and shutters repainted.
+- **The close-up fixes it** (2026-10-29, `aiphoto/edit.js` step 6): a part still ΔE ≥ 5 from its paint after the
+  drawing, its box at most 15 % of the photo, is drawn again from a crop around it (half its longer side on every
+  side), grown to the first drawing's pixel budget, only its own pixels taken, and kept when it comes closer without
+  the picture's worst getting worse; two parts at most (`aiphoto.compose` `closeUp*`). *Measured* on the same design,
+  the app's own route on the site's data copy: the front door (the "front door" part holds both doors) 37.77 → 0.57,
+  the picture's ΔE 0.85 (window trim the worst), 39.0 s instead of 20–23 s. In the first drawing the door under the
+  wreath kept its lower half white and the porch door was half painted; after it, both are Naval. Seen beside them,
+  not the close-up's: white patches where the body's outline stops short of the flowers and the car — the photo's
+  own white paint outside every part's outline (in the earlier drawing too).
 - **Found through the screenshots and fixed** (757a608): Paint colors named Benjamin Moore's and PPG / Glidden's load
   "public list" (now "the brand's files", `/v1/brands` `via`); the AI photo's Close and Save image sat under the
   modal body's fold at 1440 × 900 (now its footer).

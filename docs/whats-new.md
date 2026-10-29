@@ -41,6 +41,9 @@
   and the row says what to know first (the door may not stand out).
 - **The AI photo names the part furthest from its paint**: "ΔE 37.8 from the chips — furthest off: Front door"
   says which part the number is about — often a small part the model left as photographed.
+- **The AI photo draws a part it left as photographed again, up close**: a small part — the front door under a porch —
+  still far from its paint after the drawing is drawn again from a crop around it, and kept when it comes out closer.
+  The progress names it (**Front door up close**); it takes about 15 seconds more ([The AI photo](ai-photo.md)).
 - **Paint colors says where each brand's colors came from**: Benjamin Moore and PPG / Glidden, loaded from the
   palette files on their websites, said **public list**; they now say **the brand's files**, and a file you imported
   yourself says **imported file**.

@@ -77,7 +77,12 @@ and drift each color, so the app:
    Only what the model changed is locked (`lockOnlyRepainted`): a pixel it left as it was — white trim inside a body
    mask — keeps its own color instead of turning paint-colored (RESEARCH §10, "the pink trim"), unless the paint is
    close to the part's old color, when the whole part is locked. So a part the model didn't repaint (a small door
-   under a porch) stays as photographed, and the picture's "ΔE … from the chips" — the part furthest off — says so.
+   under a porch) stays as photographed, and the picture's "ΔE … from the chips" — the part furthest off — says so;
+4. **draws such a part again up close**: a small part still far from its paint is cut out of the photo with the
+   house around it, grown to the same pixel budget so the model sees it large, drawn with a prompt naming it alone,
+   and its own pixels take that drawing; every part is locked again, and the close-up is kept only when the part
+   came closer and the picture's worst didn't get worse (`aiphoto.compose` `closeUp*`; the porch door 37.77 → 0.57,
+   RESEARCH §14). Each one is another drawing, about 15 seconds, named on the task strip.
 
 About 20 seconds a picture on Windows with an 8 GB NVIDIA card (RESEARCH §6, §9–§10). A cloud model to compare
 was probed and parked (IDEAS.md: the key's project has no billing for image output).

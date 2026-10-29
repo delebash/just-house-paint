@@ -365,13 +365,14 @@ export const useHouseStore = defineStore("house", {
       }
     },
     /** An AI photo of the colors on screen (a server job) — or `job`, one already being made (runningJobs),
-     *  followed. Resolves with the kept render. */
-    async aiPhoto(label, { job = null } = {}) {
+     *  followed; `describe(job, percent)` words its progress (a part drawn again up close). Resolves with the kept
+     *  render. */
+    async aiPhoto(label, { job = null, describe = null } = {}) {
       const id = this.house.id;
       const start = job ? async () => job : () => post(hp(id, "/aiphoto"), { colors: this.colors });
       let render;
       try {
-        render = await runServerJob({ start, feature: "aiphoto.render", label, meta: { houseId: id } });
+        render = await runServerJob({ start, feature: "aiphoto.render", label, meta: { houseId: id }, describe });
       } catch (e) {
         if (e?.name !== "JobGone" && e?.name !== "JobEnded") throw e;
         // the server started again, or the photo ended while the window was away: its AI photos as they are

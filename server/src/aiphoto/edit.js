@@ -10,7 +10,9 @@
 //      masks every pixel is the photo's own (the whole frame went through the VAE, so nothing
 //      outside is pixel-identical otherwise — RESEARCH §10);
 //   4. each surface is locked to its paint: paint × the render's own normalized lighting;
-//   5. ΔE2000 of each surface's median normally lit pixel against its paint is measured.
+//   5. ΔE2000 of each surface's median normally lit pixel against its paint is measured;
+//   6. the close-up: a small surface still far from its paint (the model left it as photographed) is drawn
+//      again from a crop around it, grown to the same pixel budget, and kept only when it comes closer.
 //
 // Several surfaces in one run: sd.cpp takes ONE mask, so the masks' union goes in and the
 // prompt names each surface with its color; the lock then gives each surface its own paint.
@@ -89,10 +91,12 @@ function sizeFor(size, width, height, rule) {
  * `size` = an exact working `{width, height}` (multiples of 16) or a pixel budget.
  * `onProgress({fraction, stage, step, steps})`; `signal` cancels (the drawing stops at its next step).
  *
- * → `{path, timings: {prepareMs, generateMs, composeMs, totalMs}, deltaE, deltaEUnlocked,
+ * → `{path, timings: {prepareMs, generateMs, closeUpMs, composeMs, totalMs}, deltaE, deltaEUnlocked,
  *    surfaces: [{surfaceLabel, colorHex, deltaE, deltaEUnlocked, litMedian, litPixels}],
- *    prompt, workingSize, size}` — `deltaE` is the worst surface's ΔE2000 after the lock,
- *    `deltaEUnlocked` the same measure on the AI's own colors (paste-back without the lock).
+ *    closeUp: [{surfaceLabel, before, after, kept, workingSize, crop}], prompt, workingSize, size}` — `deltaE` is the
+ *    worst surface's ΔE2000 after the lock, `deltaEUnlocked` the same measure on the AI's own colors (paste-back
+ *    without the lock); `closeUp` each surface drawn again up close (step 6), its ΔE before and after. While one is
+ *    drawn, `onProgress` has `stage: "closeUp"` and `closeUp`, its index in the surfaces.
  */
 export async function aiRepaint(opts) {
   const {
@@ -162,71 +166,131 @@ export async function aiRepaint(opts) {
     const ai = await readRgb(render, { width: W, height: H });
     if (renderPath) await fromRgb(ai.data, W, H).toFile(renderPath);
     signal?.throwIfAborted();
-    const Y = luminanceOf(ai.data);
     const soft = [];
     for (const m of hard) soft.push(await featherMask(m, W, H, c.featherPx));
     const union = new Float32Array(W * H);
     for (const m of soft) for (let i = 0; i < union.length; i++) if (m[i] > union[i]) union[i] = m[i];
-    const unlocked = pasteBack(full.data, ai.data, union);
+    const photoY = list.some((s) => s.currentHex) ? luminanceOf(full.data) : null;
+
+    // The picture from a drawing at full size (`aiData`): the paste-back, then each surface locked to its paint.
+    // Each surface's lighting statistics over the pixels it owns (a later surface wins). The lock goes over the
+    // paste-back, only where the AI repainted (c.lockOnlyRepainted) — unless the paint is close to the surface's old
+    // color, when the whole surface is locked. A surface whose paint now is known is locked in the light that paint
+    // says falls on it, read off the photo's own pixels (not the render's); its ΔE is to the paint in that light.
+    const composeFrom = (aiData) => {
+      const Y = luminanceOf(aiData);
+      const unlocked = pasteBack(full.data, aiData, union);
+      let locked = c.lockOnlyRepainted ? unlocked : full.data;
+      const results = [];
+      for (let s = 0; s < list.length; s++) {
+        const owned = Float32Array.from(hard[s]);
+        for (let t = s + 1; t < list.length; t++) for (let i = 0; i < owned.length; i++) if (hard[t][i] >= c.insideAt) owned[i] = 0;
+        const stats = surfaceStats(Y, owned, c);
+        const gain = list[s].currentHex ? lightGain(full.data, surfaceStats(photoY, hard[s], c).lit, list[s].currentHex, c) : [1, 1, 1];
+        const target = litHexOf(list[s].colorHex, gain);
+        let lockAlpha = soft[s];
+        if (c.lockOnlyRepainted) {
+          const old = deltaEAt(full.data, stats.inside, target).deltaE;
+          if (old === null || old >= c.sameColorDeltaE) lockAlpha = repaintedAlpha(full.data, aiData, soft[s], c.repaintedRange);
+        }
+        locked = colorLock(locked, aiData, lockAlpha, list[s].colorHex, stats, Y, gain);
+        results.push({ stats, gain, target });
+        signal?.throwIfAborted();
+      }
+      const surfaces = list.map((s, i) => {
+        const { stats, gain, target } = results[i];
+        const { lit, inside } = stats;
+        const after = deltaEAt(locked, lit, target);
+        const before = deltaEAt(unlocked, lit, target);
+        // The whole surface's median, shade included — how far "one paint" spreads (RESEARCH §10).
+        const whole = deltaEAt(locked, inside, target);
+        return {
+          surfaceLabel: s.surfaceLabel,
+          colorHex: s.colorHex,
+          litHex: target,
+          gain: gain.map(round2),
+          deltaE: round2(after.deltaE),
+          deltaEUnlocked: round2(before.deltaE),
+          deltaESurface: round2(whole.deltaE),
+          litMedian: after.median,
+          aiLitMedian: before.median,
+          surfaceMedian: whole.median,
+          litPixels: lit.length,
+          surfacePixels: inside.length,
+        };
+      });
+      return { locked, unlocked, surfaces };
+    };
+    let aiData = ai.data;
+    let composed = composeFrom(aiData);
     report("compose", 0.3);
 
-    // Each surface's lighting statistics over the pixels it owns (a later surface wins). The lock
-    // goes over the paste-back, only where the AI repainted (c.lockOnlyRepainted) — unless the paint
-    // is close to the surface's old color, when the whole surface is locked.
-    // A surface whose paint now is known is locked in the light that paint says falls on it, read
-    // off the photo's own pixels (not the render's); its ΔE is to the paint in that light.
-    let locked = c.lockOnlyRepainted ? unlocked : full.data;
-    const photoY = list.some((s) => s.currentHex) ? luminanceOf(full.data) : null;
-    const results = [];
-    for (let s = 0; s < list.length; s++) {
-      const owned = Float32Array.from(hard[s]);
-      for (let t = s + 1; t < list.length; t++) for (let i = 0; i < owned.length; i++) if (hard[t][i] >= c.insideAt) owned[i] = 0;
-      const stats = surfaceStats(Y, owned, c);
-      const gain = list[s].currentHex ? lightGain(full.data, surfaceStats(photoY, hard[s], c).lit, list[s].currentHex, c) : [1, 1, 1];
-      const target = litHexOf(list[s].colorHex, gain);
-      let lockAlpha = soft[s];
-      if (c.lockOnlyRepainted) {
-        const old = deltaEAt(full.data, stats.inside, target).deltaE;
-        if (old === null || old >= c.sameColorDeltaE) lockAlpha = repaintedAlpha(full.data, ai.data, soft[s], c.repaintedRange);
-      }
-      locked = colorLock(locked, ai.data, lockAlpha, list[s].colorHex, stats, Y, gain);
-      results.push({ stats, gain, target });
+    // 6. The close-up (2026-10-28 — the porch door the model left as photographed, ΔE 37.8): a small surface the
+    // drawing left unpainted (ΔE ≥ closeUpDeltaE, its box at most closeUpMaxShare of the photo) is drawn again from a
+    // crop around it, so it gets the model's whole canvas; its own pixels take the new drawing, every surface is
+    // locked again, and it is kept only when that surface comes closer. At most closeUpMaxParts, the furthest first.
+    const closeUp = [];
+    const t3 = performance.now();
+    // the first drawing's pixel budget (Settings → aiphoto.workingPixels, or an exact size's own) — not the size it
+    // was drawn at, which a photo smaller than the budget shrinks
+    const budget = typeof size === "number" ? size : size && typeof size === "object" ? size.width * size.height : workingSizeRule.targetPixels;
+    const worstOf = (list) => list.reduce((m, s) => (s.deltaE == null ? m : Math.max(m, s.deltaE)), 0);
+    const candidates = composed.surfaces
+      .map((s, i) => ({ i, deltaE: s.deltaE, box: boxOf(hard[i], W, H, c.insideAt) }))
+      .filter((x) => x.deltaE != null && x.deltaE >= c.closeUpDeltaE && x.box && (x.box.width * x.box.height) / (W * H) <= c.closeUpMaxShare)
+      .sort((a, b) => b.deltaE - a.deltaE)
+      .slice(0, Math.max(0, c.closeUpMaxParts));
+    for (const [n, { i, box }] of candidates.entries()) {
       signal?.throwIfAborted();
+      const crop = cropAround(box, W, H, c.closeUpMargin);
+      const cws = workingSize(crop.width, crop.height, { ...workingSizeRule, targetPixels: budget }, { grow: true });
+      const cropInit = await fromRgb(full.data, W, H).extract(crop).resize(cws.width, cws.height, { fit: "fill" }).png().toBuffer();
+      const cropMask = await maskCropPng(hard[i], W, crop, cws, c.insideAt);
+      const closeRequest = { prompt: renderPrompt([list[i]], templates), width: cws.width, height: cws.height, init: cropInit, refs: [cropInit], mask: cropMask };
+      const step = (f) => report("compose", 0.3 + (0.5 * (n + f)) / candidates.length, { stage: "closeUp", closeUp: i });
+      const drawnClose = await generate(closeRequest, { onProgress: (p) => step(p.fraction ?? 0), signal });
+      signal?.throwIfAborted();
+      const back = await sharp(drawnClose).resize(crop.width, crop.height, { fit: "fill" }).removeAlpha().raw().toBuffer();
+      // this surface's own pixels take the close-up's drawing; every other pixel keeps the first
+      const next = Buffer.from(aiData);
+      for (let y = 0; y < crop.height; y++) {
+        for (let x = 0; x < crop.width; x++) {
+          const p = (crop.top + y) * W + crop.left + x;
+          if (soft[i][p] <= 0) continue;
+          const q = (y * crop.width + x) * 3;
+          next[p * 3] = back[q];
+          next[p * 3 + 1] = back[q + 1];
+          next[p * 3 + 2] = back[q + 2];
+        }
+      }
+      const tried = composeFrom(next);
+      const before = composed.surfaces[i].deltaE;
+      const after = tried.surfaces[i].deltaE;
+      // kept when this part came closer and no other got worse than the picture's worst was (a neighbour under its
+      // outline's edge takes the close-up's pixels too)
+      const kept = after != null && after < before && worstOf(tried.surfaces) <= worstOf(composed.surfaces);
+      if (kept) {
+        aiData = next;
+        composed = tried;
+      }
+      closeUp.push({ surfaceLabel: list[i].surfaceLabel, before, after, kept, workingSize: cws, crop });
     }
-    const surfaces = list.map((s, i) => {
-      const { stats, gain, target } = results[i];
-      const { lit, inside } = stats;
-      const after = deltaEAt(locked, lit, target);
-      const before = deltaEAt(unlocked, lit, target);
-      // The whole surface's median, shade included — how far "one paint" spreads (RESEARCH §10).
-      const whole = deltaEAt(locked, inside, target);
-      return {
-        surfaceLabel: s.surfaceLabel,
-        colorHex: s.colorHex,
-        litHex: target,
-        gain: gain.map(round2),
-        deltaE: round2(after.deltaE),
-        deltaEUnlocked: round2(before.deltaE),
-        deltaESurface: round2(whole.deltaE),
-        litMedian: after.median,
-        aiLitMedian: before.median,
-        surfaceMedian: whole.median,
-        litPixels: lit.length,
-        surfacePixels: inside.length,
-      };
-    });
+    const t4 = performance.now();
+
     report("compose", 0.8);
+    const { locked, unlocked, surfaces } = composed;
     await fromRgb(locked, W, H).toFile(outPath);
     if (unlockedPath) await fromRgb(unlocked, W, H).toFile(unlockedPath);
-    const t3 = performance.now();
+    const t5 = performance.now();
     report("compose", 1);
     const worst = (key) => surfaces.reduce((m, s) => (s[key] == null ? m : Math.max(m ?? 0, s[key])), null);
     return {
       path: outPath,
-      timings: { prepareMs: ms(t1 - t0), generateMs: ms(t2 - t1), composeMs: ms(t3 - t2), totalMs: ms(t3 - t0) },
+      timings: { prepareMs: ms(t1 - t0), generateMs: ms(t2 - t1), closeUpMs: ms(t4 - t3), composeMs: ms(t5 - t2 - (t4 - t3)), totalMs: ms(t5 - t0) },
       deltaE: worst("deltaE"),
       deltaEUnlocked: worst("deltaEUnlocked"),
       surfaces,
+      closeUp,
       prompt,
       workingSize: ws,
       size: { width: W, height: H },
@@ -238,3 +302,44 @@ export async function aiRepaint(opts) {
 
 const ms = (v) => Math.round(v);
 const round2 = (v) => (v == null ? null : Math.round(v * 100) / 100);
+
+/** The box around a full-size mask's inside pixels: { left, top, width, height }, or null when it has none. */
+export function boxOf(mask, W, H, insideAt) {
+  let x0 = W;
+  let y0 = H;
+  let x1 = -1;
+  let y1 = -1;
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      if (mask[y * W + x] < insideAt) continue;
+      if (x < x0) x0 = x;
+      if (x > x1) x1 = x;
+      if (y < y0) y0 = y;
+      if (y > y1) y1 = y;
+    }
+  }
+  return x1 < 0 ? null : { left: x0, top: y0, width: x1 - x0 + 1, height: y1 - y0 + 1 };
+}
+
+/** The crop around `box`: `margin` of its longer side on every side — the part with enough of the house around it for
+ *  the model to see what it is — kept inside the photo. */
+export function cropAround(box, W, H, margin) {
+  const pad = Math.round(Math.max(box.width, box.height) * margin);
+  const left = Math.max(0, box.left - pad);
+  const top = Math.max(0, box.top - pad);
+  const right = Math.min(W, box.left + box.width + pad);
+  const bottom = Math.min(H, box.top + box.height + pad);
+  return { left, top, width: right - left, height: bottom - top };
+}
+
+/** A full-size mask's crop at the close-up's working size, as the white-on-black PNG the image feature takes. */
+async function maskCropPng(mask, W, crop, size, insideAt) {
+  const b = Buffer.alloc(crop.width * crop.height);
+  for (let y = 0; y < crop.height; y++) {
+    for (let x = 0; x < crop.width; x++) b[y * crop.width + x] = mask[(crop.top + y) * W + crop.left + x] >= insideAt ? 255 : 0;
+  }
+  return sharp(b, { raw: { width: crop.width, height: crop.height, channels: 1 } })
+    .resize(size.width, size.height, { fit: "fill" })
+    .png()
+    .toBuffer();
+}

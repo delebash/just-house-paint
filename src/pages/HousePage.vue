@@ -713,6 +713,13 @@ function findProgress(job, n) {
   return "";
 }
 
+/** The AI photo's progress: the part being drawn again from a crop around it (the close-up, docs/ai-photo.md); else
+ *  the kit's percent. */
+function aiProgress(job, n) {
+  if (job.message === "closeUp" && job.data?.closeUp) return t("house.ai.closeUp", { part: partName(job.data.closeUp, { t, te }), n });
+  return "";
+}
+
 // While its work runs, a button is off but keeps keyboard focus: aria-disabled and the kit's
 // .is-disabled look instead of `disabled`, which drops the focus to the page's body (WAI-ARIA APG,
 // "Focusability of disabled controls"; Quasar's own `loading` keeps focus the same way, and UiButton
@@ -808,7 +815,7 @@ async function aiPhoto() {
 async function runAiPhoto(job = null) {
   busy.value.ai = true;
   try {
-    const render = await house.aiPhoto(t("house.ai.task", { name: isolate(house.house.name) }), { job });
+    const render = await house.aiPhoto(t("house.ai.task", { name: isolate(house.house.name) }), { job, describe: aiProgress });
     aiDialog.value = { render };
   } catch (e) {
     if (e?.name !== "AbortError") reportError(e);

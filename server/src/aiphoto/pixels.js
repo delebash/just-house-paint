@@ -39,6 +39,13 @@ export const DEFAULT_COMPOSE = Object.freeze({
   gainLimits: LIGHT_DEFAULTS.gainLimits,
   castLimit: LIGHT_DEFAULTS.castLimit,
   signalFloor: LIGHT_DEFAULTS.signalFloor,
+  // The close-up (edit.js step 6): a part still this far from its paint (ΔE2000) after the first drawing, whose box
+  // is at most `closeUpMaxShare` of the photo, is drawn again from a crop around it with `closeUpMargin` of its
+  // longer side on every side; at most `closeUpMaxParts` (0 = never).
+  closeUpDeltaE: 5,
+  closeUpMaxShare: 0.15,
+  closeUpMargin: 0.5,
+  closeUpMaxParts: 2,
 });
 
 /** The model's working size — the defaults are the measured recipe's 1024×768 for a 4:3 photo. */
@@ -59,10 +66,12 @@ const de2000 = differenceCiede2000();
 
 /**
  * The working size for a `width`×`height` photo: about `targetPixels`, each side a multiple
- * of `multipleOf`, the aspect kept to within the rounding, never larger than the photo.
+ * of `multipleOf`, the aspect kept to within the rounding, never larger than the photo — unless `grow`
+ * (the close-up's crop: a small part gets the model's whole canvas, not a thumbnail of it).
  */
-export function workingSize(width, height, { targetPixels, multipleOf } = DEFAULT_WORKING_SIZE) {
-  const scale = Math.min(1, Math.sqrt(targetPixels / (width * height)));
+export function workingSize(width, height, { targetPixels, multipleOf } = DEFAULT_WORKING_SIZE, { grow = false } = {}) {
+  const fit = Math.sqrt(targetPixels / (width * height));
+  const scale = grow ? fit : Math.min(1, fit);
   const snap = (v) => Math.max(multipleOf, Math.round((v * scale) / multipleOf) * multipleOf);
   return { width: snap(width), height: snap(height) };
 }

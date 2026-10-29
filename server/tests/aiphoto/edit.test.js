@@ -129,7 +129,7 @@ describe("aiRepaint", () => {
     expect(r.deltaEUnlocked).toBeGreaterThan(5);
     expect(r.surfaces[0]).toMatchObject({ surfaceLabel: "siding", colorHex: "#ad2c34", litMedian: "#ad2c34" });
     expect(r.surfaces[0].litPixels).toBeGreaterThan(1000);
-    expect(Object.keys(r.timings)).toEqual(["prepareMs", "generateMs", "composeMs", "totalMs"]);
+    expect(Object.keys(r.timings)).toEqual(["prepareMs", "generateMs", "closeUpMs", "composeMs", "totalMs"]);
     const check = await outsideDiffers(photo, r.path, [mask]);
     expect(check.size).toEqual([W, H]);
     expect(check.outside).toBeGreaterThan(30000);
@@ -307,4 +307,81 @@ test("the photo is read at most at the full-size cap, its aspect kept", async ()
   const s = await cappedSize(photo, 1e6);
   expect(s.width * s.height).toBeLessThanOrEqual(1e6);
   expect(s.width / s.height).toBeCloseTo(4 / 3, 2);
+});
+
+// The close-up (2026-10-28: on the website's house the model left the porch door as photographed — ΔE 37.8): a small
+// part the first drawing left unpainted is drawn again from a crop around it, and kept only when it comes closer.
+describe("the close-up: a small part the model left as photographed is drawn again", () => {
+  const LEFT_WALL = [[0, 121, 400, 440]]; // the wall left of the door, so the door has no wall under it
+  /** A fake whose first drawing repaints the wall and leaves the door (x ≥ 410) as it was; its later drawings
+   *  (`closeUp`) repaint what their mask asks, or leave it too. */
+  function doorSkipper({ closeUp = "repaint" } = {}) {
+    const fake = fakeImage({
+      paint: (init, mask, i, x, shade) => {
+        const own = [init.data[i * 3], init.data[i * 3 + 1], init.data[i * 3 + 2]];
+        if (mask[i] <= 127) return own.map((v) => v + 9);
+        const left = fake.calls === 1 ? x >= 410 : closeUp === "leave";
+        return left ? own : [136 * shade, 72 * shade, 66 * shade];
+      },
+    });
+    return fake;
+  }
+  const run = async (fake, compose = {}) =>
+    aiRepaint({
+      generate: fake.generate,
+      photo: await photoPng(),
+      surfaces: [
+        { mask: await rectMask(LEFT_WALL), colorHex: "#8a9a5b", colorName: "Sage", surfaceLabel: "siding" },
+        { mask: await rectMask(DOOR), colorHex: "#a33a2f", colorName: "Brick Red", surfaceLabel: "front door" },
+      ],
+      outPath: join(tmp(), "o.png"),
+      size: { width: 320, height: 240 },
+      compose,
+    });
+
+  test("the door the first drawing left is drawn again from a crop around it, and comes out its paint", async () => {
+    const fake = doorSkipper();
+    const r = await run(fake);
+    expect(fake.calls).toBe(2);
+    // the close-up's request: the door alone, named alone, at a working size of its own (multiples of 16)
+    expect(fake.seen.prompt).toContain("front door");
+    expect(fake.seen.prompt).not.toContain("siding");
+    expect(fake.seen.width % 16).toBe(0);
+    expect(fake.seen.height % 16).toBe(0);
+    // the crop grown to the first drawing's pixel budget (the door gets the model's whole canvas), its aspect kept
+    expect(Math.abs(fake.seen.width * fake.seen.height - 320 * 240) / (320 * 240)).toBeLessThan(0.06);
+    const { crop } = r.closeUp[0];
+    expect(crop.width * crop.height).toBeLessThan(0.85 * 320 * 240);
+    expect(fake.seen.width / fake.seen.height).toBeCloseTo(crop.width / crop.height, 1);
+    expect(r.closeUp).toEqual([expect.objectContaining({ surfaceLabel: "front door", kept: true })]);
+    expect(r.closeUp[0].before).toBeGreaterThanOrEqual(DEFAULT_COMPOSE.closeUpDeltaE);
+    expect(r.surfaces[1].deltaE).toBeLessThan(1);
+    expect(r.surfaces[0].deltaE).toBeLessThan(1); // the wall, untouched by the close-up
+    expect(r.deltaE).toBeLessThan(1);
+  });
+
+  test("a close-up that leaves it too is not kept: the first picture and its ΔE stand", async () => {
+    const fake = doorSkipper({ closeUp: "leave" });
+    const r = await run(fake);
+    expect(fake.calls).toBe(2);
+    expect(r.closeUp[0]).toMatchObject({ surfaceLabel: "front door", kept: false });
+    expect(r.surfaces[1].deltaE).toBe(r.closeUp[0].before);
+  });
+
+  test("a big part left as photographed gets no close-up (a crop wouldn't help it); the setting turns it off", async () => {
+    // the wall is ~40% of the photo, past closeUpMaxShare
+    const wallLeft = fakeImage({ paint: (init, mask, i) => [init.data[i * 3], init.data[i * 3 + 1], init.data[i * 3 + 2]] });
+    const big = await aiRepaint({
+      generate: wallLeft.generate,
+      photo: await photoPng(),
+      surfaces: [{ mask: await rectMask(LEFT_WALL), colorHex: "#2f3d4c", colorName: "Naval", surfaceLabel: "siding" }],
+      outPath: join(tmp(), "o.png"),
+      size: { width: 320, height: 240 },
+    });
+    expect(wallLeft.calls).toBe(1);
+    expect(big.closeUp).toEqual([]);
+    const off = doorSkipper();
+    expect((await run(off, { closeUpMaxParts: 0 })).closeUp).toEqual([]);
+    expect(off.calls).toBe(1);
+  });
 });
