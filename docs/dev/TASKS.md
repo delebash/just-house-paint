@@ -46,12 +46,24 @@ MY RECS (shown 2026-10-28), waiting on the user's pick and go:
         card, recorded, not drawn; D. morning / midday / evening light: a white-balance preview over the whole photo,
         never saved. Order: A, B, then C, then D. From IDEAS: signed installers — SignPath Foundation (free for open
         source, the owner applies); the cloud AI photo and wide-color photos stay parked.
-OPEN:   - the user's pick of the recs above, built with their tests, the full run again; then the release only on
-          the user's word.
-        - for the user, not code: the secret WEBSITE_DISPATCH_TOKEN on this repo (a token that can start the
-          website's workflow — I can't make one); without it the release's notify-website says so and passes, and
-          `gh workflow run deploy.yml -R delebash/just-house-paint-website` rebuilds the site.
-        - for the user, not code: the real data folder holds one house folder with no row (houses/fafbf1f1…, 1.8 MB,
-          the user's own photo — a delete a dev build's Windows hold stopped on 2026-10-19, before 9987314 marked such
-          folders); the start-up sweep takes only marked folders, by design (a restore's photos). Delete it by hand
-          when the app is closed.
+GO:     the user, verbatim (2026-10-28): "do 1-4, leave ideas as is, fix the bugs, …" (1–4: the four features; the
+        bugs: fixes 1–3); "you have the other points correct, and you have a go"; "do the fixes do it all dont do a
+        releaswe until we have all features and all bugs fixed".
+DONE:   fix 1 — the AI photo names the part furthest off (4e15864); fix 2 — the brand's pairings apply, the rules'
+        findings a note (48a7bae); fix 3 — Storage lists the photos of houses not in the app, Remove after asking
+        (e165a2f); A — the same color in other brands (ec0aa9a); B — use a design on another house (fe3163b); C — each
+        part's finish on the color list and card (c808927); D — Daylight, a white-balance preview (1d8ffc4). The house
+        folder fafbf1f1 in the user's data is now listed by fix 3 (Remove, after asking).
+DECIDED (the user, 2026-10-28, verbatim): "i dont ever want an automatic build of anything i only want stuff to build
+        when i say so" — the website's push trigger gone (d2e7e03), the family guard's check 25 (kit 0b6ef7c).
+        On the website's rebuild: "why are we starting another repository's workflow … why would i run the website
+        workflow from the app workflow this doesnt make sense"; "to me we should just have a command like npm run
+        deploy for each app website and it runs its own workflow"; "and each app it should all work the same";
+        relayed by docgen's session: "dont worry about key … each app website should run its own via something like
+        npm run deploy other github workflows shouldnt be running other workflows jw is wrong".
+OPEN:   - waiting on the user's "go" (asked 2026-10-28): (a) each website's `npm run deploy` (its own workflow, run by
+          hand) and the release's notify-website, WEBSITE_REPO, the website's release ping and the token gone — the
+          kit's template, §19, check 25 (a repository_dispatch is a trigger from another workflow), this app and its
+          site; JustWrite's and docgen's by their sessions; (b) the security updates — undici ≥ 8.12.2 in the kit's
+          core, Electron 44.10.0 in the template and this app (the kit's TASKS).
+        - the full run after the seven (one batch), then the release only on the user's word.

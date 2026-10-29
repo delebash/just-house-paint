@@ -177,6 +177,8 @@ async function load() {
   photo.value = null;
   painted.value = null;
   compareWith.value = "off";
+  // Daylight is a preview of one look at one house: another house opens as photographed
+  daylight.value = "";
   history.reset();
   try {
     // this house's work the server is doing now (finding its parts, an AI photo — started before this
