@@ -2,8 +2,8 @@
 
 Open **AI Settings** in the sidebar. The AI here suggests color schemes (**Suggest schemes** on a
 house's **Schemes** tab) and draws the AI photo ([The AI photo](ai-photo.md)). The page's tabs are
-**Providers & models**, **Images** (the AI photo's engine, stable-diffusion.cpp, and its model: **Install**
-and **Remove**, **Download** and **Delete**, each model with its fit-and-speed chip), **Vision** (the part
+**Providers & models**, **Images** (the AI photo's engine, stable-diffusion.cpp, and its model: **Install**,
+**Reinstall** and **Remove**, **Download** and **Delete**, each model with its fit-and-speed chip), **Vision** (the part
 finder's engine, ONNX Runtime — part of the app, nothing to install — and its model SAM 3: **Download** and
 **Delete**, its fit-and-speed chip, and **Let go after idle (minutes)**), **Routing by feature**
 (see [The AI features](ai-features.md)), **Usage** and **AI engine console**.
@@ -15,11 +15,14 @@ slow".
 
 When the app is tested with a newer build of stable-diffusion.cpp than the one installed, **Images** shows **Update
 to …**: it installs that build, with its progress and **Cancel**, and checks it before it replaces yours; if the
-update fails or you cancel it, your build stays.
+update fails or you cancel it, your build stays. Otherwise **Reinstall** downloads the installed build again — a
+repair.
 
 Above the tabs, a strip shows this computer: **OS**, **CPU**, **Memory**, **GPU**, **Acceleration**,
 and how the graphics card's memory is used — **VRAM used** (**Memory used** where the graphics share
-the computer's memory, as on a Mac), **Free**, **LLM** (the AI model loaded now) and, when other
+the computer's memory, as on a Mac), **Free**, **LLM** (the AI model loaded now), **Images** and **Vision**
+while the AI photo's model or the part finder's is loaded (with "~" before the size, the model's stated need until a
+load on this computer measures it) and, when other
 programs hold more than a little, **Other apps** with **show apps**: **Using the GPU right now** lists
 them. **Copy debug info** copies the computer's AI state — hardware, driver, engine, memory, loaded
 models — to paste into a bug report.
