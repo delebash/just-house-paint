@@ -38,6 +38,7 @@
     "@vueuse/core": "^15.0.0",
     "culori": "^4.0.2",
     "dom-accessibility-api": "^0.7.1",
+    "dompurify": "^3.4.17",
     "front-matter": "^4.0.2",
     "konva": "^10.9.0",
     "marked": "^18.1.0",
