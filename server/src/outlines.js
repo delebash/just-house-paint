@@ -11,11 +11,12 @@
 // The version is the database's: a hash of the house's parts rows (each outline write changes its part's
 // updated_at and area, a find all of them and the house's parts_found_at). It stays while the outlines do — a
 // server started again (the tray's Restart, a reboot) refused every window's next stroke when it was a counter in
-// memory (the twelfth review) — and a restore of the same data gives the same one (RFC 9110 §8.8.3).
+// memory (the twelfth review) — and a restore of the same data gives the same one (RFC 9110 §8.8.3). The version and
+// its check are the kit's (`platform/versions`, app-structure §19, "A write made on what another window already
+// changed").
 
-import { createHash } from "node:crypto";
 import { Mutex } from "@delebash/core/platform/asyncutil";
-import { ApiError } from "@delebash/core/platform/errors";
+import { checkIfMatch, etagOf } from "@delebash/core/platform/versions";
 import { outlinesState } from "./database/houses.js";
 
 export class Outlines {
@@ -29,20 +30,18 @@ export class Outlines {
 
   /** House `id`'s outlines' version, as an ETag (quoted). */
   etag(id) {
-    const hash = createHash("sha256").update(JSON.stringify(outlinesState(this.#db, id))).digest("base64url");
-    return `"${hash.slice(0, 22)}"`;
+    return etagOf(outlinesState(this.#db, id));
   }
 
   /** Refused (412) when `ifMatch` — a request's If-Match — names another version than house `id`'s now. No
    *  If-Match, or `*`: unconditional; a weak tag never matches (If-Match compares strongly — RFC 9110 §13.1.1). */
   check(id, ifMatch) {
-    if (!ifMatch || ifMatch.trim() === "*") return;
-    const tags = ifMatch.split(",").map((s) => s.trim());
-    if (!tags.includes(this.etag(id))) {
-      throw new ApiError(412, "outlines-changed", "This house was changed in another window", "your last change wasn't saved — the house is shown as it is now", {
-        houseId: String(id),
-      });
-    }
+    checkIfMatch(ifMatch, this.etag(id), {
+      type: "outlines-changed",
+      title: "This house was changed in another window",
+      detail: "your last change wasn't saved — the house is shown as it is now",
+      extra: { houseId: String(id) },
+    });
   }
 
   /** `fn` run alone among house `id`'s outline writes (the lock goes once none holds or waits for it). */
