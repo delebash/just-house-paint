@@ -179,6 +179,20 @@ export function router(ctx = getState()) {
     return c.json(found.map(({ paint, deltaE }) => ({ paint: { id: paint.id, displayName: displayName(paint), hex: paint.hex, brand: paint.brand }, deltaE })));
   });
 
+  // The same color in other brands (2026-10-28): for each other brand whose colors are here, its nearest paint and
+  // the ΔE between them — closest first. An exterior paint is matched among exterior ones (a brand that says).
+  app.get("/v1/paints/:id/other-brands", input({ params: PaintParams }), (c) => {
+    const p = getPaint(ctx.db, c.req.valid("param").id);
+    if (!p) throw notFound(`no paint ${c.req.valid("param").id}`);
+    const out = [];
+    for (const b of listBrandRows(ctx.db)) {
+      if (b.key === p.brand || !b.paintCount || !BRANDS[b.key]) continue;
+      const [near] = nearestPaints(p.hex, moduleRows(ctx.db, b.key), { k: 1, brand: b.key, exteriorOnly: p.exterior === true });
+      if (near) out.push({ brand: b.key, label: BRANDS[b.key].label, paint: { id: near.paint.id, displayName: displayName(near.paint), hex: near.paint.hex, brand: b.key }, deltaE: near.deltaE });
+    }
+    return c.json(out.sort((x, y) => x.deltaE - y.deltaE));
+  });
+
   app.get("/v1/paints/:id", input({ params: PaintParams }), (c) => {
     const p = getPaint(ctx.db, c.req.valid("param").id);
     if (!p) throw notFound(`no paint ${c.req.valid("param").id}`);

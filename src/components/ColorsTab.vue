@@ -32,6 +32,7 @@ const settings = useSettingsStore();
 const ui = useUiStore();
 // the "On this wall" swatches' group is named by its words
 const tonesId = useId();
+const othersId = useId();
 
 // the latest match — an earlier one answering later is dropped (a filter changed under it — the nineteenth review);
 // declared before the pick's watch, which matches as the tab is set up
@@ -134,6 +135,24 @@ const targets = computed(() => [
   { value: "now", label: t("colors.target.now") },
 ]);
 const nowPaint = computed(() => paints.byId[house.house?.currentPaints?.[house.selectedPart]] || null);
+
+// The same color in other brands (2026-10-28): each other loaded brand's nearest paint with its ΔE — a color found in
+// one brand, bought where another is sold. "Very close" under ΔE 2 (a difference few see side by side); a click
+// puts that paint on the part, as a chip does.
+const VERY_CLOSE = 2;
+const others = ref([]);
+watch(
+  () => current.value?.id,
+  async (id) => {
+    others.value = [];
+    if (!id) return;
+    const found = await paints.otherBrands(id).catch(() => []);
+    if (current.value?.id === id) others.value = found;
+  },
+  { immediate: true },
+);
+const otherWords = (o) =>
+  o.deltaE < VERY_CLOSE ? t("colors.others.deltaEClose", { n: o.deltaE.toFixed(1) }) : t("colors.others.deltaE", { n: o.deltaE.toFixed(1) });
 // the chip lit as chosen: the part's color, or (picking the paint on it now) that paint
 const chosenId = computed(() => (target.value === "now" ? nowPaint.value?.id : house.colors[house.selectedPart]));
 
@@ -362,6 +381,23 @@ async function match({ say = true } = {}) {
           <span class="hint">{{ t(`colors.tones.${level}`) }}</span>
         </span>
       </div>
+      <!-- the same color in other brands: each one's nearest paint, its ΔE from this one; a click puts it on the part -->
+      <div v-if="current && others.length" class="colors__others" role="group" :aria-labelledby="othersId">
+        <span :id="othersId" class="hint">{{ t("colors.others.label") }}</span>
+        <div class="colors__others-row">
+          <q-btn
+            v-for="o in others" :key="o.paint.id" flat no-caps unelevated class="chip" :disable="!house.selectedPart"
+            :aria-label="t('colors.others.use', { name: o.paint.displayName, words: otherWords(o) })" @click="choose(o.paint)"
+          >
+            <span class="chip__body">
+              <span class="chip__color" :style="{ background: o.paint.hex }" />
+              <span class="chip__name">{{ o.paint.displayName }}</span>
+              <span class="chip__code muted">{{ o.label }} · {{ otherWords(o) }}</span>
+            </span>
+          </q-btn>
+        </div>
+        <span class="hint">{{ t("colors.others.note") }}</span>
+      </div>
       <div class="colors__filters">
         <UiSelect v-model="brand" :options="brandOptions" width="name" :aria-label="t('colors.brand')" />
         <UiButton
@@ -535,5 +571,20 @@ async function match({ say = true } = {}) {
 }
 .chip__code {
   font-size: var(--fs-small);
+}
+/* the same color in other brands: a row of chips as wide as their names */
+.colors__others {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: var(--sp-2);
+}
+.colors__others-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.colors__others .chip {
+  width: 11em;
 }
 </style>

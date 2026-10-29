@@ -277,6 +277,27 @@ describe("search, nearest, schemes", () => {
     expect((await s.app.request("/v1/paints/nearest?hex=red")).status).toBe(422);
   });
 
+  test("the same color in other brands: each other brand's nearest paint, closest first, never its own brand", async () => {
+    // 2026-10-28: a color found in one brand, bought where another is sold
+    s = makeServer();
+    const importCsv = async (brand, lines) => {
+      const form = new FormData();
+      form.append("file", new Blob([["code,name,hex,exterior", ...lines].join("\n")]), `${brand}.csv`);
+      form.append("brand", brand);
+      expect((await s.app.request("/v1/paints/import", { method: "POST", body: form })).status).toBe(201);
+    };
+    await importCsv("sherwin-williams", ["9130,Evergreen Fog,#95978a,yes", "7005,Pure White,#edece6,yes"]);
+    await importCsv("behr", ["N390-4,Sage Gray,#969889,yes", "N390-5,Darker Sage,#7d7f71,yes", "W-1,Interior Sage,#95978b,no"]);
+    await importCsv("valspar", ["V-1,Far Away,#5a6b8c,yes"]);
+    const other = await (await s.app.request("/v1/paints/sherwin-williams%3A9130/other-brands")).json();
+    expect(other.map((o) => o.brand)).toEqual(["behr", "valspar"]); // closest first; not Sherwin-Williams
+    // an exterior paint is matched among exterior ones: Behr's interior-only near twin is left out
+    expect(other[0]).toMatchObject({ label: "Behr", paint: { id: "behr:N390-4", displayName: expect.any(String), hex: "#969889" } });
+    expect(other[0].deltaE).toBeLessThan(2);
+    expect(other[1].deltaE).toBeGreaterThan(10);
+    expect((await s.app.request("/v1/paints/sherwin-williams%3ANOPE/other-brands")).status).toBe(404);
+  });
+
   test("schemes from a color snap every role to a real paint", async () => {
     await withPalette();
     const schemes = await (await s.json("POST", "/v1/schemes/harmony", { base: "#3b6e8f", brand: "behr" })).json();

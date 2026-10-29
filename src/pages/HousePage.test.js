@@ -163,6 +163,8 @@ function fakeFetch(input, init = {}) {
   // default)
   if (p === "/v1/schemes/harmony") return Promise.resolve(json(server.harmony || []));
   if (/^\/v1\/paints\/[^/]+\/schemes$/.test(p)) return Promise.resolve(json(server.coordinating || []));
+  // the same color in other brands (`server.otherBrands`, none by default)
+  if (/^\/v1\/paints\/[^/]+\/other-brands$/.test(p)) return Promise.resolve(json(server.otherBrands || []));
   if (p === "/v1/paints") {
     server.searches.push(Object.fromEntries(url.searchParams));
     // `paintTotal`: the brand has more than the two shown (Show more)
@@ -327,6 +329,30 @@ test("Find the parts again without the part finder's model: its banner, its Down
   expect(document.activeElement.getAttribute("aria-disabled")).toBe("true");
   await vi.waitFor(() => expect(document.querySelector("[data-live-announcer]").textContent).toMatch(/still downloading/));
   expect(server.calls).not.toContain("POST /v1/houses/h1/find-parts");
+});
+
+test("the same color in other brands: each one's nearest paint with its ΔE, and a click puts it on the part", async () => {
+  // 2026-10-28: a color found in one brand, bought where another is sold
+  server.parts = PARTS;
+  server.otherBrands = [
+    { brand: "valspar", label: "Valspar", paint: { id: "valspar:V1", brand: "valspar", displayName: "Valspar Lake V1", hex: "#3467a9" }, deltaE: 0.84 },
+    { brand: "ppg-glidden", label: "PPG / Glidden", paint: { id: "ppg-glidden:P1", brand: "ppg-glidden", displayName: "PPG Bay P1", hex: "#2f5f9a" }, deltaE: 3.21 },
+  ];
+  await mountPage();
+  await click(byText(".q-tab", "Colors"));
+  await click(byText(".chip", "Sea Blue"));
+  await flushPromises();
+  const group = document.body.querySelector(".colors__others");
+  expect(group.getAttribute("role")).toBe("group");
+  expect(document.getElementById(group.getAttribute("aria-labelledby")).textContent).toBe("In other brands:");
+  const close = byText(".colors__others .chip", "Valspar Lake V1");
+  expect(close.textContent).toContain("Valspar");
+  expect(close.textContent).toContain("ΔE 0.8, very close");
+  expect(byText(".colors__others .chip", "PPG Bay P1").textContent).not.toContain("very close"); // ΔE 2 or more
+  expect(group.textContent).toContain("check a real chip");
+  await click(close);
+  await click(byText(".q-tab", "Parts"));
+  expect(byText(".parts__row", "Body").textContent).toContain("Valspar Lake V1");
 });
 
 test("a color from the Colors tab paints the selected part, and the Parts tab shows it with its ΔE", async () => {

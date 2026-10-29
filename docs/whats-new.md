@@ -25,6 +25,8 @@
   a busy one makes the other say "The graphics card is busy" — finding the parts on the processor never waits for
   the card now.
 - **App Settings → Storage** no longer lists the part finder: its model is counted with the AI cache's models.
+- **The same color in other brands**: on the **Colors** tab, under the chosen paint, **In other brands** shows each
+  other brand's nearest color with its ΔE (**very close** under 2); a click puts it on the part.
 - **App Settings → Storage shows photos left behind**: a house deleted while Windows held one of its files (0.1.2 and
   earlier) could leave its folder of photos on the computer. Storage lists such folders — **Photos of houses not in
   the app**, with their size — and **Remove** takes them, after asking.

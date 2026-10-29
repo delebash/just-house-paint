@@ -387,6 +387,13 @@
       "middle": "Most of it",
       "light": "In light"
     },
+    "others": {
+      "label": "In other brands:",
+      "deltaE": "ΔE {n}",
+      "deltaEClose": "ΔE {n}, very close",
+      "use": "Use {name} — {words}",
+      "note": "Each brand's nearest color, as the screen shows them: check a real chip before you buy."
+    },
     "target": {
       "label": "What a paint you pick sets",
       "new": "The new color",

@@ -27,6 +27,11 @@ selected part: **In shade**, on **Most of it** and **In light**. The light one i
 part's own light when **On it now** is set, and through **Light**; a wall in the shade of a roof or a
 tree shows mostly the darker ones, as real paint would.
 
+**In other brands** — under it, the nearest color of each other brand whose colors are loaded, with how far it is
+from the chosen paint (**ΔE**; **very close** under 2, a difference few people see side by side). For a paint found in
+one brand and bought where another is sold. An exterior paint is matched among the brands' exterior colors. Click one
+to put it on the part. These are the screen's colors: check a real chip before you buy.
+
 **On it now** — if you know the paint a part has today, tell the app: on the **Colors** tab switch
 **The new color** to **On it now** and click that paint (search for it, or type its color under the
 list); the switch then goes back to **The new color**. It doesn't paint anything: the app compares that paint

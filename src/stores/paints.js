@@ -179,5 +179,9 @@ export const usePaintsStore = defineStore("paints", {
     coordinating(paintId) {
       return get(`/v1/paints/${encodeURIComponent(paintId)}/schemes`);
     },
+    /** The same color in other brands: each other loaded brand's nearest paint with its ΔE, closest first. */
+    otherBrands(paintId) {
+      return get(`/v1/paints/${encodeURIComponent(paintId)}/other-brands`);
+    },
   },
 });
