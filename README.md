@@ -225,7 +225,7 @@ gitignored; their output under the system's temp folder or `HP_REAL_OUT`, never 
 started on its runner before anything is attached (`scripts/start-packaged.js` — the window, the server on its own,
 the part finder's engine check), the update feed, and the user docs as `docs.tar.gz`; then the website
 ([just-house-paint-website](https://github.com/delebash/just-house-paint-website)) is asked to rebuild from them
-(the secret `WEBSITE_DISPATCH_TOKEN`; without it the site rebuilds on its next push). A dry run (`publish: false`;
+(the secret `WEBSITE_DISPATCH_TOKEN`; without it, `gh workflow run deploy.yml -R delebash/just-house-paint-website` — the site never builds on its own). A dry run (`publish: false`;
 a branch works as the tag) builds and checks everything and keeps the files on the run instead of a release.
 
 ### Traps
