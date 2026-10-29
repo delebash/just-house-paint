@@ -922,7 +922,7 @@ Playwright against that server. Screenshots: session e638ccef's scratchpad `real
   same every run — 5,959 MB dedicated at its peak, ~7.4 GB shared (its host buffers; not the slowdown). So
   the 22–61 s of 10/18 is other programs on the same card — the app's GPU gate keeps only its own jobs apart
   — and a program *working* on the card at the same time costs more than an idle one. Explained in
-  troubleshooting; a hint naming what holds the card is in IDEAS.md.
+  troubleshooting; the AI photo names what else held the card (2e9940b).
 
 ## 13 · The weak spots: trim, ornaments, a dark finish (2026-10-19)
 
@@ -1260,7 +1260,7 @@ at the app's display size, through the app's own code; scripts and overlays in s
   dilation; only the house rule's margin grows the house) — it is SAM 3's own "house" instance stopping a few of its
   mask cells (~10 px each at full size) short of the occluder. Kept for the release: the Brush fills it, and
   reaching further risks painting the thing in front ("the worse mistake", above); the docs now say so
-  (finding-parts.md) and edge refinement is an IDEA.
+  (finding-parts.md); edge refinement dropped 2026-10-29 (PRD "Out of scope").
 - **Found through the screenshots and fixed** (757a608): Paint colors named Benjamin Moore's and PPG / Glidden's load
   "public list" (now "the brand's files", `/v1/brands` `via`); the AI photo's Close and Save image sat under the
   modal body's fold at 1440 × 900 (now its footer).

@@ -85,7 +85,8 @@ and drift each color, so the app:
    RESEARCH §14). Each one is another drawing, about 15 seconds, named on the task strip.
 
 About 20 seconds a picture on Windows with an 8 GB NVIDIA card (RESEARCH §6, §9–§10). A cloud model to compare
-was probed and parked (IDEAS.md: the key's project has no billing for image output).
+was probed and dropped: image output needs a billed Google project, and it sends the photo out (RESEARCH §7;
+PRD "Out of scope").
 
 ## The engines are the kit's
 

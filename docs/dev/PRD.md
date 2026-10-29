@@ -55,8 +55,14 @@ user's own computer as a family app: the desktop app, or its server with the UI 
 - **AI text features** go through the family's AI stack: a local model (llama.cpp) or the user's own
   cloud keys. No account is required for anything.
 
-## Out of scope for v1
+## Out of scope
 
-Live camera / AR view · paint quantity and cost estimates · ordering samples · interior rooms ·
-sharing designs online · the phone app (Quasar's Capacitor mode stays for later) · a cloud AI photo
-(Gemini's image models — allowed through the kit later) · HEIC photos (assumed).
+Decided 2026-10-29 (the user's word — TASKS), not planned:
+Live camera / AR view · paint quantity and cost estimates (a photo can't measure the house; the brands have
+calculators) · ordering samples · interior rooms · sharing designs online · a cloud AI photo (needs a billed Google
+project to test, and sends the photo out — RESEARCH §7) · HEIC photos (an HEVC decoder's patents — why sharp's builds
+leave it out; the app says how to send a JPEG) · wide-color photos (measured not worth it — RESEARCH §11) · outlines
+reaching what stands in front (the Brush fills the strip — RESEARCH §14) · signed installers (the help says how to
+open the app).
+
+Later: the phone app (Quasar's Capacitor mode stays for later).
