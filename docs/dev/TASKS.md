@@ -87,6 +87,10 @@ PAUSED: the release — the user, in JustWrite's session (2026-10-29): "why whou
         removed from list" — house-paint releases with the others (the kit's TASKS, "The family releases together").
 OPEN:   - the release, with the family; the dry run 40823762045 green (6879a42, the kit at ddb1431; publish skipped).
         - the website's deploy after the release (its close-up pictures and words, fef4d64).
+        - the accessibility check's first run, in the final pass: e2e/tests/a11y.test.js, the template's (kit 3b373d6 —
+          the family's WCAG 2.2 AA, app-structure §17/§18, the kit's "Finish the kit" 36) with this app's four nav
+          pages and a house's four tabs, light and dark; written, not yet run (the user: e2e once, at the end). What it
+          finds is fixed before the release.
 DECIDED (the user, 2026-10-29, verbatim): "no signed installers not worth it"; then, on the rest, "yuour rec go".
         DONE: IDEAS.md emptied; the PRD's "Out of scope" names each one as decided, not later (fc413aa).
         The phone app — my rec removed it, but the user said on 2026-10-17 (the history, verbatim): "als we prob will
