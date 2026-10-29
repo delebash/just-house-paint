@@ -6,7 +6,7 @@
 // idle 6.9 GB model made it 8 s slower).
 import { installLlmUi, LlmUiHosts } from "@delebash/ui";
 import { QUASAR_TEST_OPTIONS } from "@delebash/ui/quasar/install.js";
-import { flushPromises, mount } from "@vue/test-utils";
+import { DOMWrapper, flushPromises, mount } from "@vue/test-utils";
 import { createPinia } from "pinia";
 import * as quasar from "quasar";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
@@ -72,12 +72,12 @@ test("Save image names the file after the house, without what Windows can't hold
   });
   // "10/20" made a folder of the name, ":" "?" "*" a name Windows refuses; nothing left, the fallback
   await mountDialog(RENDER, "10/20: Oak St?*");
-  [...document.querySelectorAll("button")].find((b) => b.textContent.includes("Save image")).click();
+  await new DOMWrapper([...document.querySelectorAll("button")].find((b) => b.textContent.includes("Save image"))).trigger("click");
   await flushPromises();
   wrapper.unmount();
   document.body.innerHTML = "";
   await mountDialog(RENDER, "???");
-  [...document.querySelectorAll("button")].find((b) => b.textContent.includes("Save image")).click();
+  await new DOMWrapper([...document.querySelectorAll("button")].find((b) => b.textContent.includes("Save image"))).trigger("click");
   await flushPromises();
   expect(saved).toEqual(["1020 Oak St — AI photo.png", "House — AI photo.png"]);
   clickSpy.mockRestore();

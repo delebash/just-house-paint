@@ -11,7 +11,7 @@
 // the designs a brand's colors are in — named before Remove, and when a new list left them a color short.
 import { _resolveDialog, dialogState, installLlmUi, LlmUiHosts } from "@delebash/ui";
 import { QUASAR_TEST_OPTIONS } from "@delebash/ui/quasar/install.js";
-import { flushPromises, mount } from "@vue/test-utils";
+import { DOMWrapper, flushPromises, mount } from "@vue/test-utils";
 import { createPinia } from "pinia";
 import * as quasar from "quasar";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
@@ -117,7 +117,7 @@ async function mountPage() {
   return wrapper;
 }
 const click = async (el) => {
-  el.click();
+  await new DOMWrapper(el).trigger("click");
   await flushPromises();
 };
 /** A brand's row: the one whose name (its bold label) is exactly `label`. */

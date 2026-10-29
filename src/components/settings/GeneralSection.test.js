@@ -7,7 +7,7 @@
 // text that isn't JSON before sending it.
 import { installLlmUi, LlmUiHosts } from "@delebash/ui";
 import { QUASAR_TEST_OPTIONS } from "@delebash/ui/quasar/install.js";
-import { flushPromises, mount } from "@vue/test-utils";
+import { DOMWrapper, flushPromises, mount } from "@vue/test-utils";
 import { createPinia } from "pinia";
 import * as quasar from "quasar";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
@@ -81,7 +81,7 @@ const type = async (found, value) => {
   await flushPromises();
 };
 const submit = async (button) => {
-  button.click();
+  await new DOMWrapper(button).trigger("click");
   await new Promise((r) => setTimeout(r, 0));
   await flushPromises();
 };

@@ -13,7 +13,7 @@
 // states; the paint a part has now, picked with "On it now", setting the light new paints show in.
 import { _resolveDialog, dialogState, installLlmUi, LlmUiHosts, readPref, UiSelect } from "@delebash/ui";
 import { QUASAR_TEST_OPTIONS } from "@delebash/ui/quasar/install.js";
-import { flushPromises, mount } from "@vue/test-utils";
+import { DOMWrapper, flushPromises, mount } from "@vue/test-utils";
 import { createPinia } from "pinia";
 import * as quasar from "quasar";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
@@ -196,7 +196,7 @@ async function mountPage() {
 const text = () => document.body.textContent;
 const byText = (selector, words) => [...document.body.querySelectorAll(selector)].find((el) => el.textContent.includes(words));
 const click = async (el) => {
-  el.click();
+  await new DOMWrapper(el).trigger("click");
   await flushPromises();
 };
 /** In the side panel's rows (parts, designs, AI photos): any control inside another control (a button
