@@ -6,12 +6,29 @@
 // (NameDialog over DesignIn's rules); a delete asks first, naming what is lost. A design saved before
 // the house had some trim-group parts leaves them unpainted: opening it offers, in a banner, to paint
 // them the design's trim color — one click, never unasked (the store's unpaintedTrim).
-import { confirmDialog, EmptyState, Icon, isolate, relativeTime, reportError, schemaRules, UiBanner, UiButton, UiServerImage, UiTag } from "@delebash/ui";
+import {
+  confirmDialog,
+  EmptyState,
+  Icon,
+  isolate,
+  post,
+  pushToast,
+  relativeTime,
+  reportError,
+  schemaRules,
+  UiBanner,
+  UiButton,
+  UiMenu,
+  UiMenuItem,
+  UiServerImage,
+  UiTag,
+} from "@delebash/ui";
 import { DesignIn } from "just-house-paint-server/schemas/houses.js";
-import { computed, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { partName } from "../services/partNames.js";
 import { useHouseStore } from "../stores/house.js";
+import { useHousesStore } from "../stores/houses.js";
 import { usePaintsStore } from "../stores/paints.js";
 import { useSettingsStore } from "../stores/settings.js";
 import NameDialog from "./NameDialog.vue";
@@ -20,6 +37,23 @@ const emit = defineEmits(["show-render", "color-card"]);
 const { t, te, locale } = useI18n();
 const house = useHouseStore();
 const paints = usePaintsStore();
+const houses = useHousesStore();
+
+// A design used on another house (2026-10-28 — the front, the side and the back are three photos): the row's menu
+// lists the other houses; the server copies the colors of the parts that house paints and names the ones it lacks.
+onMounted(() => {
+  if (!houses.items.length) houses.load().catch(() => {});
+});
+const otherHouses = computed(() => houses.items.filter((h) => h.id !== house.house?.id));
+async function copyTo(d, target) {
+  try {
+    const { design, skipped } = await post(`/v1/designs/${encodeURIComponent(d.id)}/copy`, { houseId: target.id });
+    const left = skipped.length ? t("designs.copy.skipped", { parts: skipped.map((key) => partName(key, { t, te })).join(", ") }) : "";
+    pushToast({ kind: "success", title: t("designs.copy.done", { design: isolate(design.name), house: isolate(target.name) }), description: left || undefined });
+  } catch (e) {
+    reportError(e);
+  }
+}
 // a design's colors as the house shows them: on parts the house has, its paints still on the server — one whose brand
 // no longer has it counted apart (the twenty-first review: a removed brand's design still said "6 colors")
 const partKeys = computed(() => new Set(house.paintableParts.map((p) => p.key)));
@@ -127,6 +161,14 @@ function renderLabel(r) {
         </q-item-section>
         <q-item-section side class="row-side designs__side">
           <UiTag v-if="d.id === house.designId && house.dirty" intent="secondary" :value="t('designs.changed')" />
+          <!-- use it on another house: the other houses, one click each (the kit's row-actions menu) -->
+          <UiMenu
+            v-if="otherHouses.length" :label="t('designs.copy.action', { name: isolate(d.name) })" align="end"
+            trigger-class="ui-btn ui-btn--ghost ui-btn--icon"
+          >
+            <template #trigger><Icon name="Copy" :size="14" /></template>
+            <UiMenuItem v-for="h in otherHouses" :key="h.id" @select="copyTo(d, h)">{{ h.name }}</UiMenuItem>
+          </UiMenu>
           <UiButton intent="ghost" size="icon" v-tooltip="t('designs.rename', { name: isolate(d.name) })" :aria-label="t('designs.rename', { name: isolate(d.name) })" @click="naming = d">
             <template #icon><Icon name="Pencil" :size="14" /></template>
           </UiButton>

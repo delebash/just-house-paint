@@ -447,6 +447,11 @@
     }
   },
   "designs": {
+    "copy": {
+      "action": "Use “{name}” on another house",
+      "done": "“{design}” is a design of {house} now",
+      "skipped": "Left out: {parts} (that house has none)"
+    },
     "hint": "Save the colors on screen as a design to compare later. The colors stay a draft until you save them.",
     "save": "Save “{name}”",
     "saveAs": "Save as a new design",

@@ -692,6 +692,29 @@ describe("designs", () => {
     expect((await s.json("PATCH", `/v1/designs/${cafe.id}`, { name: "Caf\u00e9" })).status).toBe(200);
   });
 
+  test("a design used on another house: the parts that house has, the ones it lacks named, a free name", async () => {
+    // 2026-10-28: the front, the side and the back are three photos — one design, three houses in the app
+    s = makeServer();
+    const front = await (await s.upload(await jpeg(100, 80))).json();
+    const side = await (await s.upload(await jpeg(100, 80))).json();
+    await s.settle((await (await s.json("POST", `/v1/houses/${side.id}/find-parts`)).json()).id); // body, trim, roof
+    const d = await (await s.json("POST", `/v1/houses/${front.id}/designs`, { name: "Sage and navy", colors: { body: "sw:9130", trim: "sw:7005", shutters: "sw:6244", roof: "sw:1" } })).json();
+    const r = await s.json("POST", `/v1/designs/${d.id}/copy`, { houseId: side.id });
+    expect(r.status).toBe(201);
+    const copied = await r.json();
+    // the side's paintable parts only; the shutters it has none of, the roof it doesn't paint
+    expect(copied.design).toMatchObject({ houseId: side.id, name: "Sage and navy", colors: { body: "sw:9130", trim: "sw:7005" } });
+    expect(Object.keys(copied.design.colors).sort()).toEqual(["body", "trim"]);
+    expect(copied.skipped.sort()).toEqual(["roof", "shutters"]);
+    // again: the name is taken there, so the copy takes the next free one
+    expect((await (await s.json("POST", `/v1/designs/${d.id}/copy`, { houseId: side.id })).json()).design.name).toBe("Sage and navy (2)");
+    // the limit is the house's (3 here), as for a new design; an unknown house or design is a 404
+    await s.json("POST", `/v1/designs/${d.id}/copy`, { houseId: side.id });
+    expect((await s.json("POST", `/v1/designs/${d.id}/copy`, { houseId: side.id })).status).toBe(409);
+    expect((await s.json("POST", `/v1/designs/${d.id}/copy`, { houseId: "nope" })).status).toBe(404);
+    expect((await s.json("POST", "/v1/designs/nope/copy", { houseId: side.id })).status).toBe(404);
+  });
+
   test("deleting a house deletes its designs and parts", async () => {
     s = makeServer();
     const house = await (await s.upload(await jpeg(100, 80))).json();

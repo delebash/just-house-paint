@@ -25,6 +25,8 @@
   a busy one makes the other say "The graphics card is busy" — finding the parts on the processor never waits for
   the card now.
 - **App Settings → Storage** no longer lists the part finder: its model is counted with the AI cache's models.
+- **Use a design on another house**: on the **Designs** tab, a design's copy button lists your other houses — one
+  click saves it there, with the parts that house has; the ones it lacks are named.
 - **The same color in other brands**: on the **Colors** tab, under the chosen paint, **In other brands** shows each
   other brand's nearest color with its ΔE (**very close** under 2); a click puts it on the part.
 - **App Settings → Storage shows photos left behind**: a house deleted while Windows held one of its files (0.1.2 and

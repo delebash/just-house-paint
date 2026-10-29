@@ -61,6 +61,11 @@ export const DesignIn = strictObject({
   colors: opt(DesignColors, {}),
 });
 
+/** A design used on another house (POST /v1/designs/:id/copy): the house it goes to. */
+export const DesignCopyIn = strictObject({
+  houseId: T.String({ minLength: 1, maxLength: 64 }),
+});
+
 export const DesignPatch = strictObject({
   name: opt(Name(60)),
   colors: opt(DesignColors),

@@ -105,6 +105,11 @@ photos stay, then named **Colors on screen**). A house keeps up to 30 designs (*
 Settings → General → Designs and paint files**); past that, **Save as a new design** says "This house has all the
 designs it can keep" — delete one first, or raise the number.
 
+**Use a design on another house** — the front, the side and the back are three photos, so three houses in the app. A
+design's copy button (**Use “…” on another house**) lists your other houses; pick one and the design is saved there
+under its name (or "… (2)" when that house has one by that name), with the colors of the parts that house has. The
+parts it has none of are named — "Left out: Shutters (that house has none)" — and the design there is yours to change.
+
 A design that leaves some of the trim's parts without a color — soffits and fascia, window trim or decorations it
 was saved before the house had, or gutters, columns and railings you left unpainted — says which when you open it,
 on the **Designs** tab: **Paint them the trim's color** paints them the design's trim color — nothing changes until

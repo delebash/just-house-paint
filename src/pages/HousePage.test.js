@@ -86,6 +86,12 @@ function fakeFetch(input, init = {}) {
   }
   if (p === "/v1/houses/h1/parts") return Promise.resolve(json(server.parts));
   if (p === "/v1/houses/h1/designs" && method === "GET") return Promise.resolve(json(server.designs));
+  // every house (Use on another house's list), and a design copied to one
+  if (p === "/v1/houses" && method === "GET") return Promise.resolve(json(server.houses || [HOUSE]));
+  if (/^\/v1\/designs\/[^/]+\/copy$/.test(p) && method === "POST") {
+    server.copies = [...(server.copies || []), JSON.parse(init.body)];
+    return Promise.resolve(json({ design: { ...DESIGN, id: "d9", houseId: JSON.parse(init.body).houseId }, skipped: ["shutters"] }, 201));
+  }
   if (p === "/v1/houses/h1/designs" && method === "POST") {
     const body = JSON.parse(init.body);
     const d = { id: "d1", houseId: "h1", ...body, createdAt: HOUSE.createdAt, updatedAt: HOUSE.updatedAt };
@@ -383,6 +389,27 @@ test("a color from the Colors tab paints the selected part, and the Parts tab sh
   const words = tag.querySelector(".visually-hidden").textContent;
   expect(words).toContain(tag.classList.contains("ui-tag--success") ? "— a close match to the paint chip" : "— not a close match to the paint chip");
   expect(tag.getAttribute("title")).toContain("ΔE2000");
+});
+
+test("a design used on another house: picked from the row's menu, and the parts that house lacks are named", async () => {
+  // 2026-10-28: the front, the side and the back are three photos
+  server.parts = PARTS;
+  server.designs = [DESIGN];
+  server.houses = [HOUSE, { ...HOUSE, id: "h2", name: "The back" }];
+  await mountPage();
+  await click(byText(".q-tab", "Designs"));
+  await flushPromises();
+  // the menu lists the other houses only
+  const trigger = document.querySelector('[aria-label="Use “Blue body” on another house"]');
+  expect(trigger).not.toBeNull();
+  await click(trigger);
+  const items = [...document.querySelectorAll('[role="menuitem"]')].map((el) => el.textContent.trim());
+  expect(items).toEqual(["The back"]);
+  await click(byText('[role="menuitem"]', "The back"));
+  await flushPromises();
+  expect(server.copies).toEqual([{ houseId: "h2" }]);
+  expect(text()).toContain("“Blue body” is a design of The back now");
+  expect(text()).toContain("Left out: Shutters (that house has none)");
 });
 
 test("the selection is announced: the selected part's row and the chosen paint's chip are pressed, the open design current", async () => {
