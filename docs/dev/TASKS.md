@@ -56,7 +56,9 @@ STATE:  OPEN — the kit's plan `../just-core/docs/plans/2026-10-24-engines-the-
         `src/services/jobs.js`, the registry's test and the `jobs.*` words went to the kit; `/v1/houses/:id/jobs`
         stays the app's.
         OPEN from round B: the real AI photo through the kit — the engine's newer build (master-1004, 865 MB on
-        this PC's CUDA) has to be installed first: a download, waiting for the user's word.
+        this PC's CUDA) installed first. DECIDED 2026-10-28, the user's answer: **"Yes, install and test
+        (Recommended)"** — "It's the only part of round B not run for real. The GPU is free, since JustWrite's
+        screenshots wait for the final build. Cost: 865 MB on E:."
 
 ## Direction — decided 2026-10-17
 STATE:  DECIDED 2026-10-17 (the first session). The user's words, verbatim:
