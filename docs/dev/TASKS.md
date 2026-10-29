@@ -77,4 +77,9 @@ GO:     the user, verbatim (2026-10-29): "go ndo it all stop asking me stop stop
         patches in the AI photo, a fresh dry run, the release. The patches: SAM 3's outline stopping short of what
         stands in front, kept for the release — the Brush fills it, the docs say so, edge refinement an IDEA
         (RESEARCH §14).
-OPEN:   - a fresh GitHub dry run (the last, 40810813894, was on 1109e3c), then the release.
+PAUSED: the release — the user, in JustWrite's session (2026-10-29): "why whould we release house paint if we are still
+        doing kit work, wouldnt that mean houspaint gets old kit?" A release builds with the kit's commit of that moment,
+        so the kit's q-inner-loading fix (a pale wash in dark mode on Home, Colors and House) lands first (the kit's
+        TASKS, JustWrite's asks 3).
+OPEN:   - the fresh GitHub dry run (40823762045, on 6879a42 with the kit at ddb1431), then the release on the kit after
+          its fixes; the website's deploy after the release (its close-up pictures and words, fef4d64).
