@@ -52,7 +52,7 @@ export function router(ctx = getState()) {
       // the design deleted while it rendered: the AI photo stays, without the link
       const keepDesign = designId && getDesign(ctx.db, designId) ? designId : null;
       try {
-        const render = addRender(ctx.db, { houseId: house.id, designId: keepDesign, file: r.file, engine: r.engine, deltaE: r.deltaE, seconds: r.seconds });
+        const render = addRender(ctx.db, { houseId: house.id, designId: keepDesign, file: r.file, engine: r.engine, deltaE: r.deltaE, worstPart: r.worstPart, seconds: r.seconds });
         return { ...render, sharedGpu: await shared };
       } catch (e) {
         // the picture whose row didn't save goes (retried; a held one is left) — the row's own error stands

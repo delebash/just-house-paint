@@ -480,6 +480,7 @@
     "note": "A picture the AI drew with your colors: the light and shadows look real, but small details can change. The instant preview stays the accurate one.",
     "alt": "The AI photo of {name}",
     "deltaE": "ΔE {n} from the chips",
+    "deltaEPart": "ΔE {n} from the chips — furthest off: {part}",
     "seconds": "made in {n} s",
     "sharedGpuMore": "{n} more",
     "sharedGpu": "Other programs on the computer that draws it held {size} of its graphics card when it started ({programs}), which makes the AI photo slower. Close them for the fastest one.",

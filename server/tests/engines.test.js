@@ -190,7 +190,8 @@ describe("the engine routes", () => {
           expect(args.generate).toBeTypeOf("function"); // the kit's image feature draws
           args.onProgress({ fraction: 0.5, stage: "generate" });
           writeFileSync(args.outPath, "png");
-          return { deltaE: 0.3 };
+          // each surface's ΔE, in the order they were given; the worst is the trim
+          return { deltaE: 0.3, surfaces: args.surfaces.map((_, i) => ({ deltaE: i === 1 ? 0.3 : 0.1 })) };
         },
       });
   }
@@ -279,7 +280,9 @@ describe("the engine routes", () => {
     expect(r.status).toBe(202);
     const done = await s.settle((await r.json()).id);
     expect(done.state).toBe("done");
-    expect(done.result).toMatchObject({ houseId: house.id, deltaE: 0.3, sharedGpu: null });
+    // the part furthest off is named with its ΔE (2026-10-28: "ΔE 37.8" alone hid that the model had left the
+    // porch door as photographed)
+    expect(done.result).toMatchObject({ houseId: house.id, deltaE: 0.3, worstPart: "trim", sharedGpu: null });
     // the roof isn't paintable, so only body and trim go to the model, in English words
     expect(calls.find((c) => c[0] === "aiRepaint")[1]).toEqual([
       ["body", "#a33a2f", "#f4f4f2"],
@@ -287,6 +290,7 @@ describe("the engine routes", () => {
     ]);
     const renders = await (await s.app.request(`/v1/houses/${house.id}/renders`)).json();
     expect(renders).toHaveLength(1);
+    expect(renders[0]).toMatchObject({ deltaE: 0.3, worstPart: "trim" }); // kept with the AI photo
     expect((await s.app.request(`/v1/renders/${renders[0].id}/image`)).headers.get("content-type")).toBe("image/png");
     // a row naming a file the app never makes (an older backup's — the twentieth review: a 500 that couldn't be
     // removed): no picture, and the row still goes

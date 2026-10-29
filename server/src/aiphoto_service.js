@@ -55,7 +55,7 @@ export function createAiPhoto(ctx) {
     /**
      * One AI photo of `house` with `surfaces`: [{ key, hex, name, currentHex? }] (paintable parts with
      * a paint; `currentHex` the paint the part has now, when its owner said).
-     * Returns { file, deltaE, seconds, engine }.
+     * Returns { file, deltaE, worstPart, seconds, engine } — worstPart the key of the part whose ΔE that is.
      */
     async render(house, surfaces, { renderId, signal, progress }) {
       if (!surfaces.length) throw new ApiError(422, "nothing-to-paint", "Pick colors first", "give at least one part a paint color");
@@ -85,8 +85,14 @@ export function createAiPhoto(ctx) {
         onProgress: (e) => progress(0.05 + 0.95 * (e.fraction ?? 0), e.stage),
       });
       const seconds = (Date.now() - t0) / 1000;
-      log.info(`AI photo of ${house.id}: ${seconds.toFixed(1)} s, ΔE ${result.deltaE}`);
-      return { file: path.basename(out), deltaE: result.deltaE, seconds, engine: "sd.cpp FLUX.2 klein 4B" };
+      // the part whose ΔE is the picture's (the worst) — aiRepaint gives each surface's, in the order given
+      let worst = -1;
+      (result.surfaces ?? []).forEach((s, i) => {
+        if (s?.deltaE != null && (worst < 0 || s.deltaE > result.surfaces[worst].deltaE)) worst = i;
+      });
+      const worstPart = worst >= 0 ? (surfaces[worst]?.key ?? null) : null;
+      log.info(`AI photo of ${house.id}: ${seconds.toFixed(1)} s, ΔE ${result.deltaE}${worstPart ? ` (${worstPart})` : ""}`);
+      return { file: path.basename(out), deltaE: result.deltaE, worstPart, seconds, engine: "sd.cpp FLUX.2 klein 4B" };
     },
   };
 }

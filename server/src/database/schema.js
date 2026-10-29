@@ -137,6 +137,15 @@ export const MIGRATIONS = [
       );
     `,
   },
+  {
+    version: 4,
+    name: "an AI photo's part furthest off",
+    up: `
+      -- The part whose ΔE is the AI photo's (the worst): its number alone didn't say which part, and a part the
+      -- model left as photographed reads as a failure (2026-10-28). Null for an AI photo made before.
+      ALTER TABLE renders ADD COLUMN worst_part TEXT;
+    `,
+  },
 ];
 
 /**

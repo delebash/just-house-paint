@@ -83,6 +83,18 @@ test("Save image names the file after the house, without what Windows can't hold
   clickSpy.mockRestore();
 });
 
+test("the ΔE names the part it is — the one furthest from its chip", async () => {
+  // 2026-10-28: "ΔE 37.8 from the chips" alone looked like a failure; it was the porch door the model left as it was
+  await mountDialog({ ...RENDER, deltaE: 37.77, worstPart: "frontDoor" });
+  expect(text()).toContain("ΔE 37.8 from the chips — furthest off: Front door");
+  wrapper.unmount();
+  document.body.innerHTML = "";
+  // an AI photo made before the part was kept: the number alone, as before
+  await mountDialog({ ...RENDER, worstPart: null });
+  expect(text()).toContain("ΔE 0.4 from the chips");
+  expect(text()).not.toContain("furthest off");
+});
+
 test("Close and Save image stay in sight below the picture: the modal's footer, outside its scrolling body", async () => {
   // 2026-10-28, at 1440 × 900: the note, a 70vh picture and the caption filled the body, and the buttons sat under
   // the fold of its scroller

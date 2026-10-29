@@ -10,6 +10,7 @@ import { safeTitle } from "@delebash/core/platform/filename";
 import { AppModal, fmtBytes, isolate, LuEngineNeeded, reportError, requestBlob, saveBlob, UiButton, useServerImage } from "@delebash/ui";
 import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
+import { partName } from "../services/partNames.js";
 
 const props = defineProps({
   // the kept render ({ id, deltaE, seconds, … }), or null to offer what it needs first
@@ -17,9 +18,18 @@ const props = defineProps({
   houseName: { type: String, default: "" },
 });
 const emit = defineEmits(["close", "installed"]);
-const { t } = useI18n();
+const { t, te } = useI18n();
 const modal = ref(null);
 const saving = ref(false);
+
+// how far the picture is from the paint chips — the part furthest off, named when the server kept it (an AI photo
+// made before 2026-10-28 has none): a part the model left as photographed is that part, not the whole picture
+const deltaEWords = computed(() => {
+  const r = props.render;
+  if (r?.deltaE == null) return "";
+  const n = r.deltaE.toFixed(1);
+  return r.worstPart ? t("aiPhoto.deltaEPart", { n, part: partName(r.worstPart, { t, te }) }) : t("aiPhoto.deltaE", { n });
+});
 
 // the programs named under the AI photo: the biggest three, then how many more
 const sharedPrograms = computed(() => {
@@ -58,7 +68,7 @@ async function save() {
     <template v-else>
       <img v-if="src" class="aiphoto__img" :src="src" :alt="t('aiPhoto.alt', { name: isolate(houseName) })" />
       <p class="muted">
-        <template v-if="render.deltaE != null">{{ t("aiPhoto.deltaE", { n: render.deltaE.toFixed(1) }) }} · </template>
+        <template v-if="render.deltaE != null">{{ deltaEWords }} · </template>
         {{ t("aiPhoto.seconds", { n: Math.round(render.seconds || 0) }) }}
       </p>
       <p v-if="render.sharedGpu" class="muted aiphoto__shared">

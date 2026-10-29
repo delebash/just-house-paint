@@ -53,8 +53,10 @@ graphics card needs the room, an idle AI engine lets go of it — the part finde
 when next needed.
 
 When it is done, the picture opens — if the house page is still open; otherwise it waits on the **Designs** tab —
-with **Save image**, how far the painted parts are from the paint chips (**ΔE … from the chips**: the part furthest
-off) and how long the drawing itself took (**made in … s**). When other programs held more than 1 GB of the
+with **Save image**, how far the painted parts are from the paint chips (**ΔE … from the chips — furthest off:**
+and the part that is furthest off) and how long the drawing itself took (**made in … s**). The model sometimes leaves
+a small part as it was photographed — a door under a porch, say — and only what it repainted is locked to your
+paint, so that part is the one named, with a large ΔE; the painted photo on the house page shows it in its paint. When other programs held more than 1 GB of the
 graphics card as it started, it names them too (programs holding 200 MB or more each; **App Settings → General →
 AI photo** sets that amount, 0 turns it off). That is measured only on Windows and on Linux with an NVIDIA card, and
 shown only when the picture first opens. They are the programs on the computer that draws it: the server's, when

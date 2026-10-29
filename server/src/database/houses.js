@@ -235,24 +235,29 @@ export function deleteDesign(h, id) {
 
 // ── renders (AI photos) ───────────────────────────────────────────────────
 
-export function addRender(h, { houseId, designId = null, file, engine, deltaE = null, seconds = null }) {
+export function addRender(h, { houseId, designId = null, file, engine, deltaE = null, worstPart = null, seconds = null }) {
   const id = randomUUID();
-  h.run("INSERT INTO renders (id, house_id, design_id, file, engine, delta_e, seconds, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", [
-    id,
-    houseId,
-    designId,
-    file,
-    engine,
-    deltaE,
-    seconds,
-    nowIso(),
-  ]);
+  h.run(
+    "INSERT INTO renders (id, house_id, design_id, file, engine, delta_e, worst_part, seconds, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    [id, houseId, designId, file, engine, deltaE, worstPart, seconds, nowIso()],
+  );
   touchHouse(h, houseId);
   return getRender(h, id);
 }
 
 const render = (r) =>
-  r && { id: r.id, houseId: r.house_id, designId: r.design_id, file: r.file, engine: r.engine, deltaE: r.delta_e, seconds: r.seconds, createdAt: r.created_at };
+  r && {
+    id: r.id,
+    houseId: r.house_id,
+    designId: r.design_id,
+    file: r.file,
+    engine: r.engine,
+    deltaE: r.delta_e,
+    // the part whose ΔE that is (null for an AI photo made before 2026-10-28)
+    worstPart: r.worst_part ?? null,
+    seconds: r.seconds,
+    createdAt: r.created_at,
+  };
 
 export const getRender = (h, id) => render(h.one("SELECT * FROM renders WHERE id = ?", [id]));
 export const listRenders = (h, houseId) => h.all("SELECT * FROM renders WHERE house_id = ? ORDER BY created_at DESC", [houseId]).map(render);
