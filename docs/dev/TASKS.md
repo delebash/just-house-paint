@@ -28,9 +28,6 @@ STATE:  OPEN — the kit's plan `../just-core/docs/plans/2026-10-24-engines-the-
         cache at start and its old engine build into the kit's folder (`aiphoto/migrate.js` — the kit's
         `adoptModel`; the pinned build's install sweeps the old one). Kept as app settings, with the reason in the
         kit's plan: `aiphoto.templates`, `aiphoto.compose`, `aiphoto.workingPixels`, `aiphoto.sharedGpuNoteMb`.
-        OPEN from round B: the real render through the kit on this PC (`HP_REAL_SD=1 HP_REAL_CACHE=…`
-        `tests/aiphoto/real.test.js` — the GPU was held by another session's renders); the screens checked by eye in
-        the running app (the banner, the Images tab, the chip). Next: round C.
         Round C BUILT here 2026-10-28 (the kit's half: cd7c460, 4e2c434, 905bed9, and with this the kit's
         retireSettings, ONNX Runtime's need words, the busy refusal's words, the vision preset pane on Routing, the
         guard's handoff rule). This app's steps, all built: SAM 3 as an `onnx`
@@ -55,10 +52,13 @@ STATE:  OPEN — the kit's plan `../just-core/docs/plans/2026-10-24-engines-the-
         `@delebash/core/platform`, `runServerJob` and its errors from `@delebash/ui`; `server/src/jobs.js`,
         `src/services/jobs.js`, the registry's test and the `jobs.*` words went to the kit; `/v1/houses/:id/jobs`
         stays the app's.
-        OPEN from round B: the real AI photo through the kit — the engine's newer build (master-1004, 865 MB on
-        this PC's CUDA) installed first. DECIDED 2026-10-28, the user's answer: **"Yes, install and test
-        (Recommended)"** — "It's the only part of round B not run for real. The GPU is free, since JustWrite's
-        screenshots wait for the final build. Cost: 865 MB on E:."
+        Round B CHECKED for real 2026-10-28, on the user's word ("Yes, install and test (Recommended)"): the engine's
+        build master-1004 installed through the kit's route on the real app (906,941,374 bytes; the old build swept);
+        `tests/aiphoto/real.test.js` through the kit's sd.cpp runtime: the cache check, house1's body (23.3 s, ΔE
+        0.21), three surfaces (17.4 s, 0.47 / 0.33 / 0.33), Cancel mid-drawing (stopped at 9.2 s, no picture), a
+        non-ASCII data folder (19.7 s, ΔE 0.21) — the photo outside the masks byte for byte. Found on the way: the
+        real tests ran without the kit's hardware detection, and the GPU gate counted the test's own resident
+        sd-server (c7d8437); the non-ASCII case gave the model French words (the app's are English).
 
 ## Direction — decided 2026-10-17
 STATE:  DECIDED 2026-10-17 (the first session). The user's words, verbatim:

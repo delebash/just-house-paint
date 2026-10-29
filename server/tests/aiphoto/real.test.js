@@ -223,8 +223,10 @@ describe.runIf(real)("the AI photo for real, on the kit's sd.cpp runtime (HP_REA
         photo: join(root, "maison.jpg"),
         mask: join(root, "façade.png"),
         colorHex: "#ad2c34",
-        colorName: "Rouge Positif é",
-        surfaceLabel: "bardage",
+        // the paths are what this case is about; the prompt's words stay English, as the app's are (surfaceWords —
+        // French labels left the color barely changed, RESEARCH §10)
+        colorName: "Positive Red",
+        surfaceLabel: "siding",
         outPath: join(root, "résultat.png"),
         workDir: root,
       });
