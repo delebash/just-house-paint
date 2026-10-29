@@ -209,10 +209,12 @@ offered then). Meanwhile **Change folder…** isn't shown.
 
 - **Models cache** — the AI models downloaded for **AI Settings**. **Clear…** asks "Clear downloaded
   models?" and frees them; they stay in the catalog and download again the next time they're used.
-  When the cache is shared with the family's other apps, the question says clearing it clears their
-  models too. When it is a link to a folder elsewhere, **Clear…** removes only the models this app
-  downloaded there, never the rest of that folder. While a model is loaded it says "A model is loaded —
-  unload it first (AI Settings → Unload), then try again."
+  When the family's other apps on this computer use the cache too, or it is a link to a folder elsewhere,
+  **Clear…** removes only the models this app downloaded: the question says "only this app's models are
+  cleared", names the other apps when it knows them, and gives the size of this app's models — theirs, and
+  the rest of a linked folder, stay. A cache in another folder that no other app here is known to use is
+  cleared whole, and the question says clearing it clears their models too. While a model is loaded it says
+  "A model is loaded — unload it first (AI Settings → Unload), then try again."
 - **Engine logs** — what the AI engine wrote while it ran; **Clear…** empties them.
 - **Engine builds** — the AI engine's program files.
 - **Your houses' photos** — every house's photos, outlines and AI photos.
