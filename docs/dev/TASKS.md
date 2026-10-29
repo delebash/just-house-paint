@@ -93,6 +93,10 @@ DECIDED (the user, 2026-10-29, verbatim): "no signed installers not worth it"; t
         wont a mobile app later which quasar has functiosn for as well". My rec then: keep it as "later" (the PRD's
         one later line; src-capacitor stays as Quasar generates it; not release work). The user, verbatim: "your rec
         go".
+DECIDED (the user, 2026-10-29, in JustWrite's session, relayed by the kit's — kit TASKS, 5ff893d): "i dont want tests
+        just running or things just running on commit in gituhb unless we need it often", then "remove hook your rec
+        on rest" — no commit hooks, family-wide. Here, the user: "go". DONE: .husky/, `prepare`, the lint-staged block
+        and both packages gone; AGENTS.md and README say the checks are run by hand.
 MY RECS (shown 2026-10-29, the family's item 5): IDEAS and the PRD's "Out of scope for v1".
         Do: signed installers — Windows through the SignPath Foundation (free for open source; the owner applies; the
         signing step in the template's release.yml, every app copies it; not holding the release for it); macOS's paid
