@@ -81,5 +81,10 @@ PAUSED: the release — the user, in JustWrite's session (2026-10-29): "why whou
         doing kit work, wouldnt that mean houspaint gets old kit?" A release builds with the kit's commit of that moment,
         so the kit's q-inner-loading fix (a pale wash in dark mode on Home, Colors and House) lands first (the kit's
         TASKS, JustWrite's asks 3).
-OPEN:   - the fresh GitHub dry run (40823762045, on 6879a42 with the kit at ddb1431), then the release on the kit after
-          its fixes; the website's deploy after the release (its close-up pictures and words, fef4d64).
+        Then the family rule, the user verbatim (2026-10-29, relayed by JustWrite's session): "i want all kit work done
+        for all apps before we release any app, i want to relase all apps that we are working on now but not until all
+        kit work is done by each app that means each app is complete bugs fixed featrues done all tasks ideas done or
+        removed from list" — house-paint releases with the others (the kit's TASKS, "The family releases together").
+OPEN:   - the release, with the family; the dry run 40823762045 green (6879a42, the kit at ddb1431; publish skipped).
+        - the website's deploy after the release (its close-up pictures and words, fef4d64).
+        - IDEAS.md: each entry done or removed before the release (the family rule).
