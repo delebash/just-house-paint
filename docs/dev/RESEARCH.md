@@ -1279,10 +1279,17 @@ at the app's display size, through the app's own code; scripts and overlays in s
   the Colors tab: the AI photo took 39.5 s cold ("made in 39 s") and 33.4 s warm, ΔE 1.25 both times (window trim the
   worst), the same picture both times (a fixed seed); the card's peak 7,131 MiB. **Cancel** 6.2 s in (8 %): the bar
   went at once, nothing was kept, the card dropped to ~1 GB.
-- **Seen beside it, not explained:** the second floor's middle pair of shutters stays as photographed (light). In the
-  site's master-1004 picture of the same design every shutter is Naval, but that one is on the site's data copy, with
-  its own masks — not an A/B; the kit's session runs one on both builds. The first render's note named this app's own
-  llama-server (loaded at start by "Load the default local model … on startup") as another program holding 6.3 GB;
-  the kit's own-process filter should have left it out (filed as a kit finding).
+- **The light pair of shutters isn't the build** (*measured*, an A/B outside the app, `card/ab.js`): the second
+  floor's middle pair comes out light blue, not Naval, while the site's master-1004 picture of the same design has
+  every shutter Naval. The AI photo's own request — built by `aiphoto/edit.js` from the real data, the p_aiphoto preset
+  (4 steps, cfg 1, euler, seed 42) — went to each build's sd-server, started as the kit starts it. The drawing, the
+  front door's close-up and the final picture are byte-identical on master-1004 and master-1024 (ΔE2000 0.00 inside
+  the mask, 0 % of its pixels changed), each build's repeat is identical, and master-1024's final is byte-identical to
+  the in-app render above. So the site's picture differs by its inputs (its data copy's masks). The drawing does
+  repaint the pair (the lock's repainted test passes on 88–100 % of each shutter's pixels) but light; the lock keeps
+  the drawing's light relative to the surface (*inferred* from `colorLock`, not measured).
+- **The first render's note named this app's own llama-server** (loaded at start by "Load the default local model …
+  on startup") as another program holding 6.3 GB; the kit's own-process filter should have left it out (filed as a
+  kit finding).
 - An existing install moves to a new kit pin only through **Update** (kit 39f5783). master-1004's folder stays in the
   shared cache until every app sharing it has said which build it uses (the kit's A3).
