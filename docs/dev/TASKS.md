@@ -87,11 +87,12 @@ PAUSED: the release — the user, in JustWrite's session (2026-10-29): "why whou
         removed from list" — house-paint releases with the others (the kit's TASKS, "The family releases together").
 OPEN:   - the release, with the family; the dry run 40823762045 green (6879a42, the kit at ddb1431; publish skipped).
         - the website's deploy after the release (its close-up pictures and words, fef4d64).
-        - the phone app: the PRD keeps it "for later" until the user's word — my rec below removed it, but the user
-          said on 2026-10-17 (the history, verbatim): "als we prob will wont a mobile app later which quasar has
-          functiosn for as well". Asked 2026-10-29.
 DECIDED (the user, 2026-10-29, verbatim): "no signed installers not worth it"; then, on the rest, "yuour rec go".
-        DONE: IDEAS.md emptied; the PRD's "Out of scope" names each one as decided, not later (the phone app aside).
+        DONE: IDEAS.md emptied; the PRD's "Out of scope" names each one as decided, not later (fc413aa).
+        The phone app — my rec removed it, but the user said on 2026-10-17 (the history, verbatim): "als we prob will
+        wont a mobile app later which quasar has functiosn for as well". My rec then: keep it as "later" (the PRD's
+        one later line; src-capacitor stays as Quasar generates it; not release work). The user, verbatim: "your rec
+        go".
 MY RECS (shown 2026-10-29, the family's item 5): IDEAS and the PRD's "Out of scope for v1".
         Do: signed installers — Windows through the SignPath Foundation (free for open source; the owner applies; the
         signing step in the template's release.yml, every app copies it; not holding the release for it); macOS's paid
