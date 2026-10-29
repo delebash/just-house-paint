@@ -1254,6 +1254,13 @@ at the app's display size, through the app's own code; scripts and overlays in s
   wreath kept its lower half white and the porch door was half painted; after it, both are Naval. Seen beside them,
   not the close-up's: white patches where the body's outline stops short of the flowers and the car — the photo's
   own white paint outside every part's outline (in the earlier drawing too).
+- **Why the body stops short of what stands in front** (2026-10-29, the masks over the photo, full size 2765 × 2074,
+  masks 2048 × 1536): ~30 px of clapboard above the flower pot right of the front door and 10–20 px beside the car
+  belong to no part. Nothing of ours shrinks the body (segment/parts.js subtracts the pieces found, with no
+  dilation; only the house rule's margin grows the house) — it is SAM 3's own "house" instance stopping a few of its
+  mask cells (~10 px each at full size) short of the occluder. Kept for the release: the Brush fills it, and
+  reaching further risks painting the thing in front ("the worse mistake", above); the docs now say so
+  (finding-parts.md) and edge refinement is an IDEA.
 - **Found through the screenshots and fixed** (757a608): Paint colors named Benjamin Moore's and PPG / Glidden's load
   "public list" (now "the brand's files", `/v1/brands` `via`); the AI photo's Close and Save image sat under the
   modal body's fold at 1440 × 900 (now its footer).

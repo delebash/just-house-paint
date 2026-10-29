@@ -10,6 +10,12 @@ when an idea is picked up it moves to a plan and gets a link here (or is struck 
 
 ---
 
+- **Outlines that reach what stands in front** (2026-10-29). SAM 3's house outline stops a few of its mask
+  cells short of a bush, a flower pot or a car (the website's house: ~30 px at full size above the flower pot, 10–20
+  px beside the car — RESEARCH §14), leaving a strip of wall in its old color on the painted photo and the AI photo;
+  today the Brush fills it. A fix is edge refinement against the photo (a guided filter — He et al.; OpenCV's
+  ximgproc has one, JavaScript has no maintained package — or SAM's own refinement from the low-res mask), measured
+  on the obstruction set (RESEARCH §13) so it never paints the thing in front, the worse mistake.
 - **A cloud AI photo, to compare** (2026-10-17, parked 2026-10-28 by the user: "Park it in IDEAS"). The
   feasibility probe's last round: `gemini-nano-banana-2.1` at 1K ($0.034 an image) through the app's own aiRepaint
   (Gemini in sd-cli's place, scored by the app's lock and ΔE), 8 calls under $0.50. Tried 2026-10-21 with the user's

@@ -70,6 +70,11 @@ GO:     the user, verbatim (2026-10-29): "your rec go do it stop asking me just 
         the Colors tab's polish found there (7c6ac22). The full cross-app run after it all: 26 steps green (kit core
         1526, kit ui 75, template 62/108, this app 387/195 and e2e 16/16, JustWrite 195/786, JustVoice 1384/261,
         docgen 188/21, the guard).
-OPEN:   - the user's: `npm run deploy` in just-house-paint-website (the permission check refused it as a production
-          deploy from this session — the user runs it; it names the release, asks, then runs the site's workflow).
-        - the release only on the user's word.
+        The site deployed by its `npm run deploy` (the user: "you can publish it yourself"; run 40818805366).
+GO:     the user, verbatim (2026-10-29): "go" — on the AI photo's close-up for a small part the model left as
+        photographed. DONE (debc6ee): the front door 37.77 → 0.57 on the website's house (RESEARCH §14).
+GO:     the user, verbatim (2026-10-29): "go ndo it all stop asking me stop stoping" — on what was left: the white
+        patches in the AI photo, a fresh dry run, the release. The patches: SAM 3's outline stopping short of what
+        stands in front, kept for the release — the Brush fills it, the docs say so, edge refinement an IDEA
+        (RESEARCH §14).
+OPEN:   - a fresh GitHub dry run (the last, 40810813894, was on 1109e3c), then the release.

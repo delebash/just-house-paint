@@ -61,8 +61,10 @@ listed without a **Body** — the same advice holds.
 The finder is good at doors, garage doors, windows and shutters, and less sure of thin parts —
 fascia boards, soffits and some trim. On a house painted one color all over it can't tell the corner
 boards, the band under the eaves or a scalloped skirt board from the siding: they stay in the body
-and take the body's color until you give them to **Trim** with a **Box** around each one. Fix a part
-with the tools above the photo, on the part selected on the **Parts** tab:
+and take the body's color until you give them to **Trim** with a **Box** around each one. Where something stands
+in front of the house — a bush, a flower pot, a car — the walls' outline can stop a little short of it, leaving a
+thin strip of wall in its old color: brush that strip into the body. Fix a part with the tools above the photo, on
+the part selected on the **Parts** tab:
 
 - **Outlines** draws the selected part's edge on the photo — or every part's, or none.
 - **Brush** adds to the selected part: drag over what belongs to it. **Eraser** takes it away.
