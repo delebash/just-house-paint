@@ -13,6 +13,10 @@ one photo took. **Images** and **Vision** each have **Speed bands (seconds per i
 ≤** and **Slow at ≤**, then **Save**: a model at or under a line is "fast", "fine" or "slow", anything slower "very
 slow".
 
+When the app is tested with a newer build of stable-diffusion.cpp than the one installed, **Images** shows **Update
+to …**: it installs that build, with its progress and **Cancel**, and checks it before it replaces yours; if the
+update fails or you cancel it, your build stays.
+
 Above the tabs, a strip shows this computer: **OS**, **CPU**, **Memory**, **GPU**, **Acceleration**,
 and how the graphics card's memory is used — **VRAM used** (**Memory used** where the graphics share
 the computer's memory, as on a Mac), **Free**, **LLM** (the AI model loaded now) and, when other

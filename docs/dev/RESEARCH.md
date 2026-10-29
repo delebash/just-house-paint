@@ -27,7 +27,9 @@ Subjects: [1 · The machine](#1--the-machine) ·
 [10 · Paint color data](#10--paint-color-data) ·
 [11 · The app, run for real](#11--the-app-run-for-real-2026-10-18) ·
 [12 · The installed app and the first release](#12--the-installed-app-and-the-first-release-2026-10-19) ·
-[13 · The weak spots: trim, ornaments, a dark finish](#13--the-weak-spots-trim-ornaments-a-dark-finish-2026-10-19)
+[13 · The weak spots: trim, ornaments, a dark finish](#13--the-weak-spots-trim-ornaments-a-dark-finish-2026-10-19) ·
+[14 · The website](#14--the-website-2026-10-28) ·
+[15 · The family release's sd.cpp build, run for real](#15--the-family-releases-sdcpp-build-run-for-real-2026-10-29)
 
 ---
 
@@ -1267,3 +1269,20 @@ at the app's display size, through the app's own code; scripts and overlays in s
 - **Its look**: the three paints as tokens (light on the trim's white, dark on Naval), Young Serif and Schibsted
   Grotesk (SIL OFL, Google Fonts). Checked in Edge at 1440 × 900 and 390 × 844, light and dark: no sideways scroll,
   no console error.
+
+## 15 · The family release's sd.cpp build, run for real (2026-10-29)
+
+- **master-1024-77b72a2 on the real app** (*measured*, kit 39f5783; the server on the checkout's data, the renderer
+  from `npm run dev:spa`, driven in Edge through Playwright; scripts and pictures in session e6087772's scratchpad
+  `card/`): AI Settings → Images showed **Update to master-1024-77b72a2** — the pin here was still master-1004-a85db96,
+  since seeding keeps an existing pin — and the update installed in 16 s. House 1 with "Sage and navy" (§14) picked on
+  the Colors tab: the AI photo took 39.5 s cold ("made in 39 s") and 33.4 s warm, ΔE 1.25 both times (window trim the
+  worst), the same picture both times (a fixed seed); the card's peak 7,131 MiB. **Cancel** 6.2 s in (8 %): the bar
+  went at once, nothing was kept, the card dropped to ~1 GB.
+- **Seen beside it, not explained:** the second floor's middle pair of shutters stays as photographed (light). In the
+  site's master-1004 picture of the same design every shutter is Naval, but that one is on the site's data copy, with
+  its own masks — not an A/B; the kit's session runs one on both builds. The first render's note named this app's own
+  llama-server (loaded at start by "Load the default local model … on startup") as another program holding 6.3 GB;
+  the kit's own-process filter should have left it out (filed as a kit finding).
+- An existing install moves to a new kit pin only through **Update** (kit 39f5783). master-1004's folder stays in the
+  shared cache until every app sharing it has said which build it uses (the kit's A3).
