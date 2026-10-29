@@ -4,6 +4,28 @@
 > docs keep history. Decisions are recorded as the exact text the user approved. A tracker line is
 > a claim, not evidence. Facts live in [`RESEARCH.md`](RESEARCH.md).
 
+## Finish house-paint and release it — the go [2026-10-28]
+GO:     the user, verbatim: "i would like to finish houspaint fix all bugs add any ideas ect and do a real release";
+        then "also like jw this app should have a good readme page with features as well as dev docs and a website
+        like jw"; then "go on housepaint" on the order: (1) round B's last real checks, (2) a full bug pass, each fix
+        with its test, (3) IDEAS.md for the user's pick, (4) a dry run, then the real release with the user's go.
+        The answers of 2026-10-28, verbatim:
+        - "House-paint's website …": **"just-house-paint-website (Recommended)"** — "A new public repo,
+          delebash/just-house-paint-website, on JustWrite's stack (Astro + Starlight). Pages at
+          delebash.github.io/just-house-paint-website. Each release attaches docs.tar.gz and pings the site, as
+          JustWrite's does. Its own look, built on paint colors and the app's real screenshots, not JustWrite's book
+          design."
+        - "House-paint's IDEAS.md has two ideas. Which go into this release?": **"Neither (Recommended)"**.
+        - The Gemini probe: **"Park it in IDEAS (Recommended)"** — "Move it to IDEAS.md as unscheduled, so it doesn't
+          block the release. The harness is built and ready if you turn billing on later (8 calls, under $0.50)."
+STATE:  (1) DONE — round B checked for real (83da891, below). (2) IN PROGRESS — the walk on a copy of the real data
+        found no app error on any screen (30 steps) and the GPU flows work through the screens (the AI photo 22.4 s;
+        Find the parts again on house 2: 11 parts; AI schemes on the local model: 3 in 26.6 s; the kit's arbiter let
+        SAM 3 go for the chat model); fixed on the way: the kit's runServerJob (an external cancel failed the task; the
+        end never reached onJob — 0384b39); found: the kit's catalog squeezed in the built-in provider's Edit (being
+        fixed in the kit). Next: the README with the features and docs/dev/ARCHITECTURE.md (JustWrite's shape), the
+        website, the tracker closed down to what is open, the full cross-app run, (4).
+
 ## The AI photo and the part finder onto the kit, the way llama.cpp is [2026-10-24]
 STATE:  OPEN — the kit's plan `../just-core/docs/plans/2026-10-24-engines-the-llama-way.md` (its TASKS item
         "Every engine the llama.cpp way…" carries the user's go). Found 2026-10-24: both engines were built inside
@@ -127,20 +149,6 @@ DECIDED 2026-10-18 (the user: "yes create repo your rec on all go"): the Vulkan 
         (Was: PRD vs SPEC, the pre-commit hook, the `AGENTS.md` design, the skill and
         `just-sqlite-sync`'s CI — all decided 2026-10-17 in the kit's TASKS, "A standard start for
         every new just app".)
-
-## Feasibility probe on this machine [2026-10-17]
-STATE:  ROUNDS 1 AND 2 DONE 2026-10-17 — the user's go: "so yes go do your tests when ready".
-        Cross-platform engines only (TensorRT deferred by the user). Results: RESEARCH §9 and §10's
-        round-2 entries (finding parts, ONNX Runtime on the CPU, tint v2, a dark house, masked AI).
-        Throwaway: inputs and outputs in `data/probe/` (gitignored).
-OPEN:   a cloud render (needs a Gemini key with billing on — the API has no free tier for image output), with
-        `gemini-nano-banana-2.1` at 1K (mine, 2026-10-21: Google's default image model, $0.034 an image; Nano Banana 2
-        alone has a published color score, but it costs twice as much and the probe measures ΔE itself; Pro costs 4×
-        and is slower). TRIED 2026-10-21 with the user's key (App Settings' Gemini row): refused, 429 "limit: 0 … on
-        Free Tier" — the key's project has no billing; nothing billed. The harness (the app's aiRepaint with Gemini in
-        sd-cli's place, scored by the app's own lock and ΔE) and the free baselines are done (RESEARCH §7); the run
-        waits on billing for that project (8 calls planned, under $0.50). (The dark-to-light grain: FIXED 2026-10-19 —
-        "Fix the weak spots" below.)
 
 ## Build it all — the go [2026-10-18]
 GO:     the user, verbatim: "keep going finihs it all i want all this done and a complete working app

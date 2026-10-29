@@ -10,6 +10,11 @@ when an idea is picked up it moves to a plan and gets a link here (or is struck 
 
 ---
 
+- **A cloud AI photo, to compare** (2026-10-17, parked 2026-10-28 by the user: "Park it in IDEAS"). The
+  feasibility probe's last round: `gemini-nano-banana-2.1` at 1K ($0.034 an image) through the app's own aiRepaint
+  (Gemini in sd-cli's place, scored by the app's lock and ΔE), 8 calls under $0.50. Tried 2026-10-21 with the user's
+  key: refused, 429 "limit: 0 … on Free Tier" — the key's Google project has no billing, and image output has no
+  free tier. The harness and the free baselines are done (RESEARCH §7); it runs once that project has billing.
 - **Signed installers** (2026-10-19). v0.1.0 ships unsigned: Windows shows SmartScreen's "unknown
   publisher", macOS Gatekeeper's warning (the help says how to open it). Signing needs a certificate in
   the user's name: the SignPath Foundation signs open-source projects' Windows builds for free (an
