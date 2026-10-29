@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Option B (an opt-in setting): the brands' public color lists, loaded by the server on first use
-// and cached by the app (RESEARCH §10; TASKS "Design decisions after probe round 1"). The repo
+// and cached by the app (RESEARCH §10; docs/plans/archive/tasks-history-2026-10.md, "Design decisions after probe round 1"). The repo
 // ships no brand data — these are addresses and field maps only. `fetch` is always injected, so
 // nothing here reaches the network unless the app passes it in.
 //

@@ -8,7 +8,8 @@ surfaces, recoloring them, generative edits, and what the existing visualizers d
 stack's facts (the kit, llama.cpp, the memory arbiter) stay in the kit's register.
 
 Plans: [`../plans/2026-10-18-v1.md`](../plans/2026-10-18-v1.md) — the v1 build (what each piece is, and the
-standard it follows).
+standard it follows). [`../plans/archive/tasks-history-2026-10.md`](../plans/archive/tasks-history-2026-10.md) — the tracker's closed entries:
+the user's decisions verbatim, and what each go built and checked.
 
 Labels: **measured** — run on this machine · **web** — checked against the upstream page by the
 session that recorded it · **agent** — found on the web by a research agent and not re-checked by
@@ -1219,3 +1220,32 @@ at the app's display size, through the app's own code; scripts and overlays in s
   /v1/aiphoto/status and /v1/segment/status): Ubuntu 22.04 — the AI photo `available: false`, need glibc 2.38,
   has 2.35; the AppImage on Ubuntu 24.04 — available (cpu); Windows Server (no GPU) — available (cpu); macOS 26
   (`macos-26-arm64`) — available (metal); the part finder's ONNX Runtime loads on all four.
+
+## 14 · The website (2026-10-28)
+
+- **Where and how** (*built*): <https://delebash.github.io/just-house-paint-website/>, repo
+  `delebash/just-house-paint-website` (public), on JustWrite's site's stack — Astro 7 + Starlight 0.41, GitHub Pages
+  from Actions (its `deploy.yml`: a push, a manual run, or the `docs-updated` dispatch this app's release sends). Its
+  first deploy, run 40809842571: build and deploy green, the overview, features and docs pages answer 200.
+- **The docs are this repo's `docs/*.md`**, never copied by hand: the site's `sync-docs.js` takes `docs.tar.gz` from
+  the latest release; a release made before the release attached it (v0.1.3 and earlier) gives the same files from
+  the tag's source archive (`codeload.github.com/…/tar.gz/refs/tags/<tag>`, one folder `<repo>-<version>`) — *measured*:
+  v0.1.3's 12 pages, 5.1 MB archive. `toc.json` is the sidebar.
+- **The release's ping needs a token** this app's repo doesn't have yet: `WEBSITE_DISPATCH_TOKEN` (fine-grained, the
+  website's repository, Contents read and write — docs.github.com/en/rest/repos/repos#create-a-repository-dispatch-event).
+  Without it the release's `notify-website` says so and passes; `gh workflow run deploy.yml -R
+  delebash/just-house-paint-website` rebuilds the site by hand.
+- **Its pictures are the app itself**, on the three probe photos only (Wikimedia Commons, CC BY-SA 4.0 / 2.0 —
+  `data/probe/photos/SOURCES.md`), never the user's own house: the site's `scripts/capture.js` drives the unpacked
+  window against a server on a data copy holding only those three, each with a design (house 1 "Sage and navy": SW
+  9130 Evergreen Fog body; SW 7005 Pure White trim, window trim, soffits, columns and garage door; SW 6244 Naval
+  shutters and front door). The screenshots and photos made from them are CC BY-SA 4.0 (BY-SA 2.0 allows a later
+  version), credited on every page. *Measured* on that design: the painted photo's ΔE per part 0.0–0.7; its AI photo
+  23 s with ΔE 37.8 — the worst part, the front door under the porch, which the model left as photographed (only what
+  it repaints is locked: §10, `lockOnlyRepainted`); the body and shutters repainted.
+- **Found through the screenshots and fixed** (757a608): Paint colors named Benjamin Moore's and PPG / Glidden's load
+  "public list" (now "the brand's files", `/v1/brands` `via`); the AI photo's Close and Save image sat under the
+  modal body's fold at 1440 × 900 (now its footer).
+- **Its look**: the three paints as tokens (light on the trim's white, dark on Naval), Young Serif and Schibsted
+  Grotesk (SIL OFL, Google Fonts). Checked in Edge at 1440 × 900 and 390 × 844, light and dark: no sideways scroll,
+  no console error.

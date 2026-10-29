@@ -13,7 +13,7 @@ import { converter, formatHex, parse } from "culori";
 const toLab65 = converter("lab65");
 
 /**
- * The launch brands (TASKS "Design decisions after probe round 1"). `display` is how a code is
+ * The launch brands (the tracker's history, docs/plans/archive/tasks-history-2026-10.md, "Design decisions after probe round 1"). `display` is how a code is
  * written in front of the name; each brand's own writing, checked 2026-10-17:
  * - Sherwin-Williams writes "SW 7008" → prefix "SW " (the approved example "SW 7008 Alabaster").
  * - Behr writes the code alone ("Nairobi Dusk - PPU3-10" in its page titles) → code as-is.

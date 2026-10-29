@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
-// Ordering a brand's colors by color, as a paint store's color wall (TASKS, "Order the colors by
-// color"): the near-grays first — CIE chroma under `grayChroma`, whites to blacks — then bands of
+// Ordering a brand's colors by color, as a paint store's color wall (RESEARCH §10, "Ordering by color"): the
+// near-grays first — CIE chroma under `grayChroma`, whites to blacks — then bands of
 // `bandDegrees` of CIE LCh hue in rainbow order from the first family's start, each light to dark.
 // The families (the Colors tab's Color family filter) are hue ranges, each from its `from` to the
 // next one's; the default cuts are the ones that misfile the fewest of the brands' own labels on the

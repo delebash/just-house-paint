@@ -2,7 +2,7 @@
 // /v1/brands, /v1/paints, /v1/schemes — the paint colors: a brand's public list loaded at the
 // user's request (a job; option B), an official palette file imported (option C), search, the
 // nearest paints to a color, and color schemes snapped to real paints. The app ships no brand
-// data (TASKS, "Design decisions after probe round 1").
+// data (docs/plans/archive/tasks-history-2026-10.md, "Design decisions after probe round 1").
 
 import { Hono, input, uploadLimit } from "@delebash/core/platform";
 import { ApiError, notFound, RequestValidationError } from "@delebash/core/platform/errors";
