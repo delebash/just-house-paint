@@ -46,6 +46,14 @@ export const SETTING_DEFAULTS = {
   "paints.autoLoad": Object.fromEntries(Object.keys(BRANDS).map((key) => [key, true])),
   // the color wall's order and the Color family filter (the cuts measured, RESEARCH §10)
   "paints.colorOrder": plain(COLOR_ORDER_DEFAULTS),
+  // Daylight's white balances: a black body's color at about 4000 K (low sun), 5500 K (midday sun) and 7500 K (shade,
+  // overcast) against the camera's daylight balance (~6500 K), as red, green and blue gains — first proposals, not
+  // measured on houses (2026-10-28)
+  "photos.daylight": [
+    { key: "lowSun", gains: [1, 0.82, 0.64] },
+    { key: "midday", gains: [1, 0.93, 0.88] },
+    { key: "shade", gains: [0.92, 0.93, 1] },
+  ],
   // the finishes the brands sell exterior paint in, dullest first — each part's choice goes on the color list and card
   "paints.finishes": ["flat", "matte", "eggshell", "satin", "semigloss", "gloss"],
   "finder.parts": plain(DEFAULT_PARTS),

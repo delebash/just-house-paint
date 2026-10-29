@@ -28,6 +28,7 @@ const TODAY = {
   "paints.autoLoad": "ccd3c5f361b4e770",
   "paints.colorOrder": "f6e43b5958b274a1",
   "paints.finishes": "042d66cdfca32eff",
+  "photos.daylight": "a48b618a8d4c6714",
   "finder.parts": "f8ba077756a487ab",
   "finder.priority": "97688972545dc716",
   "finder.houseMargin": "a7e46abf169710b3",

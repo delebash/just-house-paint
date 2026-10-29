@@ -25,6 +25,8 @@
   a busy one makes the other say "The graphics card is busy" — finding the parts on the processor never waits for
   the card now.
 - **App Settings → Storage** no longer lists the part finder: its model is counted with the AI cache's models.
+- **Daylight**: the house page shows the whole photo in morning or evening sun, midday sun, or shade — a preview of how
+  the paints move with the day, never saved.
 - **Each part's finish**: on the **Colors** tab, beside the chosen paint — flat to gloss; the color list and the color
   card name it beside the paint, for the store.
 - **Use a design on another house**: on the **Designs** tab, a design's copy button lists your other houses — one

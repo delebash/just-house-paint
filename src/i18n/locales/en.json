@@ -136,6 +136,9 @@
         "paints": {
           "colorOrder": "How colors are ordered by color",
           "finishes": "The finishes a part's paint can have"
+        },
+        "photos": {
+          "daylight": "Daylight's lights"
         }
       },
       "hints": {
@@ -154,6 +157,9 @@
         "paints": {
           "colorOrder": "grayChroma: below this CIE chroma a color is a near-gray (listed first, light to dark); bandDegrees: the hue bands the rest are listed in; families: the Color family filter, each from its hue (degrees) to the next one’s.",
           "finishes": "Each an id in small letters, dullest first; the Colors tab offers them for a part's paint, and the color list and card name them."
+        },
+        "photos": {
+          "daylight": "Each light: its key and its red, green and blue gains (1 = as photographed) — the house page's Daylight, a preview only."
         }
       }
     }
@@ -217,6 +223,14 @@
       "copyList": "Copy the color list",
       "copied": "Color list copied",
       "failed": "The image couldn't be painted"
+    },
+    "daylight": {
+      "label": "Daylight",
+      "hint": "The photo on screen in another light, so you see how the paints move with the day. A preview only: Save image, the color card and the AI photo stay as photographed.",
+      "asTaken": "As photographed",
+      "lowSun": "Morning or evening sun",
+      "midday": "Midday sun",
+      "shade": "Shade or overcast"
     },
     "tools": {
       "label": "Tool",

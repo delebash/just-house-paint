@@ -41,11 +41,19 @@ const props = defineProps({
   brushSize: { type: Number, default: 20 },
   // the brush's color while drawing (the selected part's paint, or the outline color)
   strokeColor: { type: String, default: "#ffcc00" },
+  // Daylight (2026-10-28): the red, green and blue gains of a white-balance preview over the whole photo, or null — an
+  // SVG color matrix on the drawing (CSS filter), in linear light; nothing painted or saved changes
+  whiteBalance: { type: Array, default: null },
 });
 const emit = defineEmits(["pick", "stroke", "box"]);
 const { t } = useI18n();
 // the photo's keyboard hint, read with its name
 const keysId = useId();
+const daylightId = useId();
+const daylightMatrix = computed(() => {
+  const [r, g, b] = props.whiteBalance || [1, 1, 1];
+  return `${r} 0 0 0 0 0 ${g} 0 0 0 0 0 ${b} 0 0 0 0 0 1 0`;
+});
 
 const host = ref(null);
 const stage = ref(null);
@@ -438,8 +446,13 @@ const splitMarks = computed(() =>
     :aria-label="photo ? t('house.canvas.label') : undefined" :aria-describedby="photo ? keysId : undefined" @keydown="onKey"
   >
     <span v-if="photo" :id="keysId" class="visually-hidden">{{ keysHint }}</span>
+    <!-- Daylight: the white-balance filter the drawing goes through (linear light — the filter's default space) -->
+    <svg v-if="whiteBalance" class="house-canvas__filters" width="0" height="0" aria-hidden="true" focusable="false">
+      <filter :id="daylightId"><feColorMatrix type="matrix" :values="daylightMatrix" /></filter>
+    </svg>
     <v-stage
       v-if="photo" ref="stage" :config="{ width: size.width, height: size.height }"
+      :style="whiteBalance ? { filter: `url(#${daylightId})` } : undefined"
       @wheel="onWheel" @pointerdown="onDown" @pointermove="onMove" @pointerup="onUp" @pointercancel="onCancel"
       @pointerleave="onLeave"
     >

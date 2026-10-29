@@ -55,6 +55,12 @@ in the part's normal light.
 **Light** — a brighter or duller day over the whole picture, photo and paint alike: 1 is the photo's own light.
 The ΔE beside each part is always measured at the photo's own light.
 
+**Daylight** — the whole photo on screen in another light, so you see how the paints move with the day: **Morning or
+evening sun** (warm), **Midday sun**, or **Shade or overcast** (cool); **As photographed** puts it back. It is a
+preview only — **Save image**, the color card, the designs and the AI photo stay as photographed — and it goes back
+to **As photographed** when you open another house. The lights are a setting (**App Settings → Advanced**), first
+proposals rather than measured.
+
 **A dark finish painted light** — paint covers the old finish's own colors, not the boards' shadows.
 When you paint a dark part (stained wood, a dark paint — a wall, a door, shutters, trim) much lighter,
 the app takes out the old finish's blotches and grain and keeps the lines between the boards, as fresh

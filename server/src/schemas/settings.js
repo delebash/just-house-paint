@@ -50,6 +50,15 @@ export const SETTINGS = {
       maxItems: 24,
     }),
   }),
+  // Daylight on the house page (2026-10-28): each a white-balance preview of the photo on screen — its key (the screen's
+  // words `house.daylight.<key>`, else the key) and the red, green and blue gains, in linear light. Never saved.
+  "photos.daylight": T.Array(
+    strictObject({
+      key: T.String({ pattern: "^[a-z][a-zA-Z0-9]*$", maxLength: 30 }),
+      gains: T.Array(T.Number({ minimum: 0.2, maximum: 2 }), { minItems: 3, maxItems: 3 }),
+    }),
+    { maxItems: 8 },
+  ),
   // The finishes a part's paint can have (flat, satin, semi-gloss…), each an id the screen names (`finishes.<id>`, else
   // the id): a part's finish is one of them — on the color list and the color card, for the store (2026-10-28).
   "paints.finishes": T.Array(T.String({ pattern: "^[a-z][a-z0-9]*$", maxLength: 30 }), { minItems: 1, maxItems: 20 }),

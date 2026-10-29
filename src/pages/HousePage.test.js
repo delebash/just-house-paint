@@ -50,7 +50,7 @@ vi.mock("../services/fullSizeImage.js", async (importOriginal) => ({
   },
 }));
 vi.mock("../components/HouseCanvas.vue", () => ({
-  default: { name: "HouseCanvas", props: ["photo", "painted", "overlay", "before", "split", "tool", "sideBySide", "version"], render: () => h("div", { class: "house-canvas-stub" }) },
+  default: { name: "HouseCanvas", props: ["photo", "painted", "overlay", "before", "split", "tool", "sideBySide", "version", "whiteBalance"], render: () => h("div", { class: "house-canvas-stub" }) },
 }));
 
 const { default: HousePage } = await import("./HousePage.vue");
@@ -141,6 +141,11 @@ function fakeFetch(input, init = {}) {
         "schemes.roleParts": { body: ["body"], trim: ["trim", "soffit", "windowTrim"], accent: [] },
         "paints.colorOrder": { grayChroma: 8, bandDegrees: 30, families: [{ key: "reds", from: 333 }, { key: "blues", from: 181 }] },
         "paints.finishes": ["flat", "matte", "eggshell", "satin", "semigloss", "gloss"],
+        "photos.daylight": [
+          { key: "lowSun", gains: [1, 0.82, 0.64] },
+          { key: "midday", gains: [1, 0.93, 0.88] },
+          { key: "shade", gains: [0.92, 0.93, 1] },
+        ],
       }),
     );
   }
@@ -365,6 +370,21 @@ test("the same color in other brands: each one's nearest paint with its ΔE, and
   await click(close);
   await click(byText(".q-tab", "Parts"));
   expect(byText(".parts__row", "Body").textContent).toContain("Valspar Lake V1");
+});
+
+test("Daylight: the photo on screen in morning, midday or shade light — a preview, never saved", async () => {
+  // 2026-10-28: "it looked different at the store" — the paints as the light of the day moves them
+  server.parts = PARTS;
+  await mountPage();
+  const daylight = wrapper.findAllComponents(UiSelect).find((c) => c.props("options").some((o) => o.value === "midday"));
+  expect(daylight.props("options").map((o) => o.label)).toEqual(["As photographed", "Morning or evening sun", "Midday sun", "Shade or overcast"]);
+  expect(canvas().props("whiteBalance")).toBeNull();
+  daylight.vm.$emit("update:modelValue", "lowSun");
+  await flushPromises();
+  expect(canvas().props("whiteBalance")).toEqual([1, 0.82, 0.64]); // the filter itself: HouseCanvas.test.js
+  daylight.vm.$emit("update:modelValue", "");
+  await flushPromises();
+  expect(canvas().props("whiteBalance")).toBeNull();
 });
 
 test("a part's finish: chosen on the Colors tab, kept with the house, and on the color list", async () => {

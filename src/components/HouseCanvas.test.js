@@ -86,6 +86,17 @@ afterEach(() => {
 // a Konva pointer event on the stage: pointer 1 (a mouse) unless told
 const fire = (type, evt = {}) => stage().vm.$emit(type, { evt: { pointerId: 1, pointerType: "mouse", button: 0, clientX: 0, clientY: 0, ...evt } });
 
+test("Daylight: a white balance over the whole drawing — an SVG color matrix the stage goes through; none without", () => {
+  mountCanvas({ whiteBalance: [1, 0.82, 0.64] });
+  const matrix = document.querySelector(".house-canvas feColorMatrix");
+  expect(matrix.getAttribute("values")).toBe("1 0 0 0 0 0 0.82 0 0 0 0 0 0.64 0 0 0 0 0 1 0");
+  const id = matrix.closest("filter").id;
+  expect(wrapper.findComponent({ name: "v-stage" }).attributes("style") ?? "").toMatch(new RegExp(`filter: url\\("?#${id}"?\\)`));
+  wrapper.unmount();
+  mountCanvas();
+  expect(document.querySelector(".house-canvas feColorMatrix")).toBeNull();
+});
+
 test("the photo is a Tab stop with a name, and its hint says the keys and that drawing needs a pointer", () => {
   const host = mountCanvas().find(".house-canvas").element;
   expect(host.getAttribute("tabindex")).toBe("0");

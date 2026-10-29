@@ -125,6 +125,14 @@ const light = computed({
   get: () => ui.light,
   set: (v) => ui.setLight(v),
 });
+// Daylight (2026-10-28): the photo on screen in another light — low sun, midday, shade (the photos.daylight setting's
+// white balances) — so the paints show as the day moves them; a preview only, never saved ("" = as photographed)
+const daylight = ref("");
+const daylightOptions = computed(() => [
+  { value: "", label: t("house.daylight.asTaken") },
+  ...(settings.values["photos.daylight"] || []).map((d) => ({ value: d.key, label: te(`house.daylight.${d.key}`) ? t(`house.daylight.${d.key}`) : d.key })),
+]);
+const whiteBalance = computed(() => (settings.values["photos.daylight"] || []).find((d) => d.key === daylight.value)?.gains ?? null);
 // the selected part's paint in shade, on most of it and in light — for the Colors tab
 const tones = ref(null);
 const outlines = computed({
@@ -1024,10 +1032,14 @@ const canRevert = computed(() => !!house.design && house.dirty);
             <span>{{ t("house.tools.light") }}</span>
             <UiSlider v-model="light" :min="0.5" :max="2" :step="0.05" width="short" :aria-label="t('house.tools.light')" />
           </label>
+          <span class="house__tool" :title="t('house.daylight.hint')">
+            <span>{{ t("house.daylight.label") }}</span>
+            <UiSelect v-model="daylight" :options="daylightOptions" width="fit" :aria-label="t('house.daylight.label')" />
+          </span>
         </div>
       </div>
       <HouseCanvas
-        class="house__canvas"
+        class="house__canvas" :white-balance="whiteBalance"
         :photo="photo" :painted="painted" :overlay="overlay" :before="before" :version="version"
         :split="compareWith !== 'off' ? split : null" :side-by-side="compareWith !== 'off' && sideBySide"
         :tool="tool" :brush-size="brushSize" :stroke-color="strokeColor"
