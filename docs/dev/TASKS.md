@@ -66,5 +66,10 @@ GO:     the user, verbatim (2026-10-29): "your rec go do it stop asking me just 
         starts nothing, checks 25 and 26; this app's release and its site on it); (b) the security updates (kit
         96dede9: undici ^8.12.3, Electron 44.10.0; this app f7c6cae). The full run after the seven: green (lint, i18n,
         server 387, unit 195, the guard, the unpacked build, e2e 16/16).
-OPEN:   - the website's text and screenshots for the four new features, then `npm run deploy` (the site's).
+        The website's text and screenshots for the four new features DONE (just-house-paint-website a32a084, 8e43722);
+        the Colors tab's polish found there (7c6ac22). The full cross-app run after it all: 26 steps green (kit core
+        1526, kit ui 75, template 62/108, this app 387/195 and e2e 16/16, JustWrite 195/786, JustVoice 1384/261,
+        docgen 188/21, the guard).
+OPEN:   - the user's: `npm run deploy` in just-house-paint-website (the permission check refused it as a production
+          deploy from this session — the user runs it; it names the release, asks, then runs the site's workflow).
         - the release only on the user's word.
