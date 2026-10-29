@@ -358,6 +358,7 @@
     "addBrand": "Add paint colors",
     "forPart": "Colors for the {part}",
     "finish": {
+      "short": "Finish:",
       "label": "Finish for the {part}",
       "none": "No finish chosen"
     },

@@ -369,7 +369,10 @@ async function match({ say = true } = {}) {
         <!-- an action, named as one ("No color" read as the part's state — the visual review, 2026-10-20) -->
         <UiButton intent="secondary" size="small" :label="t('colors.clear')" @click="house.setColor(house.selectedPart, null)" />
         <!-- the finish the store will ask for: recorded for the color list and card, not drawn on the photo -->
-        <UiSelect v-model="finish" :options="finishOptions" width="fit" :aria-label="t('colors.finish.label', { part: selectedName })" />
+        <span class="colors__finish">
+          <span class="hint">{{ t("colors.finish.short") }}</span>
+          <UiSelect v-model="finish" :options="finishOptions" width="fit" :aria-label="t('colors.finish.label', { part: selectedName })" />
+        </span>
       </div>
       <!-- what a click on a paint sets: the new color, or the paint the part has on it now -->
       <div class="colors__target">
@@ -398,7 +401,7 @@ async function match({ say = true } = {}) {
         <span :id="othersId" class="hint">{{ t("colors.others.label") }}</span>
         <div class="colors__others-row">
           <q-btn
-            v-for="o in others" :key="o.paint.id" flat no-caps unelevated class="chip" :disable="!house.selectedPart"
+            v-for="o in others" :key="o.paint.id" v-tooltip="o.paint.displayName" flat no-caps unelevated class="chip" :disable="!house.selectedPart"
             :aria-label="t('colors.others.use', { name: o.paint.displayName, words: otherWords(o) })" @click="choose(o.paint)"
           >
             <span class="chip__body">
@@ -583,6 +586,11 @@ async function match({ say = true } = {}) {
 }
 .chip__code {
   font-size: var(--fs-small);
+}
+.colors__finish {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1, 4px);
 }
 /* the same color in other brands: a row of chips as wide as their names */
 .colors__others {
