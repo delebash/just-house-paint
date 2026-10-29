@@ -26,8 +26,28 @@ STATE:  (1) DONE — round B checked for real (the history's engines entry). (2)
         with the features first and docs/dev/ARCHITECTURE.md (9bc2af2); the release carries the user docs and pings
         the website (the template's way, kit e326cb8 + 0976b4e); the website built and live (RESEARCH §14); this
         tracker closed down to what is open (its history: `../plans/archive/tasks-history-2026-10.md`).
-OPEN:   - the full cross-app run (the kit, the template and every app), then (4): a GitHub dry run, then the real
-          release with the user's go.
+        The full cross-app run DONE 2026-10-28 (26 steps green: the kit, the template, every app's tests, the guard,
+        this app's unpacked build and e2e 16/16). The GitHub dry run DONE: run 40810813894 on main 1109e3c with the
+        kit at bb2b5dd — the three builds started on their runners, the AppImage opened as a user does, nothing
+        published (installers 154 / 367 / 162 MB kept on the run).
+NO RELEASE YET — the user, verbatim (2026-10-28): "do not recommned a release, i want all bugs fixed all features
+        recommended done before we do a release, are theer any features that you would recommned or other
+        outstanding items"; then "you can think about any new features that we dont have already or in ideas that you
+        would add".
+MY RECS (shown 2026-10-28), waiting on the user's pick and go:
+        Fixes — 1. the AI photo names the part furthest off ("front door: ΔE 37.8, left as photographed"), not only
+        the number (edit.js computes each part's; the render row keeps only the worst); 2. the Schemes tab's brand
+        pairings: all three cards' Apply off with one note repeated, cramped — find why first (the readability rule?),
+        then offer body and trim with a warning on the door if it is the rule; 3. App Settings → Storage lists the
+        folders of deleted houses an older version left (no mark, never swept) with Remove — not an automatic sweep.
+        Features — A. the same color in other brands: the nearest paint of each other brand with its ΔE ("very
+        close" under 2, the real-chip note); B. use a design on another photo: copy it to another house, the parts that
+        house lacks skipped and named; C. the finish per part (flat, satin, semi-gloss…) on the color list and color
+        card, recorded, not drawn; D. morning / midday / evening light: a white-balance preview over the whole photo,
+        never saved. Order: A, B, then C, then D. From IDEAS: signed installers — SignPath Foundation (free for open
+        source, the owner applies); the cloud AI photo and wide-color photos stay parked.
+OPEN:   - the user's pick of the recs above, built with their tests, the full run again; then the release only on
+          the user's word.
         - for the user, not code: the secret WEBSITE_DISPATCH_TOKEN on this repo (a token that can start the
           website's workflow — I can't make one); without it the release's notify-website says so and passes, and
           `gh workflow run deploy.yml -R delebash/just-house-paint-website` rebuilds the site.
