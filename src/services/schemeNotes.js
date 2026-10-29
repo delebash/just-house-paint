@@ -15,10 +15,11 @@ export const NOTE_KEYS = {
   "the accent is not colorful or distinct enough": "schemes.why.pairAccent",
 };
 
-/** The catalog keys saying why `scheme` can't be applied — none when it can; a note this list
- *  doesn't know yet still gives a reason. */
+/** The catalog keys for what the server noted about `scheme`: why it can't be applied, or — a brand's own pairing,
+ *  which always applies (2026-10-28) — what to know before applying it. None for a scheme with nothing noted; one
+ *  that can't be applied always gives a reason, even for a note this list doesn't know yet. */
 export function schemeReasons(scheme) {
-  if (scheme?.complete) return [];
   const keys = [...new Set((scheme?.notes || []).map((n) => NOTE_KEYS[n] || "schemes.why.other"))];
+  if (scheme?.complete) return keys;
   return keys.length ? keys : ["schemes.why.other"];
 }

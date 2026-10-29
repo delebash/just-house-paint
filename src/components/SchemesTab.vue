@@ -126,7 +126,8 @@ function roleSwatch(s, role) {
   const paint = s.roles?.[role]?.paint;
   return paint ? { style: { background: paint.hex }, title: paint.displayName } : { class: "swatch--none" };
 }
-// why a scheme can't be applied, in words (services/schemeNotes.js) — never a silent disabled Apply
+// what the server noted, in words (services/schemeNotes.js): why a scheme can't be applied — never a silent disabled
+// Apply — or, for a brand's pairing (which always applies), what to know first
 const why = (s) => schemeReasons(s).map((key) => t(key)).join(" ");
 
 const kindLabel = (s) => (s.kind === "ai" ? s.name : s.kind === "coordinating" ? t("schemes.kinds.coordinating") : t(`schemes.kinds.${s.kind}`));
@@ -163,10 +164,10 @@ const kindLabel = (s) => (s.kind === "ai" ? s.name : s.kind === "coordinating" ?
           <div class="scheme__text">
             <strong>{{ kindLabel(s) }}</strong>
             <span class="muted">{{ ROLES.map((r) => s.roles?.[r]?.paint?.displayName).filter(Boolean).join(" · ") }}</span>
-            <span v-if="!s.complete" :id="`schemes-why-h${i}`" class="scheme__why">{{ why(s) }}</span>
+            <span v-if="why(s)" :id="`schemes-why-h${i}`" class="scheme__why">{{ why(s) }}</span>
           </div>
           <UiButton
-            intent="secondary" size="small" :disabled="!s.complete" :aria-describedby="s.complete ? undefined : `schemes-why-h${i}`"
+            intent="secondary" size="small" :disabled="!s.complete" :aria-describedby="why(s) ? `schemes-why-h${i}` : undefined"
             :label="t('schemes.apply')" @click="apply(s)"
           />
         </li>
@@ -223,8 +224,10 @@ const kindLabel = (s) => (s.kind === "ai" ? s.name : s.kind === "coordinating" ?
   flex-direction: column;
   gap: 6px;
 }
+/* the button drops under the text when the panel is narrow, so the names and the note keep their room */
 .scheme {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--sp-2);
   padding: 6px;
@@ -250,11 +253,14 @@ const kindLabel = (s) => (s.kind === "ai" ? s.name : s.kind === "coordinating" ?
 .scheme__text {
   display: flex;
   flex-direction: column;
-  flex: 1 1 auto;
+  flex: 1 1 14em;
   min-width: 0;
   font-size: var(--fs-small);
 }
 .scheme__why {
   color: var(--ink-2);
+}
+.scheme > :last-child {
+  margin-left: auto;
 }
 </style>

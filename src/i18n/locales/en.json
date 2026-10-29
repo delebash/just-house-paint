@@ -408,9 +408,9 @@
       "noBody": "No paint of this brand to use for the body.",
       "noTrim": "No paint of this brand near the trim's color is light or dark enough against the body.",
       "noAccent": "No paint of this brand near the door's color is colorful enough and far enough from the body.",
-      "pairTrim": "The trim the brand pairs with it isn't light or dark enough against the body.",
-      "pairNoAccent": "The brand pairs no further color with it for the door.",
-      "pairAccent": "The door color the brand pairs with it isn't colorful enough, or is too close to the body.",
+      "pairTrim": "The trim the brand pairs with it isn't much lighter or darker than the body, so the trim may not stand out.",
+      "pairNoAccent": "The brand pairs no further color with it for the door: Apply leaves the door as it is.",
+      "pairAccent": "The door color the brand pairs with it is quiet or close to the body, so the door may not stand out.",
       "other": "This scheme can't be made from this brand's paints."
     },
     "kinds": {

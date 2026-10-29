@@ -156,6 +156,24 @@ describe("schemesFromCoordinating", () => {
     expect(schemes.every((s) => s.roles.trim.paint.code !== "9905" && s.roles.accent.paint?.code !== "9905")).toBe(true);
     expect(schemes[0].roles.accent.paint).toBeNull();
     expect(schemes[0].notes).toContain("the brand lists no further coordinating color for the accent");
+    // the body and the trim the brand pairs are still the brand's pairing: it applies, the door as it is
+    expect(schemes[0].complete).toBe(true);
+  });
+
+  test("the brand's pairing applies as the brand made it; what the app's rules found is a note, never a block", async () => {
+    // 2026-10-28: with the harmony rules deciding, 1,654 of Sherwin-Williams' 1,746 colors with pairings had none to
+    // apply (1,643 for the accent — the brands pair a color with soft neutrals): a pairing whose accent is a quiet
+    // neutral is still the brand's own
+    const rows = await swRows();
+    const slate = rows.find((r) => r.code === "9902");
+    const white = rows.find((r) => r.code === "9904");
+    const greige = { ...white, id: "sherwin-williams:9990", code: "9990", name: "Greige", hex: "#9a9488" };
+    const body = { ...slate, coordinating: ["9904", "9990"] };
+    const [best] = schemesFromCoordinating(body, [...rows, greige]);
+    expect(best.roles.trim.paint.code).toBe("9904");
+    expect(best.roles.accent.paint.code).toBe("9990");
+    expect(best.notes).toContain("the accent is not colorful or distinct enough");
+    expect(best.complete).toBe(true);
   });
 
   test("no coordinating colors → no schemes", async () => {

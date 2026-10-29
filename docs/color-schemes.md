@@ -28,7 +28,10 @@ is light, dark or colorful enough, the row says which role.
 ## The brand's own pairings
 
 Sherwin-Williams, Valspar, HGTV Home and Dutch Boy list two or three coordinating colors for most of their paints;
-when the body's paint has them, they come first, checked against the same rules. Behr, Benjamin Moore and
+when the body's paint has them, they come first. A pairing is the brand's own, so its **Apply** is always on: the
+body, the trim and — when the brand lists one — the door. Each is checked against the same rules as the schemes
+above, and what they find is said on the row, before you apply it: a trim that isn't much lighter or darker than the
+body, or a door color that is quiet or close to the body, may not stand out. Behr, Benjamin Moore and
 PPG / Glidden publish none.
 
 ## Ask the AI

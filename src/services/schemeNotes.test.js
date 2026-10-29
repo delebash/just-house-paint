@@ -31,4 +31,9 @@ describe("a scheme that can't be applied says why", () => {
     expect(schemeReasons({ complete: true, notes: [] })).toEqual([]);
     expect(schemeReasons({ complete: false, notes: ["something new"] })).toEqual(["schemes.why.other"]);
   });
+
+  test("a brand's pairing that applies still says what the app's rules found (2026-10-28)", () => {
+    const pairing = { kind: "coordinating", complete: true, notes: ["the accent is not colorful or distinct enough"] };
+    expect(schemeReasons(pairing)).toEqual(["schemes.why.pairAccent"]);
+  });
 });

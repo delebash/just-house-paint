@@ -198,7 +198,11 @@ export function suggestSchemes(base, paints, options = {}) {
  * Schemes from a brand's own coordinating colors (the feeds list two or three per color; Sherwin-
  * Williams' third is a matching white). `row` is the body; each pairing of its coordinating colors
  * as trim and accent is checked against the same constraints and ranked: both roles valid first,
- * then the larger trim contrast, then the more colorful accent.
+ * then the larger trim contrast, then the more colorful accent. A pairing is the brand's, so it
+ * always applies (`complete`) — the body and trim, and the accent when the brand lists one; what
+ * the constraints found stays in its `notes`, shown beside it, never a block (2026-10-28: as a block
+ * they left 1,654 of Sherwin-Williams' 1,746 colors with pairings none to apply — the brands pair a
+ * color with soft neutrals, which the accent's chroma rule refuses).
  */
 export function schemesFromCoordinating(row, paints, options = {}) {
   const t = { ...HARMONY_DEFAULTS, ...options };
@@ -218,7 +222,7 @@ export function schemesFromCoordinating(row, paints, options = {}) {
       if (!accent) notes.push("the brand lists no further coordinating color for the accent");
       else if (!aOk) notes.push("the accent is not colorful or distinct enough");
       options_.push({
-        scheme: { kind: "coordinating", base: row.hex, roles: { body: role(row), trim: role(trim), accent: role(accent) }, complete: tOk && aOk, notes },
+        scheme: { kind: "coordinating", base: row.hex, roles: { body: role(row), trim: role(trim), accent: role(accent) }, complete: true, notes },
         score: [Number(tOk) + Number(aOk), Math.abs(lchOf(trim).l - lchOf(row).l), accent ? lchOf(accent).c : 0],
       });
     }

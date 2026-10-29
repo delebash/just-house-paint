@@ -159,9 +159,10 @@ function fakeFetch(input, init = {}) {
   }
   if (decodeURIComponent(p) === `/v1/paints/${WHITE.id}`) return Promise.resolve(json(WHITE));
   if (p === "/v1/paints/nearest") return Promise.resolve(json([{ paint: PAINT, deltaE: 3.2 }]));
-  // the Schemes tab: harmony schemes around a paint, and the brand's own pairings (none here)
+  // the Schemes tab: harmony schemes around a paint, and the brand's own pairings (`server.coordinating`, none by
+  // default)
   if (p === "/v1/schemes/harmony") return Promise.resolve(json(server.harmony || []));
-  if (/^\/v1\/paints\/[^/]+\/schemes$/.test(p)) return Promise.resolve(json([]));
+  if (/^\/v1\/paints\/[^/]+\/schemes$/.test(p)) return Promise.resolve(json(server.coordinating || []));
   if (p === "/v1/paints") {
     server.searches.push(Object.fromEntries(url.searchParams));
     // `paintTotal`: the brand has more than the two shown (Show more)
@@ -1304,6 +1305,30 @@ test("a scheme that can't be applied says why on its row — never empty colors 
   expect(classic.querySelector(".scheme__why")).toBeNull();
   expect(classic.querySelector("button").disabled).toBe(false);
   expect(classic.querySelector("button").hasAttribute("aria-describedby")).toBe(false);
+});
+
+test("the brand's own pairing applies as the brand made it, and says what to know first", async () => {
+  // 2026-10-28: the accent's chroma rule left nearly every brand pairing with Apply off and one note repeated
+  server.parts = PARTS;
+  server.coordinating = [
+    {
+      kind: "coordinating",
+      complete: true,
+      notes: ["the accent is not colorful or distinct enough"],
+      roles: { body: { paint: PAINT }, trim: { paint: WHITE }, accent: { paint: WHITE } },
+    },
+  ];
+  await mountPage();
+  await click(byText(".q-tab", "Colors"));
+  await click(byText(".chip", "Sea Blue"));
+  await click(byText(".q-tab", "Schemes"));
+  await flushPromises();
+  const row = [...document.querySelectorAll(".scheme")].find((li) => li.querySelector("strong")?.textContent === "The brand's coordinating colors");
+  const note = row.querySelector(".scheme__why");
+  expect(note.textContent).toBe("The door color the brand pairs with it is quiet or close to the body, so the door may not stand out.");
+  const apply = row.querySelector("button");
+  expect(apply.disabled).toBe(false);
+  expect(apply.getAttribute("aria-describedby")).toBe(note.id);
 });
 
 // Several windows on one server (the eleventh review, 2026-10-20)

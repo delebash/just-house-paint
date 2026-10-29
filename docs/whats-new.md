@@ -25,6 +25,9 @@
   a busy one makes the other say "The graphics card is busy" — finding the parts on the processor never waits for
   the card now.
 - **App Settings → Storage** no longer lists the part finder: its model is counted with the AI cache's models.
+- **The brand's own pairings can be applied**: on the Schemes tab, a pairing whose door color was quiet or close to
+  the body had **Apply** off — nearly every pairing the brands publish. A pairing now applies as the brand made it,
+  and the row says what to know first (the door may not stand out).
 - **The AI photo names the part furthest from its paint**: "ΔE 37.8 from the chips — furthest off: Front door"
   says which part the number is about — often a small part the model left as photographed.
 - **Paint colors says where each brand's colors came from**: Benjamin Moore and PPG / Glidden, loaded from the
