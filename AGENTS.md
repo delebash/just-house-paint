@@ -76,7 +76,9 @@ and `npm run build:unpacked && npm test`.
 | **THE family app structure — every app** | `../just-core/docs/app-structure.md` (§Q the layout, §11 the chrome, §15–§18 the contracts) |
 | The shared stack (kit) | `../just-core/docs/dev/README.md` · `../just-core/packages/core/README.md` |
 | What this app is for | `docs/dev/PRD.md` |
+| Why it is built the way it is | `docs/dev/ARCHITECTURE.md` |
 | Open work · ideas | `docs/dev/TASKS.md` · `docs/dev/IDEAS.md` |
+| The release and the website | `README.md` "Releasing" · `../just-house-paint-website` (its docs are this repo's `docs/*.md`) |
 | What is already known | `docs/dev/RESEARCH.md` (the kit's: `../just-core/docs/dev/RESEARCH.md`) |
 | A route, its schema and its test | `server/src/{api,schemas}/houses*` · `server/tests/houses.test.js` |
 | A screen and its mounted test | `src/pages/HomePage.vue` · `src/pages/HomePage.test.js` (the template's notes area is the family's reference) |
