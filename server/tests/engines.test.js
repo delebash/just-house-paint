@@ -49,14 +49,16 @@ describe("resolveOverlaps", () => {
 describe("createFinder", () => {
   function fakeSegmenter() {
     const calls = [];
+    const speeds = []; // what each run recorded with the kit's recordSpeed (s/image)
     let encoded = 0;
     return {
       calls,
+      speeds,
       factory: async () => ({
         providers: { image: "cpu" },
         async encode(file) {
           calls.push(["encode", path.basename(file)]);
-          return { id: ++encoded, width: 4, height: 2 };
+          return { id: ++encoded, width: 4, height: 2, encodeMs: 13500 };
         },
         async findText(h, phrase) {
           calls.push(["text", phrase]);
@@ -79,13 +81,13 @@ describe("createFinder", () => {
   const house = { id: "h1", displayWidth: 4, displayHeight: 2 };
 
   /** The finder on a stand-in for the kit's runVisionFeature: SAM 3's adapter builds one instance, which every run
-   *  gets (the kit's withModel holds it); `refuse` an error the kit answers instead. */
+   *  gets (the kit's withModel holds it) with the kit's recordSpeed; `refuse` an error the kit answers instead. */
   function finderWith(seg, { refuse = null } = {}) {
     let instance = null;
     const run = async (fn) => {
       if (refuse) throw refuse;
       instance ??= await sam3Adapter({ createSegmenter: seg.factory }).create({ files: {}, ort: {}, executionProvider: "cpu" });
-      return fn(instance);
+      return fn(instance, { recordSpeed: (sec) => seg.speeds.push(sec) });
     };
     const config = [
       { key: "body", labelKey: "parts.body", prompts: ["house"], paintable: true, group: "walls", method: "subtract" },
@@ -151,6 +153,19 @@ describe("createFinder", () => {
     // a second run on a house being encoded waits for that encode — one encode each
     await Promise.all([f.box({ ...house, id: "h4" }, { x0: 0, y0: 0, x1: 2, y1: 2 }), f.box({ ...house, id: "h4" }, { x0: 0, y0: 0, x1: 2, y1: 2 })]);
     expect(seg.calls.filter((c) => c[0] === "encode")).toHaveLength(4);
+  });
+
+  test("a run that encodes a photo records its encode on the chip, in seconds per image; a run on a kept one records none", async () => {
+    const seg = fakeSegmenter();
+    const f = finderWith(seg);
+    await f.find(house, { signal: new AbortController().signal, progress: () => {} });
+    expect(seg.speeds).toEqual([13.5]);
+    // the box on the same house reuses the encode
+    await f.box(house, { x0: 0, y0: 0, x1: 2, y1: 2 });
+    expect(seg.speeds).toEqual([13.5]);
+    // two runs on a house being encoded: one encode, one record
+    await Promise.all([f.box({ ...house, id: "h2" }, { x0: 0, y0: 0, x1: 2, y1: 2 }), f.box({ ...house, id: "h2" }, { x0: 0, y0: 0, x1: 2, y1: 2 })]);
+    expect(seg.speeds).toEqual([13.5, 13.5]);
   });
 
   test("the kit's refusal is the finder's: not downloaded, the card busy", async () => {

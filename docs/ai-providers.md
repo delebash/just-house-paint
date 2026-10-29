@@ -5,8 +5,13 @@ house's **Schemes** tab) and draws the AI photo ([The AI photo](ai-photo.md)). T
 **Providers & models**, **Images** (the AI photo's engine, stable-diffusion.cpp, and its model: **Install**
 and **Remove**, **Download** and **Delete**, each model with its fit-and-speed chip), **Vision** (the part
 finder's engine, ONNX Runtime — part of the app, nothing to install — and its model SAM 3: **Download** and
-**Delete**, and **Let go after idle (minutes)**), **Routing by feature**
+**Delete**, its fit-and-speed chip, and **Let go after idle (minutes)**), **Routing by feature**
 (see [The AI features](ai-features.md)), **Usage** and **AI engine console**.
+
+SAM 3's chip shows a speed once **Find the parts** or **Box** has read a photo on this computer: the seconds that
+one photo took. **Images** and **Vision** each have **Speed bands (seconds per image)** — **Fast at ≤**, **Fine at
+≤** and **Slow at ≤**, then **Save**: a model at or under a line is "fast", "fine" or "slow", anything slower "very
+slow".
 
 Above the tabs, a strip shows this computer: **OS**, **CPU**, **Memory**, **GPU**, **Acceleration**,
 and how the graphics card's memory is used — **VRAM used** (**Memory used** where the graphics share

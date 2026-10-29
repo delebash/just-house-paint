@@ -109,9 +109,11 @@ export function createFinder(ctx) {
 
   /** `fn(handle)` on the house's encoded photo on segmenter `s` — kept for its next box (the last two houses). One run
    *  encodes a house (a second one waits for that encode), and a photo in use is never let go under its run: with
-   *  the parts of one house being found while a Box runs on two others, the oldest not in use goes once a run ends. */
-  async function withEncoded(s, house, fn) {
+   *  the parts of one house being found while a Box runs on two others, the oldest not in use goes once a run ends.
+   *  The run that encodes records that encode with the kit (`recordSpeed`: seconds per image, the vision kind's bands). */
+  async function withEncoded(s, house, fn, recordSpeed) {
     let e = s.encodings.get(house.id);
+    const encodes = !e;
     if (!e) {
       e = { handle: s.encode(displayPath(ctx.dataDir, house.id)), users: 0 };
       s.encodings.set(house.id, e);
@@ -120,7 +122,9 @@ export function createFinder(ctx) {
     }
     e.users++;
     try {
-      return await fn(await e.handle);
+      const handle = await e.handle;
+      if (encodes) recordSpeed(handle.encodeMs / 1000);
+      return await fn(handle);
     } finally {
       e.users--;
       for (const [id, old] of s.encodings) {
@@ -136,14 +140,18 @@ export function createFinder(ctx) {
     async find(house, { signal, progress }) {
       progress(0.02, "loading");
       const config = validatePartsConfig(ctx.partsConfig() || DEFAULT_PARTS);
-      const result = await run((s) =>
-        withEncoded(s, house, (handle) =>
-          findParts(s, handle, config, {
-            signal,
-            houseMargin: ctx.houseMargin?.() ?? 0,
-            houseMinShare: ctx.houseMinShare?.() ?? 0.5,
-            onProgress: ({ part, index, total }) => progress(0.1 + (0.85 * index) / total, part),
-          }),
+      const result = await run((s, { recordSpeed }) =>
+        withEncoded(
+          s,
+          house,
+          (handle) =>
+            findParts(s, handle, config, {
+              signal,
+              houseMargin: ctx.houseMargin?.() ?? 0,
+              houseMinShare: ctx.houseMinShare?.() ?? 0.5,
+              onProgress: ({ part, index, total }) => progress(0.1 + (0.85 * index) / total, part),
+            }),
+          recordSpeed,
         ),
       );
       const byKey = Object.fromEntries(config.map((p) => [p.key, p]));
@@ -160,7 +168,9 @@ export function createFinder(ctx) {
 
     /** The region inside a box [x0, y0, x1, y1] (display pixels): the best instance's mask. */
     async box(house, { x0, y0, x1, y1 }) {
-      const found = await run((s) => withEncoded(s, house, (handle) => s.findBoxes(handle, [[x0, y0, x1, y1]], { phrase: "visual", mode: "select", threshold: 0.3 })));
+      const found = await run((s, { recordSpeed }) =>
+        withEncoded(s, house, (handle) => s.findBoxes(handle, [[x0, y0, x1, y1]], { phrase: "visual", mode: "select", threshold: 0.3 }), recordSpeed),
+      );
       const best = found.sort((a, b) => b.score - a.score)[0];
       return best ? best.mask : new Uint8Array(house.displayWidth * house.displayHeight);
     },
