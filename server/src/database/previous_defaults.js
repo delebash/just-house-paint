@@ -32,6 +32,7 @@ export const PREVIOUS_DEFAULTS = Object.freeze({
     "c7df3921fb6c1e9f", // before gainLimits (the paint on a part now)
     "2349559042b9098d", // + gainLimits, before castLimit and signalFloor (v0.1.0–v0.1.2)
     "5afc0446d8b847fa", // + castLimit and signalFloor, before the close-up
+    "59aaec40e06a42a6", // + the close-up, before pieceLight (the light pair of shutters)
   ]),
   "schemes.harmony": Object.freeze([
     "b11d8afd9127c603", // v1, before the classic door's traditional colors (27f4140)

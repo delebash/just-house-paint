@@ -5,7 +5,9 @@
 original photo back everywhere else, then locks what it repainted to the paint colors.
 
 Use it to see a whole scheme with the model's own sense of light. Its colors are approximate: the
-model decides how the light falls, so one paint can look lighter on one wing than another. The
+model decides how the light falls, so one paint can look lighter on one wing than another. A part in separate
+pieces keeps them together: a shutter or a door the model draws much lighter than the part's others comes out only a
+little lighter, and one it draws much darker no darker than deep shade. The
 painted photo on the house page is the color-accurate view (the AI photo's own note calls it "the instant
 preview"). The **Light** and **Texture** sliders don't change the AI photo.
 

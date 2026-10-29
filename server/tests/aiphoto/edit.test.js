@@ -6,6 +6,7 @@
 import { mkdtempSync, readdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { differenceCiede2000, parse } from "culori";
 import sharp from "sharp";
 import { describe, expect, test } from "vitest";
 import { aiRepaint, cappedSize } from "../../src/aiphoto/edit.js";
@@ -14,6 +15,7 @@ import { DEFAULT_COMPOSE, featherMask, readMask, readRgb } from "../../src/aipho
 const W = 640;
 const H = 480;
 const tmp = () => mkdtempSync(join(tmpdir(), "aiphoto-edit-"));
+const de = differenceCiede2000();
 
 /** A house-ish photo: sky, a white wall lit from the left with a shadow band, a dark door. */
 async function photoPng() {
@@ -261,6 +263,42 @@ describe("the lock covers only what the AI repainted (RESEARCH §10: the pink tr
   test("with lockOnlyRepainted off, the old behavior locks the trim too", async () => {
     const { trim } = await run({ ...DEFAULT_COMPOSE, lockOnlyRepainted: false });
     expect(trim[0]).toBeGreaterThan(trim[1] + 60); // the trim turned paint-colored
+  });
+});
+
+describe("a part of several pieces (RESEARCH §15: the light pair of shutters)", () => {
+  test("a pair the model drew light cyan comes out the paint, as do the shutters it drew navy", async () => {
+    // six shutters on the lit wall; the model draws the first pair light cyan, the rest navy
+    const SHUTTERS = [
+      [40, 160, 70, 280],
+      [130, 160, 160, 280],
+      [180, 160, 210, 280],
+      [240, 160, 270, 280],
+      [360, 160, 390, 280],
+      [450, 160, 480, 280],
+    ];
+    const sd = fakeImage({
+      paint: (init, mask, i, x, shade) =>
+        mask[i] <= 127 ? [0, 1, 2].map((k) => init.data[i * 3 + k]) : x < 165 ? [155 * shade, 218 * shade, 222 * shade] : [10 * shade, 45 * shade, 65 * shade],
+    });
+    const r = await aiRepaint({
+      generate: sd.generate,
+      photo: await photoPng(),
+      mask: await rectMask(SHUTTERS),
+      colorHex: "#2f3d4c",
+      surfaceLabel: "shutters",
+      outPath: join(tmp(), "o.png"),
+      size: { width: 320, height: 240 },
+      compose: { ...DEFAULT_COMPOSE, closeUpMaxParts: 0 },
+    });
+    const out = await readRgb(r.path);
+    const naval = parse("#2f3d4c");
+    for (const [x0, y0, x1, y1] of SHUTTERS) {
+      const i = (((y0 + y1) >> 1) * W + ((x0 + x1) >> 1)) * 3;
+      const seen = { mode: "rgb", r: out.data[i] / 255, g: out.data[i + 1] / 255, b: out.data[i + 2] / 255 };
+      expect(de(naval, seen), `the shutter at x ${x0}`).toBeLessThan(3);
+    }
+    expect(r.deltaE).toBeLessThan(0.5);
   });
 });
 

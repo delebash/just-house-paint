@@ -38,7 +38,7 @@ const TODAY = {
   "aiphoto.workingPixels": "aa1e50acc912c068",
   "aiphoto.sharedGpuNoteMb": "e39eef82f61b21e2",
   "aiphoto.templates": "d8cd23b0f7781ac7",
-  "aiphoto.compose": "59aaec40e06a42a6",
+  "aiphoto.compose": "fe040e21e6ed28e3",
 };
 
 test("today's defaults are the ones this test knows, and none of them is listed as earlier", () => {

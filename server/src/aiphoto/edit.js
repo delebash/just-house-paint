@@ -33,6 +33,7 @@ import {
   luminanceOf,
   paintColor,
   pasteBack,
+  pieces,
   readMask,
   readRgb,
   repaintedAlpha,
@@ -171,9 +172,17 @@ export async function aiRepaint(opts) {
     const union = new Float32Array(W * H);
     for (const m of soft) for (let i = 0; i < union.length; i++) if (m[i] > union[i]) union[i] = m[i];
     const photoY = list.some((s) => s.currentHex) ? luminanceOf(full.data) : null;
+    // the pixels each surface owns (a later surface wins) and their pieces — each shutter, each door
+    const owned = hard.map((m, s) => {
+      const o = Float32Array.from(m);
+      for (let t = s + 1; t < list.length; t++) for (let i = 0; i < o.length; i++) if (hard[t][i] >= c.insideAt) o[i] = 0;
+      return o;
+    });
+    const parts = owned.map((o) => pieces(o, W, c.insideAt));
 
     // The picture from a drawing at full size (`aiData`): the paste-back, then each surface locked to its paint.
-    // Each surface's lighting statistics over the pixels it owns (a later surface wins). The lock goes over the
+    // Each surface's lighting statistics over the pixels it owns, each piece's level within pieceLight of the
+    // typical piece's (the drawing's light, not one piece the model drew lighter or darker). The lock goes over the
     // paste-back, only where the AI repainted (c.lockOnlyRepainted) — unless the paint is close to the surface's old
     // color, when the whole surface is locked. A surface whose paint now is known is locked in the light that paint
     // says falls on it, read off the photo's own pixels (not the render's); its ΔE is to the paint in that light.
@@ -183,9 +192,7 @@ export async function aiRepaint(opts) {
       let locked = c.lockOnlyRepainted ? unlocked : full.data;
       const results = [];
       for (let s = 0; s < list.length; s++) {
-        const owned = Float32Array.from(hard[s]);
-        for (let t = s + 1; t < list.length; t++) for (let i = 0; i < owned.length; i++) if (hard[t][i] >= c.insideAt) owned[i] = 0;
-        const stats = surfaceStats(Y, owned, c);
+        const stats = surfaceStats(Y, owned[s], c, parts[s]);
         const gain = list[s].currentHex ? lightGain(full.data, surfaceStats(photoY, hard[s], c).lit, list[s].currentHex, c) : [1, 1, 1];
         const target = litHexOf(list[s].colorHex, gain);
         let lockAlpha = soft[s];

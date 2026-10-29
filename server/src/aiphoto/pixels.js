@@ -22,6 +22,12 @@ export const DEFAULT_COMPOSE = Object.freeze({
   basePercentile: 75,
   // "Normally lit" pixels — luminance ÷ base inside this band; ΔE is measured on them.
   litBand: Object.freeze([0.9, 1.1]),
+  // A part's pieces (its outline's separate shapes: each shutter, each door) each have their own level in the
+  // drawing, and the model can draw one far lighter or darker than the light makes it (RESEARCH §15: a pair of
+  // shutters light cyan, 29× the others). A piece's level counts only within this range of the part's typical
+  // piece's; past it the piece is locked at the range's end. The feathered edge just outside the outline (the
+  // drawing's wall there, not the part) is lit at most to the range's top.
+  pieceLight: Object.freeze([0.25, 1.1]),
   // Lock only what the AI repainted: a pixel the AI left as it was (white trim inside a body mask)
   // keeps the AI's own pixel instead of turning paint-colored (RESEARCH §10: the pink trim). The
   // change is the RGB distance between the render and the photo relative to their brightness
@@ -100,19 +106,82 @@ export function percentile(values, p) {
   return a[Math.min(a.length - 1, Math.max(0, Math.round((p / 100) * (a.length - 1))))];
 }
 
+/** The 4-connected pieces of a mask's inside (≥ insideAt): `label`, each pixel's piece (−1 outside), and `count`. */
+export function pieces(mask, width, insideAt) {
+  const label = new Int32Array(mask.length).fill(-1);
+  let size = 0;
+  for (let i = 0; i < mask.length; i++) if (mask[i] >= insideAt) size++;
+  const stack = new Int32Array(size);
+  let count = 0;
+  for (let s = 0; s < mask.length; s++) {
+    if (label[s] >= 0 || mask[s] < insideAt) continue;
+    let top = 0;
+    stack[top++] = s;
+    label[s] = count;
+    while (top) {
+      const p = stack[--top];
+      const x = p % width;
+      for (const q of [x > 0 ? p - 1 : -1, x < width - 1 ? p + 1 : -1, p - width, p + width]) {
+        if (q < 0 || q >= mask.length || label[q] >= 0 || mask[q] < insideAt) continue;
+        label[q] = count;
+        stack[top++] = q;
+      }
+    }
+    count++;
+  }
+  return { label, count };
+}
+
 /**
  * The lighting statistics of one surface in the render: `inside` (mask ≥ insideAt), `base`
- * (the basePercentile of their luminance) and `lit` (inside, luminance ÷ base within litBand).
+ * (the basePercentile of their luminance) and `lit` (inside, luminance ÷ its base within litBand).
+ * With `parts` (the mask's `pieces`), each piece has its own level, the basePercentile of its pixels; `base` is the
+ * typical piece's (the pieces' levels weighted by their pixels, at the median) and `pieceBase` each piece's base —
+ * `base` itself, unless the piece's level is past `pieceLight` × base: then its level ÷ that end (the piece the
+ * model drew too light or too dark locked at the end). A pixel in no piece (the feathered edge) takes `base`, its
+ * light at most `edgeMax` (pieceLight's top).
  */
-export function surfaceStats(Y, mask, { insideAt, basePercentile, litBand } = DEFAULT_COMPOSE) {
+export function surfaceStats(Y, mask, { insideAt, basePercentile, litBand, pieceLight } = DEFAULT_COMPOSE, parts = null) {
   const inside = [];
   for (let i = 0; i < mask.length; i++) if (mask[i] >= insideAt) inside.push(i);
-  const base = percentile(
-    inside.map((i) => Y[i]),
-    basePercentile,
-  );
-  const lit = base > 0 ? inside.filter((i) => Y[i] / base > litBand[0] && Y[i] / base < litBand[1]) : [];
-  return { inside, base, lit };
+  if (!parts) {
+    const base = percentile(
+      inside.map((i) => Y[i]),
+      basePercentile,
+    );
+    const lit = base > 0 ? inside.filter((i) => Y[i] / base > litBand[0] && Y[i] / base < litBand[1]) : [];
+    return { inside, base, lit };
+  }
+  const { label, count } = parts;
+  const values = Array.from({ length: count }, () => []);
+  for (const i of inside) if (label[i] >= 0) values[label[i]].push(Y[i]);
+  const level = values.map((v) => percentile(v, basePercentile));
+  const order = level.map((_, k) => k).filter((k) => values[k].length && level[k] > 0);
+  order.sort((a, b) => level[a] - level[b]);
+  let base = Number.NaN;
+  let seen = 0;
+  const half = order.reduce((n, k) => n + values[k].length, 0) / 2;
+  for (const k of order) {
+    seen += values[k].length;
+    if (seen >= half) {
+      base = level[k];
+      break;
+    }
+  }
+  const [lo, hi] = pieceLight;
+  const pieceBase = Float64Array.from(level, (l) => (l > 0 ? Math.min(Math.max(base, l / hi), lo > 0 ? l / lo : Number.POSITIVE_INFINITY) : base));
+  const stats = { inside, base, lit: [], label, pieceBase, edgeMax: hi };
+  const light = lightOf(stats, Y);
+  if (base > 0) stats.lit = inside.filter((i) => light(i) > litBand[0] && light(i) < litBand[1]);
+  return stats;
+}
+
+/** Pixel `i`'s light in the drawing: its luminance ÷ its piece's base — at most `edgeMax` on the feathered edge
+ *  outside every piece (surfaceStats). */
+function lightOf(stats, Y) {
+  const { label, pieceBase, base, edgeMax } = stats;
+  if (!label) return (i) => Y[i] / base;
+  return (i) => (label[i] >= 0 ? Y[i] / pieceBase[label[i]] : Math.min(edgeMax, Y[i] / base));
 }
 
 /** `under` with `color(i)` (0..1 sRGB triple) laid over it at `alpha[i]`, as a new buffer. */
@@ -140,15 +209,18 @@ export function pasteBack(photo, render, alpha) {
 
 /**
  * The color lock over `under`: inside `alpha`, paint × `gain` (the part's light — lightGain) ×
- * (render luminance ÷ the surface's normally lit luminance `stats.base`), in linear light, clipped
- * at white. The render keeps only its light and shade; the hue and the lit level come from the
- * paint in the part's light.
+ * (render luminance ÷ the surface's normally lit luminance — its piece's, surfaceStats), in linear
+ * light, clipped at white. The render keeps only its light and shade; the hue and the lit level come
+ * from the paint in the part's light.
  */
 export function colorLock(under, render, alpha, paintHex, stats, Y = luminanceOf(render), gain = [1, 1, 1]) {
   const p = paintColor(paintHex);
   const paint = [toLinear(p.r) * gain[0], toLinear(p.g) * gain[1], toLinear(p.b) * gain[2]];
-  const base = stats.base;
-  return blendOver(under, alpha, (i) => paint.map((v) => toSrgb(Math.min(1, (v * Y[i]) / base))));
+  const light = lightOf(stats, Y);
+  return blendOver(under, alpha, (i) => {
+    const l = light(i);
+    return paint.map((v) => toSrgb(Math.min(1, v * l)));
+  });
 }
 
 /**

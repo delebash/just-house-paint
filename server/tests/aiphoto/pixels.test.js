@@ -13,6 +13,7 @@ import {
   medianColor,
   pasteBack,
   percentile,
+  pieces,
   surfaceStats,
   toLinear,
   toSrgb,
@@ -114,6 +115,53 @@ describe("colorLock", () => {
 
   test("a malformed paint is refused", () => {
     expect(() => colorLock(photo, render, mask, "red", { base: 1 }, Y)).toThrow(/#rrggbb/);
+  });
+});
+
+describe("a part's pieces (RESEARCH §15: the light pair of shutters)", () => {
+  const NAVAL = [0x2f, 0x3d, 0x4c];
+  const [lo, hi] = DEFAULT_COMPOSE.pieceLight;
+  const lit = (k) => NAVAL.map((v) => Math.round(255 * toSrgb(Math.min(1, toLinear(v / 255) * k))));
+
+  test("pieces are 4-connected: a shared side joins, a corner or a row's wrap doesn't", () => {
+    const corner = pieces(Float32Array.from([1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1]), 4, 0.5);
+    expect(corner.count).toBe(2);
+    expect([...corner.label]).toEqual([0, 0, -1, -1, -1, -1, 1, -1, -1, -1, 1, 1]);
+    expect(pieces(Float32Array.from([0, 0, 1, 1, 0, 0]), 3, 0.5).count).toBe(2);
+  });
+
+  test("a piece drawn far lighter than the rest is locked at the range's top, the rest at the paint", () => {
+    // one row: four pixels of a navy piece, a gap, two of a light cyan one (the model's pair)
+    const render = image(7, 1, (x) => (x < 4 ? [10, 45, 65] : x === 4 ? [110, 160, 110] : [155, 218, 222]));
+    const m = Float32Array.from([1, 1, 1, 1, 0, 1, 1]);
+    const Yp = luminanceOf(render);
+    // one level for the whole part: the light pixels are its 75th percentile, and the navy goes near black
+    expect(surfaceStats(Yp, m, DEFAULT_COMPOSE).base).toBeCloseTo(Yp[5], 6);
+    const stats = surfaceStats(Yp, m, DEFAULT_COMPOSE, pieces(m, 7, 0.5));
+    expect(stats.base).toBeCloseTo(Yp[0], 6); // the typical piece: most of the part's pixels
+    const out = colorLock(Buffer.alloc(21), render, m, "#2f3d4c", stats, Yp);
+    expect(px(out, 0)).toEqual(NAVAL);
+    expect(px(out, 5)).toEqual(lit(hi));
+    expect(px(out, 4)).toEqual([0, 0, 0]); // the gap is not the part
+    expect(stats.lit).toEqual(expect.arrayContaining([0, 1, 2, 3])); // ΔE is measured on the typical piece
+  });
+
+  test("a piece drawn far darker is locked at the range's bottom", () => {
+    const render = image(6, 1, (x) => (x < 4 ? [10, 45, 65] : [1, 2, 3]));
+    const m = Float32Array.from([1, 1, 1, 1, 0, 1]);
+    const Yp = luminanceOf(render);
+    const out = colorLock(Buffer.alloc(18), render, m, "#2f3d4c", surfaceStats(Yp, m, DEFAULT_COMPOSE, pieces(m, 6, 0.5)), Yp);
+    expect(px(out, 5)).toEqual(lit(lo));
+  });
+
+  test("the feathered edge outside every piece is lit at most to the range's top", () => {
+    // the edge pixel (coverage 0.3, below insideAt) is the drawing's bright wall
+    const render = image(5, 1, (x) => (x < 4 ? [10, 45, 65] : [200, 210, 200]));
+    const m = Float32Array.from([1, 1, 1, 1, 0.3]);
+    const Yp = luminanceOf(render);
+    const out = colorLock(Buffer.alloc(15), render, m, "#2f3d4c", surfaceStats(Yp, m, DEFAULT_COMPOSE, pieces(m, 5, 0.5)), Yp);
+    const want = NAVAL.map((v) => Math.round(255 * Math.fround(0.3) * toSrgb(toLinear(v / 255) * hi)));
+    expect(px(out, 4)).toEqual(want);
   });
 });
 

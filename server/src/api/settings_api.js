@@ -43,6 +43,8 @@ const COMPOSE_LIMITS = {
   insideAt: [0.01, 1],
   basePercentile: [0, 100],
   litBand: [0, 10],
+  // a piece's level against the part's typical piece's (0 at the bottom: no bound below)
+  pieceLight: [0, 10],
   repaintedRange: [0, 100],
   sameColorDeltaE: [0, 200],
   gainLimits: [0.01, 100],

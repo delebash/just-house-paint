@@ -109,3 +109,8 @@ MY RECS (shown 2026-10-29, the family's item 5): IDEAS and the PRD's "Out of sco
         (measured not worth it); live camera/AR; paint quantity and cost (a photo can't measure the house; the brands
         have calculators); ordering samples; interior rooms; sharing designs online; the phone app; HEIC (an HEVC
         decoder's patents — why sharp's builds leave it out; the app says how to send a JPEG).
+GO:     the user, verbatim (2026-10-29): "fix the light shutters go"; then "wait newer engine doesnt cause this so what
+        you are fixing old data and not code, that is stupid" — answered: the code, not the data (the lock's one level
+        for a part of many pieces) — and "fix it". DONE: each piece of a part locked at its own level, within
+        `aiphoto.compose` `pieceLight` of the typical piece's (RESEARCH §15). The app's AI photo of House 1's "Sage and
+        navy": every shutter Naval, the light pair ΔE 22.9 → 0.3, the eleven the model drew navy 8.7–13.8 → 0.3–5.3.

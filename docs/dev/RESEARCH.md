@@ -1285,9 +1285,26 @@ at the app's display size, through the app's own code; scripts and overlays in s
   (4 steps, cfg 1, euler, seed 42) — went to each build's sd-server, started as the kit starts it. The drawing, the
   front door's close-up and the final picture are byte-identical on master-1004 and master-1024 (ΔE2000 0.00 inside
   the mask, 0 % of its pixels changed), each build's repeat is identical, and master-1024's final is byte-identical to
-  the in-app render above. So the site's picture differs by its inputs (its data copy's masks). The drawing does
-  repaint the pair (the lock's repainted test passes on 88–100 % of each shutter's pixels) but light; the lock keeps
-  the drawing's light relative to the surface (*inferred* from `colorLock`, not measured).
+  the in-app render above. So the site's picture differs by its inputs (its data copy's masks).
+- **Why the pair came out light, and the rest near black** (*measured* 2026-10-29, the A/B's master-1024 drawing at
+  full size, per shutter — the 4-connected pieces of the mask; `card/shutters.js`): the photo's shutters are black.
+  The model drew the pair light cyan (#9bdade, ΔE 57.7 from Naval), its level 29× the typical shutter's; the rest
+  navy. The lock took one level for the whole part — the 75th percentile of all its pixels — and the pair pulled it
+  up: the pair came out #637d98 (ΔE 22.9 / 21.7), thirteen of the other fourteen too dark (#05090c–#19222c,
+  ΔE 8.7–16.6), and the part's ΔE was measured on the pixels at that level — almost only the one shutter drawn
+  there (*inferred* from the levels). The model's sense of light ends at each piece: between pieces of one part it
+  can be off by any factor.
+- **Fixed** (`aiphoto/pixels.js` `pieces`, `surfaceStats` with the pieces; `aiphoto.compose` `pieceLight`
+  [0.25, 1.1]): each piece has its own level; the part's level is the typical piece's (the pieces' levels weighted
+  by their pixels, at the median), and a piece past `pieceLight` × it is locked at that end. The feathered edge
+  just outside the outline — the drawing's wall there — is lit at most to the top: without that, the lower level
+  turned it into a light rim around each shutter. *Measured* on the same drawing through `aiRepaint` (`card/
+  replay.js`, no card): the pair ΔE 0.3 / 0.3, the others 0.3–7.9 (the drawing's own light between them, within
+  the range; 7.9 the one behind the bush), the one in deep shade at the bottom, 12.0 (it was 16.6); the part's lit
+  pixels 23,995 of 95,619; the picture's ΔE 1.29 (window trim). *Measured in the app* (the server on the checkout's
+  data, the renderer from `npm run dev:spa`, "Sage and navy" picked on screen, `card/run.js`): AI photo in 40.1 s,
+  "ΔE 1.3 from the chips — furthest off: Window trim", every shutter piece for piece as in the replay. Still there,
+  as before: a 1–2 px light line where a shutter's outline takes the window trim's edge and the model painted it.
 - **The first render's note named this app's own llama-server** (loaded at start by "Load the default local model …
   on startup") as another program holding 6.3 GB; the kit's own-process filter should have left it out (filed as a
   kit finding).

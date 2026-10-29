@@ -101,7 +101,9 @@ doesn't allow is named under the box.
   **colorUnnamed**. `{surface}`, `{color}`, `{list}`, `{name}` and `{hex}` are filled in.
 - **How the AI photo is put back on the photo** — **featherPx**: how soft the edge of the pasted-back
   photo is; **insideAt**, **basePercentile** and **litBand**: which pixels count as a part's normally
-  lit wall (its ΔE is measured on them); **lockOnlyRepainted** and **repaintedRange**: only what the AI
+  lit wall (its ΔE is measured on them); **pieceLight**: how much darker and lighter than the part's other pieces
+  (each shutter, each door) one piece may come out — a piece the AI drew further off is painted at that limit, and
+  the soft edge just outside a part no lighter than its top; **lockOnlyRepainted** and **repaintedRange**: only what the AI
   repainted is locked to the paint color; **sameColorDeltaE**: below this difference from the old
   color the whole part is locked; **gainLimits**: the most the light from **On it now** may change it;
   **closeUpDeltaE**, **closeUpMaxShare** and **closeUpMaxParts**: a part still this far from its paint after the
