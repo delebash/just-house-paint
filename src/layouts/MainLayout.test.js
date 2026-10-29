@@ -89,6 +89,14 @@ test("keep-running is told to the shell at every start when it is on, and not wh
   expect(shell.keepRunning).toEqual([]);
 });
 
+test("the nav's rows read as the links and the button they are, in no list (axe's aria-required-children)", async () => {
+  await mountLayout();
+  const links = wrapper.find(".shell__links");
+  expect(links.attributes("role")).toBe("none");
+  expect(links.findAll('[role="listitem"]')).toHaveLength(0);
+  expect(wrapper.findAll(".shell__links a.navlink").length).toBeGreaterThan(0);
+});
+
 test("Open settings and About open their pages; leaving the layout drops the tray's listeners", async () => {
   await mountLayout();
   expect(Object.keys(shell.handlers).sort()).toEqual(["tray:about", "tray:copy-url", "tray:open-settings"]);
