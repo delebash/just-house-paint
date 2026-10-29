@@ -1231,10 +1231,12 @@ at the app's display size, through the app's own code; scripts and overlays in s
   the latest release; a release made before the release attached it (v0.1.3 and earlier) gives the same files from
   the tag's source archive (`codeload.github.com/…/tar.gz/refs/tags/<tag>`, one folder `<repo>-<version>`) — *measured*:
   v0.1.3's 12 pages, 5.1 MB archive. `toc.json` is the sidebar.
-- **The release's ping needs a token** this app's repo doesn't have yet: `WEBSITE_DISPATCH_TOKEN` (fine-grained, the
-  website's repository, Contents read and write — docs.github.com/en/rest/repos/repos#create-a-repository-dispatch-event).
-  Without it the release's `notify-website` says so and passes; `gh workflow run deploy.yml -R
-  delebash/just-house-paint-website` rebuilds the site by hand.
+- **The site deploys by its own `npm run deploy`** (2026-10-29, the user's rule — no workflow starts another): the
+  kit's `website/scripts/deploy.js` names the release whose docs go live (`gh release view --json tagName,assets`:
+  v0.1.3 "from the tag's source"), asks, then `gh workflow run deploy.yml --ref main` on the user's login. A
+  repository_dispatch from the app's release would have needed a token in the app's repo (GitHub's built-in one can't
+  start another repository's workflow — docs.github.com/en/rest/repos/repos#create-a-repository-dispatch-event); the
+  release no longer sends one.
 - **Its pictures are the app itself**, on the three probe photos only (Wikimedia Commons, CC BY-SA 4.0 / 2.0 —
   `data/probe/photos/SOURCES.md`), never the user's own house: the site's `scripts/capture.js` drives the unpacked
   window against a server on a data copy holding only those three, each with a design (house 1 "Sage and navy": SW

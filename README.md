@@ -223,10 +223,11 @@ gitignored; their output under the system's temp folder or `HP_REAL_OUT`, never 
 `npm run bump <version>` sets the version (package.json and server/package.json); commit, tag `v<version>`, push;
 `npm run release` dispatches `.github/workflows/release.yml`: the installers for Windows, macOS and Linux, each
 started on its runner before anything is attached (`scripts/start-packaged.js` — the window, the server on its own,
-the part finder's engine check), the update feed, and the user docs as `docs.tar.gz`; then the website
-([just-house-paint-website](https://github.com/delebash/just-house-paint-website)) is asked to rebuild from them
-(the secret `WEBSITE_DISPATCH_TOKEN`; without it, `gh workflow run deploy.yml -R delebash/just-house-paint-website` — the site never builds on its own). A dry run (`publish: false`;
-a branch works as the tag) builds and checks everything and keeps the files on the run instead of a release.
+the part finder's engine check), the update feed, and the user docs as `docs.tar.gz` — and starts nothing else. The
+website ([just-house-paint-website](https://github.com/delebash/just-house-paint-website)) publishes those docs when
+you run `npm run deploy` there (it names the release, asks, then runs its own workflow — nothing builds by itself). A
+dry run (`publish: false`; a branch works as the tag) builds and checks everything and keeps the files on the run
+instead of a release.
 
 ### Traps
 

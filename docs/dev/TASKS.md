@@ -61,9 +61,10 @@ DECIDED (the user, 2026-10-28, verbatim): "i dont ever want an automatic build o
         deploy for each app website and it runs its own workflow"; "and each app it should all work the same";
         relayed by docgen's session: "dont worry about key … each app website should run its own via something like
         npm run deploy other github workflows shouldnt be running other workflows jw is wrong".
-OPEN:   - waiting on the user's "go" (asked 2026-10-28): (a) each website's `npm run deploy` (its own workflow, run by
-          hand) and the release's notify-website, WEBSITE_REPO, the website's release ping and the token gone — the
-          kit's template, §19, check 25 (a repository_dispatch is a trigger from another workflow), this app and its
-          site; JustWrite's and docgen's by their sessions; (b) the security updates — undici ≥ 8.12.2 in the kit's
-          core, Electron 44.10.0 in the template and this app (the kit's TASKS).
-        - the full run after the seven (one batch), then the release only on the user's word.
+GO:     the user, verbatim (2026-10-29): "your rec go do it stop asking me just think adverserial on your recs and do it
+        go". DONE: (a) the website deploys by its own `npm run deploy` (kit abb3975: website/, the template's release
+        starts nothing, checks 25 and 26; this app's release and its site on it); (b) the security updates (kit
+        96dede9: undici ^8.12.3, Electron 44.10.0; this app f7c6cae). The full run after the seven: green (lint, i18n,
+        server 387, unit 195, the guard, the unpacked build, e2e 16/16).
+OPEN:   - the website's text and screenshots for the four new features, then `npm run deploy` (the site's).
+        - the release only on the user's word.

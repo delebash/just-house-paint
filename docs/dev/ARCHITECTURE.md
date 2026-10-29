@@ -133,7 +133,7 @@ cost too much to start on a push). Each platform's build is started on its runne
 (`scripts/start-packaged.js`: the window, the server on its own through the app's launcher, the part finder's
 engine check), and the AppImage is opened again the way a Linux user opens it. A new release stays a draft until
 every file is attached — the installers, electron-updater's feed and the user docs (`docs.tar.gz`) — so an installed
-copy's update check never reads a release without its feed. Then the website,
-[just-house-paint-website](https://github.com/delebash/just-house-paint-website), is asked to rebuild: it serves
-the docs of the latest release, not of the main branch (`WEBSITE_REPO`, the secret `WEBSITE_DISPATCH_TOKEN`; the
-kit's app-structure §19, "An app's website").
+copy's update check never reads a release without its feed. The release starts nothing else: the website,
+[just-house-paint-website](https://github.com/delebash/just-house-paint-website), publishes the docs of the latest
+release (not of the main branch) when the user runs its `npm run deploy` — no workflow starts another, and nothing
+builds by itself (the user's rules, 2026-10-28; the kit's `website/` files, app-structure §19, "An app's website").
