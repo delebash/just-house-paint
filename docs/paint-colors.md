@@ -16,7 +16,8 @@ colors here yet and has **Load automatically** on, and keeps them on your comput
 bottom right, with **Cancel**. **Load automatically**, on a brand's row, turns that off for the brand (its colors
 already here stay) or on again (an empty brand loads at once). A brand with no colors here has **Load the colors**;
 one already loaded has **Load again**, which fetches its list again; their progress shows above the list. **From**
-says where a brand's colors came from — its **public list** or a **palette file** — and when. A load that fails
+says where a brand's colors came from — its **public list**, **the brand's files** (Benjamin Moore's and PPG /
+Glidden's palette files, loaded by the app) or an **imported file** — and when. A load that fails
 says why on the brand's row ("The last try failed: …"). Each brand's own website terms apply to what you
 download — the app downloads each list for your own use.
 

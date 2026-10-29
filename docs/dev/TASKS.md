@@ -25,7 +25,16 @@ STATE:  (1) DONE — round B checked for real (83da891, below). (2) IN PROGRESS 
         end never reached onJob — 0384b39); the kit's catalog squeezed in the built-in provider's Edit (fixed in the
         kit, 2d1065d). DONE: the README with the features first (JustWrite's shape) and docs/dev/ARCHITECTURE.md; the
         release's one-liners as ES modules and the user docs (docs.tar.gz) attached while the release is a draft,
-        then the website asked to rebuild (`WEBSITE_REPO`; the template's way — kit e326cb8, 0976b4e). Next: the
+        then the website asked to rebuild (`WEBSITE_REPO`; the template's way — kit e326cb8, 0976b4e). Found and
+        fixed through the website's screenshots: Paint colors said "public list" for Benjamin Moore and PPG / Glidden
+        (loaded from their palette files — now "the brand's files"; a user's import "imported file"); the AI photo's
+        Close and Save image sat under the fold at 1440 × 900 (now the modal's footer, the note its lede). Checked,
+        no change: an AI photo of "Sage and navy" on house 1 read ΔE 37.8 — the model left the small front door under
+        the porch as it was, and only what it repaints is locked (lockOnlyRepainted; the README and ARCHITECTURE said
+        "locks each part" — corrected). The real data folder holds one house folder with no row
+        (houses/fafbf1f1…, 1.8 MB: a delete a dev build's Windows hold stopped on 2026-10-19, before 9987314 marked
+        such folders); the start-up sweep takes only marked folders, by design (a restore's photos) — left for the
+        user to delete. Next: the
         website, the tracker closed down to what is open, the full cross-app run, (4). For the user, once the website
         exists: the secret WEBSITE_DISPATCH_TOKEN on this repo (a token that can start the website's workflow — I
         can't make one); without it the site rebuilds on its next push.

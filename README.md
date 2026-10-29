@@ -66,8 +66,9 @@ how to open an installer that isn't signed yet). User docs live in `docs/`; the 
 
 ### ✶ The AI photo — the whole house, newly painted
 
-- **FLUX.2 [klein] 4B** on your computer (stable-diffusion.cpp) repaints only the parts' outlines; the app puts your
-  photo back everywhere else, byte for byte, and locks each part to its paint (ΔE under 1 on a lit wall).
+- **FLUX.2 [klein] 4B** on your computer (stable-diffusion.cpp) repaints only inside the parts' outlines; the app
+  puts your photo back everywhere else and locks what the model repainted to the paint colors. Its colors are
+  approximate — the model decides the light — and the picture says how far the part furthest off is from its chip.
 - About **20 seconds** a picture on Windows with an 8 GB NVIDIA graphics card. Every AI photo is kept with the house.
 - **Installed when you want it**: the engine and the model download from the house page or the AI page, with their
   progress and **Cancel**; the app checks the drive has room first.

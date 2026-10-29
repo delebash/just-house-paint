@@ -32,14 +32,14 @@ const json = (body, status = 200) =>
 const LOADED_AT = "2026-10-17T10:00:00.000Z";
 // GET /v1/brands: every launch brand (server/src/paints/normalize.js BRANDS, in its order); all
 // seven are fetchable (a public list, or the palette files its page links)
-const brandRow = (key, label, fields = {}) => ({ key, label, feed: true, enabled: false, paintCount: 0, source: null, loadedAt: null, lastError: null, ...fields });
+const brandRow = (key, label, fields = {}) => ({ key, label, feed: true, via: "list", enabled: false, paintCount: 0, source: null, loadedAt: null, lastError: null, ...fields });
 const loaded = (paintCount, source = "feed") => ({ enabled: true, paintCount, source, loadedAt: LOADED_AT });
 const brands = () => [
   brandRow("sherwin-williams", "Sherwin-Williams", loaded(1948)),
   brandRow("behr", "Behr"),
-  brandRow("benjamin-moore", "Benjamin Moore", loaded(4056, "file")),
+  brandRow("benjamin-moore", "Benjamin Moore", { via: "files", ...loaded(4056, "file") }),
   brandRow("valspar", "Valspar", loaded(1596)),
-  brandRow("ppg-glidden", "PPG / Glidden", loaded(2108)),
+  brandRow("ppg-glidden", "PPG / Glidden", { via: "files", ...loaded(2108) }),
   brandRow("hgtv-home", "HGTV Home by Sherwin-Williams", loaded(900)),
   brandRow("dutch-boy", "Dutch Boy", loaded(1340)),
 ];
@@ -166,7 +166,11 @@ test("the seven brands, each with its color count and where its colors came from
   expect(cells("Sherwin-Williams")[1]).toBe("1,948");
   expect(cells("Sherwin-Williams")[2]).toContain("public list");
   expect(cells("Benjamin Moore")[1]).toBe("4,056");
-  expect(cells("Benjamin Moore")[2]).toContain("palette file");
+  // a palette file the user imported, whatever the brand
+  expect(cells("Benjamin Moore")[2]).toContain("imported file");
+  // loaded by the app from the palette files the brand's page links (2026-10-28: it said "public list")
+  expect(cells("PPG / Glidden")[2]).toContain("the brand's files");
+  expect(cells("PPG / Glidden")[2]).not.toContain("public list");
   // no colors yet: "None yet", no source, and the button that loads them
   expect(cells("Behr")[1]).toBe("None yet");
   expect(cells("Behr")[2]).toBe("");

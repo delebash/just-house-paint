@@ -211,7 +211,7 @@ async function clear(brand) {
         </template>
         <template #source="{ row }">
           <span v-if="row.paintCount" class="paint-colors__nowrap">
-            <UiTag intent="ghost" :value="row.source === 'feed' ? t('paintColors.fromFeed') : t('paintColors.fromFile')" />
+            <UiTag intent="ghost" :value="row.source !== 'feed' ? t('paintColors.fromFile') : row.via === 'files' ? t('paintColors.fromFiles') : t('paintColors.fromFeed')" />
             <span v-if="row.loadedAt" class="muted"> {{ relativeTime(row.loadedAt) }}</span>
           </span>
         </template>

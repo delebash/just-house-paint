@@ -69,8 +69,10 @@ export function router(ctx = getState()) {
       Object.entries(BRANDS).map(([key, b]) => ({
         key,
         label: b.label,
-        // the app can fetch the brand's colors: a public list, or the palette files its page links
+        // the app can fetch the brand's colors: a public list, or the palette files its page links (`via`, which the
+        // screen names an app's load by — a files brand's load is no "public list")
         feed: fetchable(key),
+        via: BRAND_FEEDS.some((f) => f.brand === key) ? "list" : BRAND_FILE_PAGES.some((p) => p.brand === key) ? "files" : null,
         enabled: rows[key]?.enabled ?? false,
         paintCount: rows[key]?.paintCount ?? 0,
         source: rows[key]?.source ?? null,

@@ -72,8 +72,12 @@ and drift each color, so the app:
 1. hands the model the photo and the union of the chosen parts' masks at its working size (multiples of 16);
 2. brings the render back to the photo's full size and **pastes it back only inside the (slightly feathered)
    masks** — everywhere else the pixels are the photo's own;
-3. **locks each part to its paint**: the paint times the render's own normalized lighting, then checks the result
-   with ΔE2000 (under 1 on a lit wall).
+3. **locks what the model repainted to its paint**: the paint times the render's own normalized lighting, then
+   measures each part's normally lit pixels with ΔE2000 against the paint (0.21–0.75 on a lit wall in the real runs).
+   Only what the model changed is locked (`lockOnlyRepainted`): a pixel it left as it was — white trim inside a body
+   mask — keeps its own color instead of turning paint-colored (RESEARCH §10, "the pink trim"), unless the paint is
+   close to the part's old color, when the whole part is locked. So a part the model didn't repaint (a small door
+   under a porch) stays as photographed, and the picture's "ΔE … from the chips" — the part furthest off — says so.
 
 About 20 seconds a picture on Windows with an 8 GB NVIDIA card (RESEARCH §6, §9–§10). A cloud model to compare
 was probed and parked (IDEAS.md: the key's project has no billing for image output).

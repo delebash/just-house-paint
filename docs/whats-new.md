@@ -25,6 +25,9 @@
   a busy one makes the other say "The graphics card is busy" — finding the parts on the processor never waits for
   the card now.
 - **App Settings → Storage** no longer lists the part finder: its model is counted with the AI cache's models.
+- **Paint colors says where each brand's colors came from**: Benjamin Moore and PPG / Glidden, loaded from the
+  palette files on their websites, said **public list**; they now say **the brand's files**, and a file you imported
+  yourself says **imported file**.
 
 ## v0.1.3
 

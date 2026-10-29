@@ -82,3 +82,16 @@ test("Save image names the file after the house, without what Windows can't hold
   expect(saved).toEqual(["1020 Oak St — AI photo.png", "House — AI photo.png"]);
   clickSpy.mockRestore();
 });
+
+test("Close and Save image stay in sight below the picture: the modal's footer, outside its scrolling body", async () => {
+  // 2026-10-28, at 1440 × 900: the note, a 70vh picture and the caption filled the body, and the buttons sat under
+  // the fold of its scroller
+  await mountDialog(RENDER);
+  const footer = document.querySelector(".ui-modal__footer");
+  expect(footer?.textContent).toContain("Save image");
+  expect(footer?.textContent).toContain("Close");
+  expect(document.querySelector(".ui-modal__body").textContent).not.toContain("Save image");
+  // the note is the modal's lede; the ΔE and time stay under the picture
+  expect(document.querySelector(".ui-modal__lede")?.textContent).toContain("instant preview");
+  expect(document.querySelector(".ui-modal__body").textContent).toContain("ΔE 0.4 from the chips");
+});

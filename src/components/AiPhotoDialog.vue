@@ -48,10 +48,14 @@ async function save() {
 <template>
   <!-- As wide as what it holds: the banner at a prose width — an 880 px dialog held 512 px of the old install card's
        content (the seventeenth review); the AI photo itself, the room a big picture needs. -->
-  <AppModal ref="modal" :title="t('aiPhoto.title')" :max-width="render ? '1100px' : '38em'" @close="emit('close')">
+  <!-- The note is the modal's lede and the buttons its footer, outside the scrolling body: at 1440 × 900 the note, the
+       picture and the caption filled the body and Close and Save image sat under its fold (2026-10-28). -->
+  <AppModal
+    ref="modal" :title="t('aiPhoto.title')" :lede="render ? t('aiPhoto.note') : ''" :max-width="render ? '1100px' : '38em'"
+    @close="emit('close')"
+  >
     <LuEngineNeeded v-if="!render" feature="aiphoto.render" :label="t('aiPhoto.featureName')" @ready="emit('installed')" />
     <template v-else>
-      <p class="hint">{{ t("aiPhoto.note") }}</p>
       <img v-if="src" class="aiphoto__img" :src="src" :alt="t('aiPhoto.alt', { name: isolate(houseName) })" />
       <p class="muted">
         <template v-if="render.deltaE != null">{{ t("aiPhoto.deltaE", { n: render.deltaE.toFixed(1) }) }} · </template>
@@ -60,10 +64,10 @@ async function save() {
       <p v-if="render.sharedGpu" class="muted aiphoto__shared">
         {{ t("aiPhoto.sharedGpu", { size: fmtBytes(render.sharedGpu.mb * 1024 * 1024), programs: sharedPrograms }) }}
       </p>
-      <div class="form__actions">
-        <UiButton intent="ghost" :label="t('kit.common.close')" @click="modal?.close()" />
-        <UiButton intent="primary" :disabled="saving" :label="t('aiPhoto.save')" @click="save" />
-      </div>
+    </template>
+    <template v-if="render" #footer>
+      <UiButton intent="ghost" :label="t('kit.common.close')" @click="modal?.close()" />
+      <UiButton intent="primary" :disabled="saving" :label="t('aiPhoto.save')" @click="save" />
     </template>
   </AppModal>
 </template>
@@ -75,7 +79,9 @@ async function save() {
 .aiphoto__img {
   display: block;
   max-width: 100%;
-  max-height: 70vh;
+  /* the room the modal leaves it — its 88vh less the title (56 px), the body's padding (36), a two-line lede (54), the
+     caption (44), the footer (60) and a little air: at 1440 × 900 the body then holds it all without a scrollbar */
+  max-height: calc(88vh - 290px);
   margin: 0 auto var(--sp-2);
   border-radius: 6px;
 }

@@ -29,9 +29,11 @@ describe("brands", () => {
     const brands = await (await s.app.request("/v1/brands")).json();
     expect(brands.map((b) => b.key)).toEqual(["sherwin-williams", "behr", "benjamin-moore", "valspar", "ppg-glidden", "hgtv-home", "dutch-boy"]);
     // Benjamin Moore and PPG / Glidden load from the palette files their pages link to
-    expect(brands.find((b) => b.key === "benjamin-moore")).toMatchObject({ feed: true, enabled: false, paintCount: 0 });
+    expect(brands.find((b) => b.key === "benjamin-moore")).toMatchObject({ feed: true, via: "files", enabled: false, paintCount: 0 });
+    expect(brands.find((b) => b.key === "ppg-glidden")).toMatchObject({ feed: true, via: "files" });
     expect(brands.every((b) => b.feed)).toBe(true);
-    expect(brands.find((b) => b.key === "behr")).toMatchObject({ feed: true });
+    // the rest from a public list — the screen names an app's load "public list" or "the brand's files" by `via`
+    expect(brands.filter((b) => b.via === "list").map((b) => b.key)).toEqual(["sherwin-williams", "behr", "valspar", "hgtv-home", "dutch-boy"]);
   });
 
   test("loading a public list is a job; its colors become searchable", async () => {
