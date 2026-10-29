@@ -25,6 +25,9 @@
   a busy one makes the other say "The graphics card is busy" — finding the parts on the processor never waits for
   the card now.
 - **App Settings → Storage** no longer lists the part finder: its model is counted with the AI cache's models.
+- **App Settings → Storage shows photos left behind**: a house deleted while Windows held one of its files (0.1.2 and
+  earlier) could leave its folder of photos on the computer. Storage lists such folders — **Photos of houses not in
+  the app**, with their size — and **Remove** takes them, after asking.
 - **The brand's own pairings can be applied**: on the Schemes tab, a pairing whose door color was quiet or close to
   the body had **Apply** off — nearly every pairing the brands publish. A pairing now applies as the brand made it,
   and the row says what to know first (the door may not stand out).

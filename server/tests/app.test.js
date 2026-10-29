@@ -10,7 +10,7 @@ import { getLogger } from "@delebash/core/platform/log";
 import { pyPath } from "@delebash/core/runner/cache_registry";
 import * as lifecycle from "@delebash/core/runner/lifecycle";
 import { beforeEach, expect, test, vi } from "vitest";
-import { createApp } from "../src/app.js";
+import { createApp, DATA_WRITES } from "../src/app.js";
 import { getDb } from "../src/app_state.js";
 import { seedWorkspace } from "../src/database/seed.js";
 import { setSetting } from "../src/database/settings.js";
@@ -236,4 +236,10 @@ test("behind a reverse proxy its public origin may write; any other origin may n
   const write = (origin) => c.post("/v1/houses", { json: {}, headers: { origin } });
   expect((await write("https://paint.example.com")).statusCode).not.toBe(403);
   expect((await write("https://evil.example")).statusCode).toBe(403);
+});
+
+test("a restore or a reset holds every data write — the house leftovers' Remove too", () => {
+  // the kit's MaintenanceGate refuses these while the data is replaced (app.js DATA_WRITES)
+  for (const p of ["/v1/houses", "/v1/houses/h1", "/v1/designs/d1", "/v1/renders/r1", "/v1/house-leftovers"]) expect(DATA_WRITES.test(p), p).toBe(true);
+  for (const p of ["/v1/health", "/v1/data/backup", "/v1/housesx"]) expect(DATA_WRITES.test(p), p).toBe(false);
 });

@@ -105,7 +105,13 @@
     "logsHint": "What the server and this window reported, newest last.",
     "storage": {
       "saves": "your houses and their photos",
-      "houses": "Your houses' photos"
+      "houses": "Your houses' photos",
+      "leftovers": "Photos of houses not in the app | Photos of a house not in the app | Photos of {n} houses not in the app",
+      "leftoversRemove": "Remove",
+      "leftoversRemoving": "Removing…",
+      "leftoversTitle": "Remove the photos of houses not in the app?",
+      "leftoversMessage": "No house | A folder of photos belongs to no house in the app ({size}): a house deleted while Windows held one of its files, or one from a database that was lost. It is removed from this computer. | {n} folders of photos belong to no house in the app ({size}): houses deleted while Windows held one of their files, or from a database that was lost. They are removed from this computer.",
+      "leftoversConfirm": "Remove the photos"
     },
     "about": {
       "blurb": "See your house in real paint colors before you buy paint: its parts found on your computer, real brand paints in the photo's own light, color schemes, designs and an AI photo."

@@ -10,7 +10,7 @@ import { ApiError, notFound, RequestValidationError } from "@delebash/core/platf
 import { cleanName, cutToLength, nameKey, nameProblem } from "@delebash/core/platform/text";
 import { houseNotFound } from "./refusals.js";
 import { createHouse, deleteHouse, getHouse, listHouses, patchCurrentPaints, renameHouse, setCurrentPaints } from "../database/houses.js";
-import { addingHouseDir, displayPath, houseAdded, originalPath, removeHouseDir, thumbPath } from "../files.js";
+import { addingHouseDir, displayPath, houseAdded, originalPath, removeHouseDir, strayHouseDirs, thumbPath } from "../files.js";
 import { ingestPhoto, NotAnImage, TooManyPixels } from "../images.js";
 import { CurrentPaintsIn, CurrentPaintsPatch, HousePatch, IdParams, ImageQuery } from "../schemas/houses.js";
 import { getState } from "../app_state.js";
@@ -86,6 +86,25 @@ export function router(ctx = getState()) {
 
   // the house with its outlines' version (outlines.js) — read before its outlines, so a page never holds outlines
   // older than the version it sends back
+  // The folders of houses not in the app (files.js strayHouseDirs): App Settings → Storage lists them with their size,
+  // and Remove takes them — never the start's sweep, which keeps a whole one (it may be a house's only photo).
+  const strays = async () => strayHouseDirs(ctx.dataDir, listHouses(ctx.db).map((h) => h.id));
+  app.get("/v1/house-leftovers", async (c) => {
+    const folders = await strays();
+    return c.json({ folders, bytes: folders.reduce((sum, f) => sum + f.bytes, 0) });
+  });
+  app.delete("/v1/house-leftovers", async (c) => {
+    const remove = ctx.removeHouseDir ?? removeHouseDir; // a test passes one Windows holds
+    let removed = 0;
+    let held = 0;
+    for (const f of await strays()) {
+      // one held by Windows is marked (removeHouseDir), so the next start takes it
+      if (await remove(ctx.dataDir, f.id)) removed++;
+      else held++;
+    }
+    return c.json({ removed, held });
+  });
+
   app.get("/v1/houses/:id", input({ params: IdParams }), (c) => {
     const house = must(c.req.valid("param").id);
     return c.json(ctx.outlines ? { ...house, outlines: ctx.outlines.etag(house.id) } : house);

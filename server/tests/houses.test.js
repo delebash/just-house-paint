@@ -301,6 +301,31 @@ describe("houses", () => {
     expect(existsSync(path.join(s.dataDir, "houses", house.id, ".adding"))).toBe(false);
   });
 
+  test("folders of houses not in the app: listed with their size, and removed only when asked", async () => {
+    // 2026-10-28: a delete Windows stopped before v0.1.3 marked such folders (the user's data held one, a whole photo's
+    // three copies); the start's sweep keeps a whole one on purpose — a database lost or replaced must never take every
+    // house's photos — so App Settings → Storage lists them, and Remove takes them
+    s = makeServer();
+    const house = await (await s.upload(await jpeg(100, 80))).json();
+    const stray = path.join(s.dataDir, "houses", "stray-1");
+    mkdirSync(path.join(stray, "masks"), { recursive: true });
+    for (const f of ["original.jpg", "display.jpg", "thumb.jpg"]) writeFileSync(path.join(stray, f), Buffer.alloc(1000));
+    addingHouseDir(s.dataDir, "being-added"); // a photo being added right now is no leftover
+    expect(await sweepHouseDirs(s.dataDir, [house.id])).toBe(1); // the start takes the marked one only
+    addingHouseDir(s.dataDir, "being-added");
+    const listed = await (await s.app.request("/v1/house-leftovers")).json();
+    expect(listed.folders.map((f) => f.id)).toEqual(["stray-1"]);
+    expect(listed.bytes).toBeGreaterThanOrEqual(3000);
+    expect(listed.folders[0].bytes).toBe(listed.bytes);
+    // Remove: the stray folder goes; the house's and the one being added stay
+    const removed = await (await s.app.request("/v1/house-leftovers", { method: "DELETE" })).json();
+    expect(removed).toEqual({ removed: 1, held: 0 });
+    expect(existsSync(stray)).toBe(false);
+    expect(existsSync(path.join(s.dataDir, "houses", house.id, "display.jpg"))).toBe(true);
+    expect(existsSync(path.join(s.dataDir, "houses", "being-added"))).toBe(true);
+    expect((await (await s.app.request("/v1/house-leftovers")).json()).folders).toEqual([]);
+  });
+
   test("the add route marks the folder before the photo: a refused add Windows holds leaves it marked", async () => {
     s = makeServer({ removeHouseDir: async () => false }); // the cleanup held
     const heic = Buffer.concat([Buffer.from([0, 0, 0, 24]), Buffer.from("ftypheic", "latin1"), Buffer.alloc(64)]);

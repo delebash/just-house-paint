@@ -12,6 +12,7 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, wri
 import { tmpdir } from "node:os";
 import { cp, rm } from "node:fs/promises";
 import path from "node:path";
+import { dirSize } from "@delebash/core/platform/dir_size";
 import { getLogger } from "@delebash/core/platform/log";
 import { renameHeld } from "@delebash/core/platform/rename_held";
 
@@ -217,6 +218,29 @@ async function putBack(dataDir, name) {
     log.warning(`the houses folder is missing and ${name} couldn't be put back (${e.code || e.message}); tried again at the next start`);
     return false;
   }
+}
+
+/**
+ * The folders under houses/ that belong to no house (`ids`: the houses that exist), with their size: a delete
+ * Windows stopped before v0.1.3 marked such folders, or a database lost or replaced. The start's sweep keeps a whole
+ * one on purpose (it may be a house's only photo), so App Settings → Storage lists them and the user removes them
+ * (2026-10-28). A photo being added (marked `.adding`) is no leftover.
+ */
+export async function strayHouseDirs(dataDir, ids) {
+  const root = housesRoot(dataDir);
+  const keep = new Set(ids);
+  const out = [];
+  for (const name of existsSync(root) ? readdirSync(root) : []) {
+    const dir = path.join(root, name);
+    if (!SAFE.test(name) || keep.has(name) || existsSync(path.join(dir, ADDING))) continue;
+    try {
+      if (!statSync(dir).isDirectory()) continue;
+    } catch {
+      continue;
+    }
+    out.push({ id: name, bytes: await dirSize(dir) });
+  }
+  return out;
 }
 
 /**

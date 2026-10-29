@@ -79,7 +79,7 @@ const log = getLogger("just_house_paint.app");
 // brands and their colors; the app's settings; the engines (the house page offers or uses them — the kit's runtimes':
 // the AI photo's engine and model, the part finder's model). Not one: a window's own prefs, a scheme worked out, a log
 // line, a cancel (the job's end is counted), an AI run, the tokens.
-export const DATA_WRITES = /^\/v1\/(houses|designs|renders|brands|paints|settings|ai\/runtimes)(\/|$)/;
+export const DATA_WRITES = /^\/v1\/(houses|house-leftovers|designs|renders|brands|paints|settings|ai\/runtimes)(\/|$)/;
 
 /** The problem-type prefix of every error answer (`type`: `<base><slug>`, app-structure §15). */
 export const TYPE_BASE = "https://just-house-paint.local/errors/";

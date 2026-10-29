@@ -28,7 +28,11 @@ import {
   ServerPanel,
   SettingsShell,
   StoragePanel,
+  confirmDialog,
+  del,
+  fmtBytes,
   safeRequest,
+  UiButton,
   UpdatesPanel,
 } from "@delebash/ui";
 import { computed, onMounted, ref, watch } from "vue";
@@ -101,6 +105,33 @@ const storageShell = {
   forgetOldCopy: storageForgetOldCopy,
   useDefault: storageUseDefault,
 };
+// Storage's own row: the folders of houses not in the app (a delete Windows stopped before v0.1.3, or a database lost
+// or replaced — the start never removes a whole one, it may be a house's only photo), shown only when there are some;
+// Remove asks first, then the kit panel's `run` marks it busy and reads the sizes again (2026-10-28)
+const leftovers = ref(null);
+const loadLeftovers = async () => {
+  leftovers.value = await safeRequest("/v1/house-leftovers", null);
+};
+async function removeLeftovers(run) {
+  const yes = await confirmDialog({
+    title: t("settings.storage.leftoversTitle"),
+    message: t("settings.storage.leftoversMessage", { n: leftovers.value.folders.length, size: fmtBytes(leftovers.value.bytes) }, leftovers.value.folders.length),
+    confirmLabel: t("settings.storage.leftoversConfirm"),
+    danger: true,
+  });
+  if (!yes) return;
+  await run("leftovers", async () => {
+    await del("/v1/house-leftovers");
+    await loadLeftovers();
+  });
+}
+watch(
+  active,
+  (a) => {
+    if (a === "storage") loadLeftovers();
+  },
+  { immediate: true },
+);
 // Updates — release notes from docs/whats-new.md, loaded when the section first opens; the
 // desktop shell's updater (null in a browser; the app's GitHub releases, electron-main.js `updates`).
 const updater = desktopUpdater();
@@ -143,8 +174,18 @@ watch(
       <StoragePanel v-else-if="active === 'storage'" :data-dir="health?.dataDir || ''" :shell="storageShell" :saves="t('settings.storage.saves')">
         <!-- this app's own store (the server's extra disk bucket): its houses (the engines and models — the part
              finder's, the AI photo's — are the kit's: its buckets above, the AI page's Vision and Images tabs) -->
-        <template #extra="{ usage, size }">
+        <template #extra="{ usage, size, busy, run }">
           <span class="lu-storage__label">{{ t("settings.storage.houses") }}</span><span>{{ size(usage?.extras?.houses) }}</span>
+          <template v-if="leftovers?.folders?.length">
+            <span class="lu-storage__label">{{ t("settings.storage.leftovers", leftovers.folders.length) }}</span>
+            <div class="lu-storage__row">
+              <span>{{ size(leftovers.bytes) }}</span>
+              <UiButton
+                intent="secondary" size="small" :disabled="!!busy"
+                :label="busy === 'leftovers' ? t('settings.storage.leftoversRemoving') : t('settings.storage.leftoversRemove')" @click="removeLeftovers(run)"
+              />
+            </div>
+          </template>
         </template>
       </StoragePanel>
 

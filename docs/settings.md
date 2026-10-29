@@ -212,6 +212,10 @@ offered then). Meanwhile **Change folder…** isn't shown.
 - **Engine logs** — what the AI engine wrote while it ran; **Clear…** empties them.
 - **Engine builds** — the AI engine's program files.
 - **Your houses' photos** — every house's photos, outlines and AI photos.
+- **Photos of houses not in the app** — shown only when there are some: folders of photos that belong to no house,
+  left by a house deleted while Windows held one of its files (version 0.1.2 and earlier), or by a database that was
+  lost or replaced. The app never removes a whole one by itself — it may be a house's only photo — so **Remove** asks
+  "Remove the photos of houses not in the app?" first, then removes them from this computer.
 
 The part finder's model and the AI photo's engine and model are counted with the AI engine's builds and the models
 above; **AI Settings → Vision** and **Images** remove them (your houses keep their parts and AI photos).

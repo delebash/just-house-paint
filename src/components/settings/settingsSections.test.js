@@ -64,6 +64,12 @@ function fakeFetch(input, init = {}) {
     return Promise.resolve(json(server.auth));
   }
   if (url.pathname === "/v1/disk/usage") return Promise.resolve(json(server.disk));
+  if (url.pathname === "/v1/house-leftovers" && method === "DELETE") {
+    const removed = server.leftovers.folders.length;
+    server.leftovers = { folders: [], bytes: 0 };
+    return Promise.resolve(json({ removed, held: 0 }));
+  }
+  if (url.pathname === "/v1/house-leftovers") return Promise.resolve(json(server.leftovers));
   if (url.pathname === "/v1/llm-runner/models-cache/clear") return Promise.resolve(json({ ok: true }));
   if (url.pathname === "/v1/data/restore") return Promise.resolve(json({ ...(server.restoreAnswer || {}), ok: true }));
   return Promise.resolve(json({}));
@@ -97,7 +103,12 @@ const text = () => document.body.textContent;
 const button = (words) => [...document.body.querySelectorAll("button")].find((b) => b.textContent.includes(words));
 
 beforeEach(() => {
-  server = { calls: [], auth: { tokens: [], requireForLoopback: false }, disk: { modelsCache: 2e9, spawnLogs: 1e6, total: 3e9, diskFree: 5e10 } };
+  server = {
+    calls: [],
+    auth: { tokens: [], requireForLoopback: false },
+    disk: { modelsCache: 2e9, spawnLogs: 1e6, total: 3e9, diskFree: 5e10 },
+    leftovers: { folders: [], bytes: 0 },
+  };
   Object.assign(shell, { version: "", root: null, picked: null, relocated: [], keepRunning: [], oldCopies: [], removed: [], forgotten: [], oldCopiesAsked: [], usedDefault: 0 });
   setServerToken(""); // a token a test's window kept (the Server panel) isn't the next test's
   vi.stubGlobal("fetch", vi.fn(fakeFetch));
@@ -172,6 +183,33 @@ describe("Storage", () => {
     expect(text()).toContain("your houses and their photos"); // what this app saves, in the kit's sentence
     expect(button("Change folder")).toBeUndefined();
     expect(text()).toMatch(/\d(\.\d)? GB/); // the models cache, 2e9 bytes (the kit's fmtBytes: a no-break space)
+  });
+
+  test("folders of houses not in the app: a row with their size only when there are some, removed only after asking", async () => {
+    // 2026-10-28: a delete Windows stopped before v0.1.3 left a whole house folder no sweep takes (on purpose)
+    const rows = () => [...document.querySelectorAll(".lu-storage__label")].map((el) => el.textContent.trim());
+    await mountSettings("storage");
+    expect(rows()).not.toContain("Photos of a house not in the app");
+    wrapper.unmount();
+    document.body.innerHTML = "";
+    server.leftovers = { folders: [{ id: "stray-1", bytes: 1_800_000 }], bytes: 1_800_000 };
+    await mountSettings("storage");
+    expect(rows()).toContain("Photos of a house not in the app");
+    expect(text()).toMatch(/2\sMB/); // the kit's fmtBytes: whole MB, a no-break space
+    // No: nothing removed
+    await new DOMWrapper(button("Remove")).trigger("click");
+    await flushPromises();
+    _resolveDialog(false);
+    await flushPromises();
+    expect(server.calls.some(([m, p]) => m === "DELETE" && p === "/v1/house-leftovers")).toBe(false);
+    // Yes: removed, and the row goes
+    await new DOMWrapper(button("Remove")).trigger("click");
+    await flushPromises();
+    _resolveDialog(true);
+    // the removal, the list read again, the panel's sizes read again
+    for (let i = 0; i < 8; i++) await flushPromises();
+    expect(server.calls.some(([m, p]) => m === "DELETE" && p === "/v1/house-leftovers")).toBe(true);
+    expect(rows()).not.toContain("Photos of a house not in the app");
   });
 
   test("Change folder asks first, then hands the folder to the shell; No moves nothing", async () => {
