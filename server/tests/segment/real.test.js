@@ -10,8 +10,9 @@
 // default "auto"); HP_PHOTO the photo (default: the probe's house1, data/probe/ — gitignored, read only). Nothing is
 // written.
 import path from "node:path";
+import * as hardware from "@delebash/core/runner/hardware";
 import { RuntimeService } from "@delebash/core/runner/runtime_service";
-import { afterAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { ortBinDir, sam3Adapter } from "../../src/finder.js";
 import { DEFAULT_PARTS, findParts } from "../../src/segment/parts.js";
 import { maskToPng, pngToMask } from "../../src/segment/segmenter.js";
@@ -36,6 +37,8 @@ const svc = ON
   : null;
 
 describe.skipIf(!ON)("SAM 3 on a real house photo, on the kit's ONNX runtime", () => {
+  // the kit's hardware detection, as the app's boot runs it (installLlm): the arbiter books the card from it
+  beforeAll(() => hardware.ensureDetected(), 120_000);
   afterAll(async () => {
     await svc?.stopServer();
   });

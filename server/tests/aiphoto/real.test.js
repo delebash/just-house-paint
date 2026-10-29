@@ -7,7 +7,8 @@
 //
 // The kit's sd.cpp runtime runs the AI photo's model with its preset's recipe (seed_presets.js p_aiphoto), exactly as
 // the app does (aiphoto_service.js → the kit's runImageFeature → imageEdit); before each run it waits until the GPU
-// has HP_MIN_FREE_MIB (7000) free — another app may hold it. Photos and masks are read from the probe folder
+// has HP_MIN_FREE_MIB (7000) that no other program holds — another app may hold it (the kit's otherGpuHolders: its
+// own sd-server, kept running between drawings, is this test's). Photos and masks are read from the probe folder
 // (data/probe/, gitignored); everything written goes under the system's temp folder (HP_REAL_OUT), never the data
 // folder. HP_REAL_SD_1MP=1 adds a ~1 MP run for the size/VRAM trade-off.
 
@@ -18,9 +19,10 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { binaryAsset, DEFAULT_SDCPP_BINARIES, DEFAULT_SDCPP_BUILD } from "@delebash/core/runner/config";
+import * as hardware from "@delebash/core/runner/hardware";
 import { RuntimeService } from "@delebash/core/runner/runtime_service";
 import { imageEdit, SDCPP_SERVER } from "@delebash/core/runner/sdcpp";
-import { afterAll, describe, expect, test } from "vitest";
+import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { aiRepaint } from "../../src/aiphoto/edit.js";
 import { DEFAULT_COMPOSE, featherMask, readMask, readRgb } from "../../src/aiphoto/pixels.js";
 import { DEFAULT_ENGINE_PRESETS, FLUX2_KLEIN } from "../../src/seed_presets.js";
@@ -68,14 +70,19 @@ function nvidiaSmi(args) {
 
 const gpuMiB = async (field) => Number((await nvidiaSmi([`--query-gpu=${field}`, "--format=csv,noheader,nounits"])).trim().split(/\r?\n/)[0]);
 
-/** Wait (up to 20 min) until the GPU has `min` MiB free; returns the free MiB seen. */
+/** Wait (up to 20 min) until the GPU has `min` MiB no other program holds; returns the MiB seen. Other programs are
+ *  the kit's otherGpuHolders — outside this process's tree, so the test's own sd-server (the kit keeps it running
+ *  between drawings) is its own room; where that can't be measured, the card's free memory. */
 async function waitForGpu(min = MIN_FREE_MIB) {
+  const total = await gpuMiB("memory.total");
   const until = Date.now() + 20 * 60_000;
   for (;;) {
-    const free = await gpuMiB("memory.free");
-    if (free >= min) return free;
-    if (Date.now() > until) throw new Error(`GPU still has only ${free} MiB free`);
-    console.log(`[real] GPU ${free} MiB free < ${min} — waiting`);
+    const others = await hardware.otherGpuHolders().catch(() => null);
+    const room = others ? total - others.reduce((n, r) => n + r.memMb, 0) : await gpuMiB("memory.free");
+    if (room >= min) return room;
+    const who = others?.length ? ` (${others.map((r) => `${r.label} ${r.memMb} MB`).join(", ")})` : "";
+    if (Date.now() > until) throw new Error(`the GPU still has only ${room} MiB other programs leave${who}`);
+    console.log(`[real] GPU ${room} MiB left by other programs < ${min}${who} — waiting`);
     await new Promise((r) => setTimeout(r, 15_000));
   }
 }
@@ -123,6 +130,8 @@ async function run(name, opts) {
 }
 
 describe.runIf(real)("the AI photo for real, on the kit's sd.cpp runtime (HP_REAL_SD=1)", () => {
+  // the kit's hardware detection, as the app's boot runs it (installLlm): the runtime picks its build from it
+  beforeAll(() => hardware.ensureDetected(), 120_000);
   afterAll(async () => {
     await svc?.stopServer();
   });
