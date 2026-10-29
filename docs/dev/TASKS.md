@@ -22,9 +22,13 @@ STATE:  (1) DONE — round B checked for real (83da891, below). (2) IN PROGRESS 
         found no app error on any screen (30 steps) and the GPU flows work through the screens (the AI photo 22.4 s;
         Find the parts again on house 2: 11 parts; AI schemes on the local model: 3 in 26.6 s; the kit's arbiter let
         SAM 3 go for the chat model); fixed on the way: the kit's runServerJob (an external cancel failed the task; the
-        end never reached onJob — 0384b39); found: the kit's catalog squeezed in the built-in provider's Edit (being
-        fixed in the kit). Next: the README with the features and docs/dev/ARCHITECTURE.md (JustWrite's shape), the
-        website, the tracker closed down to what is open, the full cross-app run, (4).
+        end never reached onJob — 0384b39); the kit's catalog squeezed in the built-in provider's Edit (fixed in the
+        kit, 2d1065d). DONE: the README with the features first (JustWrite's shape) and docs/dev/ARCHITECTURE.md; the
+        release's one-liners as ES modules and the user docs (docs.tar.gz) attached while the release is a draft,
+        then the website asked to rebuild (`WEBSITE_REPO`; the template's way — kit e326cb8, 0976b4e). Next: the
+        website, the tracker closed down to what is open, the full cross-app run, (4). For the user, once the website
+        exists: the secret WEBSITE_DISPATCH_TOKEN on this repo (a token that can start the website's workflow — I
+        can't make one); without it the site rebuilds on its next push.
 
 ## The AI photo and the part finder onto the kit, the way llama.cpp is [2026-10-24]
 STATE:  OPEN — the kit's plan `../just-core/docs/plans/2026-10-24-engines-the-llama-way.md` (its TASKS item

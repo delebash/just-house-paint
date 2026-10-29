@@ -5,7 +5,9 @@ Read in this order:
 1. **`../../AGENTS.md`** — what this app is, the commands, what must pass before a commit, what
    bites, where to look, and the family rules.
 2. **`PRD.md`** — what the app is for: who uses it, its features and how each is proven, the
-   outside data and services it uses, what's out of scope.
+   outside data and services it uses, what's out of scope. **`ARCHITECTURE.md`** — why it is built
+   the way it is: the server, painting on the screen, the part finder, the AI photo, the engines,
+   the paint data, the schemes, the release and the website.
 3. **`TASKS.md`** — the live tracker of open work. **`IDEAS.md`** — ideas not yet scheduled.
    **`RESEARCH.md`** — what is already known, by subject, with the proof; read its section before
    researching anything.
