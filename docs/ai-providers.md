@@ -135,6 +135,24 @@ What goes online: the house's colors as words and numbers, which parts are paint
 you add — never the photo. The key is kept in the app's data and goes into a
 [backup](settings.md#backups).
 
+### Your own plan instead of a key
+
+- **Your Claude plan (through Claude Code)** — when Claude Code is installed on this computer, the
+  online tab says so: **Connect** makes it a provider that runs on the Claude plan you already pay for.
+  Not signed in, the line gives the command (`claude auth login`) and **Look again**. The provider's row
+  shows how much of this week's plan is used; **Test connection** says whether Claude Code is found and
+  signed in. Each request starts Claude Code afresh, so the first word takes a few seconds, and the
+  plan's limits are meant for ordinary personal use. Anthropic's terms allow your own subscription in
+  the unmodified Claude Code; how they apply to apps that run it isn't settled, and any enforcement
+  would fall on your account.
+- **Sign in with ChatGPT** — an **OpenAI** provider, once saved, has **Sign in with ChatGPT** under
+  **Edit**: it signs in at OpenAI in this computer's browser and then uses your ChatGPT Plus or Pro plan
+  instead of the key. **Sign out** goes back to the key.
+
+Calls on a plan cost nothing per call (**Usage** shows $0; the tokens still count), and temperature and
+a reply-length limit don't apply to them. A Google AI Pro or Ultra plan includes monthly Google Cloud
+credits that can pay for a Gemini key's use.
+
 ## Usage
 
 **Usage** counts every AI call — **calls**, **tokens** (**prompt** and **completion**) and the

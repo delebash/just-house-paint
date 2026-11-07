@@ -2,6 +2,10 @@
 
 ## Next version
 
+- **Your Claude or ChatGPT plan instead of an API key (2026-11-07).** When Claude Code is installed on
+  this computer and signed in, the online providers offer it — **Connect** runs the AI on your own Claude
+  plan; an **OpenAI** provider has **Sign in with ChatGPT** for a Plus or Pro plan. Calls on a plan show
+  $0 under **Usage** ([Set up the AI](ai-providers.md#your-own-plan-instead-of-a-key)).
 - **The AI photo runs on the family's shared AI engine.** Its engine (stable-diffusion.cpp) and its model
   (FLUX.2 [klein] 4B) live in the AI cache with the other AI models: **AI Settings → Images** shows them — **Install**
   and **Remove**, **Download** and **Delete** — with the model's chip, whether it fits this computer and how fast it
