@@ -2,6 +2,8 @@
 
 ## v0.2.0
 
+- **Cancel on the start screen no longer strands you.** Cancelling the model's load at start-up left the start
+  screen up with no button; **Continue without waiting** now stays ([Set up the AI](ai-providers.md#the-models)).
 - **Your Claude or ChatGPT plan instead of an API key (2026-11-07).** When Claude Code is installed on
   this computer and signed in, the online providers offer it — **Connect** runs the AI on your own Claude
   plan; an **OpenAI** provider has **Sign in with ChatGPT** for a Plus or Pro plan. Calls on a plan show

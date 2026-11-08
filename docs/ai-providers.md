@@ -95,7 +95,8 @@ Setup's pick.
 
 **Load the default local model into memory on startup** (under the built-in provider, on at first)
 loads the model as the app starts: the start screen shows it loading — or **Setting up the AI engine**
-while the engine installs — with **Continue without waiting**. If it doesn't load, **What can I do?**
+while the engine installs — with **Continue without waiting**; **Cancel** stops the load and leaves
+**Continue without waiting** to go in. If it doesn't load, **What can I do?**
 opens [Troubleshooting](troubleshooting.md).
 
 **Tune & measure** (a model's **More actions**) finds the fastest settings for this computer:
