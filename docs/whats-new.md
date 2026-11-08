@@ -9,11 +9,11 @@
 - **Claude answers at its own temperature.** Anthropic's current API refuses a temperature or samplers on every Claude
   model, so a Claude provider no longer sends them ([Set up the AI](ai-providers.md#online-providers)).
 - **The AI photo runs on the family's shared AI engine.** Its engine (stable-diffusion.cpp) and its model
-  (FLUX.2 [klein] 4B) live in the AI cache with the other AI models: **AI Settings → Images** shows them — **Install**
-  and **Remove**, **Download** and **Delete** — with the model's chip, whether it fits this computer and how fast it
+  (FLUX.2 [klein] 4B) live in the AI cache with the other AI models: **AI Settings → Images** shows them — **Install**,
+  **Reinstall** and **Remove**, **Download** and **Delete** — with the model's chip, whether it fits this computer and how fast it
   draws here. The AI photo says what it needs first, one step at a time: the engine, then the model.
 - **Coming from v0.1.3:** the model you already downloaded is moved into the AI cache when the app starts — nothing
-  to download again. The engine needs one install of its newer version (865 MB on Windows with an NVIDIA card),
+  to download again. The engine needs one install of its newer version (872 MB on Windows with an NVIDIA card),
   which can stop a drawing in the middle when you press **Cancel**; the older one is removed when it's installed.
 - **How the AI photo draws is a preset**: **Draw the AI photo** under **AI Settings → Routing by feature** — the
   steps, the guidance, the strength, the sampler and the seed ([The AI features](ai-features.md)).
@@ -22,7 +22,8 @@
   engine's builds and the models.
 - **The part finder runs on the family's shared AI engines too.** Its model (SAM 3) lives in the AI cache: a house's
   **Parts** tab offers **Download the model**, and **AI Settings → Vision** shows it — **Download** and **Delete**,
-  and how long it stays in memory (**Let go after idle (minutes)**). Coming from v0.1.3, the part finder you
+  its chip (whether it fits, and how fast it read a photo here once it has), and how long it stays in memory
+  (**Let go after idle (minutes)**). Coming from v0.1.3, the part finder you
   installed is moved into the AI cache when the app starts — nothing to download again.
 - **Where the part finder runs is its preset**: **Find the parts** under **AI Settings → Routing by feature** —
   **Runs on: The graphics card, where it can** or **The processor only**. **Use the graphics card (Windows)** and

@@ -96,6 +96,10 @@ doesn't allow is named under the box.
 - **How colors are ordered by color** — **grayChroma**: below this chroma a color is a near-gray,
   listed first; **bandDegrees**: the hue bands the rest are listed in; **families**: the **Color
   family** choices, each from its hue to the next one's.
+- **The finishes a part's paint can have** — each an id in small letters, dullest first (`flat` … `gloss`): the
+  **Colors** tab offers them for a part's paint, and the color list and the color card name them.
+- **Daylight's lights** — each light of the house page's **Daylight**: its **key** and its red, green and blue
+  **gains** (1 = as photographed). A preview only.
 - **The AI photo's prompts** — the words the image model reads: **single** for one part, **multi**
   with one **item** per part (joined by **separator**), and the color as **colorNamed** or
   **colorUnnamed**. `{surface}`, `{color}`, `{list}`, `{name}` and `{hex}` are filled in.
@@ -224,10 +228,10 @@ offered then). Meanwhile **Change folder…** isn't shown.
   left by a house deleted while Windows held one of its files (version 0.1.2 and earlier), or by a database that was
   lost or replaced. The app never removes a whole one by itself — it may be a house's only photo — so **Remove** asks
   "Remove the photos of houses not in the app?" first, then removes them from this computer.
+- **Database**, **Server logs**, **Total** and **Free disk space** on the data folder's drive.
 
 The part finder's model and the AI photo's engine and model are counted with the AI engine's builds and the models
 above; **AI Settings → Vision** and **Images** remove them (your houses keep their parts and AI photos).
-- **Database**, **Server logs**, **Total** and **Free disk space** on the data folder's drive.
 
 ## Where to keep the data folder
 

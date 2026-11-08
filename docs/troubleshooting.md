@@ -130,7 +130,7 @@ resumes where it stopped the next time you press the button; a file that doesn't
 press it again to download it again.
 
 **"Not enough room on the drive".** "This needs … on the drive that holds the app's AI engines and models, which
-has … free" — about 3.1 GB for the part finder's model; for the AI photo, about 2.2 GB for its engine on Windows
+has … free" — about 3.4 GB for the part finder's model; for the AI photo, about 2.2 GB for its engine on Windows
 with an NVIDIA graphics card (much less on most others) and 8.4 GB for its model. Make room, or move the data
 folder to a bigger drive (**App Settings → Storage → Change folder…**, see [Storage](settings.md#storage)).
 
@@ -143,8 +143,9 @@ start — a DLL on this computer is older than stable-diffusion.cpp needs"), the
 **"A file of this engine is missing from the app (onnxruntime.dll)"** (the part finder). An antivirus may have
 quarantined it. Restore it from the antivirus (and allow the app's folder), or install the app again.
 
-**"The model is busy"** or **"The engine is busy"** on **AI Settings → Vision** or **Images**: the part finder is
-finding parts, the AI photo is being drawn, or the model is downloading or being deleted — try again once that has
+**"SAM 3 is busy"**, **"FLUX.2 [klein] 4B is busy"** or **"stable-diffusion.cpp is busy"** on **AI Settings →
+Vision** or **Images**: the part finder is finding parts, the AI photo is being drawn, or the model is downloading
+or being deleted — try again once that has
 finished.
 
 ## The AI photo

@@ -43,10 +43,14 @@ how to open an installer that isn't signed yet). User docs live in `docs/`; the 
 - **How close it is**: each part shows its **ΔE** to the paint chip (under 1, a difference most people can't see).
 - **On it now**: tell the app the paint a part has today, and new colors show in the light that paint reveals.
 - **Light** and **Texture** sliders; **Outlines** of one part, all, or none.
+- **Daylight**: the whole photo in morning or evening sun, midday sun, or shade — a preview of how the paints move
+  with the day, never saved.
 - **Compare** with the photo as taken, or with another design — a line across the photo, or side by side.
+- **Finish** for each part, flat to gloss — named beside its paint on the color list and the color card.
 - **Save image** at full size, **Copy the color list** to take to the store, **Save a color card** of the photo and
   its paints.
-- **Designs**: save the colors as a design, keep several, open one to put its colors back.
+- **Designs**: save the colors as a design, keep several, open one to put its colors back, or use it on another
+  house — another photo of the same house.
 
 ### ✶ Paint colors — seven brands, kept on your computer
 
@@ -55,6 +59,8 @@ how to open an installer that isn't signed yet). User docs live in `docs/`; the 
 - **Import a palette file** a brand publishes: Adobe swatches (.ase, .aco), Excel and CSV.
 - **Find a color** by name or number, by color family, sorted by color or by name; exterior colors only, or all;
   discontinued colors hidden unless asked for.
+- **In other brands**: the chosen paint's nearest color in each other loaded brand, with its ΔE — a click puts it on
+  the part.
 
 ### ✶ Color schemes — whole schemes, always real paints
 
@@ -69,6 +75,8 @@ how to open an installer that isn't signed yet). User docs live in `docs/`; the 
 - **FLUX.2 [klein] 4B** on your computer (stable-diffusion.cpp) repaints only inside the parts' outlines; the app
   puts your photo back everywhere else and locks what the model repainted to the paint colors. Its colors are
   approximate — the model decides the light — and the picture says how far the part furthest off is from its chip.
+- **Up close**: a small part the model left as photographed — a door under a porch — is drawn again from a crop
+  around it, and kept when it comes out closer to its paint (about 15 seconds more).
 - About **20 seconds** a picture on Windows with an 8 GB NVIDIA graphics card. Every AI photo is kept with the house.
 - **Installed when you want it**: the engine and the model download from the house page or the AI page, with their
   progress and **Cancel**; the app checks the drive has room first.
@@ -78,7 +86,7 @@ how to open an installer that isn't signed yet). User docs live in `docs/`; the 
 - **Local and free**: the built-in engine (llama.cpp) runs a chat model on your computer for the color schemes;
   **Quick Setup** picks one that fits the computer.
 - **Or online**: OpenAI, Anthropic (Claude), Gemini, OpenRouter, DeepSeek, xAI, Mistral, or any OpenAI-compatible
-  service.
+  service — or, instead of a key, your Claude plan (through Claude Code) or your ChatGPT Plus or Pro plan.
 - **Routing by feature**: each AI feature — the schemes, the AI photo, the part finder — on its own model and
   settings; the graphics card shared between them by themselves.
 - **Usage** counts the calls and their cost; the **AI tasks** panel shows what runs, with **Cancel**.
@@ -123,14 +131,14 @@ are `AGENTS.md`.
 | `src-capacitor/` | the phone app (Android), as Quasar generates it — not working yet: a phone build has no server (the PRD puts the phone after v1) | `quasar build -m capacitor -T android` |
 | `build/launcher/` | the headless launcher `just-house-paint-server.cmd`: the installed exe (`justhousepaint.exe`) run as Node on its server package — never the exe's name (§Q.3) | copied beside the exe by the installer |
 | `e2e/` | the smoke suite and the screenshot capture over the real desktop app (Playwright's `_electron`), hermetic | `npm test` · `npm run screenshots` |
-| `docs/` | the Help pages (`toc.json`, the five the family requires + your houses, finding the parts, painting, paint colors, color schemes, the AI photo) and `docs/dev/` (README, PRD, TASKS, IDEAS, RESEARCH) | the kit's Help drawer; `whats-new.md` feeds Settings → Updates |
+| `docs/` | the Help pages (`toc.json`, the five the family requires + your houses, finding the parts, App Settings, painting, paint colors, color schemes, the AI photo) and `docs/dev/` (README, PRD, ARCHITECTURE, TASKS, IDEAS, RESEARCH) | the kit's Help drawer; `whats-new.md` feeds Settings → Updates |
 
 ### What every family app carries — where it is here
 
 | Part | Files |
 |---|---|
 | Server wiring (§Q.3, §8, §11, §14) | `server/src/app.js` (the order), `serve.js`, `version.js`, `paths.js`, `app_state.js` (with `services.js` — the jobs, the engines, the settings readers), `auth.js`, `data_admin.js` (the backup takes `houses/`), `api/{health,server_auth,prefs,settings}_api.js` |
-| Data (§16) | `server/src/database/` — `schema.js` (migrations; v1 settings, v2 houses · parts · designs · paints · renders, v3 the paint on each part now), `index.js` (open + migrate), `seed.js`, the stores `houses.js`, `paints.js` and `settings.js`; each house's files under `data/houses/<id>/` (`files.js`) |
+| Data (§16) | `server/src/database/` — `schema.js` (migrations; v1 settings, v2 houses · parts · designs · paints · renders, v3 the paint on each part now, v4 an AI photo's part furthest off, v5 each part's finish), `index.js` (open + migrate), `seed.js`, the stores `houses.js`, `paints.js` and `settings.js`; each house's files under `data/houses/<id>/` (`files.js`) |
 | Validation and errors (§15) | `server/src/schemas/` (shared with the forms), the kit's `input()`, `notFound`, problem+json with request ids |
 | The AI half (§8) | `server/src/feature_catalog.js` (`schemes.suggest`, `aiphoto.render` — kind image, `parts.find` — kind vision), `seed_feature_prompts.js` (the schemes' prompt row, from `schemes_ai.js`), `seed_presets.js` (the presets, JustWrite's three general Gemma rows and their class tunes, the AI photo's FLUX.2 [klein] and the part finder's SAM 3 as the kit's runtime models) |
 | The chrome (§11) | `src/layouts/MainLayout.vue`, `src/components/TitleBar.vue`, `src/pages/{AiPage,SettingsPage,ConnectionErrorPage}.vue`, `src/components/settings/` (General and Advanced are this app's), `index.html`'s `#app-boot` plate |
@@ -210,7 +218,8 @@ own `onnxruntime-node`, and keeps SAM 3's pre- and post-processing as the kit's 
 app's when the cache is shared), are downloaded only when the user presses the button (each file checked against its
 SHA-256, the drive's room checked first), are not in a backup, and share the graphics card through the kit's
 arbiter. An older install's files move into the cache at start (`aiphoto/migrate.js`, `segment/migrate.js`).
-`onnxruntime-node` loads on the first part search, never at start-up; its install script is off (`allowScripts`)
+`onnxruntime-node` loads the first time a window asks whether the part finder can run (the kit's runtime check — a
+house page opening, AI Settings → Vision), never at the server's start; its install script is off (`allowScripts`)
 — the CPU and DirectML builds ship in the package.
 
 The tests that run the real engines are off by default: `HP_REAL_SAM3=1` and `HP_REAL_SD=1` with

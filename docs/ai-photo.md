@@ -18,7 +18,7 @@ family's apps share, kept in the AI cache with the app's other AI models. The fi
 needs, one step at a time, each with its progress bar and **Cancel**:
 
 1. "The AI photo runs on stable-diffusion.cpp, which isn't installed on this computer yet" — **Install the engine
-   (865 MB)** on Windows with an NVIDIA card (a few dozen MB on most other computers).
+   (872 MB)** on Windows with an NVIDIA card (a few dozen MB on most other computers).
 2. "The AI photo needs its model, FLUX.2 [klein] 4B, which isn't on this computer yet" — **Download the model
    (8.1 GB)**, once.
 

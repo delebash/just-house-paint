@@ -39,9 +39,9 @@ The installers aren't signed with a publisher's certificate yet, so the first ti
   It is quickest on Windows with an NVIDIA card: about 20 seconds on an 8 GB card; without a graphics card it takes
   about ten minutes. On other graphics cards — AMD, Intel, Apple silicon, and NVIDIA on Linux — the app shows a speed
   once it has measured one. See [The AI photo](ai-photo.md).
-- **Room on the drive**, as the app counts it, on the drive that holds the AI engines and models: 3.1 GB for the
+- **Room on the drive**, as the app counts it, on the drive that holds the AI engines and models: 3.4 GB for the
   part finder's model (**Download the model (3.1 GB)**); for the AI photo, about 2.2 GB for its engine on
-  Windows with an NVIDIA card (**Install the engine (865 MB)** — the download and its unpacked files at once; much
+  Windows with an NVIDIA card (**Install the engine (872 MB)** — the download and its unpacked files at once; much
   less on most other computers) and 8.4 GB for its model (**Download the model (8.1 GB)**). The app checks before it
   downloads, and says what the computer lacks — the system, the room on the drive.
 
@@ -72,7 +72,8 @@ See [Updates](settings.md#updates).
 - **The house page** — the photo with the paint on it, the tools above it, and the tabs **Parts**,
   **Colors**, **Schemes** and **Designs** beside it.
 - **Paint colors** — the brands' colors on this computer.
-- **AI Settings** — the AI model the color-scheme suggestions use. See [Set up the AI](ai-providers.md).
+- **AI Settings** — the AI model the color-scheme suggestions use, and the AI photo's and the part finder's engines
+  and models. See [Set up the AI](ai-providers.md).
 - **App Settings** — **General** and **Advanced** (the app's settings), **Appearance**, **Backups**, **Storage**,
   **Server**, **Logs**, **Updates** and **About**. See [App Settings](settings.md).
 - **The title bar** — the arrows at its left go back and forward; at its right, the theme button switches the

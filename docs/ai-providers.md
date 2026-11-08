@@ -1,7 +1,8 @@
 # Set up the AI
 
 Open **AI Settings** in the sidebar. The AI here suggests color schemes (**Suggest schemes** on a
-house's **Schemes** tab) and draws the AI photo ([The AI photo](ai-photo.md)). The page's tabs are
+house's **Schemes** tab), draws the AI photo ([The AI photo](ai-photo.md)) and finds the parts
+([Finding the parts](finding-parts.md)). The page's tabs are
 **Providers & models**, **Images** (the AI photo's engine, stable-diffusion.cpp, and its model: **Install**,
 **Reinstall** and **Remove**, **Download** and **Delete**, each model with its fit-and-speed chip), **Vision** (the part
 finder's engine, ONNX Runtime — part of the app, nothing to install — and its model SAM 3: **Download** and

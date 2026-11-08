@@ -74,6 +74,9 @@ and drift each color, so the app:
    masks** — everywhere else the pixels are the photo's own;
 3. **locks what the model repainted to its paint**: the paint times the render's own normalized lighting, then
    measures each part's normally lit pixels with ΔE2000 against the paint (0.21–0.75 on a lit wall in the real runs).
+   Each piece of a part (each shutter, each door) is normalized to its own level, held within `pieceLight` of the
+   part's typical piece, so one piece the model drew far lighter can't pull the others dark (RESEARCH §15, the light
+   pair of shutters).
    Only what the model changed is locked (`lockOnlyRepainted`): a pixel it left as it was — white trim inside a body
    mask — keeps its own color instead of turning paint-colored (RESEARCH §10, "the pink trim"), unless the paint is
    close to the part's old color, when the whole part is locked. So a part the model didn't repaint (a small door
