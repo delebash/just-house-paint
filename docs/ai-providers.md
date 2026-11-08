@@ -126,7 +126,8 @@ different model may now fit; **Run Quick Setup** checks again.
 Gemini (Google), OpenRouter, DeepSeek, xAI (Grok), Mistral, or any OpenAI-compatible service — its
 **Base URL**, **API key** and **Default chat model** (**Fetch** lists its models). **Test connection** checks it before you **Save
 provider**; the saved key is never shown again (leave the box blank to keep it). On the list, **Test**
-checks a provider again (**Connected** or **Failed**).
+checks a provider again (**Connected** or **Failed**). A Claude (Anthropic) provider takes no temperature or samplers:
+Anthropic's current API refuses them on every Claude model, so its answers use Claude's own defaults.
 
 **Set as default** makes the features run on it. Presets you changed by hand stay as they are unless
 you tick **Also overwrite presets I customized**.
